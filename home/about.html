@@ -1,0 +1,125 @@
+<!-- ======================= home/about.html v2.0.2 =======================
+     Over-pagina: tijdelijk niet beschikbaar, consistente opmaak
+     Wijziging v2.0.0: facelift — Navbar + TopBar + 'komt binnenkort' blok,
+                       geen aparte header meer, script.js verwijderd
+     Wijziging v2.0.1: login scripts
+     Wijziging v2.0.2: Favicon / App-icoon + scripts opgeschoond,
+                       dubbele fetch-blokken verwijderd, topbar.js via createElement
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Over</title>
+
+    <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* ======================= BINNENKORT BLOK ======================= */
+        .binnenkort-blok {
+            max-width: 520px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 48px 24px;
+        }
+        .binnenkort-blok .icoon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        .binnenkort-blok h1 {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 0 0 12px 0;
+            color: #222;
+        }
+        .binnenkort-blok p {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+            margin: 0 0 24px 0;
+        }
+        .knop-home {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #1E90FF;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+        .knop-home:hover { background: #1278d4; }
+    </style>
+</head>
+<body>
+
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div>
+
+<!-- ======================= Navbar ======================= -->
+<div id="navbar-placeholder"></div>
+
+<!-- ======================= Hoofd content ======================= -->
+<main>
+    <div class="binnenkort-blok">
+        <div class="icoon">🌳</div>
+        <h1>Over MyFamTreeCollab</h1>
+        <p>
+            Deze pagina is momenteel in ontwikkeling.<br>
+            Binnenkort vind je hier meer informatie over het project,
+            de makers en hoe de app werkt.
+        </p>
+        <a href="/MyFamTreeCollab/" class="knop-home">Terug naar Home</a>
+    </div>
+</main>
+
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. TopBar fetch        — laadt HTML, daarna pas topbar.js
+     5. Navbar + Footer     — onafhankelijk, mag parallel
+     about.html heeft geen pagina-specifieke scripts
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    // TopBar laden — topbar.js pas injecteren nadat #top-auth in de DOM zit
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Navbar laden — geen auth-afhankelijkheid
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+
+    // Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+</script>
+
+</body>
+</html>
