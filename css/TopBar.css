@@ -1,0 +1,17 @@
+/* ======================= css/TopBar.css v0.0.0 ======================= */
+/* Hoge specificiteit + scoped op .topbar */
+div.topbar,
+div.topbar * {
+    color: #000000 !important;   /* ✅ Tekstkleur zwart */
+}
+
+/* Specifiek voor links */
+div.topbar a {
+    color: #000000 !important;   /* ✅ Links zwart */
+    text-decoration: none;
+}
+
+/* Hover-effect */
+div.topbar a:hover {
+    color: #333333 !important;   /* ✅ Donkergrijs bij hover */
+}

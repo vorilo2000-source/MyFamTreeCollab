@@ -1,0 +1,294 @@
+/* ======================= css/style.css v1.0.6 ======================= */
+/* Algemene styling (zonder timeline — die zit nu in timeline.css) */
+
+/* ======================= BASIS LAYOUT ======================= */
+body {
+    font-family: Arial, sans-serif; /* basis font voor de pagina */
+    margin: 0; /* verwijder standaard browser marge */
+    padding: 0; /* verwijder standaard browser padding */
+    background-color: #fdfdfd; /* lichte achtergrondkleur */
+}
+
+main {
+    padding: 2rem; /* interne marge rondom content */
+    color: #333; /* standaard tekstkleur */
+}
+
+/* ======================= HEADER / NAVBAR ======================= */
+header {
+    background-color: #004080; /* donkerblauwe achtergrond */
+    color: white; /* tekstkleur wit */
+    padding: 1rem; /* interne marge */
+    display: flex; /* flex layout */
+    justify-content: space-between; /* ruimte tussen items */
+    align-items: center; /* verticale uitlijning */
+}
+
+header h1,
+header .brand,
+header .logo {
+    color: white; /* forceer wit */
+    margin: 0; /* verwijder marge */
+}
+
+/* ======================= NAVIGATIE ======================= */
+nav ul.menu {
+    list-style: none; /* geen bullets */
+    margin: 0;
+    padding: 0;
+    display: flex; /* horizontaal */
+    gap: 1rem; /* ruimte tussen items */
+}
+
+nav ul.menu > li {
+    position: relative; /* nodig voor submenu */
+}
+
+nav ul.menu a {
+    color: white; /* witte links */
+    text-decoration: none; /* geen underline */
+    padding: 0.5rem 1rem; /* klikruimte */
+    display: block; /* blokniveau */
+}
+
+nav li.dropdown > a {
+    cursor: pointer; /* visuele hint */
+}
+
+/* ======================= SUBMENU ======================= */
+nav ul.submenu {
+    display: none; /* standaard verborgen */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #004080;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 4px;
+    min-width: 150px;
+    z-index: 1000;
+}
+
+nav ul.submenu li a {
+    padding: 0.5rem 1rem;
+}
+
+nav ul.menu li:hover > .submenu {
+    display: block; /* zichtbaar bij hover */
+}
+
+/* ======================= BUTTONS ======================= */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #0080ff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+/* ======================= TOPBAR ======================= */
+.topbar {
+    background-color: #f0f0f0;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.topbar-content {
+    width: 95%;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+}
+
+.top-left a,
+.top-right a {
+    text-decoration: none;
+    color: #333;
+    margin-left: 10px;
+    font-weight: 500;
+}
+
+.top-left a:hover,
+.top-right a:hover {
+    text-decoration: underline;
+}
+
+.topbar a.active {
+    font-weight: 700;
+    text-decoration: underline;
+    color: #004080;
+}
+
+/* ======================= TABLE ======================= */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    background-color: #ffffff;
+}
+
+table th {
+    background-color: #004080;
+    color: white;
+    font-weight: 600;
+}
+
+table th,
+table td {
+    border: 1px solid #d9d9d9;
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+table tr:hover {
+    background-color: #eef4fb;
+}
+
+/* ======================= STORAGE TABLE ======================= */
+#storageTable tr:nth-child(even) {
+    background-color: #f7f9fc;
+}
+
+#storageTable tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+/* ======================= SELECTED ROW ======================= */
+table tr.selected {
+    background-color: #dbeeff;
+}
+
+/* ======================= MODAL ======================= */
+.modal {
+    position: fixed;
+    top: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    max-width: 1000px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 2px solid #004080;
+    border-radius: 6px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    z-index: 9999;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #004080;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.modal pre {
+    background: #f4f6f9;
+    padding: 1rem;
+    border-radius: 4px;
+    font-size: 13px;
+    overflow-x: auto;
+}
+
+/* ======================= BUTTONS (ADMIN) ======================= */
+button {
+    cursor: pointer;
+    font-family: inherit;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 14px;
+    transition: background-color 0.2s ease, transform 0.05s ease;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button.danger {
+    background-color: #b30000;
+    color: white;
+}
+
+button.danger:hover {
+    background-color: #990000;
+}
+
+/* ======================= STORAGE SUMMARY ======================= */
+#storageSummary {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background-color: #eef4fb;
+    border-left: 4px solid #004080;
+    font-size: 14px;
+}
+
+/* ======================= RESPONSIVE ======================= */
+@media (max-width: 768px) {
+    nav ul.menu {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    table th,
+    table td {
+        font-size: 13px;
+    }
+
+    .modal {
+        width: 95%;
+    }
+}
+
+/* ======================= TREE VIEW ======================= */
+#treeContainer { 
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fdfdfd;
+    text-align: center;
+}
+
+.tree-parents, 
+.tree-children { 
+    text-align: center;
+    margin: 10px 0;
+}
+
+.tree-node { 
+    display: inline-block;
+    padding: 6px 10px;
+    margin: 6px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #f5f5f5;
+    font-size: 13px;
+    cursor: default;
+}
+
+.tree-node:hover { 
+    background-color: #e0f0ff;
+    border-color: #004080;
+}
+
+.tree-connector { 
+    display: block;
+    height: 1px;
+    border-top: 1px solid #ccc;
+    margin: 6px auto;
+    width: 50%;
+}

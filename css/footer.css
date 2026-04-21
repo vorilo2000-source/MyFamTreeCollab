@@ -1,0 +1,22 @@
+   Footer CSS v1.0.0
+   Laatst aangepast: 8 maart 2026
+   Project: MyFamTreeCollab
+   ================================ */
+
+footer{
+    background:#343a40;          /* Donkergrijze balk */
+    color:#fff;                  /* Witte tekst */
+    padding:15px 20px;           /* Binnenruimte rondom */
+    text-align:center;           /* Alles gecentreerd */
+    font-family:Arial, sans-serif;
+}
+
+footer a{
+    color:#fff;                  /* Links wit */
+    text-decoration:underline;   /* Onderstreept */
+}
+
+.footer-links{
+    margin-top:5px;              /* Ruimte tussen copyright en links */
+    font-size:0.9rem;
+}
