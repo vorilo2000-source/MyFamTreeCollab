@@ -1,0 +1,211 @@
+<!-- ======================= abonnementen/vergelijk.html v1.1.0 ======================= 
+  consistente opmaak — Navbar + TopBar + 'komt binnenkort' blok, geen aparte header meer, 
+    script.js verwijderd. Login + Favicon / App-icoon toegevoegd
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vergelijken</title>
+        
+    <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* ======================= BINNENKORT BLOK ======================= */
+        .binnenkort-blok {                                                 /* Centraal informatieblok */
+            max-width: 520px;                                              /* Niet te breed */
+            margin: 0 auto;                                                /* Horizontaal centreren */
+            text-align: center;                                            /* Tekst centreren */
+            padding: 48px 24px;                                            /* Ruimte rondom de inhoud */
+        }
+        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; } /* Groot icoon boven de tekst */
+        .binnenkort-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
+        .binnenkort-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 24px 0; }
+        .knop-home {                                                       /* Knop terug naar home */
+            display: inline-block; padding: 10px 24px;
+            background: #1E90FF; color: #fff; text-decoration: none;
+            border-radius: 5px; font-size: 0.95rem; font-weight: bold;
+        }
+        .knop-home:hover { background: #1278d4; }
+    </style>
+</head>
+<body>
+
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div>
+     
+<!-- Scripts: Supabase + auth ALTIJD vóór topbar.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/auth.js"></script>
+     
+<script>
+fetch('/MyFamTreeCollab/Layout/TopBar.html')
+    .then(resp => resp.text())
+    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
+</script>
+
+<!-- ======================= Navbar ======================= -->
+<div id="Navbar-placeholder"></div>
+<script>
+fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    .then(resp => resp.text())
+    .then(data => {
+        const placeholder = document.getElementById('Navbar-placeholder');
+        if (placeholder) placeholder.innerHTML = data;
+    });
+</script>
+
+<!-- ======================= Hoofd content ======================= -->
+<main>
+    <div class="vergelijk-container">
+
+        <!-- ======================= Header ======================= -->
+        <div class="vergelijk-header">
+            <div class="icoon">🔍</div> <!-- Vergelijk / analyse icoon -->
+            <h1>Abonnementen vergelijken</h1>
+            <p>
+                Kies het plan dat past bij jouw manier van werken.<br>
+                Van lokaal gebruik tot cloud en samenwerking — jij behoudt altijd controle over je data.
+            </p>
+        </div>
+
+        <!-- ======================= Pricing cards ======================= -->
+        <div class="pricing-grid">
+
+            <!-- ======================= FREE PLAN ======================= -->
+            <div class="pricing-card free">
+                <div class="badge">FREE / LOCAL</div> <!-- status badge -->
+                <h2>Gratis</h2>
+                <div class="prijs">€0</div>
+                <p class="subtekst">Volledig lokaal, zonder account</p>
+
+                <ul>
+                    <li>✔ Stamboom beheer in browser</li>
+                    <li>✔ Lokale opslag (localStorage)</li>
+                    <li>✔ Personen beheren</li>
+                    <li>✔ Export CSV / JSON</li>
+                    <li>✔ Tijdlijn & statistieken</li>
+                </ul>
+
+                <div class="cta">
+                    <a href="/MyFamTreeCollab/" class="knop-primary">Start gratis</a>
+                </div>
+            </div>
+
+            <!-- ======================= CLOUD PLAN ======================= -->
+            <div class="pricing-card cloud">
+                <div class="badge">CLOUD SYNC</div> <!-- status badge -->
+                <h2>Cloud</h2>
+                <div class="prijs">€2,99</div>
+                <p class="subtekst">Synchronisatie op al je apparaten</p>
+
+                <ul>
+                    <li>✔ Alles van gratis plan</li>
+                    <li>✔ Cloud opslag</li>
+                    <li>✔ Account login</li>
+                    <li>✔ Automatische back-ups</li>
+                    <li>✔ Meerdere stambomen</li>
+                </ul>
+
+                <div class="cta">
+                    <a href="/MyFamTreeCollab/account.html" class="knop-primary">Upgrade naar Cloud</a>
+                </div>
+            </div>
+
+            <!-- ======================= FUTURE COLLAB PLAN ======================= -->
+            <div class="pricing-card pro">
+                <div class="badge">COLLAB (toekomst)</div> <!-- status badge -->
+                <h2>Samenwerken</h2>
+                <div class="prijs">€5,99</div>
+                <p class="subtekst">Samen bouwen aan één stamboom</p>
+
+                <ul>
+                    <li>✔ Alles van Cloud</li>
+                    <li>✔ Samenwerken met anderen</li>
+                    <li>✔ Gedeelde stambomen</li>
+                    <li>✔ Versiebeheer per persoon</li>
+                    <li>✔ Wijzigingsgeschiedenis</li>
+                </ul>
+
+                <div class="cta">
+                    <a href="#" class="knop-secondary">Wachtlijst</a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ======================= Support block ======================= -->
+        <div class="support-blok">
+            <h3>☕ Support het project</h3>
+            <p>
+                Help mee om nieuwe functies sneller te ontwikkelen.<br>
+                Alles blijft bruikbaar zonder betaling.
+            </p>
+
+            <div class="support-cta">
+                <a href="https://www.buymeacoffee.com/" target="_blank" class="knop-coffee">
+                    ☕ Buy Me a Coffee
+                </a>
+                <a href="/MyFamTreeCollab/" class="knop-home">
+                    Terug naar Home
+                </a>
+            </div>
+        </div>
+
+    </div>
+</main>
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde is verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
+     5. Navbar fetch        — onafhankelijk, mag parallel
+     6. Pagina-scripts      — altijd als laatste
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            // #top-auth bestaat nu — veilig om topbar.js te laden
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+
+    // Stap 3: Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+</script>
+
+<!-- Pagina-specifieke scripts: ... → ... → -->
+
+</body>
+</html>
