@@ -1,4 +1,4 @@
-<!-- ======================= Layout/Navbar v0.0.2 =======================
+<!-- ======================= Layout/Navbar v1.0.0 =======================
      Wijzigingen v0.0.2:
      - adminDropdown standaard verborgen (display:none)
      - Zichtbaar via topbar.js na admin-check
@@ -78,13 +78,19 @@
             <li class="dropdown" id="adminDropdown" style="display:none;">
                 <a href="#" class="menu-title">Administrator ▼</a>
                 <ul class="submenu">
-                    <li><a href="/MyFamTreeCollab/Admin/blank.html" class="submenu-link">Leeg</a></li>
-                    <li><a href="/MyFamTreeCollab/Admin/analyse.html" class="submenu-link">Analyse</a></li>
-                    <li><a href="/MyFamTreeCollab/Admin/standaardpagina.html" class="submenu-link">Pagina-voorbeeld</a></li>
-                    <li><a href="/MyFamTreeCollab/Admin/sandbox.html" class="submenu-link">Sandbox</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/analyse.html" class="submenu-link">Analyse</a></li>
+                    
                 </ul>
             </li>
-
+          <!-- develop dropdown — standaard verborgen, zichtbaar via topbar.js na admin-check  -->
+            <li class="dropdown" id="adminDropdown" style="display:none;">
+                <a href="#" class="menu-title">Developer ▼</a>
+                <ul class="submenu">
+                    <li><a href="/MyFamTreeCollab/develop/blank.html" class="submenu-link">Leeg</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/analyse.html" class="submenu-link">Analyse</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/standaardpagina.html" class="submenu-link">Pagina-voorbeeld</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/sandbox.html" class="submenu-link">Sandbox</a></li>
+                </ul>
         </ul>
     </nav>
 </header>
