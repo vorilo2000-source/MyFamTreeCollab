@@ -1,0 +1,134 @@
+<!-- ======================= home/import.html v2.0.3 =======================
+     Importpagina: CSV/TXT bestanden inladen in de stamboom
+
+     Wijziging v2.0.3 (F5-04):
+     - AccessGuard toegevoegd: alleen owner mag importeren
+     - shareModule.js + accessGuard.js toegevoegd aan laadvolgorde
+     - Dubbele Supabase/utils/auth script-blokken opgeruimd (waren aanwezig in v2.0.2)
+     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder (was Navbar-placeholder)
+
+     Wijziging v2.0.2: Login toegevoegd + Favicon / App-icoon
+     Wijziging v2.0.0: facelift
+
+     Scripts: supabase → utils.js → auth.js → [TopBar] → schema.js →
+              storage.js → shareModule.js → accessGuard.js → import.js
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import</title>
+
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .welkom-blok { margin-bottom: 24px; }
+        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+
+        .import-sectie {
+            border: 1px solid #ddd; border-radius: 6px; padding: 24px;
+            margin-bottom: 20px; background: #fafafa; max-width: 560px;
+        }
+        .import-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 6px 0; color: #333; }
+        .import-sectie .subtitel { font-size: 0.88rem; color: #888; margin: 0 0 18px 0; }
+        .import-sectie p  { font-size: 0.9rem; color: #555; line-height: 1.6; margin: 0 0 16px 0; }
+
+        .bestand-input { display: block; width: 100%; margin-bottom: 16px; font-size: 0.9rem; color: #444; }
+
+        .knop-import {
+            padding: 10px 24px; background: #1E90FF; color: #fff;
+            border: none; border-radius: 5px; font-size: 0.95rem;
+            font-weight: bold; cursor: pointer;
+        }
+        .knop-import:hover { background: #1278d4; }
+
+        #importStatus { font-size: 0.9rem; margin-top: 12px; }
+
+        .info-blok {
+            max-width: 560px; background: #eef4fb;
+            border-left: 4px solid #1E90FF; border-radius: 0 6px 6px 0;
+            padding: 14px 18px; font-size: 0.88rem; color: #333; line-height: 1.7;
+        }
+        .info-blok strong { color: #004080; }
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div>
+<div id="navbar-placeholder"></div>
+
+<main>
+    <div class="container">
+
+        <div class="welkom-blok">
+            <h1>Welkom bij Import</h1>
+            <p>
+                Laad een bestaand CSV-bestand in om je stamboomdata te importeren.
+                Nieuwe personen worden toegevoegd aan de bestaande stamboom.
+            </p>
+        </div>
+
+        <div class="import-sectie">
+            <h2>Selecteer een bestand</h2>
+            <p class="subtitel">Ondersteunde formaten: .csv en .txt</p>
+            <input type="file" id="importFile" accept=".csv,.txt" class="bestand-input">
+            <button id="importBtn" class="knop-import">Importeer CSV</button>
+            <p id="importStatus"></p>
+        </div>
+
+        <div class="info-blok">
+            <strong>Wat moet je weten over de import?</strong><br>
+            Het bestand moet de juiste kolomnamen hebben. Gebruik de CSV-template als startpunt.<br>
+            Komma, puntkomma en tab worden automatisch herkend als kolomscheider.<br>
+            Bestaande personen worden niet overschreven, nieuwe rijen worden toegevoegd.<br>
+            Je gegevens verlaten je browser nooit: alles wordt lokaal verwerkt.
+        </div>
+
+    </div>
+</main>
+
+<div id="footer-placeholder"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+</script>
+
+<script src="../js/schema.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
+<script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen owner -->
+<script src="../js/import.js"></script>
+
+<script>
+    /* Rolcheck: import.html is alleen voor owner.
+       Viewer en Editor krijgen een foutblok te zien. */
+    document.addEventListener('DOMContentLoaded', function () {
+        window.AccessGuard.check([]);    // Lege array: alleen owner wordt doorgelaten
+    });
+</script>
+
+</body>
+</html>

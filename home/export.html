@@ -1,0 +1,147 @@
+<!-- ======================= home/export.html v2.1.3 =======================
+     Exportpagina: CSV en JSON download van de volledige stamboom
+
+     Wijziging v2.1.3 (F5-04):
+     - AccessGuard toegevoegd: alleen owner mag exporteren
+     - shareModule.js + accessGuard.js toegevoegd aan laadvolgorde
+
+     Wijziging v2.1.2: bugfix — ontbrekende topbar-placeholder div,
+             navbar placeholder ID mismatch opgelost
+     Wijziging v2.1.1: Login + Favicon / App-icoon
+     Wijziging v2.1.0: nieuwe opmaak — welkomstblok, CSV en JSON als aparte secties
+
+     Scripts: supabase → utils.js → auth.js → [TopBar] → schema.js →
+              storage.js → shareModule.js → accessGuard.js → export.js
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export</title>
+
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .export-sectie {
+            border: 1px solid #ddd; border-radius: 6px; padding: 20px 24px;
+            margin-bottom: 20px; background: #fafafa;
+        }
+        .export-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 10px 0; color: #333; }
+        .export-sectie p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 14px 0; }
+        .export-sectie .opmerking { font-size: 0.85rem; color: #888; margin-top: 10px; }
+
+        #exportCSVBtn, #exportJSONBtn {
+            padding: 9px 18px; cursor: pointer; border: none;
+            border-radius: 4px; font-size: 0.95rem; font-weight: bold;
+        }
+        #exportCSVBtn       { background: #5bc0de; color: #fff; }
+        #exportCSVBtn:hover { background: #31b0d5; }
+        #exportJSONBtn       { background: #0275d8; color: #fff; }
+        #exportJSONBtn:hover { background: #025aa5; }
+        #exportStatus        { font-size: 0.9rem; margin-top: 8px; }
+
+        .welkom-blok { margin-bottom: 24px; }
+        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div>
+<div id="navbar-placeholder"></div>
+
+<main>
+    <div class="container">
+
+        <div class="welkom-blok">
+            <h1>Welkom in de Export</h1>
+            <p>
+                Hier kun je je volledige stamboom downloaden als CSV-bestand voor gebruik in
+                Excel, of als JSON-bestand voor een volledige back-up die je later weer kunt importeren.
+            </p>
+        </div>
+
+        <div class="export-sectie">
+            <h2>Exporteer als CSV</h2>
+            <p>
+                Een CSV-bestand kun je openen in Excel, Google Sheets of elk ander spreadsheetprogramma.
+                Je kunt de data bekijken, aanpassen en later weer importeren via de importpagina.<br><br>
+                <strong>Op Chrome of Edge (HTTPS)</strong> krijg je een "Opslaan als" dialoog om zelf
+                de opslaglocatie te kiezen. Op andere browsers wordt het bestand automatisch
+                opgeslagen in je downloadmap.
+            </p>
+            <button id="exportCSVBtn">Exporteer CSV</button>
+            <p id="exportStatus"></p>
+        </div>
+
+        <div class="export-sectie">
+            <h2>🚧 Exporteer als JSON</h2>
+            <p>
+                Een JSON-bestand is een volledige back-up van je stamboom inclusief alle velden.
+                Bewaar dit bestand op een veilige plek zodat je je data nooit kwijt bent.
+            </p>
+            <button id="exportJSONBtn">Export JSON</button>
+            <p class="opmerking">
+                Het bestand wordt automatisch opgeslagen in je downloadmap met de datum in de bestandsnaam.
+            </p>
+        </div>
+
+    </div>
+</main>
+
+<div id="footer-placeholder"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+</script>
+
+<script src="../js/schema.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
+<script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen owner -->
+<script src="../js/export.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* Rolcheck: export.html is alleen voor owner.
+       Viewer en Editor krijgen een foutblok te zien. */
+    window.AccessGuard.check([]);    // Lege array: alleen owner wordt doorgelaten
+
+    var statusEl      = document.getElementById('exportStatus');
+    var exportCSVBtn  = document.getElementById('exportCSVBtn');
+    var exportJSONBtn = document.getElementById('exportJSONBtn');
+
+    exportCSVBtn.addEventListener('click', function () {
+        window.ExportModule.exportCSV(statusEl);
+    });
+    exportJSONBtn.addEventListener('click', function () {
+        window.ExportModule.exportJSON(statusEl);
+    });
+});
+</script>
+
+</body>
+</html>
