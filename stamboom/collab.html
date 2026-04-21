@@ -1,0 +1,537 @@
+<!-- ======================= stamboom/collab.html v2.0.0 =======================
+     Collaboratie-pagina: berichtenboard per stamboom + persoon-ID
+
+     Wijzigingen v2.0.0 (F5-04):
+     - Laadvolgorde bijgewerkt: schema.js + storage.js + shareModule.js + accessGuard.js
+     - AccessGuard check toegevoegd (viewer/editor/owner)
+     - Livesearch dropdown op StamboomStorage (persoon-zoeker)
+     - collab.js herschreven: AuthModule + ShareModule ipv window.supabaseClient
+
+     Rollen: Owner (modereren + berichten), Editor (berichten + diff + status),
+             Viewer (berichten plaatsen)
+     Opslag: Supabase — tabel collab_messages (boom_id: UUID)
+
+     Laadvolgorde (verplicht):
+       1. supabase-js CDN
+       2. utils.js
+       3. auth.js
+       4. TopBar HTML + topbar.js (via fetch)
+       5. Navbar HTML (via fetch)
+       6. Footer HTML (via fetch)
+       7. schema.js
+       8. storage.js
+       9. shareModule.js
+      10. accessGuard.js
+      11. collab.js (altijd LAATSTE)
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFamTreeCollab — Samenwerken</title>
+
+    <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        /* ======================= COLLAB PAGINA STIJLEN ======================= */
+
+        .collab-wrapper {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
+        }
+
+        .collab-titel {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #222;
+            margin: 0 0 4px 0;
+        }
+
+        .collab-subtitel {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0 0 24px 0;
+        }
+
+        /* --- Geen toegang blok --- */
+        .geen-toegang-blok {
+            max-width: 520px;
+            margin: 48px auto;
+            text-align: center;
+            padding: 40px 24px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        .geen-toegang-blok .icoon { font-size: 2.5rem; margin-bottom: 12px; }
+        .geen-toegang-blok h2 { font-size: 1.2rem; margin: 0 0 10px 0; color: #333; }
+        .geen-toegang-blok p  { font-size: 0.9rem; color: #666; line-height: 1.6; margin: 0 0 20px 0; }
+
+        .knop-primair {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #1E90FF;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+        .knop-primair:hover { background: #1278d4; }
+
+        /* ======================= PERSOON-ZOEKER ======================= */
+        .zoek-sectie {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+            position: relative;    /* Ankerpunt voor livesearch dropdown */
+        }
+        .zoek-sectie input[type="text"] {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+        .zoek-sectie input[type="text"]:focus {
+            outline: none;
+            border-color: #1E90FF;
+            box-shadow: 0 0 0 2px rgba(30,144,255,0.15);
+        }
+        .zoek-label {
+            font-size: 0.85rem;
+            color: #555;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        /* ======================= DISCUSSIE CLUSTERS ======================= */
+        #discussie-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .discussie-blok {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .discussie-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #f4f6f9;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            user-select: none;
+        }
+        .discussie-header:hover { background: #eaecf0; }
+
+        .discussie-persoon-naam { font-weight: bold; font-size: 0.95rem; color: #1a1a1a; }
+        .discussie-persoon-id   { font-size: 0.75rem; color: #888; margin-left: 8px; font-family: monospace; }
+
+        .status-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .status-open     { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+        .status-review   { background: #cce5ff; color: #004085; border: 1px solid #1E90FF; }
+        .status-opgelost { background: #d4edda; color: #155724; border: 1px solid #28a745; }
+
+        .discussie-toggle-pijl {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 8px;
+            transition: transform 0.2s;
+        }
+        .discussie-blok.ingeklapt .discussie-toggle-pijl { transform: rotate(-90deg); }
+
+        .discussie-body { padding: 16px; }
+        .discussie-blok.ingeklapt .discussie-body { display: none; }
+
+        /* ======================= BERICHTEN ======================= */
+        .bericht-lijst {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .bericht-item {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+        .bericht-item.eigen {
+            background: #e8f4ff;
+            border-color: #b8d9f5;
+            align-self: flex-end;
+            max-width: 80%;
+        }
+
+        .bericht-meta {
+            font-size: 0.75rem;
+            color: #999;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bericht-auteur { font-weight: bold; color: #555; }
+
+        .rol-label {
+            font-size: 0.68rem;
+            padding: 1px 6px;
+            border-radius: 8px;
+            margin-left: 5px;
+            font-weight: bold;
+        }
+        .rol-owner  { background: #ffeaa7; color: #6c4f00; }
+        .rol-editor { background: #dfe6e9; color: #2d3436; }
+        .rol-viewer { background: #e8f5e9; color: #1b5e20; }
+
+        .bericht-verwijder {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 2px;
+            line-height: 1;
+        }
+        .bericht-verwijder:hover { color: #e74c3c; }
+
+        .diff-blok {
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #fff8e1;
+            border-left: 3px solid #f39c12;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.82rem;
+            color: #555;
+        }
+        .diff-blok strong { color: #e67e22; }
+
+        .bericht-leeg {
+            text-align: center;
+            color: #bbb;
+            font-size: 0.85rem;
+            padding: 16px 0;
+        }
+
+        /* ======================= NIEUW BERICHT FORMULIER ======================= */
+        .nieuw-bericht-form {
+            border-top: 1px solid #eee;
+            padding-top: 14px;
+        }
+
+        .nieuw-bericht-form textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.88rem;
+            resize: vertical;
+            min-height: 72px;
+            font-family: inherit;
+            line-height: 1.5;
+            box-sizing: border-box;
+        }
+        .nieuw-bericht-form textarea:focus {
+            outline: none;
+            border-color: #1E90FF;
+            box-shadow: 0 0 0 2px rgba(30,144,255,0.15);
+        }
+
+        .form-acties {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-select {
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .diff-invoer-wrapper {
+            width: 100%;
+            margin-top: 8px;
+            display: none;
+        }
+        .diff-invoer-wrapper.zichtbaar { display: block; }
+        .diff-invoer-wrapper textarea {
+            min-height: 52px;
+            background: #fff8e1;
+            border-color: #f39c12;
+        }
+        .diff-invoer-wrapper label {
+            font-size: 0.78rem;
+            color: #e67e22;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .knop-diff-toggle {
+            padding: 7px 12px;
+            background: #fff8e1;
+            border: 1px solid #f39c12;
+            color: #e67e22;
+            border-radius: 5px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .knop-diff-toggle:hover { background: #ffeeba; }
+
+        .knop-verzend {
+            padding: 7px 18px;
+            background: #1E90FF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.88rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: auto;
+        }
+        .knop-verzend:hover { background: #1278d4; }
+        .knop-verzend:disabled { background: #aaa; cursor: not-allowed; }
+
+        /* ======================= LADEN / FOUT ======================= */
+        .laad-indicator {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+            padding: 32px 0;
+        }
+        .fout-melding {
+            background: #fdecea;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            margin-bottom: 16px;
+        }
+
+        /* ======================= NIEUWE DISCUSSIE KNOP ======================= */
+        .knop-nieuwe-discussie {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #fff;
+            border: 1px dashed #1E90FF;
+            color: #1E90FF;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .knop-nieuwe-discussie:hover { background: #e8f4ff; }
+
+        /* ======================= MODAL ======================= */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.actief { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 10px;
+            padding: 28px 24px;
+            max-width: 440px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .modal-box h3 { margin: 0 0 16px 0; font-size: 1.05rem; color: #222; }
+        .modal-box label { font-size: 0.85rem; color: #555; display: block; margin-bottom: 4px; }
+        .modal-box input[type="text"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+            box-sizing: border-box;
+        }
+        .modal-box input[type="text"]:focus { outline: none; border-color: #1E90FF; }
+        .modal-acties {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .knop-annuleer {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        .knop-annuleer:hover { background: #e0e0e0; }
+
+        @media (max-width: 600px) {
+            .form-acties { flex-direction: column; align-items: stretch; }
+            .knop-verzend { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<div id="navbar-placeholder"></div>
+
+<main>
+    <div class="collab-wrapper">
+
+        <h1 class="collab-titel">💬 Samenwerken</h1>
+        <p class="collab-subtitel" id="actieve-boom-label">Actieve stamboom wordt geladen…</p>
+
+        <!-- Foutmelding container -->
+        <div id="fout-container" style="display:none;"></div>
+
+        <!-- Geen-toegang blok — zichtbaar voor gebruikers zonder rol -->
+        <div class="geen-toegang-blok" id="geen-toegang-blok" style="display:none;">
+            <div class="icoon">🔒</div>
+            <h2>Geen toegang tot samenwerken</h2>
+            <p>
+                De samenwerkingsfunctie is beschikbaar voor Viewers, Editors en Owners
+                die zijn uitgenodigd door de stamboom-eigenaar.
+            </p>
+            <a href="/MyFamTreeCollab/stamboom/storage.html" class="knop-primair">
+                Ga naar Opslag
+            </a>
+        </div>
+
+        <!-- Hoofd collab interface — verborgen totdat rol bevestigd is -->
+        <div id="collab-interface" style="display:none;">
+
+            <!-- Persoon-zoeker met livesearch dropdown -->
+            <div class="zoek-sectie">
+                <span class="zoek-label">Voeg een persoon toe aan de discussie:</span>
+                <input
+                    type="text"
+                    id="persoon-zoek-input"
+                    placeholder="Zoek op naam of ID…"
+                    autocomplete="off"
+                >
+                <button class="knop-primair" id="zoek-knop">Discussie starten</button>
+            </div>
+
+            <!-- Discussies container — gevuld door collab.js -->
+            <div id="discussie-container">
+                <div class="laad-indicator" id="laad-indicator">Berichten laden…</div>
+            </div>
+
+        </div>
+
+    </div>
+</main>
+
+<!-- Nieuwe discussie modal -->
+<div class="modal-overlay" id="nieuwe-discussie-modal">
+    <div class="modal-box">
+        <h3>➕ Nieuwe discussie starten</h3>
+        <label for="modal-persoon-id">Persoon-ID</label>
+        <input type="text" id="modal-persoon-id" placeholder="bijv. P-0042">
+        <label for="modal-persoon-naam">Naam</label>
+        <input type="text" id="modal-persoon-naam" placeholder="bijv. Jan de Vries">
+        <div class="modal-acties">
+            <button class="knop-annuleer" id="modal-annuleer">Annuleren</button>
+            <button class="knop-primair"  id="modal-bevestig">Discussie aanmaken</button>
+        </div>
+    </div>
+</div>
+
+<div id="footer-placeholder"></div>
+
+<script>
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            var ph = document.getElementById('navbar-placeholder');
+            if (ph) ph.innerHTML = data;
+        });
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            var ph = document.getElementById('footer-placeholder');
+            if (ph) ph.innerHTML = data;
+        });
+</script>
+
+<!-- Verplichte laadvolgorde pagina-scripts -->
+<script src="../js/schema.js"></script>          <!-- Veldnamen stamboom -->
+<script src="../js/storage.js"></script>         <!-- StamboomStorage — voor livesearch -->
+<script src="../js/shareModule.js"></script>     <!-- Rolcheck via stamboom_gedeeld -->
+<script src="../js/accessGuard.js"></script>     <!-- Paginabeveiliging -->
+<script src="../js/collab.js"></script>          <!-- Pagina-logica — altijd LAATSTE -->
+
+<script>
+    /* Rolcheck: collab.html is toegankelijk voor viewer, editor en owner.
+       Gratis gebruikers zonder rol krijgen het geen-toegang blok te zien
+       via collab.js zelf — AccessGuard wordt hier als extra laag gebruikt. */
+    document.addEventListener('DOMContentLoaded', function () {
+        window.AccessGuard.check(['viewer', 'editor']);    // Owner altijd doorgelaten
+    });
+</script>
+
+</body>
+</html>
