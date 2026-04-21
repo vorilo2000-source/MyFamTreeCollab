@@ -1,0 +1,241 @@
+<!-- ======================= stamboom/stats.html v2.0.0 =======================
+     Statistiekenpagina: KPI-dashboard van de stamboom
+     Wijziging v1.0.0: facelift — welkomstblok, inline stijlen naar <style>,
+                       paginatitel div verwijderd, // commentaar boven DOCTYPE verwijderd
+     v2.0.1 Login + Favicon / App-icoon 
+     Scripts: storage.js
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistieken</title>
+     
+      <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+     
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* ======================= WELKOMSTBLOK ======================= */
+        .welkom-blok { margin-bottom: 24px; }                             /* Ruimte onder het introductieblok */
+        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+
+        /* ======================= KPI BLOKKEN ======================= */
+        #kpiContainer {                                                    /* Flex-container voor alle KPI-blokken */
+            display: flex;                                                 /* Naast elkaar */
+            flex-wrap: wrap;                                               /* Naar volgende rij als ze niet passen */
+            gap: 20px;                                                     /* Ruimte tussen de blokken */
+            margin-bottom: 30px;                                           /* Ruimte onder de KPI-sectie */
+        }
+        .kpi-block {                                                       /* Eén KPI-blok */
+            flex: 1;                                                       /* Gelijke breedte */
+            min-width: 160px;                                              /* Minimale breedte zodat het leesbaar blijft */
+            padding: 20px;                                                 /* Ruimte binnen het blok */
+            border-radius: 8px;                                            /* Afgeronde hoeken */
+            text-align: center;                                            /* Tekst centreren */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);                        /* Subtiele schaduw voor diepte */
+            transition: transform 0.2s;                                    /* Vloeiende hover animatie */
+        }
+        .kpi-block:hover { transform: translateY(-3px); }                 /* Blok springt iets omhoog bij hover */
+        .kpi-value { font-size: 2rem; font-weight: bold; margin-bottom: 5px; }  /* Grote waarde bovenin het blok */
+        .kpi-label { font-size: 0.9rem; }                                 /* Klein label onderaan het blok */
+
+        /* KPI kleurthema's — elke categorie heeft een eigen kleur */
+        .kpi-persons    { background: #007bff; color: #fff; }             /* Blauw: aantal personen */
+        .kpi-update     { background: #28a745; color: #fff; }             /* Groen: laatste update */
+        .kpi-version    { background: #ffc107; color: #fff; }             /* Geel: versie */
+        .kpi-generations{ background: #17a2b8; color: #fff; }             /* Blauwgroen: generaties */
+        .kpi-mostcommon { background: #d1b3ff; color: #fff; }             /* Lila: meest voorkomende naam */
+        .kpi-gender     { background: #fd7e14; color: #fff; }             /* Oranje: geslachtsverhouding */
+        .kpi-families   { background: #e83e8c; color: #fff; }             /* Roze: aantal families */
+
+        /* ======================= FAMILIE OVERZICHT ======================= */
+        .families-sectie {                                                 /* Sectie onder de KPI-blokken */
+            border: 1px solid #ddd;                                        /* Subtiele rand */
+            border-radius: 6px;                                            /* Afgeronde hoeken */
+            padding: 20px 24px;                                            /* Ruimte binnen de sectie */
+            background: #fafafa;                                           /* Lichtgrijze achtergrond */
+        }
+        .families-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 12px 0; color: #333; }
+        #familyList { margin-left: 20px; line-height: 1.8; font-size: 0.95rem; color: #444; } /* Familienamen lijst */
+    </style>
+</head>
+<body>
+
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div>
+<script>
+fetch('/MyFamTreeCollab/Layout/TopBar.html')
+    .then(resp => resp.text())
+    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
+</script>
+
+<!-- ======================= Navbar ======================= -->
+<div id="Navbar-placeholder"></div>
+<script>
+fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    .then(resp => resp.text())
+    .then(data => {
+        const placeholder = document.getElementById('Navbar-placeholder');
+        if (placeholder) placeholder.innerHTML = data;
+        else console.error('Navbar-placeholder niet gevonden');
+    });
+</script>
+
+<!-- ======================= Hoofd content ======================= -->
+<main>
+    <div class="container">
+
+        <!-- ======================= Welkomstblok ======================= -->
+        <div class="welkom-blok">
+            <h1>Welkom bij je stamboom Statistieken</h1>
+            <p>
+                Een overzicht van je stamboom in cijfers. Alle gegevens komen
+                rechtstreeks uit je opgeslagen data en worden live berekend.
+            </p>
+        </div>
+
+        <!-- ======================= KPI blokken (gevuld door JS) ======================= -->
+        <div id="kpiContainer"></div>                                      <!-- JS vult hier de KPI-blokken in -->
+
+        <!-- ======================= Familie overzicht ======================= -->
+        <div class="families-sectie">
+            <h2>Overzicht families</h2>
+            <ul id="familyList"></ul>                                      <!-- JS vult hier de familienamen in -->
+        </div>
+
+    </div>
+</main>
+
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde is verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
+     5. Navbar fetch        — onafhankelijk, mag parallel
+     6. Pagina-scripts      — altijd als laatste
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            // #top-auth bestaat nu — veilig om topbar.js te laden
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+
+    // Stap 3: Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+</script>
+
+<!-- ======================= Scripts ======================= -->
+<script src="../js/storage.js"></script>      <!-- Storage API voor ophalen stamboomdata -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    if (typeof StamboomStorage === 'undefined') {                         // Controleer of storage.js correct geladen is
+        console.error('StamboomStorage niet geladen.');
+        return;
+    }
+
+    const data          = StamboomStorage.get();                          // Haal alle personen op uit localStorage
+    const lastUpdate    = localStorage.getItem('lastUpdate') || 'Onbekend'; // Haal datum laatste update op
+    const version       = StamboomStorage.version;                        // Haal versienummer van StamboomStorage op
+    const kpiContainer  = document.getElementById('kpiContainer');        // Container voor KPI-blokken
+    const familyList    = document.getElementById('familyList');          // Container voor familienamenlijst
+
+    /* ======================= KPI BLOK AANMAKEN ======================= */
+    function createKPI(value, label, extraClass) {                        // Maakt een KPI-blok aan met waarde, label en kleurklasse
+        const div      = document.createElement('div');                   // Maak het buitenste div-element
+        div.classList.add('kpi-block');                                   // Voeg basis-stijlklasse toe
+        if (extraClass) div.classList.add(extraClass);                    // Voeg kleurklasse toe als die meegegeven is
+
+        const valSpan  = document.createElement('div');                   // Div voor de grote waarde bovenin
+        valSpan.classList.add('kpi-value');                               // Stijlklasse voor de waarde
+        valSpan.textContent = value;                                      // Stel de waarde in
+
+        const labelSpan = document.createElement('div');                  // Div voor het kleine label onderaan
+        labelSpan.classList.add('kpi-label');                             // Stijlklasse voor het label
+        labelSpan.textContent = label;                                    // Stel het label in
+
+        div.appendChild(valSpan);                                         // Voeg waarde toe aan het blok
+        div.appendChild(labelSpan);                                       // Voeg label toe aan het blok
+        return div;                                                       // Geef het kant-en-klare KPI-blok terug
+    }
+
+    /* ======================= STATISTIEKEN BEREKENEN ======================= */
+    const generations = new Set(data.map(p => p.Generation)).size;       // Tel het aantal unieke generatiewaarden
+
+    const surnameCounts = {};                                             // Object om achternamen te tellen
+    data.forEach(p => {
+        surnameCounts[p.Achternaam] = (surnameCounts[p.Achternaam] || 0) + 1; // Verhoog teller per achternaam
+    });
+    let mostCommonSurname = '—';                                          // Standaardwaarde als er geen data is
+    let maxCount = 0;
+    for (const [name, count] of Object.entries(surnameCounts)) {
+        if (count > maxCount) { maxCount = count; mostCommonSurname = name; } // Bewaar de meest voorkomende naam
+    }
+
+    const genderCounts = data.reduce((acc, p) => {
+        if (p.Geslacht === 'M') acc.M++;                                  // Tel mannen
+        else if (p.Geslacht === 'V') acc.V++;                             // Tel vrouwen
+        return acc;
+    }, { M: 0, V: 0 });                                                   // Begin met nul voor beide
+
+    const families = {};                                                  // Groepeer personen per achternaam
+    data.forEach(p => {
+        if (!families[p.Achternaam]) families[p.Achternaam] = [];         // Maak array als achternaam nog niet bestaat
+        families[p.Achternaam].push(p);                                   // Voeg persoon toe aan de familiegroep
+    });
+    const familyCount = Object.keys(families).length;                    // Tel het aantal unieke families
+
+    /* ======================= KPI BLOKKEN TOEVOEGEN ======================= */
+    kpiContainer.appendChild(createKPI(data.length,       'Aantal personen',           'kpi-persons'));
+    kpiContainer.appendChild(createKPI(lastUpdate,        'Laatste update',            'kpi-update'));
+    kpiContainer.appendChild(createKPI(version,           'Versie',                    'kpi-version'));
+    kpiContainer.appendChild(createKPI(generations,       'Generaties',                'kpi-generations'));
+    kpiContainer.appendChild(createKPI(mostCommonSurname, 'Meest voorkomende naam',    'kpi-mostcommon'));
+    kpiContainer.appendChild(createKPI(`${genderCounts.M}M / ${genderCounts.V}V`, 'Man / Vrouw', 'kpi-gender'));
+    kpiContainer.appendChild(createKPI(familyCount,       'Aantal families',           'kpi-families'));
+
+    /* ======================= FAMILIENAMEN LIJST ======================= */
+    Object.entries(families).forEach(([familyName, members]) => {
+        const li = document.createElement('li');                          // Maak een lijstitem per familie
+        li.textContent = `${familyName} (${members.length} leden)`;      // Toon naam en aantal leden
+        familyList.appendChild(li);                                       // Voeg het item toe aan de lijst
+    });
+
+});
+</script>
+
+</body>
+</html>

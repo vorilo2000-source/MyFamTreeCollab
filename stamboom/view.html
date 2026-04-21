@@ -1,0 +1,175 @@
+<!-- ======================= stamboom/view.html v2.0.1 =======================
+     Stamboomweergave: visualiseert relaties rondom een geselecteerde persoon
+     v2.0.0: facelift — welkomstblok, inline stijlen naar <style>, zoekbalk in kader,
+     paginatitel div verwijderd
+     v2.0.1 Login + Favicon / App-icoon
+     Scripts: utils.js → schema.js → storage.js → relatieEngine.js → LiveSearch.js → view.js
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stamboom</title>
+        
+    <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Tree.css">
+    <link rel="stylesheet" href="../css/RelationColors.css">
+    <style>
+        /* ======================= WELKOMSTBLOK ======================= */
+        .welkom-blok { margin-bottom: 20px; }
+        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+
+        /* ======================= ZOEKBALK ======================= */
+        .zoek-sectie {                                                     /* Kader rondom de zoekbalk */
+            margin-bottom: 20px;                                           /* Ruimte onder de zoeksectie */
+        }
+        #searchPerson {                                                    /* Het zoektekstveld */
+            width: 50%;                                                    /* Halve paginabreedte */
+            padding: 9px 12px;                                             /* Ruim klikgebied */
+            font-size: 1rem;                                               /* Leesbare tekstgrootte */
+            border: 1px solid #bbb;                                        /* Subtiele rand */
+            border-radius: 5px;                                            /* Afgeronde hoeken */
+            box-sizing: border-box;                                        /* Padding telt mee in breedte */
+        }
+        #searchPerson:focus {                                              /* Focusstijl bij klikken */
+            outline: none;                                                 /* Verwijder browser-outline */
+            border-color: #1E90FF;                                         /* Blauwe rand bij focus */
+        }
+
+        /* ======================= BOOM LAYOUT ======================= */
+        /* Tree.css beheert de flex-layout van treeContainer en BZBox.   */
+        /* Hier overschrijven we alleen de .container uit Tree.css zodat */
+        /* de stamboom-wrapper NIET de page-container class gebruikt.    */
+        .stamboom-wrapper {                                               /* Buitenste wrapper: bevat treeContainer + BZBox naast elkaar */
+            display: flex;                                                 /* Twee containers naast elkaar */
+            gap: 20px;                                                     /* Ruimte tussen de stamboom en de broer/zus kolom */
+            align-items: flex-start;                                       /* Bovenkant uitlijnen */
+            margin-top: 4px;                                               /* Klein beetje ruimte onder de zoekbalk */
+        }
+        .bz-kolom-titel {                                                 /* Titel boven de broer/zus container */
+            font-size: 0.95rem;                                            /* Leesbaar */
+            font-weight: bold;                                             /* Vetgedrukt */
+            margin: 0 0 8px 0;                                             /* Ruimte onder de titel */
+            color: #444;                                                   /* Donkergrijs */
+            padding: 0 2px;                                                /* Klein beetje ruimte links */
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div>
+<script>
+fetch('/MyFamTreeCollab/Layout/TopBar.html')
+    .then(resp => resp.text())
+    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
+</script>
+
+<!-- ======================= Navbar ======================= -->
+<div id="Navbar-placeholder"></div>
+<script>
+fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    .then(resp => resp.text())
+    .then(data => {
+        const ph = document.getElementById('Navbar-placeholder');
+        if (ph) ph.innerHTML = data;
+    });
+</script>
+
+<!-- ======================= Hoofd content ======================= -->
+<main>
+    <div class="container">
+
+        <!-- ======================= Welkomstblok ======================= -->
+        <div class="welkom-blok">
+            <h1>Welkom bij je stamboom View </h1>
+            <p>
+                Zoek een persoon op om de stamboom rondom hem of haar te bekijken.
+                Klik op een node om die persoon als nieuw middelpunt te kiezen.
+            </p>
+        </div>
+
+        <!-- ======================= Zoekbalk ======================= -->
+        <div class="zoek-sectie">
+            <input type="text" id="searchPerson" placeholder="Zoek op ID, naam of geboortedatum..."> <!-- Zoekveld voor live search -->
+        </div>
+
+        <!-- ======================= Boom + Broer/Zus naast elkaar ======================= -->
+        <div class="stamboom-wrapper">
+
+            <!-- Linker container: hoofdpersoon, ouders, partner, kinderen -->
+            <div id="treeContainer"></div>                                <!-- view.js rendert hier ouders, hoofd, partner en kinderen -->
+
+            <!-- Rechter container: broers en zussen -->
+            <div>
+                <p class="bz-kolom-titel">Broers &amp; zussen</p>        <!-- Titel boven de broer/zus container -->
+                <div id="BZBox"></div>                                    <!-- view.js rendert hier de BZID nodes en hun partners -->
+            </div>
+
+        </div>
+
+    </div>
+</main>
+
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde is verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
+     5. Navbar fetch        — onafhankelijk, mag parallel
+     6. Pagina-scripts      — altijd als laatste
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            // #top-auth bestaat nu — veilig om topbar.js te laden
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+
+    // Stap 3: Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+</script>
+
+<!-- ======================= Scripts (volgorde verplicht) ======================= -->
+<script src="../js/utils.js"></script>
+<script src="../js/schema.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/relatieEngine.js"></script>
+<script src="../js/LiveSearch.js"></script>
+<script src="../js/view.js"></script>
+
+</body>
+</html>

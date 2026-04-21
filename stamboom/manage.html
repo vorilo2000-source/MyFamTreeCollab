@@ -1,0 +1,160 @@
+<!-- ======================= stamboom/manage.html v2.3.0 =======================
+     Beheerpagina: stamboom bewerken als tabel met live search
+
+     Wijziging v2.3.0 (F5-04):
+     - AccessGuard toegevoegd: alleen editor en owner mogen bewerken
+     - shareModule.js + accessGuard.js toegevoegd aan laadvolgorde
+     - Viewer krijgt foutblok te zien, main blijft verborgen
+
+     Wijziging v2.2.0:
+     - Horizontale scroll toegevoegd via wrapper (zelfde principe als template.html)
+     - white-space: nowrap toegevoegd zodat tabel breedte behoudt (v2.2.1)
+     - Geen impact op bestaande JS functionaliteit
+     - v2.2.2: login + Favicon / App-icoon
+     - v2.2.3: bugfix — ontbrekende CSS-links toegevoegd (style.css, Tree.css,
+               RelationColors.css), navbar placeholder ID mismatch opgelost
+               (Navbar-placeholder → consistente schrijfwijze), dubbele utils.js
+               import verwijderd.
+
+     Scripts: utils.js → schema.js → idGenerator.js → storage.js → auth.js →
+              shareModule.js → accessGuard.js → LiveSearch.js →
+              relatieEngine.js → manage.js (verplichte volgorde)
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beheer</title>
+
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/Tree.css">
+    <link rel="stylesheet" href="../css/RelationColors.css">
+
+    <style>
+        .welkom-blok { margin-bottom: 20px; }
+        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+
+        .zoek-sectie { margin-bottom: 16px; }
+        #searchPerson {
+            width: 50%;
+            padding: 9px 12px;
+            font-size: 1rem;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #searchPerson:focus { outline: none; border-color: #1E90FF; }
+
+        .knoppen-balk { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .knoppen-balk button {
+            padding: 9px 18px; font-size: 0.95rem; font-weight: bold;
+            border: none; border-radius: 5px; cursor: pointer;
+        }
+        #refreshBtn { background: #6c757d; color: #fff; }
+        #refreshBtn:hover { background: #5a6268; }
+        #addBtn { background: #28a745; color: #fff; }
+        #addBtn:hover { background: #218838; }
+        #saveBtn { background: #1E90FF; color: #fff; }
+        #saveBtn:hover { background: #1278d4; }
+
+        .manage-tabel-wrapper { overflow-x: auto; margin-bottom: 16px; }
+
+        #manageTable {
+            width: 100%; border-collapse: collapse; margin-top: 4px;
+            background: transparent; white-space: nowrap;
+        }
+        th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 0.9rem; }
+        th { background: #f4f4f4; font-weight: bold; color: #333; }
+        #manageTable td textarea {
+            background: transparent; border: none; width: 100%;
+            box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 0.9rem; padding: 2px 4px;
+        }
+
+        tr.HoofdID td  { background: var(--color-hoofd); font-weight: 500; }
+        tr.VHoofdID td,
+        tr.MHoofdID td { background: var(--color-vader); }
+        tr.PHoofdID td { background: var(--color-partner-hoofd); font-style: italic; }
+        tr.KindID td   { background: var(--color-KindID); opacity: 0.85; }
+        tr.HKindID td  { background: var(--color-HKindID); }
+        tr.PHKindID td { background: var(--color-PHKindID); }
+        tr.Partner td  { background: var(--color-partner); font-style: italic; }
+        tr.BZID td     { background: var(--color-bz); }
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div>
+<div id="navbar-placeholder"></div>
+
+<main>
+    <div class="container">
+        <div class="welkom-blok">
+            <h1>Welkom bij je stamboom Manager</h1>
+            <p>Zoek een persoon op om de stamboom te beheren.</p>
+        </div>
+        <div class="zoek-sectie">
+            <input type="text" id="searchPerson" placeholder="Zoek op ID, naam of geboortedatum...">
+        </div>
+        <div class="knoppen-balk">
+            <button id="refreshBtn">Vernieuwen</button>
+            <button id="addBtn">+ Toevoegen</button>
+            <button id="saveBtn">Opslaan</button>
+        </div>
+        <div class="manage-tabel-wrapper">
+            <table id="manageTable">
+                <thead><tr></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<div id="footer-placeholder"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+</script>
+
+<script src="../js/schema.js"></script>
+<script src="../js/idGenerator.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
+<script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen editor + owner -->
+<script src="../js/LiveSearch.js"></script>
+<script src="../js/relatieEngine.js"></script>
+<script src="../js/manage.js"></script>
+
+<script>
+    /* Rolcheck: manage.html is alleen toegankelijk voor editor en owner.
+       Viewer krijgt een foutblok te zien. */
+    document.addEventListener('DOMContentLoaded', function () {
+        window.AccessGuard.check(['editor']);    // Owner wordt intern altijd toegelaten
+    });
+</script>
+
+</body>
+</html>

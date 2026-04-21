@@ -1,0 +1,1500 @@
+<!-- ======================= stamboom/storage.html v2.6.0 =======================
+     Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
+
+     Wijzigingen v2.6.0 (F5-04):
+     - Derde tabblad "Gedeeld met mij" toegevoegd
+     - Delen knop per rij in cloud stambomenlijst
+     - Inline deelpaneel: rol-dropdown, e-mailinput, uitnodigen
+     - Deelpaneel toont huidige viewers/editors met intrekken-knop (owner)
+     - "Gedeeld met mij" tabblad: lijst van gedeelde bomen met rol + eigenaar
+     - Viewer/Editor kan zichzelf verwijderen (verlaat samenwerking)
+     - shareModule.js toegevoegd aan laadvolgorde
+
+     Wijzigingen v2.5.0:
+     - laadStamboom() detecteert onopgeslagen wijzigingen via aktieveId vergelijking
+     - 3-knoppen modal: Annuleren / Toch laden / Eerst opslaan
+     - _injectWisselModal() — modal HTML + CSS eenmalig geïnjecteerd
+     - _wisselModal — controller object (toon / sluit)
+     - _voerLaadUit() — gedeelde laadlogica voor beide paden
+     - renderTable() aangeroepen na laden zodat lokale tabel bijwerkt
+
+     Wijzigingen v2.4.0 (F5-07):
+     - Meerdere stambomen per gebruiker in cloud
+     - Stambomenlijst met naam, datum, personen
+     - Opslaan als nieuw / overschrijven huidige / laden / verwijderen
+     - Actieve stamboom wordt getoond bovenaan cloud tabblad
+     - Opslaan dialoog met naamveld
+
+     Wijzigingen v2.3.0:
+     - Tier-gebaseerde meldingen
+     - FA+-06 conflictmelding
+
+     Scripts: schema.js → storage.js → auth.js → cloudSync.js → shareModule.js
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opslag</title>
+
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+
+        /* ======================= WELKOMSTBLOK ======================= */
+        .welkom-blok { margin-bottom: 24px; }
+        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+
+        /* ======================= TABBLADEN ======================= */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 28px;
+        }
+        .tab-knop {
+            padding: 10px 22px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #666;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .tab-knop:hover { color: #2563eb; }
+        .tab-knop.actief { color: #2563eb; border-bottom-color: #2563eb; }
+        .tab-inhoud { display: none; }
+        .tab-inhoud.zichtbaar { display: block; }
+
+        /* ======================= ACTIE BALK (lokale data) ======================= */
+        .actie-balk {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .storage-info { font-size: 0.88rem; color: #666; }
+
+        /* ======================= KNOPPEN ======================= */
+        .btn-reset {
+            padding: 8px 16px;
+            background: #d9534f;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-reset:hover { background: #c9302c; }
+
+        /* ======================= TABEL (lokale data) ======================= */
+        .storage-tabel-wrapper { overflow-x: auto; margin-top: 10px; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.9rem; white-space: nowrap; }
+        th, td { border: 1px solid #ddd; padding: 7px 10px; text-align: left; }
+        th { background: #f4f4f4; font-weight: bold; color: #333; }
+        th input { width: 95%; padding: 3px 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 3px; }
+        .empty { font-style: italic; color: #888; padding: 20px 0; }
+
+        /* ======================= CLOUD — ALGEMEEN ======================= */
+        .cloud-intro { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 20px 0; }
+
+        .cloud-banner {
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 0.92rem;
+            margin-bottom: 16px;
+            font-weight: bold;
+            display: none;
+            line-height: 1.5;
+        }
+        .cloud-banner.succes  { display: block; background: #f0fdf4; color: #166534; border-left: 4px solid #22c55e; }
+        .cloud-banner.fout    { display: block; background: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444; }
+        .cloud-banner.info    { display: block; background: #eff6ff; color: #1e40af; border-left: 4px solid #3b82f6; }
+        .cloud-banner.waarsch { display: block; background: #fff7ed; color: #9a3412; border-left: 4px solid #f97316; }
+
+        .cloud-login-warn {
+            background: #fff7ed;
+            border-left: 4px solid #f97316;
+            border-radius: 0 6px 6px 0;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            color: #9a3412;
+            display: none;
+        }
+        .cloud-login-warn.zichtbaar { display: block; }
+
+        .upgrade-blok {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            display: none;
+        }
+        .upgrade-blok.zichtbaar { display: block; }
+        .upgrade-blok h3 { font-size: 1.05rem; font-weight: bold; color: #222; margin: 0 0 8px 0; }
+        .upgrade-blok p  { font-size: 0.92rem; color: #555; margin: 0 0 16px 0; line-height: 1.6; }
+        .btn-kofi {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 22px;
+            background: #FF5E5B;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+        .btn-kofi:hover { background: #e54543; }
+
+        /* ======================= CLOUD — ACTIEVE STAMBOOM BALK ======================= */
+        .actieve-stamboom-balk {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 0.92rem;
+            color: #1e40af;
+        }
+        .actieve-stamboom-balk.zichtbaar { display: flex; }
+        .actieve-stamboom-balk strong { font-weight: bold; }
+        .actieve-stamboom-balk .actief-label {
+            font-size: 0.78rem; font-weight: bold;
+            background: #2563eb; color: #fff;
+            padding: 2px 8px; border-radius: 10px;
+        }
+
+        /* ======================= CLOUD — OPSLAAN SECTIE ======================= */
+        .cloud-sectie {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .cloud-sectie.zichtbaar { display: block; }
+        .cloud-sectie h3 { font-size: 1rem; font-weight: bold; color: #222; margin: 0 0 6px 0; }
+        .cloud-sectie p  { font-size: 0.88rem; color: #666; margin: 0 0 14px 0; line-height: 1.5; }
+
+        .stamboom-naam-rij {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .stamboom-naam-rij label { font-size: 0.88rem; color: #444; white-space: nowrap; }
+        .stamboom-naam-input {
+            flex: 1;
+            min-width: 180px;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .stamboom-naam-input:focus { outline: none; border-color: #2563eb; }
+
+        .cloud-knoppen { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn-primary {
+            padding: 9px 20px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+        .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+
+        .btn-secondary {
+            padding: 9px 20px;
+            background: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-secondary:hover:not(:disabled) { background: #f3f4f6; }
+        .btn-secondary:disabled { color: #aaa; cursor: not-allowed; }
+
+        /* ======================= CLOUD — STAMBOMENLIJST ======================= */
+        .stambomen-lijst-sectie { display: none; }
+        .stambomen-lijst-sectie.zichtbaar { display: block; }
+        .stambomen-lijst-sectie h3 {
+            font-size: 1rem; font-weight: bold; color: #222; margin: 0 0 14px 0;
+        }
+
+        .lijst-laden { font-size: 0.88rem; color: #888; font-style: italic; padding: 12px 0; }
+
+        .stambomen-tabel { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .stambomen-tabel th {
+            background: #f4f4f4; font-weight: bold; color: #333;
+            padding: 9px 12px; text-align: left;
+            border-bottom: 2px solid #e5e7eb; white-space: nowrap;
+        }
+        .stambomen-tabel td {
+            padding: 10px 12px; border-bottom: 1px solid #f0f0f0;
+            color: #333; vertical-align: middle;
+        }
+        .stambomen-tabel tr:last-child td { border-bottom: none; }
+        .stambomen-tabel tr:hover td { background: #f9fafb; }
+        .stambomen-tabel tr.actief-rij td { background: #eff6ff; }
+
+        .badge-actief {
+            font-size: 0.72rem; font-weight: bold;
+            background: #2563eb; color: #fff;
+            padding: 2px 7px; border-radius: 10px;
+            margin-left: 6px; vertical-align: middle; white-space: nowrap;
+        }
+
+        /* Rol badge in "Gedeeld met mij" tabel */
+        .badge-rol {
+            font-size: 0.72rem; font-weight: bold;
+            padding: 2px 7px; border-radius: 10px;
+            white-space: nowrap; display: inline-block;
+        }
+        .badge-rol.viewer { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .badge-rol.editor { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .badge-rol.owner  { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+
+        .rij-knoppen { display: flex; gap: 6px; flex-wrap: nowrap; }
+
+        .btn-tabel-laden {
+            padding: 5px 12px; background: #2563eb; color: #fff;
+            border: none; border-radius: 4px; font-size: 0.82rem;
+            font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-tabel-laden:hover { background: #1d4ed8; }
+
+        .btn-tabel-delen {
+            padding: 5px 12px; background: #fff; color: #2563eb;
+            border: 1px solid #2563eb; border-radius: 4px;
+            font-size: 0.82rem; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-tabel-delen:hover { background: #eff6ff; }
+
+        .btn-tabel-verwijder {
+            padding: 5px 10px; background: #fff; color: #d9534f;
+            border: 1px solid #d9534f; border-radius: 4px;
+            font-size: 0.82rem; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-tabel-verwijder:hover { background: #fef2f2; }
+
+        .btn-tabel-verlaat {
+            padding: 5px 10px; background: #fff; color: #d97706;
+            border: 1px solid #d97706; border-radius: 4px;
+            font-size: 0.82rem; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-tabel-verlaat:hover { background: #fff7ed; }
+
+        .stambomen-leeg { font-size: 0.88rem; color: #888; font-style: italic; padding: 16px 0; }
+
+        /* ======================= DEEL PANEEL (inline onder rij) ======================= */
+        .deel-paneel {
+            display: none;                       /* verborgen totdat knop geklikt wordt */
+            background: #f8faff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 4px 0 8px 0;
+        }
+        .deel-paneel.open { display: block; }    /* zichtbaar na klik op Delen knop */
+
+        .deel-paneel h4 {
+            font-size: 0.92rem; font-weight: bold; color: #1e40af;
+            margin: 0 0 12px 0;
+        }
+
+        /* Uitnodig rij: input + dropdown + knop naast elkaar */
+        .deel-uitnodig-rij {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .deel-email-input {
+            flex: 1;
+            min-width: 180px;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.88rem;
+        }
+        .deel-email-input:focus { outline: none; border-color: #2563eb; }
+
+        .deel-rol-select {
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .btn-uitnodigen {
+            padding: 7px 16px;
+            background: #2563eb; color: #fff;
+            border: none; border-radius: 4px;
+            font-size: 0.88rem; font-weight: bold;
+            cursor: pointer; white-space: nowrap;
+        }
+        .btn-uitnodigen:hover:not(:disabled) { background: #1d4ed8; }
+        .btn-uitnodigen:disabled { background: #93c5fd; cursor: not-allowed; }
+
+        /* Statusregel binnen deelpaneel */
+        .deel-status {
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .deel-status.succes { display: block; background: #f0fdf4; color: #166534; }
+        .deel-status.fout   { display: block; background: #fef2f2; color: #991b1b; }
+
+        /* Lijst van huidige toegangsgevers */
+        .deel-lijst-titel {
+            font-size: 0.82rem; font-weight: bold; color: #555;
+            margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .deel-lijst-leeg { font-size: 0.85rem; color: #888; font-style: italic; }
+
+        .deel-gebruiker-rij {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.88rem;
+        }
+        .deel-gebruiker-rij:last-child { border-bottom: none; }
+        .deel-gebruiker-naam { flex: 1; color: #222; }
+        .deel-gebruiker-datum { font-size: 0.8rem; color: #888; white-space: nowrap; }
+
+        .btn-intrekken {
+            padding: 4px 10px;
+            background: #fff; color: #d9534f;
+            border: 1px solid #d9534f; border-radius: 4px;
+            font-size: 0.8rem; font-weight: bold;
+            cursor: pointer; white-space: nowrap;
+        }
+        .btn-intrekken:hover { background: #fef2f2; }
+
+        /* Sluitknop deelpaneel */
+        .deel-sluit {
+            display: block;
+            margin-top: 14px;
+            padding: 0;
+            background: none;
+            border: none;
+            font-size: 0.82rem;
+            color: #6b7280;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .deel-sluit:hover { color: #374151; }
+
+        /* ======================= GEDEELD MET MIJ TABBLAD ======================= */
+        .gedeeld-intro {
+            font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 20px 0;
+        }
+        .gedeeld-login-warn {
+            background: #fff7ed;
+            border-left: 4px solid #f97316;
+            border-radius: 0 6px 6px 0;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            color: #9a3412;
+            display: none;
+        }
+        .gedeeld-login-warn.zichtbaar { display: block; }
+
+        .gedeeld-banner {
+            padding: 12px 16px; border-radius: 6px; font-size: 0.92rem;
+            margin-bottom: 16px; font-weight: bold; display: none; line-height: 1.5;
+        }
+        .gedeeld-banner.succes  { display: block; background: #f0fdf4; color: #166534; border-left: 4px solid #22c55e; }
+        .gedeeld-banner.fout    { display: block; background: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444; }
+
+        @media (max-width: 768px) {
+            table, th, td { font-size: 0.82rem; }
+            .tab-knop { padding: 10px 14px; font-size: 0.88rem; }
+            .cloud-knoppen { flex-direction: column; }
+            .stambomen-tabel th, .stambomen-tabel td { padding: 8px; }
+            .rij-knoppen { flex-direction: column; }
+            .deel-uitnodig-rij { flex-direction: column; align-items: stretch; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div>
+<div id="navbar-placeholder"></div>
+
+<main>
+    <div class="container">
+
+        <div class="welkom-blok">
+            <h1>Opslag</h1>
+            <p>Bekijk je lokale data of beheer je stambomen in de cloud.</p>
+        </div>
+
+        <!-- ======================= TABBLADEN ======================= -->
+        <div class="tabs">
+            <button class="tab-knop actief" data-tab="data">📋 Mijn data</button>
+            <button class="tab-knop" data-tab="cloud">☁️ Cloud stambomen</button>
+            <button class="tab-knop" data-tab="gedeeld">🔗 Gedeeld met mij</button>
+        </div>
+
+        <!-- ======================= TAB: MIJN DATA ======================= -->
+        <div class="tab-inhoud zichtbaar" id="tab-data">
+            <div class="actie-balk">
+                <button id="resetBtn" class="btn-reset">Reset stamboom</button>
+                <span class="storage-info" id="storageInfo"></span>
+            </div>
+            <div id="storageContainer"></div>
+        </div>
+
+        <!-- ======================= TAB: CLOUD STAMBOMEN ======================= -->
+        <div class="tab-inhoud" id="tab-cloud">
+
+            <p class="cloud-intro">
+                Sla meerdere stambomen op in de cloud en laad ze op elk apparaat.
+            </p>
+
+            <div id="cloudStatus" class="cloud-banner"></div>
+
+            <div id="cloudLoginWarn" class="cloud-login-warn">
+                <strong>Je bent niet ingelogd.</strong>
+                Log in via de balk bovenaan om cloud stambomen te beheren.
+            </div>
+
+            <div id="upgradeBlok" class="upgrade-blok">
+                <h3>☁️ Cloud stambomen</h3>
+                <p>
+                    Cloud opslag is beschikbaar voor donateurs en abonnees.<br>
+                    Steun het project via Ko-fi en krijg toegang.
+                </p>
+                <a href="https://ko-fi.com/myfamtreecollab"
+                   target="_blank" rel="noopener noreferrer"
+                   class="btn-kofi">☕ Steun via Ko-fi</a>
+            </div>
+
+            <div id="actieveStamboomBalk" class="actieve-stamboom-balk">
+                <span class="actief-label">ACTIEF</span>
+                <span id="actieveNaamTekst">—</span>
+            </div>
+
+            <div id="sectionOpslaan" class="cloud-sectie">
+                <h3>☁️ Opslaan in cloud</h3>
+                <p>Sla je huidige lokale stamboom op als nieuw, of overschrijf een bestaande.</p>
+                <div class="stamboom-naam-rij">
+                    <label for="inputNaamNieuw">Naam:</label>
+                    <input type="text"
+                           id="inputNaamNieuw"
+                           class="stamboom-naam-input"
+                           placeholder="bijv. Familie De Smedt"
+                           maxlength="80">
+                </div>
+                <div class="cloud-knoppen">
+                    <button id="btnNieuw" class="btn-primary">➕ Opslaan als nieuw</button>
+                    <button id="btnOverschrijf" class="btn-secondary" disabled>🔄 Huidige overschrijven</button>
+                </div>
+            </div>
+
+            <div id="sectionLijst" class="stambomen-lijst-sectie">
+                <h3>Jouw cloud stambomen</h3>
+                <div id="lijstContainer">
+                    <p class="lijst-laden">Stambomen laden…</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ======================= TAB: GEDEELD MET MIJ ======================= -->
+        <div class="tab-inhoud" id="tab-gedeeld">
+
+            <p class="gedeeld-intro">
+                Stambomen die andere gebruikers met jou hebben gedeeld. Je kunt deze laden en bekijken.
+                Editors kunnen ook wijzigingen opslaan.
+            </p>
+
+            <!-- Statusbalk voor acties in dit tabblad (bijv. verlaat samenwerking) -->
+            <div id="gedeeldStatus" class="gedeeld-banner"></div>
+
+            <!-- Waarschuwing als niet ingelogd -->
+            <div id="gedeeldLoginWarn" class="gedeeld-login-warn">
+                <strong>Je bent niet ingelogd.</strong>
+                Log in via de balk bovenaan om gedeelde stambomen te bekijken.
+            </div>
+
+            <!-- Container voor de lijst van gedeelde stambomen -->
+            <div id="gedeeldContainer">
+                <p class="lijst-laden">Gedeelde stambomen laden…</p>
+            </div>
+
+        </div>
+
+    </div>
+</main>
+
+<div id="footer-placeholder"></div>
+
+<!-- Scripts — verplichte volgorde -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+    /* Layout laden via fetch — TopBar, Navbar, Footer */
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(function(r) { return r.text(); })
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';                    // TopBar JS na HTML injectie
+            document.body.appendChild(s);
+        });
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(function(r) { return r.text(); })
+        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(function(r) { return r.text(); })
+        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+</script>
+
+<script src="../js/schema.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/cloudSync.js"></script>
+<script src="../js/shareModule.js"></script>   <!-- v1.0.0: delen, uitnodigen, intrekken -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ======================= TAB NAVIGATIE =======================
+
+    var tabKnoppen  = document.querySelectorAll('.tab-knop');
+    var tabInhouden = document.querySelectorAll('.tab-inhoud');
+
+    /* Activeer een specifiek tabblad op naam (data / cloud / gedeeld) */
+    function activeerTab(naam) {
+        tabKnoppen.forEach(function(k) {
+            k.classList.toggle('actief', k.dataset.tab === naam);
+        });
+        tabInhouden.forEach(function(i) {
+            i.classList.toggle('zichtbaar', i.id === 'tab-' + naam);
+        });
+        window.location.hash = naam;
+
+        // Laad gedeeld-tabblad inhoud wanneer het voor het eerst geopend wordt
+        if (naam === 'gedeeld' && !_gedeeldGeladen) {
+            _gedeeldGeladen = true;
+            initGedeeld();
+        }
+    }
+
+    tabKnoppen.forEach(function(k) {
+        k.addEventListener('click', function() { activeerTab(k.dataset.tab); });
+    });
+
+    /* Herstel tabblad via URL hash bij laden pagina */
+    var hash = window.location.hash.replace('#', '');
+    if (hash === 'data' || hash === 'cloud' || hash === 'gedeeld') {
+        activeerTab(hash);
+    }
+
+    var _gedeeldGeladen = false;    // Voorkomt dubbel laden van gedeeld-tabblad
+
+    // ======================= LOKALE DATA TABEL =======================
+
+    if (typeof StamboomStorage === 'undefined') {
+        console.error('[storage.html] StamboomStorage niet geladen!');
+        return;
+    }
+
+    var container = document.getElementById('storageContainer');
+    var info      = document.getElementById('storageInfo');
+    var resetBtn  = document.getElementById('resetBtn');
+    var columns   = window.StamboomSchema ? window.StamboomSchema.fields.slice() : [];
+
+    /* Render de lokale data als HTML tabel met filterrij */
+    function renderTable() {
+        var data = StamboomStorage.get();
+        container.innerHTML = '';
+        info.innerHTML = 'Versie: ' + StamboomStorage.version + ' | ' + data.length + ' records';
+
+        if (!data.length) {
+            container.innerHTML = '<p class="empty">Geen data gevonden in localStorage.</p>';
+            return;
+        }
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'storage-tabel-wrapper';
+
+        var table   = document.createElement('table');
+        var thead   = document.createElement('thead');
+
+        /* Kolomkoppen */
+        var headerRow = document.createElement('tr');
+        columns.forEach(function(col) {
+            var th = document.createElement('th');
+            th.textContent = col;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        /* Filterrij met invoervelden per kolom */
+        var filterRow = document.createElement('tr');
+        var filters   = {};
+        columns.forEach(function(col) {
+            var th    = document.createElement('th');
+            var input = document.createElement('input');
+            input.type        = 'text';
+            input.placeholder = 'Filter...';
+            input.addEventListener('input', function() {
+                filters[col] = this.value.toLowerCase();
+                applyFilters();
+            });
+            th.appendChild(input);
+            filterRow.appendChild(th);
+        });
+        thead.appendChild(filterRow);
+        table.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        container.appendChild(wrapper);
+
+        /* Filter en herrender tabelrijen op basis van invoer */
+        function applyFilters() {
+            tbody.innerHTML = '';
+            var fragment  = document.createDocumentFragment();
+            var gefilterd = data.filter(function(p) {
+                return columns.every(function(col) {
+                    if (!filters[col]) return true;
+                    return (p[col] || '').toString().toLowerCase().includes(filters[col]);
+                });
+            });
+            gefilterd.forEach(function(p) {
+                var rij = document.createElement('tr');
+                columns.forEach(function(col) {
+                    var td = document.createElement('td');
+                    td.textContent = p[col] || '';
+                    rij.appendChild(td);
+                });
+                fragment.appendChild(rij);
+            });
+            tbody.appendChild(fragment);
+        }
+        applyFilters();
+    }
+
+    /* Reset-knop: verwijder alle lokale stamboomdata */
+    resetBtn.addEventListener('click', function() {
+        if (!StamboomStorage.get().length) return;
+        if (!confirm('⚠️ WAARSCHUWING ⚠️\n\nAlle data wordt verwijderd.\nMaak eerst een export.\nKlik OK om te bevestigen.')) return;
+        StamboomStorage.clear();
+        renderTable();
+    });
+
+    renderTable();
+
+    // ======================= WISSEL MODAL (v2.5.0) =======================
+
+    /* Injecteert de modal HTML + CSS eenmalig in de pagina */
+    function _injectWisselModal() {
+        if (document.getElementById('wissel-modal-root')) return;    // Al aanwezig, skip
+
+        var root = document.createElement('div');
+        root.id  = 'wissel-modal-root';
+        root.innerHTML =
+            '<div id="wissel-backdrop"></div>' +
+            '<div id="wissel-box" role="dialog" aria-modal="true">' +
+            '  <div id="wissel-icon">⚠️</div>' +
+            '  <h3 id="wissel-titel">Onopgeslagen wijzigingen</h3>' +
+            '  <p id="wissel-tekst"></p>' +
+            '  <div id="wissel-knoppen">' +
+            '    <button id="wissel-annuleer">Annuleren</button>' +
+            '    <button id="wissel-toch"    class="wm-toch">Toch laden</button>' +
+            '    <button id="wissel-opslaan" class="wm-opslaan">Eerst opslaan</button>' +
+            '  </div>' +
+            '</div>';
+        document.body.appendChild(root);
+
+        var stijl = document.createElement('style');
+        stijl.textContent =
+            '#wissel-modal-root { display:none; }' +
+            '#wissel-modal-root.open { display:block; }' +
+            '#wissel-backdrop {' +
+            '  position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:3000;' +
+            '}' +
+            '#wissel-box {' +
+            '  position:fixed; top:50%; left:50%;' +
+            '  transform:translate(-50%,-50%);' +
+            '  background:#fff; border-radius:10px;' +
+            '  padding:28px 32px 24px; width:100%; max-width:420px;' +
+            '  z-index:3001; box-shadow:0 8px 32px rgba(0,0,0,0.18);' +
+            '  font-family:Arial,sans-serif; text-align:center;' +
+            '}' +
+            '#wissel-icon { font-size:2rem; margin-bottom:8px; }' +
+            '#wissel-titel { font-size:1.05rem; font-weight:bold; color:#222; margin:0 0 10px; }' +
+            '#wissel-tekst { font-size:0.9rem; color:#555; line-height:1.6; margin:0 0 20px; }' +
+            '#wissel-knoppen {' +
+            '  display:flex; gap:8px; justify-content:center; flex-wrap:wrap;' +
+            '}' +
+            '#wissel-knoppen button {' +
+            '  padding:8px 16px; border-radius:5px; font-size:0.88rem;' +
+            '  font-weight:bold; cursor:pointer; border:1px solid #ccc;' +
+            '  background:#fff; color:#333;' +
+            '}' +
+            '#wissel-annuleer:hover { background:#f3f4f6; }' +
+            '.wm-toch { border-color:#d97706 !important; color:#d97706 !important; }' +
+            '.wm-toch:hover { background:#fff7ed !important; }' +
+            '.wm-opslaan { border-color:#2563eb !important; background:#2563eb !important; color:#fff !important; }' +
+            '.wm-opslaan:hover { background:#1d4ed8 !important; }';
+        document.head.appendChild(stijl);
+    }
+
+    /* Controller object voor de wissel modal — toon / sluit */
+    var _wisselModal = {
+        toon: function(stamboomNaam, onToch, onOpslaan) {
+            document.getElementById('wissel-tekst').textContent =
+                'Je lokale data bevat wijzigingen die nog niet zijn opgeslagen in de cloud. ' +
+                'Wat wil je doen voordat je "' + stamboomNaam + '" laadt?';
+
+            /* Knoppen handlers elke keer opnieuw toewijzen zodat context klopt */
+            document.getElementById('wissel-annuleer').onclick = function() {
+                _wisselModal.sluit();
+            };
+            document.getElementById('wissel-toch').onclick = function() {
+                _wisselModal.sluit();
+                onToch();
+            };
+            document.getElementById('wissel-opslaan').onclick = function() {
+                _wisselModal.sluit();
+                onOpslaan();
+            };
+
+            document.getElementById('wissel-modal-root').classList.add('open');
+        },
+
+        sluit: function() {
+            var root = document.getElementById('wissel-modal-root');
+            if (root) root.classList.remove('open');
+        }
+    };
+
+    /* Sluit wissel modal bij klik op backdrop */
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'wissel-backdrop') {
+            _wisselModal.sluit();
+        }
+    });
+
+    _injectWisselModal();    // Modal HTML eenmalig klaarzetten
+
+    // ======================= CLOUD STAMBOMEN =======================
+
+    var statusEl       = document.getElementById('cloudStatus');
+    var loginWarn      = document.getElementById('cloudLoginWarn');
+    var upgradeBlok    = document.getElementById('upgradeBlok');
+    var actieveBalk    = document.getElementById('actieveStamboomBalk');
+    var actieveNaamEl  = document.getElementById('actieveNaamTekst');
+    var sectionOpslaan = document.getElementById('sectionOpslaan');
+    var sectionLijst   = document.getElementById('sectionLijst');
+    var lijstContainer = document.getElementById('lijstContainer');
+    var inputNaamNieuw = document.getElementById('inputNaamNieuw');
+    var btnNieuw       = document.getElementById('btnNieuw');
+    var btnOverschrijf = document.getElementById('btnOverschrijf');
+
+    /* Toon statusbalk boven cloud tabblad */
+    function toonStatus(tekst, type) {
+        statusEl.textContent = tekst;
+        statusEl.className   = 'cloud-banner ' + type;
+    }
+
+    /* Verberg statusbalk */
+    function verbergStatus() {
+        statusEl.className = 'cloud-banner';
+    }
+
+    /* Formatteer ISO datum naar leesbare Nederlandse notatie */
+    function formateerDatum(iso) {
+        if (!iso) return '?';
+        return new Date(iso).toLocaleDateString('nl-BE', {
+            day: '2-digit', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    /* Huidige openstaande deelpaneel — slechts één tegelijk open */
+    var _huidigDeelPaneel = null;
+
+    /* Render de cloud stambomenlijst inclusief Laden / Delen / Verwijderen knoppen */
+    function renderLijst(stambomen) {
+        lijstContainer.innerHTML = '';
+
+        if (!stambomen || !stambomen.length) {
+            lijstContainer.innerHTML =
+                '<p class="stambomen-leeg">Nog geen stambomen opgeslagen in de cloud.</p>';
+            return;
+        }
+
+        var actieveId = StamboomStorage.getActiveTreeId();
+
+        var tabel = document.createElement('table');
+        tabel.className = 'stambomen-tabel';
+
+        var thead = document.createElement('thead');
+        thead.innerHTML =
+            '<tr>' +
+            '<th>Naam</th><th>Personen</th><th>Laatste opslag</th><th>Acties</th>' +
+            '</tr>';
+        tabel.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+
+        stambomen.forEach(function(stamboom) {
+            var isActief = (stamboom.id === actieveId);
+
+            /* Hoofdrij met stamboominfo */
+            var rij = document.createElement('tr');
+            if (isActief) rij.classList.add('actief-rij');
+
+            /* Naam kolom met optionele actief-badge */
+            var tdNaam = document.createElement('td');
+            tdNaam.textContent = stamboom.naam;
+            if (isActief) {
+                var badge = document.createElement('span');
+                badge.className   = 'badge-actief';
+                badge.textContent = 'actief';
+                tdNaam.appendChild(badge);
+            }
+
+            var tdPersonen = document.createElement('td');
+            tdPersonen.textContent = stamboom.aantalPersonen;
+
+            var tdDatum = document.createElement('td');
+            tdDatum.textContent = formateerDatum(stamboom.updatedAt);
+
+            /* Actiekolom: Laden / Delen / Verwijderen */
+            var tdActies  = document.createElement('td');
+            var knoppen   = document.createElement('div');
+            knoppen.className = 'rij-knoppen';
+
+            /* Laad-knop */
+            var btnLaad = document.createElement('button');
+            btnLaad.className   = 'btn-tabel-laden';
+            btnLaad.textContent = isActief ? '✓ Geladen' : '⬇️ Laden';
+            btnLaad.disabled    = isActief;
+            btnLaad.addEventListener('click', function() {
+                laadStamboom(stamboom.id, stamboom.naam);
+            });
+
+            /* Delen-knop — opent inline deelpaneel onder deze rij */
+            var btnDelen = document.createElement('button');
+            btnDelen.className   = 'btn-tabel-delen';
+            btnDelen.textContent = '🔗 Delen';
+            btnDelen.addEventListener('click', function() {
+                _toggleDeelPaneel(stamboom.id, stamboom.naam, paneel);
+            });
+
+            /* Verwijder-knop */
+            var btnVerwijder = document.createElement('button');
+            btnVerwijder.className   = 'btn-tabel-verwijder';
+            btnVerwijder.textContent = '🗑️ Verwijderen';
+            btnVerwijder.addEventListener('click', function() {
+                verwijderStamboom(stamboom.id, stamboom.naam);
+            });
+
+            knoppen.appendChild(btnLaad);
+            knoppen.appendChild(btnDelen);
+            knoppen.appendChild(btnVerwijder);
+            tdActies.appendChild(knoppen);
+
+            rij.appendChild(tdNaam);
+            rij.appendChild(tdPersonen);
+            rij.appendChild(tdDatum);
+            rij.appendChild(tdActies);
+            tbody.appendChild(rij);
+
+            /* Deelpaneel rij — verborgen, spanning over alle kolommen */
+            var paneelRij = document.createElement('tr');
+            var paneelTd  = document.createElement('td');
+            paneelTd.colSpan = 4;                       // Spanning over alle kolommen
+            paneelTd.style.padding = '0';
+
+            var paneel = document.createElement('div');
+            paneel.className    = 'deel-paneel';
+            paneel.dataset.id   = stamboom.id;          // Sla stamboom ID op in paneel
+            paneel.dataset.naam = stamboom.naam;
+
+            paneelTd.appendChild(paneel);
+            paneelRij.appendChild(paneelTd);
+            tbody.appendChild(paneelRij);
+        });
+
+        tabel.appendChild(tbody);
+        lijstContainer.appendChild(tabel);
+    }
+
+    /* Toggle het deelpaneel voor een specifieke stamboom */
+    function _toggleDeelPaneel(stamboomId, stamboomNaam, paneel) {
+        /* Als hetzelfde paneel al open is, sluit het */
+        if (_huidigDeelPaneel && _huidigDeelPaneel === paneel) {
+            paneel.classList.remove('open');
+            _huidigDeelPaneel = null;
+            return;
+        }
+
+        /* Sluit eerder geopend paneel */
+        if (_huidigDeelPaneel) {
+            _huidigDeelPaneel.classList.remove('open');
+        }
+
+        /* Bouw paneel inhoud en open het */
+        _bouwDeelPaneel(stamboomId, stamboomNaam, paneel);
+        paneel.classList.add('open');
+        _huidigDeelPaneel = paneel;
+    }
+
+    /* Bouw de inhoud van het deelpaneel voor een stamboom */
+    function _bouwDeelPaneel(stamboomId, stamboomNaam, paneel) {
+        paneel.innerHTML = '';    // Leegmaken bij heropenen
+
+        /* Titel */
+        var titel = document.createElement('h4');
+        titel.textContent = '🔗 Stamboom delen: ' + stamboomNaam;
+        paneel.appendChild(titel);
+
+        /* Statusregel binnen paneel */
+        var statusEl = document.createElement('div');
+        statusEl.className = 'deel-status';
+        paneel.appendChild(statusEl);
+
+        /* Helper: toon status in paneel */
+        function toonDeelStatus(tekst, type) {
+            statusEl.textContent = tekst;
+            statusEl.className   = 'deel-status ' + type;
+        }
+
+        /* ---- Uitnodigingsrij ---- */
+        var uitnodigRij = document.createElement('div');
+        uitnodigRij.className = 'deel-uitnodig-rij';
+
+        /* E-mailinput voor uitgenodigde gebruiker */
+        var emailInput = document.createElement('input');
+        emailInput.type        = 'email';
+        emailInput.className   = 'deel-email-input';
+        emailInput.placeholder = 'E-mailadres uitnodigen…';
+
+        /* Rol-dropdown: viewer of editor */
+        var rolSelect = document.createElement('select');
+        rolSelect.className = 'deel-rol-select';
+        var optViewer = document.createElement('option');
+        optViewer.value       = 'viewer';
+        optViewer.textContent = '👁 Viewer';
+        var optEditor = document.createElement('option');
+        optEditor.value       = 'editor';
+        optEditor.textContent = '✏️ Editor';
+        rolSelect.appendChild(optViewer);
+        rolSelect.appendChild(optEditor);
+
+        /* Uitnodig-knop */
+        var btnUitnodig = document.createElement('button');
+        btnUitnodig.className   = 'btn-uitnodigen';
+        btnUitnodig.textContent = 'Uitnodigen';
+        btnUitnodig.addEventListener('click', async function() {
+            var email = emailInput.value.trim();
+            var rol   = rolSelect.value;
+
+            if (!email) {
+                toonDeelStatus('Vul een e-mailadres in.', 'fout');
+                return;
+            }
+
+            btnUitnodig.disabled    = true;
+            btnUitnodig.textContent = 'Bezig…';
+
+            /* Roep shareModule aan om de uitnodiging te verwerken */
+            var result = await window.ShareModule.shareTree(stamboomId, email, rol);
+
+            btnUitnodig.disabled    = false;
+            btnUitnodig.textContent = 'Uitnodigen';
+
+            if (result.success) {
+              toonDeelStatus('✅ ' + email + ' toegevoegd als ' + (rol === 'editor' ? 'Editor' : 'Viewer') + '.', 'succes');
+                emailInput.value = '';
+                laadDeelLijst();    // Ververs de lijst van toegangsgevers
+            } else {
+                toonDeelStatus('❌ ' + result.error, 'fout');
+            }
+        });
+
+        uitnodigRij.appendChild(emailInput);
+        uitnodigRij.appendChild(rolSelect);
+        uitnodigRij.appendChild(btnUitnodig);
+        paneel.appendChild(uitnodigRij);
+
+        /* ---- Huidige toegangsgevers lijst ---- */
+        var lijstTitel = document.createElement('p');
+        lijstTitel.className   = 'deel-lijst-titel';
+        lijstTitel.textContent = 'Huidige toegang';
+        paneel.appendChild(lijstTitel);
+
+        var lijstContainer = document.createElement('div');
+        lijstContainer.id = 'deel-lijst-' + stamboomId;    // Uniek ID voor verversen
+        lijstContainer.innerHTML = '<p class="deel-lijst-leeg">Laden…</p>';
+        paneel.appendChild(lijstContainer);
+
+        /* ---- Sluitknop ---- */
+        var sluitBtn = document.createElement('button');
+        sluitBtn.className   = 'deel-sluit';
+        sluitBtn.textContent = '✕ Sluiten';
+        sluitBtn.addEventListener('click', function() {
+            paneel.classList.remove('open');
+            _huidigDeelPaneel = null;
+        });
+        paneel.appendChild(sluitBtn);
+
+        /* Laad de huidige toegangslijst */
+        async function laadDeelLijst() {
+            lijstContainer.innerHTML = '<p class="deel-lijst-leeg">Laden…</p>';
+
+            var result = await window.ShareModule.listSharedWith(stamboomId);
+
+            lijstContainer.innerHTML = '';
+
+            if (result.error) {
+                lijstContainer.innerHTML = '<p class="deel-lijst-leeg">Fout: ' + result.error + '</p>';
+                return;
+            }
+
+            if (!result.data || !result.data.length) {
+                lijstContainer.innerHTML = '<p class="deel-lijst-leeg">Nog niemand uitgenodigd.</p>';
+                return;
+            }
+
+            /* Render een rij per toegangsgever */
+            result.data.forEach(function(item) {
+                var rij = document.createElement('div');
+                rij.className = 'deel-gebruiker-rij';
+
+                /* Naam van de gebruiker */
+                var naam = document.createElement('span');
+                naam.className   = 'deel-gebruiker-naam';
+                naam.textContent = item.display_name;
+
+                /* Rol badge */
+                var rolBadge = document.createElement('span');
+                rolBadge.className   = 'badge-rol ' + item.rol;
+                rolBadge.textContent = item.rol === 'editor' ? '✏️ Editor' : '👁 Viewer';
+
+                /* Gedeeld-op datum */
+                var datum = document.createElement('span');
+                datum.className   = 'deel-gebruiker-datum';
+                datum.textContent = formateerDatum(item.gedeeld_op);
+
+                /* Intrekken-knop — alleen voor owner zichtbaar */
+                var btnIntrek = document.createElement('button');
+                btnIntrek.className   = 'btn-intrekken';
+                btnIntrek.textContent = 'Intrekken';
+                btnIntrek.addEventListener('click', async function() {
+                    if (!confirm('Toegang intrekken voor ' + item.display_name + '?')) return;
+
+                    var res = await window.ShareModule.revokeAccess(stamboomId, item.viewer_id);
+
+                    if (res.success) {
+                        toonDeelStatus('✅ Toegang ingetrokken voor ' + item.display_name + '.', 'succes');
+                        laadDeelLijst();    // Ververs lijst na intrekken
+                    } else {
+                        toonDeelStatus('❌ ' + res.error, 'fout');
+                    }
+                });
+
+                rij.appendChild(naam);
+                rij.appendChild(rolBadge);
+                rij.appendChild(datum);
+                rij.appendChild(btnIntrek);
+                lijstContainer.appendChild(rij);
+            });
+        }
+
+        laadDeelLijst();    // Direct laden bij openen paneel
+    }
+
+    /* Initialiseer de cloud sectie — check login, tier, laad stambomenlijst */
+    async function initCloud() {
+        if (!window.CloudSync) {
+            console.warn('[storage.html] CloudSync niet beschikbaar');
+            return;
+        }
+
+        var meta = await window.CloudSync.getCloudMeta();
+
+        /* Niet ingelogd */
+        if (meta.error === 'not_logged_in') {
+            loginWarn.classList.add('zichtbaar');
+            return;
+        }
+
+        /* Geen cloud toegang (gratis account) */
+        if (!meta.hasAccess) {
+            upgradeBlok.classList.add('zichtbaar');
+            return;
+        }
+
+        /* Cloud toegang aanwezig — toon opslaan en lijst secties */
+        sectionOpslaan.classList.add('zichtbaar');
+        sectionLijst.classList.add('zichtbaar');
+
+        var actieveNaam = StamboomStorage.getActiveTreeName();
+        var actieveId   = StamboomStorage.getActiveTreeId();
+
+        /* Toon actieve stamboom balk als er een actieve is */
+        if (actieveId && actieveNaam) {
+            actieveNaamEl.textContent = actieveNaam;
+            actieveBalk.classList.add('zichtbaar');
+            btnOverschrijf.disabled = false;
+        } else {
+            btnOverschrijf.disabled = true;
+        }
+
+        /* Pre-fill de naamsinput met actieve naam als nog leeg */
+        if (actieveNaam && !inputNaamNieuw.value) {
+            inputNaamNieuw.value = actieveNaam;
+        }
+
+        renderLijst(meta.stambomen || []);
+    }
+
+    /* ---- Opslaan als nieuw ---- */
+    btnNieuw.addEventListener('click', async function() {
+        var naam = inputNaamNieuw.value.trim();
+        if (!naam) {
+            toonStatus('⚠️ Geef de stamboom een naam.', 'waarsch');
+            inputNaamNieuw.focus();
+            return;
+        }
+
+        btnNieuw.disabled    = true;
+        btnNieuw.textContent = 'Bezig…';
+        verbergStatus();
+
+        var result = await window.CloudSync.saveToCloud(naam, null);
+
+        btnNieuw.disabled    = false;
+        btnNieuw.textContent = '➕ Opslaan als nieuw';
+
+        if (result.success) {
+            toonStatus('✅ Stamboom "' + result.naam + '" opgeslagen (' + result.count + ' personen).', 'succes');
+            await initCloud();
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
+    });
+
+    /* ---- Overschrijf actieve stamboom ---- */
+    btnOverschrijf.addEventListener('click', async function() {
+        var actieveId   = StamboomStorage.getActiveTreeId();
+        var actieveNaam = StamboomStorage.getActiveTreeName() || 'deze stamboom';
+
+        if (!actieveId) {
+            toonStatus('⚠️ Geen actieve stamboom geselecteerd.', 'waarsch');
+            return;
+        }
+
+        var naam = inputNaamNieuw.value.trim() || actieveNaam;
+
+        if (!confirm('Wil je "' + actieveNaam + '" overschrijven met je huidige lokale data?')) return;
+
+        btnOverschrijf.disabled    = true;
+        btnOverschrijf.textContent = 'Bezig…';
+        verbergStatus();
+
+        var result = await window.CloudSync.saveToCloud(naam, actieveId);
+
+        btnOverschrijf.disabled    = false;
+        btnOverschrijf.textContent = '🔄 Huidige overschrijven';
+
+        if (result.success) {
+            toonStatus('✅ "' + result.naam + '" bijgewerkt (' + result.count + ' personen).', 'succes');
+            await initCloud();
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
+    });
+
+    /* ---- Laad een stamboom uit de lijst (v2.5.0 wissel-modal) ---- */
+    async function laadStamboom(id, naam) {
+        var actieveId = StamboomStorage.getActiveTreeId();
+
+        /* Controleer of er onopgeslagen lokale data is van een andere stamboom */
+        var heeftWijzigingen = (
+            actieveId &&
+            actieveId !== id &&
+            StamboomStorage.get().length > 0
+        );
+
+        if (heeftWijzigingen) {
+            _wisselModal.toon(
+                naam,
+                async function() { await _voerLaadUit(id, naam); },
+                async function() {
+                    var actieveNaam = StamboomStorage.getActiveTreeName() || 'Mijn stamboom';
+                    toonStatus('Actieve stamboom opslaan…', 'info');
+                    var saveResult = await window.CloudSync.saveToCloud(actieveNaam, actieveId);
+                    if (!saveResult.success) { toonStatus(_foutTekst(saveResult), 'fout'); return; }
+                    toonStatus('✅ Opgeslagen. Nu laden…', 'succes');
+                    await _voerLaadUit(id, naam);
+                }
+            );
+            return;
+        }
+
+        if (!confirm(
+            'Wil je "' + naam + '" laden?\n\n' +
+            'Dit overschrijft je huidige lokale data.\n' +
+            'Maak eerst een export als je dat wilt bewaren.'
+        )) return;
+
+        await _voerLaadUit(id, naam);
+    }
+
+    /* Daadwerkelijk laden uit cloud naar localStorage */
+    async function _voerLaadUit(id, naam) {
+        verbergStatus();
+        var result = await window.CloudSync.loadFromCloud(id);
+
+        if (result.success) {
+            toonStatus(
+                '✅ "' + result.naam + '" geladen (' + result.count + ' personen).',
+                'succes'
+            );
+            renderTable();        // Lokale data tabel bijwerken
+            await initCloud();    // Cloud UI herinitialiseren
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
+    }
+
+    /* ---- Verwijder een stamboom uit de cloud ---- */
+    async function verwijderStamboom(id, naam) {
+        if (!confirm(
+            'Wil je "' + naam + '" definitief verwijderen uit de cloud?\n\n' +
+            'Dit kan niet ongedaan worden gemaakt.'
+        )) return;
+
+        verbergStatus();
+        var result = await window.CloudSync.deleteFromCloud(id);
+
+        if (result.success) {
+            toonStatus('✅ "' + naam + '" verwijderd uit de cloud.', 'succes');
+            await initCloud();
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
+    }
+
+    /* Vertaal foutcodes naar leesbare tekst */
+    function _foutTekst(result) {
+        if (result.error === 'not_logged_in')    return '❌ Je bent niet ingelogd.';
+        if (result.error === 'no_cloud_access')  return '❌ Cloud opslag is niet beschikbaar voor je abonnement.';
+        if (result.error === 'limit_exceeded')   return '❌ Limiet overschreden: ' + result.count + '/' + result.max + ' personen.';
+        if (result.error === 'geen_id')          return '❌ Geen stamboom geselecteerd.';
+        if (result.error === 'invalid_data')     return '❌ Ongeldige data in de cloud.';
+        return '❌ Fout: ' + (result.error || 'onbekend');
+    }
+
+    initCloud();    // Start cloud initialisatie bij laden pagina
+
+    // ======================= GEDEELD MET MIJ TABBLAD =======================
+
+    var gedeeldStatus    = document.getElementById('gedeeldStatus');
+    var gedeeldLoginWarn = document.getElementById('gedeeldLoginWarn');
+    var gedeeldContainer = document.getElementById('gedeeldContainer');
+
+    /* Toon statusbalk in gedeeld-tabblad */
+    function toonGedeeldStatus(tekst, type) {
+        gedeeldStatus.textContent = tekst;
+        gedeeldStatus.className   = 'gedeeld-banner ' + type;
+    }
+
+    /* Initialiseer het "Gedeeld met mij" tabblad */
+    async function initGedeeld() {
+        if (!window.ShareModule) {
+            gedeeldContainer.innerHTML = '<p class="stambomen-leeg">ShareModule niet geladen.</p>';
+            return;
+        }
+
+        /* Controleer of gebruiker ingelogd is */
+        var user = await window.AuthModule.getUser();
+        if (!user) {
+            gedeeldContainer.innerHTML = '';
+            gedeeldLoginWarn.classList.add('zichtbaar');
+            return;
+        }
+
+        gedeeldContainer.innerHTML = '<p class="lijst-laden">Gedeelde stambomen laden…</p>';
+
+        /* Haal lijst op van stambomen die met de huidige gebruiker gedeeld zijn */
+        var result = await window.ShareModule.listSharedWithMe();
+
+        gedeeldContainer.innerHTML = '';
+
+        if (result.error) {
+            gedeeldContainer.innerHTML =
+                '<p class="stambomen-leeg">Fout bij laden: ' + result.error + '</p>';
+            return;
+        }
+
+        if (!result.data || !result.data.length) {
+            gedeeldContainer.innerHTML =
+                '<p class="stambomen-leeg">Nog geen stambomen met jou gedeeld.</p>';
+            return;
+        }
+
+        /* Render tabel van gedeelde stambomen */
+        var tabel = document.createElement('table');
+        tabel.className = 'stambomen-tabel';
+
+        var thead = document.createElement('thead');
+        thead.innerHTML =
+            '<tr>' +
+            '<th>Naam</th><th>Eigenaar</th><th>Jouw rol</th><th>Gedeeld op</th><th>Acties</th>' +
+            '</tr>';
+        tabel.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+
+        result.data.forEach(function(item) {
+            var rij = document.createElement('tr');
+
+            /* Stamboom naam */
+            var tdNaam = document.createElement('td');
+            tdNaam.textContent = item.naam;
+
+            /* Eigenaar display naam */
+            var tdEigenaar = document.createElement('td');
+            tdEigenaar.textContent = item.eigenaar_display_name;
+
+            /* Rol badge */
+            var tdRol = document.createElement('td');
+            var rolBadge = document.createElement('span');
+            rolBadge.className   = 'badge-rol ' + item.rol;
+            rolBadge.textContent = item.rol === 'editor' ? '✏️ Editor' : '👁 Viewer';
+            tdRol.appendChild(rolBadge);
+
+            /* Gedeeld-op datum */
+            var tdDatum = document.createElement('td');
+            tdDatum.textContent = formateerDatum(item.gedeeld_op);
+
+            /* Actiekolom: Laden + Verlaat samenwerking */
+            var tdActies = document.createElement('td');
+            var knoppen  = document.createElement('div');
+            knoppen.className = 'rij-knoppen';
+
+            /* Laad-knop — laadt de gedeelde stamboom in localStorage */
+            var btnLaad = document.createElement('button');
+            btnLaad.className   = 'btn-tabel-laden';
+            btnLaad.textContent = '⬇️ Laden';
+            btnLaad.addEventListener('click', function() {
+                laadGedeeldeStamboom(item.stamboom_id, item.naam);
+            });
+
+            /* Verlaat samenwerking — verwijdert eigen toegang */
+            var btnVerlaat = document.createElement('button');
+            btnVerlaat.className   = 'btn-tabel-verlaat';
+            btnVerlaat.textContent = '🚪 Verlaten';
+            btnVerlaat.addEventListener('click', async function() {
+                if (!confirm(
+                    'Wil je de samenwerking aan "' + item.naam + '" verlaten?\n\n' +
+                    'Je verliest je toegang tot deze stamboom.'
+                )) return;
+
+                var res = await window.ShareModule.leaveCollaboration(item.stamboom_id);
+
+                if (res.success) {
+                    toonGedeeldStatus('✅ Je hebt de samenwerking aan "' + item.naam + '" verlaten.', 'succes');
+                    initGedeeld();    // Ververs de lijst
+                } else {
+                    toonGedeeldStatus('❌ ' + res.error, 'fout');
+                }
+            });
+
+            knoppen.appendChild(btnLaad);
+            knoppen.appendChild(btnVerlaat);
+            tdActies.appendChild(knoppen);
+
+            rij.appendChild(tdNaam);
+            rij.appendChild(tdEigenaar);
+            rij.appendChild(tdRol);
+            rij.appendChild(tdDatum);
+            rij.appendChild(tdActies);
+            tbody.appendChild(rij);
+        });
+
+        tabel.appendChild(tbody);
+        gedeeldContainer.appendChild(tabel);
+    }
+
+    /* Laad een gedeelde stamboom via CloudSync — zelfde flow als eigen bomen */
+    async function laadGedeeldeStamboom(stamboomId, naam) {
+        if (!confirm(
+            'Wil je "' + naam + '" laden?\n\n' +
+            'Dit overschrijft je huidige lokale data.'
+        )) return;
+
+        gedeeldContainer.querySelectorAll('.btn-tabel-laden').forEach(function(b) {
+            b.disabled = true;    // Blokkeer dubbele laadacties
+        });
+
+        /* Gebruik bestaande CloudSync loadFromCloud — werkt ook voor gedeelde bomen
+           omdat de RLS policy viewer-leestoegang toestaat */
+        var result = await window.CloudSync.loadFromCloud(stamboomId);
+
+        gedeeldContainer.querySelectorAll('.btn-tabel-laden').forEach(function(b) {
+            b.disabled = false;
+        });
+
+        if (result.success) {
+            toonGedeeldStatus(
+                '✅ "' + result.naam + '" geladen (' + result.count + ' personen).',
+                'succes'
+            );
+            renderTable();    // Lokale data tabel bijwerken
+        } else {
+            toonGedeeldStatus('❌ Fout bij laden: ' + (result.error || 'onbekend'), 'fout');
+        }
+    }
+
+});
+</script>
+
+</body>
+</html>
