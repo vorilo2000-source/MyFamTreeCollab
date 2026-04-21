@@ -1,0 +1,535 @@
+<!-- ======================= abonnementen/overzicht.html v2.0.0 =======================
+     Herschreven: correct toegangsmodel (Gratis / Viewer / Editor / Owner)
+     Donatie-model vervangt 'abonnement'-taal volledig
+     Rollen activeren via uitnodiging + donatie (eenmalig of periodiek)
+     Structuur: zelfde template als standaardpagina (TopBar, Navbar, Footer via fetch)
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFamTreeCollab — Toegang &amp; Samenwerken</title>
+
+    <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        /* ======================= PAGINA LAYOUT ======================= */
+
+        .overzicht-wrapper {
+            max-width: 760px;          /* Leesbare breedte */
+            margin: 0 auto;            /* Centreren */
+            padding: 40px 20px 64px;   /* Ruimte boven en onder */
+        }
+
+        /* --- Paginatitel --- */
+        .overzicht-wrapper h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+        }
+        .overzicht-intro {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.7;
+            margin: 0 0 40px 0;
+            max-width: 640px;
+        }
+
+        /* --- Sectietitel --- */
+        .sectie-titel {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #1E90FF;
+            margin: 0 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8f4ff;
+        }
+
+        /* ======================= HOE WERKT HET ======================= */
+
+        .hoe-werkt-het {
+            background: #f4f8ff;
+            border: 1px solid #d0e4ff;
+            border-radius: 10px;
+            padding: 24px 24px 20px;
+            margin-bottom: 40px;
+        }
+        .hoe-werkt-het h2 {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #1E90FF;
+            margin: 0 0 16px 0;
+        }
+        .stappen {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .stap {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .stap-nummer {
+            background: #1E90FF;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.8rem;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .stap-tekst {
+            font-size: 0.88rem;
+            color: #444;
+            line-height: 1.6;
+        }
+        .stap-tekst strong { color: #1a1a1a; }
+
+        /* ======================= ROL KAARTEN ======================= */
+
+        .rol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .rol-kaart {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px 20px 18px;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;          /* Accentbalk binnen border-radius houden */
+        }
+
+        /* Gekleurde accentbalk bovenaan elke kaart */
+        .rol-kaart::before {
+            content: '';
+            display: block;
+            height: 4px;
+            border-radius: 10px 10px 0 0;
+            position: absolute;
+            top: 0; left: 0; right: 0;
+        }
+        .rol-kaart.gratis::before  { background: #aaa; }
+        .rol-kaart.viewer::before  { background: #28a745; }
+        .rol-kaart.editor::before  { background: #1E90FF; }
+        .rol-kaart.owner::before   { background: #f39c12; }
+
+        .rol-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            margin-top: 4px;           /* Kleine ruimte na de accentbalk */
+        }
+        .rol-icoon { font-size: 1.5rem; line-height: 1; }
+        .rol-naam  { font-size: 1rem; font-weight: bold; color: #1a1a1a; }
+
+        /* Badge: hoe wordt de rol geactiveerd */
+        .rol-activatie {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .badge-gratis  { background: #f0f0f0; color: #666; border: 1px solid #ddd; }
+        .badge-donatie { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+
+        .rol-beschrijving {
+            font-size: 0.88rem;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .rol-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .rol-features li {
+            font-size: 0.84rem;
+            color: #444;
+            padding: 3px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            line-height: 1.4;
+        }
+        .vink  { color: #28a745; font-weight: bold; flex-shrink: 0; margin-top: 1px; }
+        .kruis { color: #ccc;    flex-shrink: 0;    margin-top: 1px; }
+
+        /* ======================= DONATIE TABEL ======================= */
+
+        .donatie-sectie { margin-bottom: 40px; }
+
+        .donatie-tabel {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .donatie-tabel th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #f4f6f9;
+            color: #555;
+            font-weight: bold;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .donatie-tabel td {
+            padding: 12px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #444;
+            vertical-align: top;
+            line-height: 1.5;
+        }
+        .donatie-tabel tr:last-child td { border-bottom: none; }
+        .donatie-tabel tr:hover td { background: #fafafa; }
+
+        .donatie-bedrag {
+            font-weight: bold;
+            color: #1a1a1a;
+            white-space: nowrap;
+        }
+        .donatie-of {
+            font-size: 0.74rem;
+            color: #999;
+            display: block;
+            font-weight: normal;
+        }
+
+        /* Noot onder de donatietabel */
+        .donatie-noot {
+            background: #fff8e1;
+            border-left: 4px solid #f39c12;
+            border-radius: 0 6px 6px 0;
+            padding: 13px 16px;
+            font-size: 0.84rem;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 16px;
+        }
+        .donatie-noot strong { color: #e67e22; }
+
+        /* ======================= CTA ======================= */
+
+        .cta-blok {
+            text-align: center;
+            padding: 32px 24px;
+            background: #f4f8ff;
+            border-radius: 10px;
+            border: 1px solid #d0e4ff;
+        }
+        .cta-blok h2 {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+        }
+        .cta-blok p {
+            font-size: 0.9rem;
+            color: #555;
+            margin: 0 0 20px 0;
+            line-height: 1.6;
+        }
+        .knop-cta {
+            display: inline-block;
+            padding: 10px 26px;
+            background: #1E90FF;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.92rem;
+            font-weight: bold;
+        }
+        .knop-cta:hover { background: #1278d4; }
+        .knop-cta.secundair {
+            background: #fff;
+            color: #1E90FF;
+            border: 1px solid #1E90FF;
+            margin-left: 8px;
+        }
+        .knop-cta.secundair:hover { background: #e8f4ff; }
+    </style>
+</head>
+<body>
+
+<!-- ======================= TopBar placeholder ======================= -->
+<div id="topbar-placeholder"></div>
+
+<!-- Scripts: Supabase + utils + auth ALTIJD vóór topbar.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<!-- ======================= Navbar placeholder ======================= -->
+<div id="navbar-placeholder"></div>
+
+<!-- ======================= Hoofd content ======================= -->
+<main>
+<div class="overzicht-wrapper">
+
+    <!-- Paginatitel -->
+    <h1>Toegang &amp; Samenwerken</h1>
+    <p class="overzicht-intro">
+        MyFamTreeCollab werkt op basis van rollen. Elke rol bepaalt wat je kan zien,
+        bewerken en bijdragen aan een stamboom. De basisversie is gratis en volledig
+        lokaal — geen account, geen verplichtingen. Samenwerking en cloud-opslag
+        worden mogelijk via een donatie.
+    </p>
+
+    <!-- ===== HOE WERKT HET ===== -->
+    <div class="hoe-werkt-het">
+        <h2>⚙️ Hoe werkt toegang?</h2>
+        <div class="stappen">
+            <div class="stap">
+                <div class="stap-nummer">1</div>
+                <div class="stap-tekst">
+                    <strong>Gratis starten</strong> — iedereen kan lokaal een stamboom aanmaken
+                    zonder account of donatie.
+                </div>
+            </div>
+            <div class="stap">
+                <div class="stap-nummer">2</div>
+                <div class="stap-tekst">
+                    <strong>Owner activeert cloud-samenwerking</strong> via een donatie en
+                    nodigt anderen uit als Viewer of Editor.
+                </div>
+            </div>
+            <div class="stap">
+                <div class="stap-nummer">3</div>
+                <div class="stap-tekst">
+                    <strong>Uitgenodigden doen een donatie</strong> om hun rol te activeren —
+                    eenmalig of periodiek, naar eigen keuze.
+                </div>
+            </div>
+            <div class="stap">
+                <div class="stap-nummer">4</div>
+                <div class="stap-tekst">
+                    <strong>Samenwerking actief</strong> — berichten per persoon-ID,
+                    wijzigingsvoorstellen, discussies volgen en modereren.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ROL KAARTEN ===== -->
+    <h2 class="sectie-titel">De vier rollen</h2>
+    <div class="rol-grid">
+
+        <!-- GRATIS -->
+        <div class="rol-kaart gratis">
+            <div class="rol-header">
+                <span class="rol-icoon">🖥️</span>
+                <span class="rol-naam">Gratis</span>
+            </div>
+            <span class="rol-activatie badge-gratis">Standaard — geen donatie vereist</span>
+            <p class="rol-beschrijving">
+                Lokale stamboom in de browser. Geen account, geen cloud, geen samenwerking.
+                Volledig privé op jouw apparaat.
+            </p>
+            <ul class="rol-features">
+                <li><span class="vink">✓</span> Stamboom aanmaken &amp; beheren</li>
+                <li><span class="vink">✓</span> Tijdlijn &amp; statistieken</li>
+                <li><span class="vink">✓</span> Export naar CSV / JSON</li>
+                <li><span class="kruis">✗</span> Geen cloud-opslag</li>
+                <li><span class="kruis">✗</span> Geen samenwerking</li>
+            </ul>
+        </div>
+
+        <!-- VIEWER -->
+        <div class="rol-kaart viewer">
+            <div class="rol-header">
+                <span class="rol-icoon">👁️</span>
+                <span class="rol-naam">Viewer</span>
+            </div>
+            <span class="rol-activatie badge-donatie">Uitnodiging Owner + donatie</span>
+            <p class="rol-beschrijving">
+                Bekijk een gedeelde stamboom en draag bij via berichten in de
+                collab-discussies. Geen bewerkingen.
+            </p>
+            <ul class="rol-features">
+                <li><span class="vink">✓</span> Stamboom bekijken</li>
+                <li><span class="vink">✓</span> Tijdlijn &amp; statistieken</li>
+                <li><span class="vink">✓</span> Berichten plaatsen in discussies</li>
+                <li><span class="kruis">✗</span> Geen bewerkingen</li>
+                <li><span class="kruis">✗</span> Geen export (later: afdrukken)</li>
+            </ul>
+        </div>
+
+        <!-- EDITOR -->
+        <div class="rol-kaart editor">
+            <div class="rol-header">
+                <span class="rol-icoon">✏️</span>
+                <span class="rol-naam">Editor</span>
+            </div>
+            <span class="rol-activatie badge-donatie">Uitnodiging Owner + donatie</span>
+            <p class="rol-beschrijving">
+                Voeg personen en relaties toe, bewerk gegevens en stel wijzigingen
+                voor via de collab-pagina.
+            </p>
+            <ul class="rol-features">
+                <li><span class="vink">✓</span> Alles van Viewer</li>
+                <li><span class="vink">✓</span> Personen toevoegen &amp; bewerken</li>
+                <li><span class="vink">✓</span> Relaties beheren</li>
+                <li><span class="vink">✓</span> Wijzigingsvoorstel (diff) plaatsen</li>
+                <li><span class="vink">✓</span> Discussiestatus aanpassen</li>
+            </ul>
+        </div>
+
+        <!-- OWNER -->
+        <div class="rol-kaart owner">
+            <div class="rol-header">
+                <span class="rol-icoon">👑</span>
+                <span class="rol-naam">Owner</span>
+            </div>
+            <span class="rol-activatie badge-donatie">Eigenaar van de boom + donatie</span>
+            <p class="rol-beschrijving">
+                Volledige controle over de stamboom. Beheert toegang, modereert
+                discussies en stelt privacy in.
+            </p>
+            <ul class="rol-features">
+                <li><span class="vink">✓</span> Alles van Editor</li>
+                <li><span class="vink">✓</span> Viewers &amp; Editors uitnodigen</li>
+                <li><span class="vink">✓</span> Berichten modereren (verwijderen)</li>
+                <li><span class="vink">✓</span> Toegang intrekken</li>
+                <li><span class="vink">✓</span> Privacy &amp; zichtbaarheid instellen</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- ===== DONATIE STRUCTUUR ===== -->
+    <div class="donatie-sectie">
+        <h2 class="sectie-titel">☕ Donatie-opties</h2>
+        <p style="font-size:0.88rem;color:#555;margin:0 0 16px 0;line-height:1.6;">
+            MyFamTreeCollab draait volledig op donaties — geen verplichte abonnementen.
+            Elke rol (Owner, Editor, Viewer) vereist een donatie om actief te worden.
+            Jij kiest eenmalig of periodiek.
+        </p>
+
+        <table class="donatie-tabel">
+            <thead>
+                <tr>
+                    <th>Optie</th>
+                    <th>Bedrag</th>
+                    <th>Wat je krijgt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Eenmalig</strong></td>
+                    <td class="donatie-bedrag">
+                        €10
+                        <span class="donatie-of">eenmalig</span>
+                    </td>
+                    <td>Permanente rolactivatie voor één stamboom. Geen verdere verplichtingen.</td>
+                </tr>
+                <tr>
+                    <td><strong>Periodiek</strong></td>
+                    <td class="donatie-bedrag">
+                        €3 – €5
+                        <span class="donatie-of">per maand</span>
+                    </td>
+                    <td>Lopende toegang, opzegbaar wanneer je wilt. Ondersteunt doorlopende ontwikkeling.</td>
+                </tr>
+                <tr>
+                    <td><strong>Stichtend lid</strong></td>
+                    <td class="donatie-bedrag">
+                        €25
+                        <span class="donatie-of">eenmalig</span>
+                    </td>
+                    <td>Permanente rolactivatie + early access tot nieuwe functies + vermelding als stichtend lid.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="donatie-noot">
+            <strong>Transparantie:</strong> er is nog geen automatische betaalverificatie.
+            De Owner bevestigt handmatig toegang na ontvangst van een donatie.
+            Dit wordt in een volgende fase geautomatiseerd.
+        </div>
+    </div>
+
+    <!-- ===== CTA ===== -->
+    <div class="cta-blok">
+        <h2>Klaar om te starten?</h2>
+        <p>
+            Begin gratis met een lokale stamboom, of bekijk de gedetailleerde
+            rolvergelijking op de prijzenpagina.
+        </p>
+        <a href="/MyFamTreeCollab/home/create.html" class="knop-cta">Start gratis</a>
+        <a href="prijzen.html" class="knop-cta secundair">Rolvergelijking</a>
+    </div>
+
+</div>
+</main>
+
+<!-- ======================= Footer placeholder ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde is verplicht:
+     1. Supabase SDK        — vereist door auth.js (al geladen boven)
+     2. utils.js            — vereist door alle andere modules (al geladen boven)
+     3. auth.js             — vereist door topbar.js (al geladen boven)
+     4. TopBar HTML + topbar.js (via fetch)
+     5. Navbar HTML (via fetch)
+     6. Footer HTML (via fetch)
+     7. Pagina-scripts      — geen pagina-js nodig voor overzicht.html
+     ============================================================= -->
+<script>
+    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            var ph = document.getElementById('navbar-placeholder');
+            if (ph) ph.innerHTML = data;
+        });
+
+    // Stap 3: Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            var ph = document.getElementById('footer-placeholder');
+            if (ph) ph.innerHTML = data;
+        });
+</script>
+
+<!-- Geen pagina-specifieke scripts nodig voor overzicht.html -->
+
+</body>
+</html>
