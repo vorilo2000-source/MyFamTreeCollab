@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFamTreeCollab</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ======================= NAVBAR (geïmporteerd) ======================= -->
+    <div id="navbar"></div> <!-- Placeholder voor navbar -->
+
+    <script>
+        // Laad navbar.html vanuit de root folder
+        fetch('navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar').innerHTML = data;
+            });
+    </script>
+
+    <!-- ======================= MAIN CONTENT ======================= -->
+    <main id="home">
+        <section>
+            <h2>Welcome to the MyFamTreeCollab website</h2>
+            <p>Discover your family tree, subscriptions, and resources easily using the navigation above.</p>
+        </section>
+
+        <section>
+            <h2>Start Your Family Tree</h2>
+            <p>Begin today with exploring and managing your family history.</p>
+            <a href="stamboom/index-en.html" class="btn">Start Now</a>
+        </section>
+
+        <section>
+            <h2>News & Updates</h2>
+            <p>Check the latest features and tips for managing your family tree.</p>
+        </section>
+    </main>
+
+    <!-- ======================= FOOTER ======================= -->
+    <footer>
+        <p>&copy; 2026 MyFamTreeCollab website</p>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,177 @@
+<!-- ======================= index.html v2.0.2 =======================
+     Homepagina: introductie, foto's en start-knop
+     Wijziging v2.0.0: facelift — paginatitel div verwijderd, inline stijlen
+                       naar <style>, Start Nu knop relatief pad, opmaak consistent
+     Wijziging v2.0.1: Favicon / App-icoon toegevoegd
+     Wijziging v2.0.2: Supabase auth + TopBar login modal — scripts samengevoegd
+                       onderaan body, topbar.js via createElement na TopBar fetch
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+
+    <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+
+        /* ======================= FOTO GRID ======================= */
+        .foto-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+        .foto-grid div {
+            flex: 1 1 45%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+        }
+        .foto-grid div:nth-child(2n) { border-style: dashed; }
+        .foto-grid div img { width: 100%; height: 100%; object-fit: cover; }
+
+        @media (max-width: 768px) { .foto-grid div { flex: 1 1 100%; } }
+
+        /* ======================= INTRO SECTIE ======================= */
+        .intro-sectie { margin-bottom: 32px; }
+        .intro-sectie h2 { font-size: 1.3rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
+        .intro-sectie p  { font-size: 0.95rem; color: #555; line-height: 1.7; margin: 0 0 12px 0; }
+        .intro-sectie ul { margin: 0 0 12px 20px; }
+        .intro-sectie li { font-size: 0.95rem; color: #555; line-height: 1.8; }
+
+        /* ======================= START SECTIE ======================= */
+        .start-sectie {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .start-sectie h2 { font-size: 1.3rem; font-weight: bold; margin: 0 0 10px 0; color: #222; }
+        .start-sectie p  { font-size: 0.95rem; color: #555; margin: 0 0 20px 0; }
+        .knop-start {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #4CAF50;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .knop-start:hover { background: #43a047; }
+
+        /* ======================= NIEUWS SECTIE ======================= */
+        .nieuws-sectie { margin-top: 32px; }
+        .nieuws-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 8px 0; color: #333; }
+        .nieuws-sectie p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+    </style>
+</head>
+<body>
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div>
+
+<!-- ======================= Navbar ======================= -->
+<div id="navbar-placeholder"></div>
+
+<!-- ======================= Hoofd content ======================= -->
+<main>
+    <div class="container">
+
+        <!-- ======================= Introductie ======================= -->
+        <section class="intro-sectie">
+            <h2>Welkom bij MyFamTreeCollab</h2>
+            <p>
+                MyFamTreeCollab is een veilig en intuïtief platform om je familiegeschiedenis
+                te ontdekken, vast te leggen en te visualiseren, volledig lokaal in je browser,
+                zonder dat je gegevens je apparaat verlaten.
+            </p>
+            <ul>
+                <li><strong>Bouw je stamboom</strong> met alle details die voor jou belangrijk zijn.</li>
+                <li><strong>Beheer je data volledig</strong> — alles wordt lokaal opgeslagen, jij beslist wat je deelt.</li>
+                <li><strong>Visualiseer je familie</strong> via de stamboom- en tijdlijnweergave.</li>
+            </ul>
+        </section>
+
+        <!-- ======================= Foto's boven Start Nu ======================= -->
+        <section class="foto-grid">
+            <div><img src="img/FotoGezin1.png" alt="Gezinsfoto"></div>
+            <div><img src="img/Stats1.png"     alt="Statistieken weergave"></div>
+        </section>
+
+        <!-- ======================= Start Nu ======================= -->
+        <section class="start-sectie">
+            <h2>Start je stamboom</h2>
+            <p>Begin vandaag met het vastleggen van je familiegeschiedenis.</p>
+            <a href="home/create.html" class="knop-start">Start Nu</a>
+        </section>
+
+        <!-- ======================= Foto's onder Start Nu ======================= -->
+        <section class="foto-grid">
+            <div><img src="img/Manage1.png" alt="Beheer weergave"></div>
+            <div><img src="img/View1.png"   alt="Stamboom weergave"></div>
+        </section>
+
+        <!-- ======================= Nieuws & Updates ======================= -->
+        <section class="nieuws-sectie">
+            <h2>Nieuws &amp; updates</h2>
+            <p>Bekijk de laatste functies, tips en updates om je stamboom nog beter te beheren.</p>
+        </section>
+
+    </div>
+</main>
+
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. TopBar fetch        — laadt HTML, daarna pas topbar.js
+     5. Navbar + Footer     — onafhankelijk, mag parallel
+     index.html staat in root — paden beginnen met /js/ niet ../js/
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/MyFamTreeCollab/js/utils.js"></script>
+<script src="/MyFamTreeCollab/js/auth.js"></script>
+
+<script>
+    // TopBar laden — topbar.js pas injecteren nadat #top-auth in de DOM zit
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '/MyFamTreeCollab/js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Navbar laden — geen auth-afhankelijkheid
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+
+    // Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+</script>
+
+<!-- index.html heeft geen pagina-specifieke scripts nodig -->
+
+</body>
+</html>
