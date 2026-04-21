@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CSV Template - MyFamTreeCollab</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>CSV Template</h1>
+    <p>Use this downloadable CSV to import family tree data into MyFamTreeCollab. 
+       All column names are recognized and the template fully complies with the current schema. 
+       IDs follow the idGenerator logic.</p>
+</header>
+
+<main>
+    <section>
+        <h2>Example Record (visual reference only)</h2>
+        <p>
+            ID: JJVMMHoofdID | Given Name: Jan | Preferred Name: Jan | Gender: M | Birth Date: 1980-01-01 | 
+            Birth Place: Amsterdam | PartnerID: (empty)
+        </p>
+    </section>
+
+    <button id="downloadBtn">Download CSV Template</button>
+    <p id="status"></p>
+</main>
+
+<footer>
+    <p>&copy; 2026 MyFamTreeCollab website</p>
+</footer>
+
+<script>
+const downloadBtn = document.getElementById('downloadBtn');
+const status = document.getElementById('status');
+
+downloadBtn.addEventListener('click', () => {
+    if (!window.StamboomSchema) {
+        status.textContent = "❌ Error: StamboomSchema not loaded.";
+        return;
+    }
+
+    const headers = StamboomSchema.header();
+    const emptyRow = Array(StamboomSchema.count()).fill("").join(",");
+    const csvContent = "\uFEFF" + `${headers}\n${emptyRow}\n${emptyRow}`; // BOM toegevoegd voor Excel
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "FamilyTree_template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    status.textContent = "✅ CSV template successfully downloaded!";
+});
+</script>
+
+</body>
+</html>
