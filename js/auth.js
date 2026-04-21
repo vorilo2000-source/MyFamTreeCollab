@@ -1,6 +1,6 @@
 // =============================================================================
 // auth.js — Supabase Authentication Module
-// MyFamTreeCollab v2.3.0
+// MyFamTreeCollab v2.4.0
 // -----------------------------------------------------------------------------
 // Handles registration, login, logout, session management, profiles
 // and password reset flow.
@@ -23,8 +23,8 @@
   // ---------------------------------------------------------------------------
   // CONFIGURATION
   // ---------------------------------------------------------------------------
-  const SUPABASE_URL  = "https://xpufzrjncivyzyukwcmn.supabase.co";
-  const SUPABASE_ANON = "sb_publishable_4Pg_TkSymTbA-uX29z0Zaw_d1A1c5lE";
+  const SUPABASE_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";
+  const SUPABASE_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";
 
   // ---------------------------------------------------------------------------
   // Supabase client — eenmalig aangemaakt, overal hergebruikt
@@ -94,7 +94,7 @@
     if (!email) return { error: "Vul je e-mailadres in." };
 
     const { error } = await _client.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://thvd64-cyber.github.io/MyFamTreeCollab/home/reset.html"
+      redirectTo: "https://vorilo2000-source.github.io/MyFamTreeCollab/home/reset.html"
     });
 
     if (error) return { error: _errMsg(error) };
