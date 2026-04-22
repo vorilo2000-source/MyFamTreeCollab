@@ -1,28 +1,21 @@
-<!-- ======================= bronnen/handleiding.html v1.6.0 =======================
+<!-- ======================= bronnen/handleiding.html v1.7.0 =======================
      Gebruikershandleiding voor MyFamTreeCollab
      Beschrijft alle functies van de applicatie stap voor stap
+
+     Wijzigingen v1.7.0 (Sessie 15 — overdracht + Fase 6 rolmodel):
+     - Sectie 2  — gebruikersmenu bijgewerkt
+     - Sectie 9  — versielimiet aangepast van 20 naar 5
+     - Sectie 10 — tiers bijgewerkt naar nieuw rolmodel (owner i.p.v. supporter/personal/etc.)
+     - Sectie 14 — roltabel bijgewerkt naar nieuw model (gast/viewer/editor/owner/admin)
+     - Sectie 14 — uitnodigingstekst bijgewerkt: alleen owner mag uitnodigen
+     - Sectie 15 — toegangstekst bijgewerkt naar nieuw rolmodel
+     - Ko-fi link bijgewerkt naar https://ko-fi.com/vorilo
 
      Wijzigingen v1.6.0 (F5-04):
      - Sectie 15 "Stamboom delen & samenwerken" toegevoegd
      - Subsecties: uitnodigen, rollen, gedeeld met mij, collab berichtenboard
      - Sectie 14 "Steun" hernummerd naar 16
      - Inhoudsopgave bijgewerkt naar 16 items
-
-     Wijzigingen v1.5.0:
-     - Sectie 2 — gebruikersmenu dropdown uitleg toegevoegd
-     - Sectie 10 "Cloud stambomen" — wisselen tussen stambomen uitgelegd incl. wissel modal
-     - Versie badge bijgewerkt naar v1.5.0
-
-     Wijzigingen v1.4.0:
-     - Sectie 9 "Versiegeschiedenis" toegevoegd (F5-06)
-     - Secties 9–13 hernummerd naar 10–14
-     - Inhoudsopgave bijgewerkt
-     - Versie badge bijgewerkt naar v1.4.0
-
-     Wijzigingen v1.3.0:
-     - Sectie 8 "Mijn Account" toegevoegd (F5-08)
-     - Inhoudsopgave bijgewerkt (secties 8-13 hernummerd)
-     - Versie badge bijgewerkt naar v1.3.0
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -31,7 +24,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Handleiding</title>
 
-    <!-- ===== Favicon / App-icoon ===== -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
@@ -39,126 +31,40 @@
 
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        /* ======================= PAGINA LAYOUT ======================= */
-        .handleiding-wrapper {
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 0 20px 60px;
-        }
-
-        /* ======================= WELKOMSTBLOK ======================= */
+        .handleiding-wrapper { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
         .welkom-blok { margin-bottom: 32px; }
         .welkom-blok h1 { font-size: 1.6rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
         .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
-
-        /* ======================= INHOUDSOPGAVE ======================= */
-        .inhoudsopgave {
-            background: #f8f8f5;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 20px 24px;
-            margin-bottom: 40px;
-        }
+        .inhoudsopgave { background: #f8f8f5; border: 1px solid #ddd; border-radius: 6px; padding: 20px 24px; margin-bottom: 40px; }
         .inhoudsopgave h2 { font-size: 1rem; font-weight: bold; margin: 0 0 12px 0; color: #333; }
         .inhoudsopgave ol { margin: 0; padding-left: 20px; }
         .inhoudsopgave li { margin-bottom: 6px; font-size: 0.92rem; }
         .inhoudsopgave a  { color: #2563eb; text-decoration: none; }
         .inhoudsopgave a:hover { text-decoration: underline; }
-
-        /* ======================= SECTIES ======================= */
         .sectie { margin-bottom: 48px; scroll-margin-top: 20px; }
-        .sectie h2 {
-            font-size: 1.25rem; font-weight: bold; margin: 0 0 16px 0; color: #222;
-            padding-bottom: 8px; border-bottom: 2px solid #eee;
-        }
+        .sectie h2 { font-size: 1.25rem; font-weight: bold; margin: 0 0 16px 0; color: #222; padding-bottom: 8px; border-bottom: 2px solid #eee; }
         .sectie h3 { font-size: 1rem; font-weight: bold; margin: 24px 0 8px 0; color: #333; }
         .sectie p  { font-size: 0.95rem; color: #444; line-height: 1.7; margin: 0 0 12px 0; }
         .sectie ul, .sectie ol { margin: 0 0 12px 20px; }
         .sectie li { font-size: 0.95rem; color: #444; line-height: 1.7; margin-bottom: 4px; }
-
-        /* ======================= STAPPEN BLOK ======================= */
         .stappen { counter-reset: stap; list-style: none; padding: 0; margin: 0 0 16px 0; }
-        .stappen li {
-            counter-increment: stap;
-            display: flex; gap: 12px; align-items: flex-start;
-            margin-bottom: 12px; font-size: 0.95rem; color: #444; line-height: 1.6;
-        }
-        .stappen li::before {
-            content: counter(stap);
-            display: flex; align-items: center; justify-content: center;
-            min-width: 26px; height: 26px;
-            background: #2563eb; color: white; border-radius: 50%;
-            font-size: 0.8rem; font-weight: bold; flex-shrink: 0; margin-top: 1px;
-        }
-
-        /* ======================= TIP BLOK ======================= */
-        .tip {
-            background: #eff6ff; border-left: 4px solid #2563eb;
-            border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0;
-            font-size: 0.9rem; color: #1e40af; line-height: 1.5;
-        }
+        .stappen li { counter-increment: stap; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; font-size: 0.95rem; color: #444; line-height: 1.6; }
+        .stappen li::before { content: counter(stap); display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; background: #2563eb; color: white; border-radius: 50%; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; margin-top: 1px; }
+        .tip { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #1e40af; line-height: 1.5; }
         .tip strong { color: #1e3a8a; }
-
-        /* ======================= WAARSCHUWING BLOK ======================= */
-        .waarschuwing {
-            background: #fff7ed; border-left: 4px solid #f97316;
-            border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0;
-            font-size: 0.9rem; color: #9a3412; line-height: 1.5;
-        }
-
-        /* ======================= TERUG NAAR TOP ======================= */
-        .terug-top {
-            display: inline-block; margin-top: 8px;
-            font-size: 0.85rem; color: #2563eb; text-decoration: none;
-        }
+        .waarschuwing { background: #fff7ed; border-left: 4px solid #f97316; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #9a3412; line-height: 1.5; }
+        .terug-top { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: #2563eb; text-decoration: none; }
         .terug-top:hover { text-decoration: underline; }
-
-        /* ======================= VERSIE BADGE ======================= */
-        .versie-badge {
-            display: inline-block; background: #e0f2fe; color: #0369a1;
-            font-size: 0.78rem; font-weight: bold; padding: 2px 8px;
-            border-radius: 4px; margin-left: 8px; vertical-align: middle;
-        }
-
-        /* ======================= DIFF VOORBEELD BLOK (F5-06) ======================= */
-        .diff-voorbeeld {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin: 16px 0;
-            font-size: 0.88rem;
-        }
-        .diff-voorbeeld-kolom {
-            border-radius: 6px;
-            padding: 10px 14px;
-            line-height: 1.6;
-        }
+        .versie-badge { display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 0.78rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+        .diff-voorbeeld { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0; font-size: 0.88rem; }
+        .diff-voorbeeld-kolom { border-radius: 6px; padding: 10px 14px; line-height: 1.6; }
         .diff-voorbeeld-kolom strong { display: block; margin-bottom: 4px; font-size: 0.85rem; }
         .diff-toegevoegd-ex { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
         .diff-gewijzigd-ex  { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
         .diff-verwijderd-ex { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
-
-        /* ======================= ROL TABEL (F5-04) ======================= */
-        .rol-tabel {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-            margin: 16px 0;
-        }
-        .rol-tabel th {
-            background: #f4f6f9;
-            font-weight: bold;
-            color: #333;
-            padding: 8px 12px;
-            text-align: left;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        .rol-tabel td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #444;
-            vertical-align: middle;
-        }
+        .rol-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .rol-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .rol-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle; }
         .rol-tabel tr:last-child td { border-bottom: none; }
         .check-ja  { color: #166534; font-weight: bold; }
         .check-nee { color: #991b1b; }
@@ -166,19 +72,14 @@
 </head>
 <body>
 
-<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-
-<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
-<!-- ======================= Hoofd content ======================= -->
 <main>
     <div class="handleiding-wrapper">
 
-        <!-- ======================= Welkomstblok ======================= -->
         <div class="welkom-blok">
-            <h1>Handleiding <span class="versie-badge">v1.6.0</span></h1>
+            <h1>Handleiding <span class="versie-badge">v1.7.0</span></h1>
             <p>
                 Welkom bij de handleiding van MyFamTreeCollab. Hier vind je stap voor stap uitleg
                 over alle functies van de applicatie — van je eerste persoon aanmaken tot je stamboom
@@ -186,7 +87,6 @@
             </p>
         </div>
 
-        <!-- ======================= Inhoudsopgave ======================= -->
         <div class="inhoudsopgave">
             <h2>Inhoudsopgave</h2>
             <ol>
@@ -209,7 +109,7 @@
             </ol>
         </div>
 
-        <!-- ======================= 1. Aan de slag ======================= -->
+        <!-- 1. Aan de slag -->
         <div class="sectie" id="aan-de-slag">
             <h2>1. Aan de slag</h2>
             <p>
@@ -219,8 +119,8 @@
             </p>
             <div class="tip">
                 <strong>Tip:</strong> Maak een account aan om later je stamboom veilig op te slaan
-                in de cloud. Zonder account werkt alles ook — je data blijft dan alleen lokaal.
-                Je kunt dan niet online delen of samenwerken.
+                in de cloud. Zonder account werkt alles ook — je data blijft dan alleen lokaal
+                en wordt gereset bij het sluiten van de browser (demo modus).
             </div>
             <p>
                 De navigatie bovenaan de pagina brengt je naar alle onderdelen van de app:
@@ -229,12 +129,14 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 2. Account ======================= -->
+        <!-- 2. Account -->
         <div class="sectie" id="account">
             <h2>2. Account aanmaken en inloggen</h2>
             <p>
                 Een account geeft je toegang tot cloud-opslag en synchronisatie tussen apparaten.
-                Registreren is gratis.
+                Registreren is gratis. Er zijn vier rollen: <strong>Viewer</strong>, <strong>Editor</strong>,
+                <strong>Owner</strong> en <strong>Admin</strong>. Nieuwe accounts krijgen automatisch
+                de rol <strong>Viewer</strong>.
             </p>
 
             <h3>Account aanmaken</h3>
@@ -269,7 +171,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 3. Eerste persoon ======================= -->
+        <!-- 3. Eerste persoon -->
         <div class="sectie" id="persoon-aanmaken">
             <h2>3. Eerste persoon aanmaken</h2>
             <p>
@@ -290,7 +192,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 4. Stamboom beheren ======================= -->
+        <!-- 4. Stamboom beheren -->
         <div class="sectie" id="stamboom-beheren">
             <h2>4. Stamboom beheren</h2>
             <p>
@@ -334,7 +236,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 5. Stamboom bekijken ======================= -->
+        <!-- 5. Stamboom bekijken -->
         <div class="sectie" id="stamboom-bekijken">
             <h2>5. Stamboom bekijken</h2>
             <p>
@@ -358,7 +260,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 6. Tijdlijn ======================= -->
+        <!-- 6. Tijdlijn -->
         <div class="sectie" id="tijdlijn">
             <h2>6. Tijdlijn</h2>
             <p>
@@ -395,7 +297,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 7. Statistieken ======================= -->
+        <!-- 7. Statistieken -->
         <div class="sectie" id="statistieken">
             <h2>7. Statistieken</h2>
             <p>
@@ -409,7 +311,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 8. Mijn Account ======================= -->
+        <!-- 8. Mijn Account -->
         <div class="sectie" id="mijn-account">
             <h2>8. Mijn Account</h2>
             <p>
@@ -419,7 +321,7 @@
 
             <h3>Profiel</h3>
             <p>
-                Bovenaan zie je je avatar, gebruikersnaam, e-mailadres, abonnementstype en de datum
+                Bovenaan zie je je avatar, gebruikersnaam, e-mailadres, rol en de datum
                 waarop je lid bent geworden. Je ziet ook of je cloud-toegang hebt.
             </p>
 
@@ -433,8 +335,8 @@
                 <li><strong>Verwijderen</strong> — verwijdert de stamboom permanent uit de cloud.</li>
             </ul>
             <div class="waarschuwing">
-                <strong>Let op:</strong> Gratis gebruikers hebben geen cloud-toegang.
-                Je ziet dan een melding met een link naar de abonnementenpagina.
+                <strong>Let op:</strong> Alleen Owner- en Admin-accounts hebben cloud-toegang.
+                Viewers en Editors zien een melding met uitleg over het upgraden naar Owner.
             </div>
 
             <h3>Lokale data</h3>
@@ -467,20 +369,19 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 9. Versiegeschiedenis ======================= -->
+        <!-- 9. Versiegeschiedenis -->
         <div class="sectie" id="versiegeschiedenis">
             <h2>9. Versiegeschiedenis</h2>
             <p>
                 Met de Versiegeschiedenis kun je de volledige wijzigingshistorie van een stamboom
                 bekijken, een oude versie previews, twee versies vergelijken en een eerdere versie
                 terugzetten. Elke keer dat je een stamboom opslaat in de cloud, wordt automatisch
-                een snapshot bewaard. Je hebt altijd de laatste 20 versies beschikbaar.
+                een snapshot bewaard. Je hebt altijd de laatste <strong>5 versies</strong> beschikbaar.
             </p>
 
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn met een account dat cloud-toegang
-                heeft. Versies worden automatisch aangemaakt bij elke cloud-opslag — je hoeft hier
-                niets voor te doen.
+                <strong>Vereist:</strong> Je moet ingelogd zijn als <strong>Owner</strong> of <strong>Admin</strong>.
+                Versies worden automatisch aangemaakt bij elke cloud-opslag — je hoeft hier niets voor te doen.
             </div>
 
             <h3>Versiehistorie openen</h3>
@@ -547,24 +448,25 @@
 
             <h3>Automatisch opruimen</h3>
             <p>
-                Per stamboom worden maximaal 20 versies bewaard. Zodra die grens wordt bereikt,
+                Per stamboom worden maximaal <strong>5 versies</strong> bewaard. Zodra die grens wordt bereikt,
                 wordt de oudste versie automatisch verwijderd bij de volgende opslag.
             </p>
 
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 10. Cloud stambomen ======================= -->
+        <!-- 10. Cloud stambomen -->
         <div class="sectie" id="cloud">
             <h2>10. Cloud stambomen</h2>
             <p>
-                Met een betaald abonnement of donateur-account kun je meerdere stambomen
+                Met een <strong>Owner</strong>- of <strong>Admin</strong>-account kun je meerdere stambomen
                 opslaan in de cloud. Ze zijn dan beschikbaar op al je apparaten.
             </p>
 
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn met een supporter-, personal-,
-                family-, researcher- of admin-account. Gratis accounts hebben geen cloud-toegang.
+                <strong>Vereist:</strong> Je moet ingelogd zijn met een <strong>Owner</strong>- of
+                <strong>Admin</strong>-account. Viewer- en Editor-accounts hebben geen eigen cloud-opslag.
+                Wil je upgraden naar Owner? Neem contact op via de website.
             </div>
 
             <h3>Stamboom opslaan in de cloud</h3>
@@ -617,7 +519,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 11. Importeren ======================= -->
+        <!-- 11. Importeren -->
         <div class="sectie" id="importeren">
             <h2>11. Importeren</h2>
             <p>
@@ -632,18 +534,18 @@
                 <li>Klik op <strong>"Importeren"</strong>.</li>
             </ul>
             <div class="waarschuwing">
-                <strong>Let op:</strong> Importeren is alleen beschikbaar voor account-eigenaren.
-                Viewers en Editors van een gedeelde stamboom kunnen niet importeren.
+                <strong>Let op:</strong> Importeren is alleen beschikbaar voor <strong>Owner</strong>- en
+                <strong>Admin</strong>-accounts. Viewers en Editors kunnen niet importeren.
             </div>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 12. Exporteren ======================= -->
+        <!-- 12. Exporteren -->
         <div class="sectie" id="exporteren">
             <h2>12. Exporteren</h2>
             <p>
                 Je kunt je stamboom exporteren als CSV (voor Excel) of JSON (volledige back-up).
-                Exporteren is alleen beschikbaar voor account-eigenaren.
+                Exporteren is alleen beschikbaar voor <strong>Owner</strong>- en <strong>Admin</strong>-accounts.
             </p>
 
             <h3>CSV exporteren</h3>
@@ -665,7 +567,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 13. Wachtwoord vergeten ======================= -->
+        <!-- 13. Wachtwoord vergeten -->
         <div class="sectie" id="wachtwoord-reset">
             <h2>13. Wachtwoord vergeten</h2>
             <p>
@@ -682,22 +584,24 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 14. NIEUW — Stamboom delen (F5-04) ======================= -->
+        <!-- 14. Stamboom delen -->
         <div class="sectie" id="delen">
             <h2>14. Stamboom delen &amp; samenwerken</h2>
             <p>
-                Als eigenaar van een stamboom kun je anderen uitnodigen om mee te kijken of mee te werken.
-                Uitgenodigde gebruikers krijgen een rol: <strong>Viewer</strong> of <strong>Editor</strong>.
-                Gratis accounts kunnen niet worden uitgenodigd — de ontvanger moet een betaald account hebben.
+                Als <strong>Owner</strong> kun je anderen uitnodigen om mee te kijken of mee te werken
+                aan je stamboom. Uitgenodigde gebruikers krijgen een rol: <strong>Viewer</strong> of
+                <strong>Editor</strong>. De uitgenodigde persoon heeft een gratis account nodig —
+                de Owner betaalt in feite de toegang.
             </p>
 
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn. De stamboom moet opgeslagen zijn in de cloud.
-                Alleen de eigenaar (Owner) kan andere gebruikers uitnodigen.
+                <strong>Vereist:</strong> Je moet ingelogd zijn als <strong>Owner</strong> of <strong>Admin</strong>.
+                De stamboom moet opgeslagen zijn in de cloud. Alleen de Owner kan anderen uitnodigen —
+                maximaal 5 uitgenodigden per stamboom.
             </div>
 
             <h3>Rollen overzicht</h3>
-            <p>Elk account heeft een rol die bepaalt wat er mogelijk is op een gedeelde stamboom:</p>
+            <p>Elk account heeft een rol die bepaalt wat er mogelijk is:</p>
 
             <table class="rol-tabel">
                 <thead>
@@ -706,35 +610,55 @@
                         <th>👑 Owner</th>
                         <th>✏️ Editor</th>
                         <th>👁 Viewer</th>
+                        <th>🚶 Gast</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Stamboom bekijken (view, tijdlijn, stats)</td>
-                        <td class="check-ja">✓</td>
-                        <td class="check-ja">✓</td>
-                        <td class="check-ja">✓</td>
+                        <td>Lokale stamboom (max 60 personen)</td>
+                        <td class="check-ja">✓ onbeperkt</td>
+                        <td class="check-ja">✓ max 60</td>
+                        <td class="check-ja">✓ max 60</td>
+                        <td class="check-ja">✓ max 60</td>
                     </tr>
                     <tr>
-                        <td>Berichten plaatsen in berichtenboard</td>
+                        <td>Cloud stambomen aanmaken (max 3)</td>
                         <td class="check-ja">✓</td>
-                        <td class="check-ja">✓</td>
-                        <td class="check-ja">✓</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
                     </tr>
                     <tr>
-                        <td>Personen bewerken (manage)</td>
+                        <td>Gedeelde stamboom bekijken</td>
+                        <td class="check-ja">✓</td>
                         <td class="check-ja">✓</td>
                         <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
                     </tr>
                     <tr>
-                        <td>Wijzigingsvoorstel plaatsen (diff)</td>
+                        <td>Gedeelde stamboom bewerken</td>
                         <td class="check-ja">✓</td>
                         <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
                     </tr>
                     <tr>
-                        <td>Discussiestatus aanpassen</td>
+                        <td>Versies terugzetten (max 5)</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Anderen uitnodigen (max 5)</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Berichtenboard gebruiken</td>
+                        <td class="check-ja">✓</td>
                         <td class="check-ja">✓</td>
                         <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
@@ -744,30 +668,21 @@
                         <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
                         <td class="check-nee">✗</td>
-                    </tr>
-                    <tr>
-                        <td>Anderen uitnodigen</td>
-                        <td class="check-ja">✓</td>
-                        <td class="check-nee">✗</td>
                         <td class="check-nee">✗</td>
                     </tr>
                     <tr>
-                        <td>Berichten modereren (verwijderen)</td>
-                        <td class="check-ja">✓</td>
+                        <td>Samenwerking verlaten</td>
                         <td class="check-nee">✗</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
                     </tr>
                     <tr>
-                        <td>Toegang intrekken van anderen</td>
-                        <td class="check-ja">✓</td>
+                        <td>Account vereist</td>
+                        <td class="check-ja">✓ betaald</td>
+                        <td class="check-ja">✓ gratis</td>
+                        <td class="check-ja">✓ gratis</td>
                         <td class="check-nee">✗</td>
-                        <td class="check-nee">✗</td>
-                    </tr>
-                    <tr>
-                        <td>Samenwerking zelf verlaten</td>
-                        <td class="check-nee">✗</td>
-                        <td class="check-ja">✓</td>
-                        <td class="check-ja">✓</td>
                     </tr>
                 </tbody>
             </table>
@@ -784,8 +699,8 @@
             </ul>
 
             <div class="waarschuwing">
-                <strong>Let op:</strong> De uitgenodigde gebruiker moet al een account hebben op MyFamTreeCollab
-                en dat account mag geen gratis account zijn. Gratis accounts kunnen niet worden uitgenodigd.
+                <strong>Let op:</strong> De uitgenodigde gebruiker moet al een account hebben op MyFamTreeCollab.
+                Een gratis account (Viewer of Editor) is voldoende — de Owner maakt de samenwerking mogelijk.
             </div>
 
             <h3>Toegang intrekken</h3>
@@ -821,7 +736,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 15. NIEUW — Berichtenboard (F5-04) ======================= -->
+        <!-- 15. Berichtenboard -->
         <div class="sectie" id="collab">
             <h2>15. Berichtenboard (Samenwerken)</h2>
             <p>
@@ -831,8 +746,9 @@
             </p>
 
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn en toegang hebben tot de actieve stamboom
-                als Viewer, Editor of Owner. Gratis gebruikers hebben geen toegang tot het berichtenboard.
+                <strong>Vereist:</strong> Je moet ingelogd zijn als <strong>Viewer</strong>, <strong>Editor</strong>,
+                <strong>Owner</strong> of <strong>Admin</strong> en toegang hebben tot de actieve stamboom.
+                Gasten (zonder account) hebben geen toegang tot het berichtenboard.
             </div>
 
             <h3>Berichtenboard openen</h3>
@@ -896,7 +812,7 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <!-- ======================= 16. Steun ======================= -->
+        <!-- 16. Steun -->
         <div class="sectie" id="steun">
             <h2>16. Steun dit project</h2>
             <p>
@@ -910,7 +826,7 @@
                style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px;
                       background:#FF5E5B; color:#fff; text-decoration:none;
                       border-radius:6px; font-size:0.95rem; font-weight:bold;">
-                 <img src="/MyFamTreeCollab/img/Coffee.png" alt="Ko-fi" style="height:50px;">
+                <img src="/MyFamTreeCollab/img/Coffee.png" alt="Ko-fi" style="height:50px;">
                 Steun dit project
             </a>
             <a href="#" class="terug-top" style="display:block; margin-top:16px;">↑ Terug naar boven</a>
@@ -919,7 +835,6 @@
     </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
