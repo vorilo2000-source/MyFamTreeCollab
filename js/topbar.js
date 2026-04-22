@@ -1,6 +1,6 @@
 // =============================================================================
 // topbar.js — TopBar Auth Modal & Status
-// MyFamTreeCollab v2.2.1
+// MyFamTreeCollab v2.2.2
 // -----------------------------------------------------------------------------
 // Nieuw in v2.2.1:
 // - _clearLocalData() alleen bij echte gebruikerswissel (SIGNED_IN met andere user)
@@ -414,17 +414,19 @@
     var maxAttempts = 20;
 
     var interval = setInterval(function () {
-      var dropdown = document.getElementById("adminDropdown");
+      var adminDd   = document.getElementById("adminDropdown");
+      var developDd = document.getElementById("developDropdown");
 
-      if (dropdown) {
+      if (adminDd || developDd) {
         clearInterval(interval);
-        dropdown.style.display = isAdmin ? "list-item" : "none";
+        if (adminDd)   adminDd.style.display   = isAdmin ? "list-item" : "none";
+        if (developDd) developDd.style.display = isAdmin ? "list-item" : "none";
       }
 
       attempts++;
       if (attempts >= maxAttempts) {
         clearInterval(interval);
-        console.warn("[topbar] adminDropdown niet gevonden in Navbar");
+        console.warn("[topbar] adminDropdown/developDropdown niet gevonden in Navbar");
       }
     }, 100);
   }
