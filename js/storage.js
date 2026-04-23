@@ -39,7 +39,7 @@
     var ACTIVE_TREE_NAME_KEY = 'stamboomActiefNaam';
 
     // Maximum aantal personen voor gratis (niet-premium) gebruikers lokaal
-    var MAX_LOCAL_FREE = 100;
+    var MAX_LOCAL_FREE = 60;
 
     /* ======================= VEILIGE JSON PARSING ======================= */
 
