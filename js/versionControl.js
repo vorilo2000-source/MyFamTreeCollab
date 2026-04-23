@@ -12,7 +12,7 @@
   // ── Constants ──────────────────────────────────────────────────────────────
 
   /** Maximum number of versions retained per family tree */
-  const MAX_VERSIONS = 20;
+  const MAX_VERSIONS = 5;
 
   /** Supabase table name for version history */
   const TABLE = "stamboom_versies";
