@@ -1,17 +1,22 @@
 // =============================================================================
 // shareModule.js — Stamboom Delen Module
-// MyFamTreeCollab v1.0.1
+// MyFamTreeCollab v1.1.0
 // -----------------------------------------------------------------------------
 // Handles sharing family trees with other users (viewer or editor role).
 // Manages invitations, access lists, and revocation.
+//
+// Nieuw in v1.1.0 (F6-05):
+// - shareTree(): tier-check uitnodigende gebruiker — alleen owner en admin mogen uitnodigen
+// - shareTree(): tier-check uitgenodigde gebruiker verwijderd — elke ingelogde gebruiker
+//   (viewer, editor, owner) kan worden uitgenodigd voor een gedeelde stamboom
 //
 // Bugfix v1.0.1:
 // - listSharedWith() en listSharedWithMe() gebruiken nu _getDisplayName()
 //   met fallback: eerst user_profiles.display_name, dan profiles.username
 //
 // Rules:
-// - Only owners can invite viewers and editors
-// - Free accounts (tier = 'free') cannot be invited
+// - Only owners and admins can invite viewers and editors
+// - Any logged-in user (viewer, editor, owner) can be invited to a shared tree
 // - Viewers and editors can remove themselves (leave collaboration)
 // - Editors can update tree data; viewers are read-only
 //
@@ -91,9 +96,15 @@
       return { success: false, error: "Ongeldige rol. Kies 'viewer' of 'editor'." };
     }
 
-    // Get the currently logged-in user (must be the owner)
+    // Get the currently logged-in user (must be owner or admin)
     const user = await window.AuthModule.getUser();
     if (!user) return { success: false, error: "Niet ingelogd." };
+
+    // Check that the current user has the right tier to invite others
+    const myTier = await window.AuthModule.getTier();                // Haal tier op van uitnodigende gebruiker
+    if (!['owner', 'admin'].includes(myTier)) {                      // Alleen owner en admin mogen uitnodigen
+      return { success: false, error: "Alleen owners kunnen andere gebruikers uitnodigen." };
+    }
 
     // Verify ownership: check that the tree belongs to the current user
     const { data: boom, error: boomErr } = await client
@@ -129,10 +140,6 @@
 
     if (profielErr || !profiel) {
       return { success: false, error: "Profiel van uitgenodigde gebruiker niet gevonden." };
-    }
-
-    if (!profiel.tier || profiel.tier === "free") {
-      return { success: false, error: "Deze gebruiker heeft een gratis account en kan niet worden uitgenodigd." };
     }
 
     // Insert the sharing record into stamboom_gedeeld
