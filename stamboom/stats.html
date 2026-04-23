@@ -68,25 +68,32 @@
             color: #333;
         }
 
-        /* ======================= FAMILIE LIJST (RESPONSIVE GRID) ======================= */
-        #familyList {
-            display: grid;                                              /* Zet lijst om naar grid */
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Responsive kolommen */
-            gap: 10px;                                                  /* Ruimte tussen items */
-            margin-left: 0;                                             /* Belangrijk: reset default indent */
-            padding: 0;                                                 /* Geen padding */
-            list-style: none;                                           /* Geen bullets */
-            line-height: 1.8;
-            font-size: 0.95rem;
-            color: #444;
-        }
+     /* ======================= FAMILIE LIJST (RESPONSIVE GRID) ======================= */
+#familyList {
+    display: grid;                                              /* Zet lijst om naar grid */
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Responsive kolommen */
+    gap: 10px;                                                  /* Ruimte tussen items */
+    margin-left: 0;                                             /* Reset standaard indent */
+    padding: 0;                                                 /* Geen padding */
+    list-style: none;                                           /* Geen bullets */
+    line-height: 1.8;
+    font-size: 0.95rem;
+    color: #444;
+}
 
-        #familyList li {
-            background: #fff;                                           /* Kaart-achtig effect */
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid #eee;
-        }
+#familyList li {
+    background: #fff;                                           /* Kaart-achtergrond */
+    padding: 10px 12px;                                        /* Binnenruimte */
+    border-radius: 6px;                                         /* Afgeronde hoeken */
+    border: 1px solid #eee;                                     /* Subtiele rand */
+    transition: transform 0.2s, background 0.2s;                /* Vloeiende hover animatie */
+}
+
+#familyList li:hover {
+    transform: translateY(-3px);                               /* Licht omhoog bij hover */
+    background: #f0f0f0;                                       /* Subtiele kleurverandering */
+    cursor: pointer;                                           /* Geeft interactief gevoel */
+}
     </style>
 </head>
 
