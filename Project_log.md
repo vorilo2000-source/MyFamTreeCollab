@@ -4,6 +4,73 @@
 > Chronologisch overzicht van alle sessies en wijzigingen.
 
 ---
+## Sessie 15 — Account overdracht & Supabase inrichting
+ 
+**Datum:** 2026-04-23
+**Doel:** Volledige overdracht van thvd64@gmail.com naar vorilo2000@gmail.com. Nieuw Supabase project ingericht, GitHub repo overgezet, Ko-fi bijgewerkt, handleiding herschreven naar nieuw rolmodel.
+ 
+### Uitgevoerd
+ 
+#### Supabase nieuw project (oihzuwlcgyyeuhghjahp)
+Alle tabellen, RLS policies, triggers en functies opnieuw aangemaakt:
+ 
+| Onderdeel | Actie |
+|-----------|-------|
+| Tabellen | `profiles`, `stambomen`, `stamboom_gedeeld`, `collab_messages`, `user_profiles` aangemaakt |
+| RLS | Alle policies ingesteld per tabel |
+| Trigger | `handle_new_user` — profiel aanmaken bij registratie |
+| RPC | `get_user_id_by_email(email)` — security definer |
+| Auth URLs | Site URL + Redirect URL ingesteld op nieuwe GitHub Pages URL |
+| SMTP | Gmail App Password ingesteld voor vorilo2000@gmail.com |
+| E-mail templates | Alle 5 templates bijgewerkt naar nieuwe GitHub Pages URL |
+ 
+#### Testaccounts aangemaakt
+ 
+| Account | Gebruikersnaam | Tier |
+|---------|---------------|------|
+| vorilo2000@gmail.com | Vorilo | admin |
+| buddy00@live.nl | Buddy | viewer |
+| thvd64@gmail.com | Theo | owner |
+| thvd64@icloud.com | Theo (icloud) | editor |
+ 
+#### Code aanpassingen
+ 
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `js/auth.js` | v2.3.0 | v2.3.1 | SUPABASE_URL + SUPABASE_ANON + redirectTo bijgewerkt naar nieuw project |
+| `js/topbar.js` | v2.2.1 | v2.2.2 | `_showAdminDropdown()` uitgebreid met `developDropdown` |
+| `bronnen/handleiding.html` | v1.6.0 | v1.7.0 | Volledig herschreven naar nieuw rolmodel (zie wijzigingen) |
+ 
+#### Bugfix — bevestigingsmail redirect
+ 
+Supabase stuurde bevestigingslink naar `https://vorilo2000-source.github.io/#access_token=...` in plaats van naar `/MyFamTreeCollab/`. Opgelost door de Confirm signup e-mail template aan te passen:
+ 
+**Oud:**
+```html
+<a href="{{ .ConfirmationURL }}"
+```
+**Nieuw:**
+```html
+<a href="{{ .SiteURL }}/#{{ .TokenHash }}&type=signup"
+```
+ 
+#### Ko-fi
+Footer en handleiding bijgewerkt naar `https://ko-fi.com/vorilo`
+ 
+#### GitHub
+Repo overgezet naar `https://github.com/vorilo2000-source/MyFamTreeCollab`
+GitHub Pages live op `https://vorilo2000-source.github.io/MyFamTreeCollab`
+ 
+### Openstaande punten
+ 
+| Punt | Actie |
+|------|-------|
+| Invite user e-mail template | `{{ .ConfirmationURL }}` ook vervangen door `{{ .SiteURL }}/#{{ .TokenHash }}&type=invite` |
+| Reset password e-mail template | Controleren of redirect correct werkt na fix |
+| Admin beheerpagina | Toegevoegd als FA-14 in backlog |
+| Fase 6 rolmodel | Volgende prioriteit — F6-01 t/m F6-17 |
+ 
+---
 
 ## Sessie 13 — F5-04: Stamboom delen, toegangsbeveiliging & collab berichtenboard
 
