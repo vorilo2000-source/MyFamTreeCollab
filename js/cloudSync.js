@@ -1,12 +1,15 @@
-// ========================= js/cloudSync.js v2.1.2 =========================
+// ========================= js/cloudSync.js v2.2.0 =========================
 // Cloud sync module for MyFamTreeCollab
 // Manages multiple family trees per user in Supabase (table: stambomen)
 // Requires: auth.js (window.AuthModule), storage.js (window.StamboomStorage)
 //           versionControl.js (window.VersionControl) — optional, non-fatal if absent
 // Exported as: window.CloudSync
 //
+// Fix v2.2.0 (F6-04):
+// - CLOUD_TIERS aangepast aan nieuw rolmodel: alleen 'owner' en 'admin'
+// - _checkCloudAccess(): 'free' check vervangen door check op ['viewer', 'editor']
+//
 // Fix v2.1.2:
-// - loadFromCloud() verwijdert .eq('user_id', userId) filter zodat viewers en
 //   editors gedeelde stambomen kunnen laden. RLS regelt de toegang.
 // - saveToCloud() ondersteunt nu editor-opslag: als de actieve stamboom niet
 //   van de ingelogde gebruiker is, wordt alleen .eq('id') gefilterd (geen
@@ -27,8 +30,8 @@
 (function () {
     'use strict';
 
-    // Tiers die cloud backup mogen gebruiken
-    var CLOUD_TIERS = ['supporter', 'personal', 'family', 'researcher', 'admin'];
+    // Tiers die cloud backup mogen gebruiken (nieuw rolmodel: alleen owner en admin)
+    var CLOUD_TIERS = ['owner', 'admin'];
 
     // Maximum aantal personen per stamboom voor niet-admin gebruikers
     var MAX_PERSONS = 500;
@@ -71,8 +74,8 @@
 
         var tier = await window.AuthModule.getTier();
 
-        if (tier === 'free') {
-            return { allowed: false, error: 'no_cloud_access', tier: tier };
+        if (['viewer', 'editor'].includes(tier)) {
+            return { allowed: false, error: 'no_cloud_access', tier: tier }; // viewer/editor hebben geen cloud toegang
         }
 
         if (!CLOUD_TIERS.includes(tier)) {
