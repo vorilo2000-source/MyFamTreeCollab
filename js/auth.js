@@ -1,9 +1,13 @@
 // =============================================================================
 // auth.js — Supabase Authentication Module
-// MyFamTreeCollab v2.4.0
+// MyFamTreeCollab v2.4.1
 // -----------------------------------------------------------------------------
 // Handles registration, login, logout, session management, profiles
 // and password reset flow.
+//
+// Nieuw in v2.4.1 (F6-03):
+// - getTier() fallback aangepast van 'free' naar 'viewer' (nieuw rolmodel)
+// - JSDoc comment bijgewerkt: oude tiers verwijderd
 //
 // Nieuw in v2.3.0:
 // - getProfile() haalt nu ook tier, is_admin, is_premium op
@@ -154,14 +158,14 @@
   // ---------------------------------------------------------------------------
   // getTier()
   // Handige shortcut — geeft alleen de tier string terug van de ingelogde gebruiker.
-  // Geeft 'free' terug als niet ingelogd of bij fout.
+  // Geeft 'viewer' terug als niet ingelogd of bij fout (nieuw rolmodel, geen 'free' meer).
   // Gebruikt door cloudSync.js en storage.js voor toegangscontrole.
-  // Returns: 'free' | 'viewer' | 'supporter' | 'personal' | 'family' | 'researcher' | 'admin'
+  // Returns: 'viewer' | 'editor' | 'owner' | 'admin'
   // ---------------------------------------------------------------------------
   async function getTier() {
     const { profile, error } = await getProfile();
-    if (error || !profile) return 'free';       // Niet ingelogd of fout → behandel als gratis
-    return profile.tier || 'free';              // Fallback naar 'free' als kolom leeg is
+    if (error || !profile) return 'viewer';     // Niet ingelogd of fout → behandel als viewer (nieuw rolmodel)
+    return profile.tier || 'viewer';            // Fallback naar 'viewer' als kolom leeg is
   }
 
   // ---------------------------------------------------------------------------
