@@ -1,0 +1,172 @@
+# MyFamTreeCollab — Sessie-briefing volgende chat
+## Datum: 2026-04-23
+## Volgende prioriteit: Fase 6 — Rolmodel implementatie (code aanpassingen)
+
+---
+
+## Context voor Claude
+
+**Project:** MyFamTreeCollab — commerciële heritage & genealogie webapplicatie
+**Live:** https://vorilo2000-source.github.io/MyFamTreeCollab/
+**Stack:** Vanilla HTML + CSS + JavaScript — geen frameworks
+**Backend:** Supabase (auth + cloud opslag)
+**Repo:** https://github.com/vorilo2000-source/MyFamTreeCollab
+**Supabase project:** https://supabase.com/dashboard/project/oihzuwlcgyyeuhghjahp
+
+### Werkwijze
+- Communicatie: Nederlands
+- Code & commentaar: Engels
+- Altijd inline commentaar op elke coderegel
+- Versienummering: gewijzigde bestanden krijgen verhoogd versienummer
+- Na elke taak: PROJECT_LOG.md + BACKLOG.md bijwerken
+- Aan het einde van elke sessie: sessie-briefing leveren voor volgende chat
+
+---
+
+## Wat er in de vorige sessie gedaan is
+
+### Sessie 15 — Account overdracht (2026-04-23)
+
+Volledige overdracht van thvd64@gmail.com → vorilo2000@gmail.com:
+
+**Supabase nieuw project (oihzuwlcgyyeuhghjahp):**
+- Tabellen aangemaakt: `profiles`, `stambomen`, `stamboom_gedeeld`, `collab_messages`, `user_profiles`
+- RLS policies, trigger `handle_new_user`, RPC `get_user_id_by_email` aangemaakt
+- Auth URLs, SMTP (Gmail App Password), e-mail templates ingesteld
+- Tier constraint direct aangemaakt met nieuw rolmodel: `viewer`, `editor`, `owner`, `admin`
+
+**Testaccounts:**
+| Account | Gebruikersnaam | Tier |
+|---------|---------------|------|
+| vorilo2000@gmail.com | Vorilo | admin |
+| buddy00@live.nl | Buddy | viewer |
+| thvd64@gmail.com | Theo | owner |
+| thvd64@icloud.com | Theo (icloud) | editor |
+
+**Code aangepast:**
+- `js/auth.js` v2.3.1 — nieuwe Supabase URL + key + redirectTo
+- `js/topbar.js` v2.2.2 — developDropdown zichtbaar voor admin
+- `bronnen/handleiding.html` v1.7.0 — volledig herschreven naar nieuw rolmodel
+
+**Bugfix bevestigingsmail:**
+Confirm signup template aangepast:
+```html
+<!-- Oud -->
+<a href="{{ .ConfirmationURL }}"
+
+<!-- Nieuw -->
+<a href="{{ .SiteURL }}/#{{ .TokenHash }}&type=signup"
+```
+Werkt nu correct — link gaat naar `https://vorilo2000-source.github.io/MyFamTreeCollab/#...`
+
+**Ko-fi:** bijgewerkt naar `https://ko-fi.com/vorilo`
+
+---
+
+## Huidig rolmodel (definitief vastgesteld)
+
+| Rol | Account | Lokaal | Cloud | Uitnodigen |
+|-----|---------|--------|-------|-----------|
+| Gast | ❌ | 1 boom, max 60 | ❌ | ❌ |
+| Viewer | ✅ gratis | 1 boom, max 60 | ❌ eigen | ❌ |
+| Editor | ✅ gratis | 1 boom, max 60 | ❌ eigen | ❌ |
+| Owner | ✅ betaald | 1 boom, onbeperkt | ✅ max 3 | ✅ max 5 |
+| Admin | ✅ | onbeperkt | ✅ onbeperkt | ✅ onbeperkt |
+
+Supabase `profiles.tier` waarden: `'viewer'` · `'editor'` · `'owner'` · `'admin'`
+
+---
+
+## Eerste prioriteit volgende sessie: Fase 6 code aanpassingen
+
+F6-01 en F6-02 zijn al gedaan (nieuw Supabase project heeft direct het nieuwe rolmodel).
+F6-16 is ook gedaan (handleiding bijgewerkt).
+
+### Nog te doen — volgorde aanhouden:
+
+**F6-03 — `js/auth.js`**
+`getTier()` geeft nu `'free'` terug als fallback — moet `'viewer'` worden:
+```javascript
+// Oud
+return profile.tier || 'free';
+// Nieuw
+return profile.tier || 'viewer';
+```
+Ook de JSDoc comment bijwerken — verwijzing naar oude tiers verwijderen.
+
+**F6-04 — `js/cloudSync.js`**
+```javascript
+// Oud
+var CLOUD_TIERS = ['supporter', 'personal', 'family', 'researcher', 'admin'];
+// Nieuw
+var CLOUD_TIERS = ['owner', 'admin'];
+```
+Persoonslimiet gast: in `_checkCloudAccess()` de `'free'` check vervangen door check op `['viewer', 'editor']`.
+
+**F6-05 — `js/shareModule.js`**
+Tier-check voor uitnodigen aanpassen: alleen `owner` en `admin` mogen uitnodigen.
+Zoek naar de tier-check in `invite()` of `addViewer()` functie.
+
+**F6-06 — `js/accessGuard.js`**
+Rolnamen aanpassen aan nieuw model. Zoek naar verwijzingen naar `'supporter'`, `'personal'`, `'family'`, `'researcher'`, `'free'`.
+
+**F6-07 — `js/storage.js`**
+Persoonslimiet gast aanpassen van 100 naar 60 in `canAdd()`.
+
+**F6-08/09/10 — `js/demo.js`**
+Nieuw bestand aanmaken — hardcoded fictieve demo stamboom voor gasten.
+
+**F6-11/12/13 — Upgrade flow & UI**
+- Lokale data overnemen bij upgrade gast → owner
+- Upgrade-prompt voor gast/viewer/editor op cloud-functies
+- Tekst uitnodiging aanpassen in `storage.html`
+
+**F6-14/15 — Versiebeheer**
+- `js/versionControl.js` — versielimiet 20 → 5
+- Terugzetten alleen voor owner en admin
+
+---
+
+## Openstaande punten uit sessie 15
+
+| Punt | Bestand | Actie |
+|------|---------|-------|
+| Invite user e-mail template | Supabase auth templates | `{{ .ConfirmationURL }}` vervangen door `{{ .SiteURL }}/#{{ .TokenHash }}&type=invite` |
+| Reset password template | Supabase auth templates | Controleren of redirect correct werkt |
+| Admin beheerpagina | `develop/admin/` | FA-14 — na Fase 6 |
+
+---
+
+## Supabase configuratie nieuw project
+
+| Onderdeel | Waarde |
+|-----------|--------|
+| Project URL | `https://oihzuwlcgyyeuhghjahp.supabase.co` |
+| Publishable key | `sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS` |
+| Site URL | `https://vorilo2000-source.github.io/MyFamTreeCollab` |
+| Redirect URL | `https://vorilo2000-source.github.io/MyFamTreeCollab/home/reset.html` |
+| SMTP | Gmail App Password — vorilo2000@gmail.com |
+
+---
+
+## Globale exports (window.*) — nooit lokaal herdefiniëren
+
+| Export | Bron | Versie |
+|--------|------|--------|
+| `window.ftSafe`, `window.ftFormatDate`, `window.ftParseBirthday` | utils.js | — |
+| `window.genereerCode` | idGenerator.js | — |
+| `window.StamboomSchema` | schema.js | — |
+| `window.StamboomStorage` | storage.js | v2.0.2 |
+| `window.AuthModule` | auth.js | v2.3.1 |
+| `window.CloudSync` | cloudSync.js | v2.1.2 |
+| `window.ShareModule` | shareModule.js | v1.0.1 |
+| `window.AccessGuard` | accessGuard.js | v1.0.0 |
+| `window.TopBarAuth` | topbar.js | v2.2.2 |
+| `window.RelatieEngine.computeRelaties` | relatieEngine.js | — |
+| `window.ExportModule` | export.js | — |
+
+## Verplichte laadvolgorde HTML
+```
+supabase SDK → utils.js → schema.js → storage.js → auth.js →
+cloudSync.js → shareModule.js → accessGuard.js → [pagina].js
+```
