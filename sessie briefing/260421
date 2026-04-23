@@ -1,0 +1,260 @@
+# MyFamTreeCollab — Sessie-briefing volgende chat
+## Datum: 2026-04-21
+## Volgende prioriteit: Fase 6 — Rolmodel implementatie
+
+---
+
+## Context voor Claude
+
+**Project:** MyFamTreeCollab — commerciële heritage & genealogie webapplicatie
+**Live:** https://thvd64-cyber.github.io/MyFamTreeCollab/index.html
+**Stack:** Vanilla HTML + CSS + JavaScript — geen frameworks
+**Backend:** Supabase (auth + cloud opslag)
+**Repo:** https://github.com/thvd64-cyber/MyFamTreeCollab
+
+### Werkwijze
+- Communicatie: Nederlands
+- Code & commentaar: Engels
+- Altijd inline commentaar op elke coderegel
+- Versienummering: gewijzigde bestanden krijgen verhoogd versienummer
+- Na elke taak: PROJECT_LOG.md + BACKLOG.md + handleiding bijwerken
+- Aan het einde van elke sessie: sessie-briefing leveren voor volgende chat
+
+---
+
+## Wat er in de vorige sessie gedaan is
+
+### Sessie 13 — F5-04 (2026-04-20)
+- `js/shareModule.js` v1.0.1 — stamboom delen, uitnodigen, rolcheck
+- `js/accessGuard.js` v1.0.0 — pagina-toegangsbeveiliging per rol
+- `stamboom/storage.html` v2.6.0 — Delen knop + "Gedeeld met mij" tabblad
+- `js/collab.js` v2.0.0 — herschreven met AuthModule + ShareModule + livesearch
+- `js/cloudSync.js` v2.1.2 — loadFromCloud/saveToCloud fix voor viewer/editor
+- Supabase: stamboom_gedeeld, collab_messages, RLS policies, RPC functie
+
+### Sessie 14 — Rolmodel herziening (2026-04-21)
+- Nieuw rolmodel vastgesteld: gast · viewer · editor · owner · admin
+- Businessmodel herzien: eenvoudiger, kostendekkend
+- Demo database concept vastgesteld
+- Fase 6 en Fase 7 toegevoegd aan backlog
+
+---
+
+## Huidig rolmodel (definitief vastgesteld)
+
+| Rol | Account | Lokaal | Cloud | Uitnodigen |
+|-----|---------|--------|-------|-----------|
+| Gast | ❌ | 1 boom, max 60 | ❌ | ❌ |
+| Viewer | ✅ gratis | 1 boom, max 60 | ❌ eigen | ❌ |
+| Editor | ✅ gratis | 1 boom, max 60 | ❌ eigen | ❌ |
+| Owner | ✅ betaald | 1 boom, onbeperkt | ✅ max 3 | ✅ max 5 |
+| Admin | ✅ | onbeperkt | ✅ onbeperkt | ✅ onbeperkt |
+
+Supabase `profiles.tier` waarden: `'viewer'` · `'editor'` · `'owner'` · `'admin'`
+Gast heeft geen account — geen profiel-rij.
+
+---
+
+## Eerste prioriteit volgende sessie: Fase 6
+
+### Stap 1 — Supabase SQL (altijd eerst)
+Voer in Supabase SQL Editor uit:
+
+```sql
+-- Stap 1a: verwijder oude constraint
+alter table public.profiles
+drop constraint if exists profiles_tier_check;
+
+-- Stap 1b: nieuwe constraint met nieuw rolmodel
+alter table public.profiles
+add constraint profiles_tier_check
+check (tier in ('viewer', 'editor', 'owner', 'admin'));
+
+-- Stap 1c: migreer bestaande accounts
+update public.profiles set tier = 'owner'
+where tier in ('supporter', 'personal', 'family', 'researcher');
+
+update public.profiles set tier = 'editor'
+where tier = 'free' and id in (
+  select distinct viewer_id from stamboom_gedeeld where rol = 'editor'
+);
+
+update public.profiles set tier = 'viewer'
+where tier = 'free' and id in (
+  select distinct viewer_id from stamboom_gedeeld where rol = 'viewer'
+);
+
+-- Admin blijft admin, thvd64@gmail.com blijft ongewijzigd
+```
+
+### Stap 2 — Code aanpassen
+Na succesvolle SQL: `auth.js`, `cloudSync.js`, `storage.js`, `shareModule.js`, `accessGuard.js`
+
+### Stap 3 — Demo database
+`js/demo.js` aanmaken met hardcoded fictieve stamboom
+
+---
+
+## Openstaande punten uit vorige sessie
+
+| Punt | Bestand | Actie |
+|------|---------|-------|
+| Tekst uitnodiging aanpassen | `stamboom/storage.html` | "Uitnodiging verstuurd" → "[email] toegevoegd als [rol]" (F6-13) |
+| Versielimiet 20 → 5 | `js/versionControl.js` | F6-14 |
+| Uitnodigingsmail | Nieuwe taak | F6-18 — nog toe te voegen |
+
+---
+
+## Globale exports (window.*) — nooit lokaal herdefiniëren
+
+| Export | Bron | Versie |
+|--------|------|--------|
+| `window.ftSafe`, `window.ftFormatDate`, `window.ftParseBirthday` | utils.js | — |
+| `window.genereerCode` | idGenerator.js | — |
+| `window.StamboomSchema` | schema.js | — |
+| `window.StamboomStorage` | storage.js | v2.0.2 |
+| `window.AuthModule` | auth.js | v2.3.0 |
+| `window.CloudSync` | cloudSync.js | v2.1.2 |
+| `window.ShareModule` | shareModule.js | v1.0.1 |
+| `window.AccessGuard` | accessGuard.js | v1.0.0 |
+| `window.TopBarAuth` | topbar.js | v2.2.1 |
+| `window.RelatieEngine.computeRelaties` | relatieEngine.js | — |
+| `window.ExportModule` | export.js | — |
+
+## Verplichte laadvolgorde HTML
+```
+supabase SDK → utils.js → schema.js → storage.js → auth.js →
+cloudSync.js → shareModule.js → accessGuard.js → [pagina].js
+```
+
+---
+
+---
+
+# Overdracht naar vorilo2000@gmail.com
+
+## Overzicht accounts te overdragen
+
+| Platform | Van | Naar | Methode |
+|----------|-----|------|---------|
+| GitHub | thvd64-cyber | vorilo2000 | Zie stap 1 |
+| Supabase | huidig account | vorilo2000@gmail.com | Zie stap 2 |
+| Ko-fi | huidig account | vorilo2000@gmail.com | Zie stap 3 |
+| Claude.ai | huidig account | vorilo2000@gmail.com | Zie stap 4 |
+
+---
+
+## Stap 1 — GitHub overdracht
+
+GitHub heeft geen directe "account overdracht" — wel twee opties:
+
+### Optie A — Repository overdragen (aanbevolen)
+Behoudt alle commits, issues en history. URL verandert.
+
+1. Ga naar https://github.com/thvd64-cyber/MyFamTreeCollab
+2. Klik **Settings** → scroll naar beneden → **Danger Zone**
+3. Klik **Transfer repository**
+4. Vul in: `vorilo2000` (de nieuwe eigenaar)
+5. Bevestig met de repo-naam
+6. Accepteer de uitnodiging vanuit het vorilo2000 account
+
+**Na overdracht:**
+- Oude URL redirect automatisch naar nieuwe URL
+- GitHub Pages blijft werken maar URL verandert naar `vorilo2000.github.io/MyFamTreeCollab`
+- **Belangrijk:** alle absolute paden in de code (`/MyFamTreeCollab/...`) blijven werken zolang de repo-naam hetzelfde blijft
+
+### Optie B — Fork + clone (als optie A niet mogelijk)
+1. Fork de repo vanuit vorilo2000 account
+2. Clone lokaal, push naar nieuwe repo
+3. GitHub Pages opnieuw instellen
+4. Let op: history blijft maar is een fork
+
+---
+
+## Stap 2 — Supabase overdracht
+
+Supabase ondersteunt organisatie-overdracht. Dit is de veiligste methode.
+
+### Via organisatie (aanbevolen)
+1. Log in op https://supabase.com met huidig account
+2. Ga naar het project **MyFamTreeCollab**
+3. Klik **Settings** → **General**
+4. Onder **Transfer project**: voer `vorilo2000@gmail.com` in
+5. Het nieuwe account ontvangt een uitnodiging per mail
+6. Accepteer de uitnodiging vanuit vorilo2000 account
+
+**Na overdracht:**
+- Project URL blijft hetzelfde (`xpufzrjncivyzyukwcmn.supabase.co`)
+- API keys blijven hetzelfde — **geen codewijzigingen nodig**
+- Alle tabellen, RLS, triggers en data blijven intact
+
+### Alternatief — Nieuwe API keys genereren
+Als de overdracht niet lukt: voeg vorilo2000@gmail.com toe als team member met Owner rechten via **Settings → Team**.
+
+---
+
+## Stap 3 — Ko-fi overdracht
+
+Ko-fi heeft geen directe account overdracht. Opties:
+
+### Optie A — E-mail wijzigen in Ko-fi
+1. Log in op https://ko-fi.com
+2. Ga naar **Settings → Account**
+3. Wijzig het e-mailadres naar `vorilo2000@gmail.com`
+4. Bevestig via de verificatiemail
+
+### Optie B — Nieuw Ko-fi account (als optie A niet werkt)
+1. Maak nieuw account aan op https://ko-fi.com met vorilo2000@gmail.com
+2. Stel dezelfde paginanaam in: `myfamtreecollab`
+3. Kopieer de beschrijving, afbeeldingen en instellingen handmatig
+4. Update de Ko-fi links in de code:
+   - `Layout/TopBar.html`
+   - `Layout/Footer.html`
+   - `home/about.html`
+   - `bronnen/handleiding.html`
+
+---
+
+## Stap 4 — Claude.ai
+
+Claude heeft geen project- of gespreksoverdracht tussen accounts. Dit is de beperking van het platform.
+
+### Wat je wél kunt doen
+1. Maak een nieuw Claude account aan met vorilo2000@gmail.com op https://claude.ai
+2. Begin een nieuwe chat en geef de volgende documenten mee als context:
+   - `Project.md` (projectvisie + technische info)
+   - `BACKLOG.md` (huidige staat van alle taken)
+   - `PROJECT_LOG.md` (sessiehistorie)
+   - Deze sessie-briefing
+
+### Wat verloren gaat
+- Gesprekshistorie van alle vorige sessies
+- Projectgeheugen (Claude heeft dit toch niet tussen sessies)
+- **Niets wat in de documentbestanden staat gaat verloren**
+
+### Aanbeveling
+Zorg dat `Project.md`, `BACKLOG.md` en `PROJECT_LOG.md` altijd volledig up-to-date zijn in de GitHub repo. Dan is er bij elke nieuwe chat of accountwisseling direct volledige context beschikbaar.
+
+---
+
+## Volgorde van overdracht (belangrijk)
+
+Doe dit in deze volgorde om problemen te voorkomen:
+
+1. **Supabase eerst** — geen codewijzigingen nodig, API keys blijven
+2. **Ko-fi** — e-mailadres wijzigen of nieuw account
+3. **GitHub** — repository overdragen (GitHub Pages update automatisch)
+4. **Claude** — nieuwe chat starten met documentatie als context
+
+---
+
+## Na de overdracht checklist
+
+- [ ] Supabase project toegankelijk vanuit vorilo2000 account
+- [ ] GitHub repo zichtbaar onder vorilo2000
+- [ ] GitHub Pages live op nieuwe URL
+- [ ] Ko-fi pagina actief en bereikbaar
+- [ ] Live site `https://[nieuw-account].github.io/MyFamTreeCollab/` werkt
+- [ ] Supabase SMTP redirect URL bijgewerkt als GitHub Pages URL verandert
+- [ ] Supabase Site URL bijgewerkt in Auth settings als GitHub Pages URL verandert
+- [ ] Admin account (thvd64@gmail.com) omzetten naar vorilo2000@gmail.com in profiles tabel
