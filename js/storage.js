@@ -1,7 +1,13 @@
-/* ======================= js/storage.js v2.1.0 =======================
+/* ======================= js/storage.js v2.2.0 =======================
    Persistente opslag voor MyFamTreeCollab via localStorage
    Exporteert: window.StamboomStorage
    Vereist: schema.js (voor veldnamen), idGenerator.js (voor ID-fallback)
+
+   Wijzigingen v2.2.0 (F6-11):
+   - canAdd() aangepast aan nieuw rolmodel:
+     viewer en editor hebben zelfde lokale limiet als gast (MAX_LOCAL_FREE)
+     owner en admin hebben geen lokaal limiet
+   - MAX_LOCAL_FREE export comment gecorrigeerd (was 100, is 60)
 
    Wijzigingen v2.1.0 (F5-07):
    - getActiveTreeId()    — geeft UUID van actieve cloud stamboom
@@ -38,7 +44,7 @@
     // Sleutel voor de naam van de actieve cloud stamboom (F5-07)
     var ACTIVE_TREE_NAME_KEY = 'stamboomActiefNaam';
 
-    // Maximum aantal personen voor gratis (niet-premium) gebruikers lokaal
+    // Maximum aantal personen voor niet-premium gebruikers lokaal (viewer, editor, gast)
     var MAX_LOCAL_FREE = 60;
 
     /* ======================= VEILIGE JSON PARSING ======================= */
@@ -159,26 +165,28 @@
     /* ======================= CAN ADD ======================= */
 
     // Controleert of een nieuwe persoon toegevoegd mag worden.
-    // Gratis gebruikers (tier 'free') zijn beperkt tot MAX_LOCAL_FREE personen.
-    // Premium en admin gebruikers hebben geen lokaal limiet.
+    // Nieuw rolmodel (F6-11):
+    //   viewer en editor → beperkt tot MAX_LOCAL_FREE (zelfde als niet-ingelogd)
+    //   owner en admin   → geen lokaal limiet
     // Returns: { allowed: true } of { allowed: false, count, max }
     async function canAdd() {
         var current = get().length;                                        // Huidig aantal personen
 
-        var tier = 'free';
+        var tier = 'viewer';                                               // Fallback naar viewer (nieuw rolmodel)
         if (window.AuthModule && typeof window.AuthModule.getTier === 'function') {
             tier = await window.AuthModule.getTier();                      // Wacht op tier uit Supabase
         }
 
-        if (tier !== 'free') {
-            return { allowed: true };                                      // Premium/admin: geen limiet
+        if (tier === 'owner' || tier === 'admin') {
+            return { allowed: true };                                      // Owner/admin: geen lokaal limiet
         }
 
+        // viewer, editor en niet-ingelogd: limiet van MAX_LOCAL_FREE
         if (current >= MAX_LOCAL_FREE) {
-            return { allowed: false, count: current, max: MAX_LOCAL_FREE };
+            return { allowed: false, count: current, max: MAX_LOCAL_FREE }; // Limiet bereikt
         }
 
-        return { allowed: true };
+        return { allowed: true };                                          // Binnen limiet
     }
 
     /* ======================= ADD ======================= */
@@ -263,8 +271,8 @@
         setActiveTreeId,        // (id)         → void                      (F5-07)
         getActiveTreeName,      // ()           → string of null            (F5-07)
         setActiveTreeName,      // (naam)       → void                      (F5-07)
-        MAX_LOCAL_FREE,         // 100
-        version: 'v2.1.0'
+        MAX_LOCAL_FREE,         // 60
+        version: 'v2.2.0'
     };
 
 })();
