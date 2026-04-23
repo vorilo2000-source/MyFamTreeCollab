@@ -1,7 +1,11 @@
 /**
  * versionControl.js
- * Version: 1.0.0
+ * Version: v1.1.0
  * Module: VersionControl — save, list, retrieve, restore and compare family tree versions in Supabase
+ *
+ * Nieuw in v1.1.0 (F6-15):
+ * - restoreVersion() controleert nu tier via AuthModule.getTier()
+ *   Alleen 'owner' en 'admin' mogen een versie terugzetten
  * Depends on: window.AuthModule (auth.js), window.CloudSync (cloudSync.js), window.StamboomSchema (schema.js)
  * Global export: window.VersionControl
  */
@@ -181,6 +185,15 @@
      */
     async restoreVersion(stamboomId, versieId) {
       const client = getClient();
+
+      // Step 0 — only owner and admin may restore a version
+      if (!window.AuthModule || typeof window.AuthModule.getTier !== 'function') {
+        throw new Error("[VersionControl] AuthModule.getTier niet beschikbaar");
+      }
+      const tier = await window.AuthModule.getTier();              // Haal tier op van ingelogde gebruiker
+      if (!['owner', 'admin'].includes(tier)) {                    // Alleen owner en admin mogen terugzetten
+        throw new Error("[VersionControl] Geen toegang: alleen owners kunnen een versie terugzetten.");
+      }
 
       // Step 1 — load the historic snapshot
       const historicData = await VersionControl.getVersionData(versieId);
@@ -367,5 +380,5 @@
   // ── Expose globally ────────────────────────────────────────────────────────
   window.VersionControl = VersionControl;
 
-  console.log("[VersionControl] Module loaded (v1.0.0)");
+  console.log("[VersionControl] Module loaded (v1.1.0)");
 })();
