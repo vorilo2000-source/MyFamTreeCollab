@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-04-20
+## Bijgewerkt: 2026-04-23
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -103,8 +103,8 @@
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
 | F3-57 | 🔴 Hoog | Overlijdensdatum tonen op tijdlijn | ✅ Gedaan |
-| F3-58 | 🟡 Middel | Levensspanne als balk weergeven (geboorte → overlijden) | 🔮 Toekoms |
-| F3-59 | 🟡 Middel | Schaalbare tijdas (zoom in op bepaalde periode) | 🔮 Toekoms |
+| F3-58 | 🟡 Middel | Levensspanne als balk weergeven (geboorte → overlijden) | 🔮 Toekomst |
+| F3-59 | 🟡 Middel | Schaalbare tijdas (zoom in op bepaalde periode) | 🔮 Toekomst |
 | F3-60 | 🟢 Laag | Historische gebeurtenissen toevoegen aan tijdlijn | 🔮 Toekomst |
 
 ### 3F — Import / export
@@ -120,9 +120,9 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F3-65 | 🔴 Hoog | `stamboom/manage-en.html` repareren en facelift | 🔮 Toekoms |
-| F3-66 | 🔴 Hoog | `home/export-en.html` synchroniseren met `export.html` | 🔮 Toekoms |
-| F3-67 | 🔴 Hoog | `home/import-en.html` repareren: mist schema.js + storage.js | 🔮 Toekoms |
+| F3-65 | 🔴 Hoog | `stamboom/manage-en.html` repareren en facelift | 🔮 Toekomst |
+| F3-66 | 🔴 Hoog | `home/export-en.html` synchroniseren met `export.html` | 🔮 Toekomst |
+| F3-67 | 🔴 Hoog | `home/import-en.html` repareren: mist schema.js + storage.js | 🔮 Toekomst |
 
 ### 3H — Overige
 
@@ -151,6 +151,7 @@
 | FA-11 | 🟢 Laag | Donateurs-badge (toekomstig — na Ko-fi webhook integratie) | 🔮 Toekomst |
 | FA-12 | 🟡 Middel | E-mail templates huisstijl (alle 5 templates) | ✅ Gedaan |
 | FA-13 | 🔴 Hoog | Admin dropdown verbergen voor niet-admins | ✅ Gedaan |
+| FA-14 | 🟡 Middel | Admin beheerpagina in `develop/admin/` — gebruikers en tiers beheren via website | 📋 Open |
 
 ---
 
@@ -164,14 +165,14 @@
 | FA+-04 | 🔴 Hoog | Gratis limiet bewaken: max 100 personen lokaal voor free tier | ✅ Gedaan |
 | FA+-05 | 🟡 Middel | "Laad vanuit cloud" knop op `storage.html` | ✅ Gedaan |
 | FA+-06 | 🟡 Middel | Conflictmelding tonen als cloud-versie nieuwer is dan lokale versie | ✅ Gedaan |
-| FA+-07 | 🟡 Middel | `home/account.html` aanmaken — uitgesteld naar meerdere stambomen fase | 🔮 Toekomst |
+| FA+-07 | 🟡 Middel | `home/account.html` aanmaken | 🔮 Toekomst |
 | FA+-08 | 🟢 Laag | Timestamp tonen van laatste cloud-backup op `storage.html` | ✅ Gedaan |
 | FA+-09 | 🔴 Hoog | Tier/rollen systeem: is_admin, is_premium, tier, tier_until in profiles | ✅ Gedaan |
 | FA+-10 | 🔴 Hoog | Cloud toegang alleen voor premium/admin — gratis gebruikers zien upgrade melding | ✅ Gedaan |
 
 ---
 
-## Fase 4 — Nieuwe features 📋 GEPLAND
+## Fase 4 — Nieuwe features
 
 ### 4A — Persoonsbeheer
 
@@ -210,7 +211,7 @@
 
 ---
 
-## Fase 5 — Cloud & accounts
+## Fase 5 — Cloud & accounts ✅ AFGEROND
 
 | ID | Taak | Status |
 |----|------|--------|
@@ -223,8 +224,74 @@
 | F5-07 | Meerdere stambomen per gebruiker in cloud | ✅ Gedaan |
 | F5-08 | account.html — overzicht stambomen, backups, profiel | ✅ Gedaan |
 | F5-09 | Promotiecodes voor cloud toegang | 🔮 Toekomst |
-| F5-10 | Abonnementen en betaaltiers verder uitwerken | 🔮 Toekomst |
-| F5-11 | Ko-fi webhook integratie voor donateur-badge | 🔮 Toekomst |
+| F5-10 | Abonnementen en betaaltiers verder uitwerken | → Fase 7 |
+| F5-11 | Ko-fi webhook integratie voor donateur-badge | → Fase 7 |
+
+---
+
+## Fase 6 — Rolmodel implementatie 🔄 HUIDIG
+
+> Herziening van het tier-systeem naar een vereenvoudigd rolmodel.
+> Rollen: gast (geen account) · viewer · editor · owner · admin
+> Volledig besluitvormingsdocument in PROJECT_LOG.md Sessie 14.
+>
+> **Volgorde verplicht:** F6-01 en F6-02 (Supabase migratie) ALTIJD eerst uitvoeren
+> voordat andere F6-taken worden opgepakt.
+
+### 6A — Supabase & auth (eerst uitvoeren)
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F6-01 | 🔴 Hoog | Supabase: tier constraint aanpassen naar `viewer`, `editor`, `owner`, `admin` | ✅ Gedaan |
+| F6-02 | 🔴 Hoog | Supabase: bestaande accounts migreren naar nieuw tier-model | ✅ Gedaan |
+| F6-03 | 🔴 Hoog | `js/auth.js` — `getTier()` mapping aanpassen naar nieuw rolmodel | 📋 Open |
+| F6-04 | 🔴 Hoog | `js/cloudSync.js` — `CLOUD_TIERS` → `['owner', 'admin']`, gast limiet → 60 personen | 📋 Open |
+| F6-05 | 🔴 Hoog | `js/shareModule.js` — tier-check: alleen `owner` mag uitnodigen | 📋 Open |
+| F6-06 | 🔴 Hoog | `js/accessGuard.js` — rolnamen aanpassen aan nieuw model | 📋 Open |
+| F6-07 | 🟡 Middel | `js/storage.js` — persoonslimiet gast aanpassen van 100 naar 60 | 📋 Open |
+
+### 6B — Demo database
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F6-08 | 🔴 Hoog | `js/demo.js` aanmaken — hardcoded fictieve demo stamboom, laadt bij gast-sessie, reset per sessie | 📋 Open |
+| F6-09 | 🟡 Middel | Demo stamboom inhoud samenstellen (fictieve familie, gevarieerde data, meerdere generaties) | 📋 Open |
+| F6-10 | 🟡 Middel | Demo-melding tonen voor gast: "Je werkt met een demo stamboom — maak een account aan om op te slaan" | 📋 Open |
+
+### 6C — Upgrade flow & UI
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F6-11 | 🔴 Hoog | Lokale data overnemen bij upgrade gast → owner (upload naar cloud bij eerste opwaardering) | 📋 Open |
+| F6-12 | 🟡 Middel | UI: upgrade-prompt tonen voor gast/viewer/editor op cloud-functies | 📋 Open |
+| F6-13 | 🟡 Middel | Tekstaanpassing uitnodiging `storage.html`: "Uitnodiging verstuurd" → "[email] toegevoegd als [rol]" | 📋 Open |
+
+### 6D — Versiebeheer aanpassen
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F6-14 | 🟡 Middel | Versielimiet aanpassen van 20 naar 5 per stamboom in `versionControl.js` | 📋 Open |
+| F6-15 | 🟡 Middel | Versies terugzetten alleen beschikbaar voor owner en admin | 📋 Open |
+
+### 6E — Handleiding & UI teksten
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F6-16 | 🟡 Middel | `bronnen/handleiding.html` — rolbeschrijvingen herschrijven naar nieuw model | ✅ Gedaan |
+| F6-17 | 🟢 Laag | `abonnementen/overzicht.html` bijwerken naar nieuwe rollen | 📋 Open |
+
+---
+
+## Fase 7 — Businessmodel & betaling 🔮 TOEKOMST
+
+| ID | Taak | Status |
+|----|------|--------|
+| F7-01 | Stripe integratie voor owner-donatie (~€5 per 6 maanden) | 🔮 Toekomst |
+| F7-02 | Supabase webhook: Stripe betaling → tier automatisch naar `owner` | 🔮 Toekomst |
+| F7-03 | Bedrijfsoprichting & belastingstructuur | 🔮 Toekomst |
+| F7-04 | Ko-fi behouden als vrijwillige steunknop (niet als toegangspoort) | 🔮 Toekomst |
+| F7-05 | Prijsstelling definitief vaststellen (owner-donatie bedrag en periode) | 🔮 Toekomst |
+| F7-06 | Owner-limiet verhogen op basis van inkomsten en Supabase kosten | 🔮 Toekomst |
 
 ---
 
@@ -241,14 +308,31 @@
 | BF-07 | storage.html — renderTable() niet aangeroepen na cloud laden | ✅ Opgelost |
 | BF-08 | cloudSync.js — dubbele .eq('id', userId) bug in saveToCloud() | ✅ Opgelost |
 
+## Bugfixes sessie 2026-04-20/21
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-09 | cloudSync.js v2.1.2 — loadFromCloud() blokkeerde viewers/editors door user_id filter | ✅ Opgelost |
+| BF-10 | cloudSync.js v2.1.2 — saveToCloud() blokkeerde editor-opslag door user_id filter op update | ✅ Opgelost |
+| BF-11 | shareModule.js v1.0.1 — listSharedWith() toonde "Onbekend" door ontbrekende profiles fallback | ✅ Opgelost |
+| BF-12 | Supabase RLS — profiles select policy te strikt voor tier-leestoegang bij uitnodigen | ✅ Opgelost |
+
+## Bugfixes sessie 2026-04-23
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-13 | Bevestigingsmail redirect naar root GitHub Pages i.p.v. /MyFamTreeCollab/ — opgelost via `{{ .SiteURL }}/#{{ .TokenHash }}&type=signup` in Confirm signup template | ✅ Opgelost |
+| BF-14 | topbar.js — developDropdown niet zichtbaar voor admin | ✅ Opgelost |
+
 ---
 
-## Verbeteringen sessie 2026-04-19
+## Verbeteringen
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
 | VB-01 | topbar.js v2.2.0 — gebruikersmenu dropdown (Account / Versiegeschiedenis / Uitloggen) | ✅ Gedaan |
 | VB-02 | storage.html v2.5.0 — wissel modal bij laden andere stamboom (3 knoppen) | ✅ Gedaan |
+| VB-03 | topbar.js v2.2.2 — developDropdown zichtbaar voor admin naast adminDropdown | ✅ Gedaan |
 
 ---
 
@@ -264,6 +348,7 @@
 | TD-06 | `home/import-en.html` laadt import.js zonder schema.js en storage.js | 🔴 Hoog |
 | TD-07 | SMTP via Gmail App Password — niet ideaal voor productie, eigen domein nodig | 🟡 Middel |
 | TD-08 | async/await mismatch — alle call-sites van storage.add() controleren buiten create.js | 🟡 Middel |
+| TD-09 | Tier-constraint Supabase nog op oud model — blokkerende vereiste voor Fase 6 | ✅ Opgelost in Sessie 15 |
 
 ---
 
