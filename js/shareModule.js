@@ -1,8 +1,8 @@
 // =============================================================================
 // shareModule.js — Stamboom Delen Module
-// MyFamTreeCollab v1.1.1
+// MyFamTreeCollab v1.1.2
 // -----------------------------------------------------------------------------
-// Nieuw in v1.1.1:
+// Nieuw in v1.1.2:
 // - 'profiles' → 'profile' (correcte tabelnaam) in _getDisplayName() en shareTree()
 //
 // Nieuw in v1.1.0 (F6-05):
@@ -58,7 +58,7 @@
 
     // Stap 2: fallback naar profile.username (correcte tabelnaam zonder s)
     const { data: pData } = await client
-      .from('profile')               // Correcte tabelnaam (zonder s)
+      .from('profiles')               // Correcte tabelnaam (zonder s)
       .select('username')
       .eq('id', userId)
       .single();
@@ -118,7 +118,7 @@
 
     // Profiel van uitgenodigde gebruiker ophalen uit profile (correcte tabelnaam zonder s)
     const { data: profiel, error: profielErr } = await client
-      .from("profile")               // Correcte tabelnaam (zonder s)
+      .from("profiles")               // Correcte tabelnaam (zonder s)
       .select("tier")
       .eq("id", viewerId)
       .single();
