@@ -1,0 +1,39 @@
+sessieMyFamTreeCollab — Sessie-briefing volgende chat
+Datum: 2026-04-24
+Volgende prioriteit: Fase 7 voorbereiden + openstaande punten afronden
+
+Context voor Claude
+Project: MyFamTreeCollab — commerciële heritage & genealogie webapplicatie
+Live: https://vorilo2000-source.github.io/MyFamTreeCollab/
+Stack: Vanilla HTML + CSS + JavaScript — geen frameworks
+Backend: Supabase (auth + cloud opslag)
+Repo: https://github.com/vorilo2000-source/MyFamTreeCollab
+Supabase project: https://supabase.com/dashboard/project/oihzuwlcgyyeuhghjahp
+Werkwijze
+
+Communicatie: Nederlands
+Code & commentaar: Engels
+Altijd inline commentaar op elke coderegel
+Versienummering: gewijzigde bestanden krijgen verhoogd versienummer
+Na elke taak: PROJECT_LOG.md + BACKLOG.md bijwerken
+Aan het einde van elke sessie: sessie-briefing leveren voor volgende chat
+
+
+Wat er in sessie 16 gedaan is
+Fase 6 — volledig afgerond
+BestandVersieWijzigingjs/auth.jsv2.4.1getTier() fallback 'free' → 'viewer'js/cloudSync.jsv2.2.0CLOUD_TIERS → ['owner','admin'], viewer/editor checkjs/shareModule.jsv1.1.0Alleen owner/admin mag uitnodigen, elke ingelogde gebruiker mag worden uitgenodigdjs/accessGuard.jsv1.1.0Dubbele inhoud verwijderd, rolnamen waren al correctjs/storage.jsv2.2.0canAdd() viewer/editor = 60 limiet, owner/admin onbeperktjs/versionControl.jsv1.1.0MAX_VERSIONS = 5, restoreVersion() alleen owner/adminjs/demo.jsv1.0.0Nieuw — 37 fictieve personen, 2 families, 6 generatiesstamboom/storage.htmlv2.7.1Actieve balk op Mijn data, upgrade-prompt, bugfix verwijderen/resetbronnen/handleiding.htmlv1.8.0Demo-melding, actieve balk, uitnodiging, roltabel
+
+Huidig rolmodel (definitief)
+RolAccountLokaalCloudUitnodigenGast❌1 boom, max 60, demo❌❌Viewer✅ gratis1 boom, max 60❌ eigen❌Editor✅ gratis1 boom, max 60❌ eigen❌Owner✅ betaald1 boom, onbeperkt✅ max 3✅ max 5Admin✅onbeperkt✅ onbeperkt✅ onbeperkt
+
+Openstaande punten
+PuntBestandActieInvite user e-mail templateSupabase auth templates{{ .ConfirmationURL }} → {{ .SiteURL }}/#{{ .TokenHash }}&type=inviteReset password templateSupabase auth templatesControleren of redirect correct werktAdmin beheerpaginadevelop/admin/FA-14abonnementen/overzicht.html—F6-17 — bijwerken naar nieuwe rollendemo.js koppelen aan pagina'sindex.html e.a.Demo laden bij gast-sessie via DOMContentLoaded check
+
+Supabase configuratie
+OnderdeelWaardeProject URLhttps://oihzuwlcgyyeuhghjahp.supabase.coPublishable keysb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDSSite URLhttps://vorilo2000-source.github.io/MyFamTreeCollabRedirect URLhttps://vorilo2000-source.github.io/MyFamTreeCollab/home/reset.html
+
+Globale exports (window.*) — nooit lokaal herdefiniëren
+ExportBronVersiewindow.ftSafe, window.ftFormatDate, window.ftParseBirthdayutils.js—window.genereerCodeidGenerator.js—window.StamboomSchemaschema.js—window.StamboomStoragestorage.jsv2.2.0window.AuthModuleauth.jsv2.4.1window.CloudSynccloudSync.jsv2.2.0window.ShareModuleshareModule.jsv1.1.0window.AccessGuardaccessGuard.jsv1.1.0window.TopBarAuthtopbar.jsv2.2.2window.VersionControlversionControl.jsv1.1.0window.DemoModuledemo.jsv1.0.0window.RelatieEngine.computeRelatiesrelatieEngine.js—window.ExportModuleexport.js—
+Verplichte laadvolgorde HTML
+supabase SDK → utils.js → schema.js → storage.js → auth.js →
+cloudSync.js → shareModule.js → accessGuard.js → demo.js → [pagina].js briefing
