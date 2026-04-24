@@ -297,7 +297,7 @@ modalOverlay.addEventListener('click', e => {
 document.getElementById('logoutLink').addEventListener('click', async e => {
   e.preventDefault();                          // standaard navigatie voorkomen
   await window.AuthModule.logout();            // uitloggen via AuthModule
-  window.location.href = '../../index.html';  // terug naar hoofdpagina
+  window.location.href = '../index.html';  // terug naar hoofdpagina
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────
@@ -309,7 +309,7 @@ document.getElementById('logoutLink').addEventListener('click', async e => {
 async function init() {
   const tier = await window.AuthModule.getTier(); // huidig tier ophalen
   if (tier !== 'admin') {                          // niet-admin geblokkeerd
-    window.location.href = '../../index.html';    // doorsturen naar home
+    window.location.href = '../index.html';    // doorsturen naar home
     return;
   }
   await loadUsers(); // gebruikers laden
