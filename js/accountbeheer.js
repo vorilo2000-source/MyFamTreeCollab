@@ -1,4 +1,4 @@
-// js/accountbeheer.js — v1.0.0 — Admin accountbeheer logica
+// js/accountbeheer.js — v1.0.1 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
 // Vereist: window.AuthModule (auth.js), Supabase SDK geladen via topbar/auth
 // Toegang: alleen admin — AccessGuard blokkeert andere rollen voor de pagina laadt
@@ -156,10 +156,10 @@ async function loadUsers() {
   tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Laden...</td></tr>'; // laadtekst
 
   try {
-    // Profielen ophalen uit publieke profiles tabel
+    // Gebruikers ophalen uit admin_users view (join van profiles + auth.users)
     const { data: profiles, error } = await sb
-      .from('profiles')                  // tabel
-      .select('id, username, tier, created_at, email') // gewenste kolommen
+      .from('admin_users')               // view met email + last_sign_in_at
+      .select('id, username, tier, created_at, email, last_sign_in_at') // alle kolommen
       .order('created_at', { ascending: false }); // nieuwste eerst
 
     if (error) throw error; // fout doorgooien
