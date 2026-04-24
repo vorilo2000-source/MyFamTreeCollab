@@ -1,6 +1,13 @@
-<!-- ======================= bronnen/handleiding.html v1.7.0 =======================
+<!-- ======================= bronnen/handleiding.html v1.8.0 =======================
      Gebruikershandleiding voor MyFamTreeCollab
      Beschrijft alle functies van de applicatie stap voor stap
+
+     Wijzigingen v1.8.0 (Sessie 16 — Fase 6 code aanpassingen):
+     - Sectie 1  — demo-melding bijgewerkt: demo.js laadt automatisch voor gasten
+     - Sectie 8  — actieve stamboom balk vermeld op "Mijn data" tabblad
+     - Sectie 10 — verwijderen cloud stamboom: actief-status wordt correct gewist
+     - Sectie 14 — uitnodiging: elke gebruiker met account (ook viewer) kan worden uitgenodigd
+     - Sectie 14 — roltabel bijgewerkt: demo stamboom voor gasten toegevoegd
 
      Wijzigingen v1.7.0 (Sessie 15 — overdracht + Fase 6 rolmodel):
      - Sectie 2  — gebruikersmenu bijgewerkt
@@ -79,7 +86,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Handleiding <span class="versie-badge">v1.7.0</span></h1>
+            <h1>Handleiding <span class="versie-badge">v1.8.0</span></h1>
             <p>
                 Welkom bij de handleiding van MyFamTreeCollab. Hier vind je stap voor stap uitleg
                 over alle functies van de applicatie — van je eerste persoon aanmaken tot je stamboom
@@ -118,9 +125,10 @@
                 eigen apparaat, in de browser.
             </p>
             <div class="tip">
-                <strong>Tip:</strong> Maak een account aan om later je stamboom veilig op te slaan
-                in de cloud. Zonder account werkt alles ook — je data blijft dan alleen lokaal
-                en wordt gereset bij het sluiten van de browser (demo modus).
+                <strong>Demo modus:</strong> Als je de app opent zonder account, laadt automatisch
+                een demo stamboom met twee families (Familie De Vries en Familie Martens) over
+                meerdere generaties. Je kunt alles uitproberen — je data wordt niet opgeslagen.
+                Maak een gratis account aan om je eigen stamboom te bewaren.
             </div>
             <p>
                 De navigatie bovenaan de pagina brengt je naar alle onderdelen van de app:
@@ -339,10 +347,13 @@
                 Viewers en Editors zien een melding met uitleg over het upgraden naar Owner.
             </div>
 
-            <h3>Lokale data</h3>
+            <h3>Lokale data & actieve stamboom</h3>
             <p>
-                Toont hoeveel personen er op dit moment in je browser (localStorage) zijn opgeslagen
-                en welke stamboom actief is.
+                Op het tabblad <strong>"📋 Mijn data"</strong> zie je bovenaan een blauwe balk
+                met de naam van de stamboom die momenteel actief is (geladen vanuit de cloud).
+                Zo weet je altijd met welke stamboom je werkt, ook als je de cloudpagina nog
+                niet open hebt. De balk verdwijnt automatisch als je de stamboom verwijdert
+                of de lokale data reset.
             </p>
 
             <h3>Avatar kiezen</h3>
@@ -466,8 +477,17 @@
             <div class="tip">
                 <strong>Vereist:</strong> Je moet ingelogd zijn met een <strong>Owner</strong>- of
                 <strong>Admin</strong>-account. Viewer- en Editor-accounts hebben geen eigen cloud-opslag.
-                Wil je upgraden naar Owner? Neem contact op via de website.
+                Wil je upgraden naar Owner? Steun het project via Ko-fi.
             </div>
+
+            <h3>Actieve stamboom</h3>
+            <p>
+                Zodra je een stamboom laadt vanuit de cloud, wordt deze gemarkeerd als
+                <strong>ACTIEF</strong> — zichtbaar als blauwe balk bovenaan zowel het
+                tabblad <strong>"☁️ Cloud stambomen"</strong> als het tabblad
+                <strong>"📋 Mijn data"</strong>. Zo zie je altijd direct met welke stamboom
+                je werkt, ongeacht welk tabblad je open hebt.
+            </p>
 
             <h3>Stamboom opslaan in de cloud</h3>
             <ul class="stappen">
@@ -491,7 +511,7 @@
                 <li>Ga naar <strong>Opslag → Cloud stambomen</strong>.</li>
                 <li>Klik op <strong>"⬇️ Laden"</strong> naast de gewenste stamboom.</li>
                 <li>Bevestig de melding — je huidige lokale data wordt overschreven.</li>
-                <li>De stamboom is nu lokaal beschikbaar en gemarkeerd als <strong>ACTIEF</strong>.</li>
+                <li>De stamboom is nu lokaal beschikbaar en gemarkeerd als <strong>ACTIEF</strong> op beide tabbladen.</li>
             </ul>
 
             <div class="waarschuwing">
@@ -514,6 +534,7 @@
             <ul class="stappen">
                 <li>Klik op <strong>"🗑️ Verwijderen"</strong> naast de stamboom in de lijst.</li>
                 <li>Bevestig de melding. Definitief verwijderd — je lokale data blijft onaangetast.</li>
+                <li>Als de verwijderde stamboom de actieve was, verdwijnt de ACTIEF-balk automatisch op beide tabbladen.</li>
             </ul>
 
             <a href="#" class="terug-top">↑ Terug naar boven</a>
@@ -590,8 +611,8 @@
             <p>
                 Als <strong>Owner</strong> kun je anderen uitnodigen om mee te kijken of mee te werken
                 aan je stamboom. Uitgenodigde gebruikers krijgen een rol: <strong>Viewer</strong> of
-                <strong>Editor</strong>. De uitgenodigde persoon heeft een gratis account nodig —
-                de Owner betaalt in feite de toegang.
+                <strong>Editor</strong>. Elke gebruiker met een account — ook een gratis Viewer-account —
+                kan worden uitgenodigd. De Owner maakt de samenwerking mogelijk.
             </p>
 
             <div class="tip">
@@ -614,6 +635,13 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td>Demo stamboom bekijken</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-ja">✓ automatisch</td>
+                    </tr>
                     <tr>
                         <td>Lokale stamboom (max 60 personen)</td>
                         <td class="check-ja">✓ onbeperkt</td>
@@ -698,7 +726,7 @@
                 <li>De uitgenodigde gebruiker verschijnt in de lijst onder het paneel.</li>
             </ul>
 
-            <div class="waarschuwing">
+            <div class="tip">
                 <strong>Let op:</strong> De uitgenodigde gebruiker moet al een account hebben op MyFamTreeCollab.
                 Een gratis account (Viewer of Editor) is voldoende — de Owner maakt de samenwerking mogelijk.
             </div>
