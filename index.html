@@ -1,177 +1,238 @@
-<!-- ======================= index.html v2.0.2 =======================
+<!-- ======================= home/index.html v2.0.3 =======================
+     v2.0.3: Homepage: conversiegericht + duidelijke structuur
+     Focus: starten, begrijpen, vertrouwen
+     v2.0.2: Supabase auth + TopBar login modal — scripts samengevoegd
+     onderaan body, topbar.js via createElement na TopBar fetch
+     v2.0.1: Favicon / App-icoon toegevoegd
+     v2.0.0: facelift — paginatitel div verwijderd, inline stijlen
+     naar <style>, Start Nu knop relatief pad, opmaak consistent
      Homepagina: introductie, foto's en start-knop
-     Wijziging v2.0.0: facelift — paginatitel div verwijderd, inline stijlen
-                       naar <style>, Start Nu knop relatief pad, opmaak consistent
-     Wijziging v2.0.1: Favicon / App-icoon toegevoegd
-     Wijziging v2.0.2: Supabase auth + TopBar login modal — scripts samengevoegd
-                       onderaan body, topbar.js via createElement na TopBar fetch
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <meta charset="UTF-8"> <!-- Tekencodering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive -->
+    <title>MyFamTreeCollab</title>
 
-    <!-- ===== Favicon / App-icoon ===== -->
+    <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css"> <!-- Globale CSS -->
+
     <style>
-
-        /* ======================= FOTO GRID ======================= */
-        .foto-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            margin: 24px 0;
-        }
-        .foto-grid div {
-            flex: 1 1 45%;
-            aspect-ratio: 4/3;
-            overflow: hidden;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-        }
-        .foto-grid div:nth-child(2n) { border-style: dashed; }
-        .foto-grid div img { width: 100%; height: 100%; object-fit: cover; }
-
-        @media (max-width: 768px) { .foto-grid div { flex: 1 1 100%; } }
-
-        /* ======================= INTRO SECTIE ======================= */
-        .intro-sectie { margin-bottom: 32px; }
-        .intro-sectie h2 { font-size: 1.3rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
-        .intro-sectie p  { font-size: 0.95rem; color: #555; line-height: 1.7; margin: 0 0 12px 0; }
-        .intro-sectie ul { margin: 0 0 12px 20px; }
-        .intro-sectie li { font-size: 0.95rem; color: #555; line-height: 1.8; }
-
-        /* ======================= START SECTIE ======================= */
-        .start-sectie {
+        /* ======================= HERO ======================= */
+        .hero {
+            max-width: 900px;
+            margin: 0 auto;
             text-align: center;
-            margin: 40px 0;
+            padding: 64px 24px;
         }
-        .start-sectie h2 { font-size: 1.3rem; font-weight: bold; margin: 0 0 10px 0; color: #222; }
-        .start-sectie p  { font-size: 0.95rem; color: #555; margin: 0 0 20px 0; }
-        .knop-start {
-            display: inline-block;
-            padding: 14px 32px;
-            background: #4CAF50;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .knop-start:hover { background: #43a047; }
 
-        /* ======================= NIEUWS SECTIE ======================= */
-        .nieuws-sectie { margin-top: 32px; }
-        .nieuws-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 8px 0; color: #333; }
-        .nieuws-sectie p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+        .hero h1 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            color: #555;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .hero-actions a {
+            margin: 6px;
+        }
+
+        /* ======================= BUTTONS ======================= */
+        .btn-primary {
+            background: #1E90FF;
+            color: #fff;
+            padding: 12px 26px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover { background: #1278d4; }
+
+        .btn-secondary {
+            border: 1px solid #1E90FF;
+            color: #1E90FF;
+            padding: 12px 26px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        /* ======================= SECTIONS ======================= */
+        section {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* ======================= BENEFITS ======================= */
+        .benefits {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .benefit {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+
+        /* ======================= STEPS ======================= */
+        .steps ol {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        /* ======================= CTA ======================= */
+        .cta {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+
 <!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
 
 <!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
-<!-- ======================= Hoofd content ======================= -->
-<main>
-    <div class="container">
+<!-- ======================= HERO ======================= -->
+<section class="hero">
 
-        <!-- ======================= Introductie ======================= -->
-        <section class="intro-sectie">
-            <h2>Welkom bij MyFamTreeCollab</h2>
-            <p>
-                MyFamTreeCollab is een veilig en intuïtief platform om je familiegeschiedenis
-                te ontdekken, vast te leggen en te visualiseren, volledig lokaal in je browser,
-                zonder dat je gegevens je apparaat verlaten.
-            </p>
-            <ul>
-                <li><strong>Bouw je stamboom</strong> met alle details die voor jou belangrijk zijn.</li>
-                <li><strong>Beheer je data volledig</strong> — alles wordt lokaal opgeslagen, jij beslist wat je deelt.</li>
-                <li><strong>Visualiseer je familie</strong> via de stamboom- en tijdlijnweergave.</li>
-            </ul>
-        </section>
+    <h1>Bouw jouw familieverhaal. Samen.</h1> <!-- Hoofdboodschap -->
 
-        <!-- ======================= Foto's boven Start Nu ======================= -->
-        <section class="foto-grid">
-            <div><img src="img/FotoGezin1.png" alt="Gezinsfoto"></div>
-            <div><img src="img/Stats1.png"     alt="Statistieken weergave"></div>
-        </section>
+    <p>
+        Maak, beheer en deel je stamboom met volledige controle over je eigen data.
+    </p>
 
-        <!-- ======================= Start Nu ======================= -->
-        <section class="start-sectie">
-            <h2>Start je stamboom</h2>
-            <p>Begin vandaag met het vastleggen van je familiegeschiedenis.</p>
-            <a href="home/create.html" class="knop-start">Start Nu</a>
-        </section>
-
-        <!-- ======================= Foto's onder Start Nu ======================= -->
-        <section class="foto-grid">
-            <div><img src="img/Manage1.png" alt="Beheer weergave"></div>
-            <div><img src="img/View1.png"   alt="Stamboom weergave"></div>
-        </section>
-
-        <!-- ======================= Nieuws & Updates ======================= -->
-        <section class="nieuws-sectie">
-            <h2>Nieuws &amp; updates</h2>
-            <p>Bekijk de laatste functies, tips en updates om je stamboom nog beter te beheren.</p>
-        </section>
-
+    <div class="hero-actions">
+        <a href="/MyFamTreeCollab/home/start.html" class="btn-primary">
+            Start je stamboom
+        </a>
+        <a href="/MyFamTreeCollab/home/about.html" class="btn-secondary">
+            Lees meer
+        </a>
     </div>
-</main>
+
+</section>
+
+<!-- ======================= PROBLEEM / OPLOSSING ======================= -->
+<section>
+
+    <h2>Waarom MyFamTreeCollab?</h2>
+
+    <p>
+        Veel familiegegevens zitten verspreid in documenten, Excel-bestanden of herinneringen.
+        Samenwerken aan een stamboom is vaak complex en onoverzichtelijk.
+    </p>
+
+    <p>
+        MyFamTreeCollab brengt alles samen in één eenvoudige structuur
+        waarin jij de controle behoudt.
+    </p>
+
+</section>
+
+<!-- ======================= BENEFITS ======================= -->
+<section class="benefits">
+
+    <div class="benefit">
+        <h3>🔐 Jij behoudt controle</h3>
+        <p>Exporteer je data als CSV, GEDCOM of JSON. Geen lock-in.</p>
+    </div>
+
+    <div class="benefit">
+        <h3>🤝 Samen bouwen</h3>
+        <p>Werk samen met familie en bouw één gedeelde stamboom.</p>
+    </div>
+
+    <div class="benefit">
+        <h3>⚡ Eenvoudig starten</h3>
+        <p>Geen installatie nodig. Begin direct in je browser.</p>
+    </div>
+
+</section>
+
+<!-- ======================= HOW IT WORKS ======================= -->
+<section class="steps">
+
+    <h2>Hoe werkt het?</h2>
+
+    <ol>
+        <li>Voeg personen toe</li>
+        <li>Leg relaties vast</li>
+        <li>Deel je stamboom</li>
+    </ol>
+
+</section>
+
+<!-- ======================= STORY ======================= -->
+<section>
+
+    <h2>Waarom dit project?</h2>
+
+    <p>
+        Dit project begon met een doos oude documenten die ik niet wilde verliezen.
+        Wat begon in Excel groeide uit tot een gedeeld familieverhaal.
+    </p>
+
+</section>
+
+<!-- ======================= CTA ======================= -->
+<section class="cta">
+
+    <h2>Begin vandaag nog</h2>
+
+    <a href="/MyFamTreeCollab/home/start.html" class="btn-primary">
+        Start je stamboom
+    </a>
+
+</section>
 
 <!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
-<!-- =============================================================
-     SCRIPTS — volgorde verplicht:
-     1. Supabase SDK        — vereist door auth.js
-     2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. TopBar fetch        — laadt HTML, daarna pas topbar.js
-     5. Navbar + Footer     — onafhankelijk, mag parallel
-     index.html staat in root — paden beginnen met /js/ niet ../js/
-     ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/MyFamTreeCollab/js/utils.js"></script>
-<script src="/MyFamTreeCollab/js/auth.js"></script>
+<!-- ======================= SCRIPTS ======================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase -->
+<script src="js/utils.js"></script> <!-- Utilities -->
+<script src="js/auth.js"></script> <!-- Auth -->
 
 <script>
-    // TopBar laden — topbar.js pas injecteren nadat #top-auth in de DOM zit
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
+    // ======================= TopBar laden =======================
+    fetch('/MyFamTreeCollab/Layout/TopBar.html') // Haalt TopBar op
+        .then(resp => resp.text()) // Converteert naar tekst
         .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '/MyFamTreeCollab/js/topbar.js';
-            document.body.appendChild(s);
+            document.getElementById('topbar-placeholder').innerHTML = data; // Injecteert HTML
+            var s = document.createElement('script'); // Script element
+            s.src = 'js/topbar.js'; // Link naar script
+            document.body.appendChild(s); // Toevoegen aan DOM
         });
 
-    // Navbar laden — geen auth-afhankelijkheid
+    // ======================= Navbar laden =======================
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
         .then(resp => resp.text())
         .then(function(data) {
             document.getElementById('navbar-placeholder').innerHTML = data;
         });
 
-    // Footer laden
+    // ======================= Footer laden =======================
     fetch('/MyFamTreeCollab/Layout/Footer.html')
         .then(resp => resp.text())
         .then(function(data) {
             document.getElementById('footer-placeholder').innerHTML = data;
         });
 </script>
-
-<!-- index.html heeft geen pagina-specifieke scripts nodig -->
 
 </body>
 </html>
