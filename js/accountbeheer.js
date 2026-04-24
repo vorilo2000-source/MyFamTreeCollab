@@ -1,319 +1,529 @@
-// js/accountbeheer.js — v1.0.1 — Admin accountbeheer logica
-// Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
-// Vereist: window.AuthModule (auth.js), Supabase SDK geladen via topbar/auth
-// Toegang: alleen admin — AccessGuard blokkeert andere rollen voor de pagina laadt
+<!DOCTYPE html>
+<!-- admin/accountbeheer.html — v1.0.1 — Admin accountbeheer pagina -->
+<!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accountbeheer — MyFamTreeCollab</title>
 
-'use strict'; // strikte modus — voorkomt stille fouten
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 
-// ─── Supabase client ophalen ───────────────────────────────────────────────
-// auth.js stelt window._supabase in na initialisatie
-const sb = window._supabase; // Supabase client instantie
+  <style>
+    /* ─── Reset & variabelen ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-// ─── Staat ────────────────────────────────────────────────────────────────
-let allUsers   = [];   // volledige gebruikerslijst (gecached na laden)
-let filteredUsers = []; // gefilterde weergave (zoek + tier-filter)
-let deleteTarget  = null; // user-object dat wacht op bevestiging
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16161a;
+      --border:    #2a2a32;
+      --accent:    #e8ff5a;
+      --accent2:   #5affd4;
+      --danger:    #ff5a5a;
+      --text:      #f0f0f0;
+      --muted:     #6b6b7a;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --radius:    6px;
+      --transition: 140ms ease;
+    }
 
-// ─── DOM-referenties ───────────────────────────────────────────────────────
-const tbody        = document.getElementById('usersTbody');      // tabel body
-const searchInput  = document.getElementById('searchInput');     // zoekbalk
-const tierFilter   = document.getElementById('tierFilter');      // tier-dropdown filter
-const lastRefresh  = document.getElementById('lastRefresh');     // timestamp label
-const btnRefresh   = document.getElementById('btnRefresh');      // vernieuwen knop
-const toast        = document.getElementById('toast');           // toast notificatie
-const modalOverlay = document.getElementById('modalOverlay');    // bevestigingsmodal
-const modalName    = document.getElementById('modalName');       // naam in modal tekst
-const btnCancel    = document.getElementById('btnCancel');       // annuleer knop modal
-const btnConfirm   = document.getElementById('btnConfirm');      // bevestig verwijder knop
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-// ─── Statistiek-elementen ──────────────────────────────────────────────────
-const statTotal   = document.getElementById('statTotal');   // totaal gebruikers
-const statViewer  = document.getElementById('statViewer');  // aantal viewers
-const statEditor  = document.getElementById('statEditor');  // aantal editors
-const statOwner   = document.getElementById('statOwner');   // aantal owners
-const statAdmin   = document.getElementById('statAdmin');   // aantal admins
+    /* ─── Topbar ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 56px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-// ─── Toast helper ──────────────────────────────────────────────────────────
-/**
- * Toont een tijdelijke toast notificatie onderaan het scherm.
- * @param {string} msg     - Bericht om te tonen
- * @param {boolean} isError - true = rode rand, false = gele rand
- */
-function showToast(msg, isError = false) {
-  toast.textContent = msg;                   // bericht instellen
-  toast.className = 'show' + (isError ? ' error' : ''); // klasse toepassen
-  clearTimeout(toast._timer);               // vorige timer annuleren
-  toast._timer = setTimeout(() => {         // automatisch verbergen na 3s
-    toast.className = '';
-  }, 3000);
-}
+    .topbar-brand {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+    }
 
-// ─── Statistieken bijwerken ────────────────────────────────────────────────
-/**
- * Telt gebruikers per tier en schrijft waarden naar de stat-kaarten.
- * @param {Array} users - Lijst van gebruikersobjecten
- */
-function updateStats(users) {
-  statTotal.textContent  = users.length;                                    // totaal
-  statViewer.textContent = users.filter(u => u.tier === 'viewer').length;  // viewers
-  statEditor.textContent = users.filter(u => u.tier === 'editor').length;  // editors
-  statOwner.textContent  = users.filter(u => u.tier === 'owner').length;   // owners
-  statAdmin.textContent  = users.filter(u => u.tier === 'admin').length;   // admins
-}
+    .topbar-brand span {
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-left: 0.5rem;
+    }
 
-// ─── Datum formatteren ────────────────────────────────────────────────────
-/**
- * Zet ISO-datumstring om naar leesbaar formaat (dd-mm-jjjj).
- * @param {string} iso - ISO 8601 datumstring
- * @returns {string} Geformatteerde datum
- */
-function fmtDate(iso) {
-  if (!iso) return '—';                      // ontbrekende datum
-  const d = new Date(iso);                   // Date object aanmaken
-  return d.toLocaleDateString('nl-NL', {     // Nederlandse notatie
-    day: '2-digit', month: '2-digit', year: 'numeric'
-  });
-}
+    .topbar-nav { display: flex; gap: 1.5rem; align-items: center; }
 
-// ─── Tabel renderen ───────────────────────────────────────────────────────
-/**
- * Geeft de gefilterde gebruikerslijst weer in de HTML-tabel.
- * @param {Array} users - Te renderen gebruikers
- */
-function renderTable(users) {
-  tbody.innerHTML = ''; // tabel leegmaken
+    .topbar-nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color var(--transition);
+    }
 
-  if (users.length === 0) { // geen resultaten
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Geen gebruikers gevonden.</td></tr>';
-    return;
-  }
+    .topbar-nav a:hover { color: var(--text); }
 
-  users.forEach(u => { // elke gebruiker als tabelrij toevoegen
-    const tr = document.createElement('tr'); // nieuwe rij
+    /* ─── Main ─── */
+    main {
+      flex: 1;
+      padding: 2.5rem 2rem;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
 
-    // Tier-opties voor de inline dropdown
-    const tierOptions = ['viewer', 'editor', 'owner', 'admin']
-      .map(t => `<option value="${t}" ${t === u.tier ? 'selected' : ''}>${t}</option>`)
-      .join('');
+    /* ─── Paginatitel ─── */
+    .page-header {
+      margin-bottom: 2.5rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+    }
 
-    tr.innerHTML = `
-      <td class="col-email">${u.email || '—'}</td>
-      <td><span class="tier-badge ${u.tier}">${u.tier}</span></td>
-      <td>
-        <select class="tier-select" data-uid="${u.id}" aria-label="Tier wijzigen">
-          ${tierOptions}
-        </select>
-      </td>
-      <td>${fmtDate(u.created_at)}</td>
-      <td>${fmtDate(u.last_sign_in_at)}</td>
-      <td>
-        <div class="row-actions">
-          <button class="btn-action btn-save-tier" data-uid="${u.id}">Opslaan</button>
-          <button class="btn-action danger btn-delete" data-uid="${u.id}" data-email="${u.email}">Verwijderen</button>
-        </div>
-      </td>
-    `;
+    .page-header h1 {
+      font-family: var(--font-head);
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
 
-    tbody.appendChild(tr); // rij toevoegen aan tabel
-  });
+    .page-header p {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
 
-  bindRowEvents(); // event listeners koppelen aan de nieuwe rijen
-}
+    /* ─── Stat kaarten ─── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
 
-// ─── Rij-events koppelen ──────────────────────────────────────────────────
-/**
- * Koppelt click-handlers aan de opslaan- en verwijderknoppen in alle rijen.
- * Wordt aangeroepen na elke renderTable() call.
- */
-function bindRowEvents() {
-  // Opslaan-knoppen: tier wijzigen
-  document.querySelectorAll('.btn-save-tier').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const uid = btn.dataset.uid;                          // gebruiker ID
-      const sel = document.querySelector(`.tier-select[data-uid="${uid}"]`); // dropdown
-      saveTier(uid, sel.value);                             // tier opslaan
-    });
-  });
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.4rem;
+      position: relative;
+      overflow: hidden;
+    }
 
-  // Verwijder-knoppen: bevestigingsmodal tonen
-  document.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', () => {
-      deleteTarget = { id: btn.dataset.uid, email: btn.dataset.email }; // target bewaren
-      modalName.textContent = deleteTarget.email;           // naam in modal zetten
-      modalOverlay.classList.add('open');                   // modal openen
-    });
-  });
-}
+    /* Gekleurde toprand per tier */
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
 
-// ─── Gebruikers laden via Supabase ────────────────────────────────────────
-/**
- * Laadt alle gebruikers uit de Supabase `profiles` tabel.
- * Combineert met auth.admin.listUsers() voor e-mail + last_sign_in.
- * Vereist: service_role key — dit draait client-side, dus alleen e-mail
- * via profiles.email kolom (indien aanwezig) of auth meta via RPC.
- */
-async function loadUsers() {
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Laden...</td></tr>'; // laadtekst
+    .stat-card.cyan::before   { background: var(--accent2); }
+    .stat-card.green::before  { background: #7fff7f; }
+    .stat-card.blue::before   { background: #7faeff; }
+    .stat-card.danger::before { background: var(--danger); }
 
-  try {
-    // Gebruikers ophalen uit admin_users view (join van profiles + auth.users)
-    const { data: profiles, error } = await sb
-      .from('admin_users')               // view met email + last_sign_in_at
-      .select('id, username, tier, created_at, email, last_sign_in_at') // alle kolommen
-      .order('created_at', { ascending: false }); // nieuwste eerst
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
 
-    if (error) throw error; // fout doorgooien
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
 
-    allUsers = profiles || []; // lijst bewaren
-    filteredUsers = [...allUsers]; // gefilterde lijst initialiseren als kopie
+    /* ─── Toolbar ─── */
+    .toolbar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
 
-    updateStats(allUsers);   // statistieken bijwerken
-    renderTable(filteredUsers); // tabel vullen
+    .search-wrap {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
 
-    // Timestamp bijwerken
-    lastRefresh.textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 0.55rem 0.9rem 0.55rem 2.2rem;
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color var(--transition);
+    }
 
-  } catch (err) {
-    console.error('[accountbeheer] loadUsers fout:', err); // fout loggen
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Fout bij laden: ${err.message}</td></tr>`;
-    showToast('Laden mislukt: ' + err.message, true); // foutmelding tonen
-  }
-}
+    .search-wrap input:focus { border-color: var(--accent); }
 
-// ─── Tier opslaan ─────────────────────────────────────────────────────────
-/**
- * Slaat een gewijzigde tier op in de Supabase profiles tabel.
- * @param {string} uid      - UUID van de gebruiker
- * @param {string} newTier  - Nieuwe tier waarde
- */
-async function saveTier(uid, newTier) {
-  try {
-    const { error } = await sb
-      .from('profiles')               // tabel
-      .update({ tier: newTier })      // tier-kolom bijwerken
-      .eq('id', uid);                 // alleen deze gebruiker
+    .search-icon {
+      position: absolute;
+      left: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
 
-    if (error) throw error;           // fout doorgooien
+    .filter-select, .btn-refresh {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 0.55rem 0.9rem;
+      border-radius: var(--radius);
+      outline: none;
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
 
-    // Lokale cache bijwerken zodat tabel direct klopt
-    const user = allUsers.find(u => u.id === uid); // gebruiker zoeken in cache
-    if (user) user.tier = newTier;                 // tier bijwerken in cache
+    .btn-refresh { color: var(--muted); letter-spacing: 0.05em; }
+    .btn-refresh:hover { border-color: var(--accent2); color: var(--accent2); }
+    .filter-select:focus { border-color: var(--accent); }
 
-    updateStats(allUsers);            // statistieken opnieuw berekenen
-    renderTable(filteredUsers);       // tabel opnieuw renderen
+    /* ─── Tabel ─── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
 
-    showToast(`Tier bijgewerkt naar "${newTier}"`); // bevestiging tonen
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 
-  } catch (err) {
-    console.error('[accountbeheer] saveTier fout:', err); // fout loggen
-    showToast('Opslaan mislukt: ' + err.message, true);   // foutmelding tonen
-  }
-}
+    thead { background: #1e1e26; }
 
-// ─── Gebruiker verwijderen ────────────────────────────────────────────────
-/**
- * Verwijdert een gebruiker uit de profiles tabel.
- * Let op: verwijdert NIET uit Supabase auth — dat vereist service_role key.
- * Profile-verwijdering volstaat voor toegangsblokkade via RLS.
- * @param {string} uid - UUID van te verwijderen gebruiker
- */
-async function deleteUser(uid) {
-  try {
-    const { error } = await sb
-      .from('profiles')   // tabel
-      .delete()           // verwijderen
-      .eq('id', uid);     // alleen deze gebruiker
+    thead th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
 
-    if (error) throw error; // fout doorgooien
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
 
-    // Gebruiker uit lokale cache verwijderen
-    allUsers      = allUsers.filter(u => u.id !== uid);      // uit volledige lijst
-    filteredUsers = filteredUsers.filter(u => u.id !== uid); // uit gefilterde lijst
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #1c1c24; }
 
-    updateStats(allUsers);    // statistieken bijwerken
-    renderTable(filteredUsers); // tabel opnieuw renderen
+    tbody td { padding: 0.75rem 1rem; vertical-align: middle; }
 
-    showToast('Gebruiker verwijderd.'); // bevestiging
+    .col-email { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  } catch (err) {
-    console.error('[accountbeheer] deleteUser fout:', err); // fout loggen
-    showToast('Verwijderen mislukt: ' + err.message, true); // foutmelding
-  }
-}
+    /* Tier badges */
+    .tier-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
 
-// ─── Zoeken & filteren ────────────────────────────────────────────────────
-/**
- * Filtert allUsers op basis van zoektekst en geselecteerde tier.
- * Wordt aangeroepen bij elke invoer in de zoekbalk of tier-filter.
- */
-function applyFilters() {
-  const q    = searchInput.value.trim().toLowerCase(); // zoekterm (lowercase)
-  const tier = tierFilter.value;                       // geselecteerde tier ('all' of specifiek)
+    .tier-badge.viewer  { background: #1e2a1e; color: #7fff7f; border: 1px solid #2a4a2a; }
+    .tier-badge.editor  { background: #1e2233; color: #7faeff; border: 1px solid #2a3a55; }
+    .tier-badge.owner   { background: #2a2205; color: var(--accent); border: 1px solid #4a3a05; }
+    .tier-badge.admin   { background: #2a0505; color: var(--danger); border: 1px solid #5a1010; }
 
-  filteredUsers = allUsers.filter(u => {
-    const matchQ    = !q || (u.email || '').toLowerCase().includes(q) // e-mail bevat zoekterm
-                         || (u.username || '').toLowerCase().includes(q); // of gebruikersnaam
-    const matchTier = tier === 'all' || u.tier === tier; // tier overeenkomst
-    return matchQ && matchTier; // beide filters moeten kloppen
-  });
+    /* Tier select inline */
+    .tier-select {
+      background: #1e1e26;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
 
-  renderTable(filteredUsers); // gefilterde tabel tonen
-}
+    .tier-select:focus { border-color: var(--accent); }
 
-// ─── Event listeners ──────────────────────────────────────────────────────
+    /* Actieknoppen */
+    .row-actions { display: flex; gap: 0.4rem; }
 
-// Zoekbalk — live filteren bij invoer
-searchInput.addEventListener('input', applyFilters);
+    .btn-action {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
 
-// Tier-filter dropdown — filteren bij selectie
-tierFilter.addEventListener('change', applyFilters);
+    .btn-action:hover        { border-color: var(--accent2); color: var(--accent2); }
+    .btn-action.danger:hover { border-color: var(--danger);  color: var(--danger); }
 
-// Vernieuwen knop — gebruikers opnieuw laden
-btnRefresh.addEventListener('click', loadUsers);
+    /* Laadrij & lege staat */
+    .loading-row td, .empty-row td {
+      text-align: center;
+      color: var(--muted);
+      padding: 3rem;
+      font-size: 0.82rem;
+    }
 
-// Modal annuleren
-btnCancel.addEventListener('click', () => {
-  modalOverlay.classList.remove('open'); // modal sluiten
-  deleteTarget = null;                   // target wissen
-});
+    /* ─── Toast ─── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      color: var(--text);
+      font-size: 0.82rem;
+      padding: 0.75rem 1.2rem;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 999;
+      max-width: 320px;
+    }
 
-// Modal bevestigen — gebruiker daadwerkelijk verwijderen
-btnConfirm.addEventListener('click', async () => {
-  if (!deleteTarget) return;                   // niets te verwijderen
-  modalOverlay.classList.remove('open');       // modal sluiten
-  await deleteUser(deleteTarget.id);           // verwijderen uitvoeren
-  deleteTarget = null;                         // target wissen
-});
+    #toast.show  { opacity: 1; transform: translateY(0); }
+    #toast.error { border-left-color: var(--danger); }
 
-// Klik buiten modal — modal sluiten
-modalOverlay.addEventListener('click', e => {
-  if (e.target === modalOverlay) {             // alleen als overlay zelf geklikt
-    modalOverlay.classList.remove('open');
-    deleteTarget = null;
-  }
-});
+    /* ─── Bevestigingsmodal ─── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
 
-// Uitloggen link
-document.getElementById('logoutLink').addEventListener('click', async e => {
-  e.preventDefault();                          // standaard navigatie voorkomen
-  await window.AuthModule.logout();            // uitloggen via AuthModule
-  window.location.href = '../../index.html';  // terug naar hoofdpagina
-});
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
 
-// ─── Init ─────────────────────────────────────────────────────────────────
-/**
- * Startpunt: controleer of gebruiker admin is, laad dan gebruikers.
- * AccessGuard op de HTML-pagina blokkeert al niet-admins,
- * maar we controleren hier nogmaals als extra beveiliging.
- */
-async function init() {
-  const tier = await window.AuthModule.getTier(); // huidig tier ophalen
-  if (tier !== 'admin') {                          // niet-admin geblokkeerd
-    window.location.href = '../../index.html';    // doorsturen naar home
-    return;
-  }
-  await loadUsers(); // gebruikers laden
-}
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--danger);
+      border-radius: var(--radius);
+      padding: 2rem;
+      width: 360px;
+      max-width: 90vw;
+    }
 
-// Wachten tot DOM klaar is
-document.addEventListener('DOMContentLoaded', init);
+    .modal-box h3 {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .modal-box p {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+    .btn-confirm-delete {
+      background: var(--danger);
+      border: none;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity var(--transition);
+    }
+
+    .btn-confirm-delete:hover { opacity: 0.85; }
+
+    /* ─── Footer ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1rem 2rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Topbar ─── -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      MyFamTreeCollab <span>// accountbeheer</span>
+    </div>
+    <nav class="topbar-nav">
+      <a href="../index.html">← Terug naar app</a>
+      <a href="#" id="logoutLink">Uitloggen</a>
+    </nav>
+  </header>
+
+  <!-- ─── Hoofd content ─── -->
+  <main>
+
+    <!-- Paginatitel -->
+    <div class="page-header">
+      <h1>Accountbeheer</h1>
+      <p id="lastRefresh">Laden...</p>
+    </div>
+
+    <!-- Statistieken -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Totaal</div>
+        <div class="stat-value" id="statTotal">—</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Viewer</div>
+        <div class="stat-value" id="statViewer">—</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Editor</div>
+        <div class="stat-value" id="statEditor">—</div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="stat-label">Owner</div>
+        <div class="stat-value" id="statOwner">—</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-label">Admin</div>
+        <div class="stat-value" id="statAdmin">—</div>
+      </div>
+    </div>
+
+    <!-- Zoekbalk & filter -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="searchInput" placeholder="Zoek op e-mail of gebruikersnaam…" />
+      </div>
+      <select class="filter-select" id="tierFilter">
+        <option value="all">Alle tiers</option>
+        <option value="viewer">Viewer</option>
+        <option value="editor">Editor</option>
+        <option value="owner">Owner</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button class="btn-refresh" id="btnRefresh">↻ Vernieuwen</button>
+    </div>
+
+    <!-- Gebruikerstabel -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>E-mail</th>
+            <th>Huidige tier</th>
+            <th>Tier wijzigen</th>
+            <th>Aangemeld op</th>
+            <th>Laatste login</th>
+            <th>Acties</th>
+          </tr>
+        </thead>
+        <tbody id="usersTbody">
+          <!-- Gevuld door accountbeheer.js -->
+          <tr class="loading-row"><td colspan="6">Laden…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- ─── Footer ─── -->
+  <footer>
+    <span>MyFamTreeCollab — Admin</span>
+    <span>Alleen zichtbaar voor admins</span>
+  </footer>
+
+  <!-- ─── Toast notificatie ─── -->
+  <div id="toast"></div>
+
+  <!-- ─── Bevestigingsmodal (verwijderen) ─── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <h3>Gebruiker verwijderen</h3>
+      <p>Weet je zeker dat je <strong id="modalName"></strong> wilt verwijderen uit de profielen? Dit kan niet ongedaan worden gemaakt.</p>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btnCancel">Annuleren</button>
+        <button class="btn-confirm-delete" id="btnConfirm">Verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Scripts — minimale laadvolgorde voor admin pagina ─── -->
+  <!-- AccessGuard, shareModule, cloudSync en topbar zijn NIET nodig -->
+  <!-- Beveiliging loopt via AuthModule.getTier() in accountbeheer.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
+  <script src="../js/utils.js"></script>         <!-- window.ftSafe e.a. -->
+  <script src="../js/schema.js"></script>        <!-- window.StamboomSchema -->
+  <script src="../js/storage.js"></script>       <!-- window.StamboomStorage -->
+  <script src="../js/auth.js"></script>          <!-- window.AuthModule — getTier() voor admin-check -->
+  <script src="../js/accountbeheer.js"></script> <!-- pagina-logica + admin-check -->
+
+</body>
+</html>
