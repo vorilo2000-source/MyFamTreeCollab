@@ -1,4 +1,4 @@
-// js/accountbeheer.js — v1.0.2 — Admin accountbeheer logica
+// js/accountbeheer.js — v1.0.3 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
 // Vereist: window.AuthModule (auth.js), Supabase SDK geladen via topbar/auth
 // Toegang: alleen admin — AccessGuard blokkeert andere rollen voor de pagina laadt
@@ -189,7 +189,7 @@ async function loadUsers() {
 async function saveTier(uid, newTier) {
   try {
     const { error } = await sb
-      .from('profile')               // tabel
+      .from('profiles')               // tabel
       .update({ tier: newTier })      // tier-kolom bijwerken
       .eq('id', uid);                 // alleen deze gebruiker
 
@@ -220,7 +220,7 @@ async function saveTier(uid, newTier) {
 async function deleteUser(uid) {
   try {
     const { error } = await sb
-      .from('profile')   // tabel
+      .from('profiles')   // tabel
       .delete()           // verwijderen
       .eq('id', uid);     // alleen deze gebruiker
 
