@@ -1,9 +1,9 @@
 // =============================================================================
 // auth.js — Supabase Authentication Module
-// MyFamTreeCollab v2.4.2
+// MyFamTreeCollab v2.4.3
 // -----------------------------------------------------------------------------
-// Nieuw in v2.4.2:
-// - Alle queries aangepast van 'profiles' naar 'profile' (correcte tabelnaam)
+// Nieuw in v2.4.3:
+// - 'profile' → 'profiles' teruggedraaid — tabel heet toch profiles
 //
 // Nieuw in v2.4.1 (F6-03):
 // - getTier() fallback aangepast van 'free' naar 'viewer' (nieuw rolmodel)
@@ -146,7 +146,7 @@
     if (!user) return { profile: null, error: "Niet ingelogd." };
 
     const { data, error } = await _client
-      .from("profile")                                                          // Correcte tabelnaam (zonder s)
+      .from("profiles")                                                          
       .select("username, avatar_id, tier, is_admin, is_premium, tier_until")
       .eq("id", user.id)
       .single();
@@ -179,7 +179,7 @@
     }
 
     const { error } = await _client
-      .from("profile")                          // Correcte tabelnaam (zonder s)
+      .from("profiles")                          
       .update({ username: username.trim() })
       .eq("id", user.id);
 
