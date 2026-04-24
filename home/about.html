@@ -1,51 +1,54 @@
-<!-- ======================= home/about.html v2.0.2 =======================
-     Over-pagina: tijdelijk niet beschikbaar, consistente opmaak
-     Wijziging v2.0.0: facelift — Navbar + TopBar + 'komt binnenkort' blok,
-                       geen aparte header meer, script.js verwijderd
-     Wijziging v2.0.1: login scripts
-     Wijziging v2.0.2: Favicon / App-icoon + scripts opgeschoond,
-                       dubbele fetch-blokken verwijderd, topbar.js via createElement
+<!-- ======================= home/about.html v2.1.0 =======================
+     Over-pagina: inhoud geïntegreerd en geoptimaliseerd voor leesbaarheid
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"> <!-- Zorgt voor correcte tekencodering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive gedrag -->
     <title>Over</title>
 
     <!-- ===== Favicon / App-icoon ===== -->
-    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico"> <!-- Standaard icoon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png"> <!-- Kleine iconen -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png"> <!-- Apple devices -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png"> <!-- Android -->
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css"> <!-- Globale styling -->
+
     <style>
-        /* ======================= BINNENKORT BLOK ======================= */
-        .binnenkort-blok {
-            max-width: 520px;
-            margin: 0 auto;
-            text-align: center;
-            padding: 48px 24px;
+        /* ======================= ABOUT CONTENT ======================= */
+        .about-container {
+            max-width: 800px; /* Beperkt breedte voor leesbaarheid */
+            margin: 0 auto; /* Centreert content */
+            padding: 48px 24px; /* Binnenruimte */
+            line-height: 1.7; /* Betere leesbaarheid */
         }
-        .binnenkort-blok .icoon {
-            font-size: 3rem;
-            margin-bottom: 16px;
+
+        .about-container h1 {
+            font-size: 1.8rem; /* Titelgrootte */
+            margin-bottom: 24px; /* Ruimte onder titel */
         }
-        .binnenkort-blok h1 {
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin: 0 0 12px 0;
+
+        .about-container h2 {
+            font-size: 1.2rem; /* Subtitels */
+            margin-top: 32px; /* Ruimte boven secties */
+            margin-bottom: 12px;
+        }
+
+        .about-container p {
+            margin-bottom: 16px; /* Ruimte tussen paragrafen */
+            color: #444; /* Iets zachtere tekstkleur */
+        }
+
+        .highlight {
+            font-weight: bold; /* Benadrukking */
             color: #222;
         }
-        .binnenkort-blok p {
-            font-size: 0.95rem;
-            color: #555;
-            line-height: 1.6;
-            margin: 0 0 24px 0;
-        }
+
         .knop-home {
             display: inline-block;
+            margin-top: 32px; /* Afstand boven knop */
             padding: 10px 24px;
             background: #1E90FF;
             color: #fff;
@@ -54,7 +57,10 @@
             font-size: 0.95rem;
             font-weight: bold;
         }
-        .knop-home:hover { background: #1278d4; }
+
+        .knop-home:hover {
+            background: #1278d4; /* Hover effect */
+        }
     </style>
 </head>
 <body>
@@ -67,57 +73,123 @@
 
 <!-- ======================= Hoofd content ======================= -->
 <main>
-    <div class="binnenkort-blok">
-        <div class="icoon">🌳</div>
-        <h1>Over MyFamTreeCollab</h1>
+    <div class="about-container">
+
+        <h1>🌳 Over MyFamTreeCollab</h1>
+
         <p>
-            Deze pagina is momenteel in ontwikkeling.<br>
-            Binnenkort vind je hier meer informatie over het project,
-            de makers en hoe de app werkt.
+            Iedere familie heeft een verhaal. Soms zit dat in herinneringen,
+            maar vaak ook in dozen vol oude documenten.
         </p>
+
+        <h2>📦 Hoe het begon</h2>
+        <p>
+            Dit project ontstond nadat ik een doos kreeg met huwelijks-, geboorte-
+            en overlijdenskaartjes die mijn moeder jarenlang had bewaard.
+            Weggooien was geen optie. Maar hoe bewaar je zoiets op een manier
+            die echt waarde heeft?
+        </p>
+
+        <p>
+            Wat begon in Excel groeide al snel uit tot een groter inzicht:
+            <span class="highlight">een stamboom wordt pas echt waardevol als je ze kunt delen en samen opbouwen.</span>
+        </p>
+
+        <h2>🤝 Waarom deze website</h2>
+        <p>
+            Veel bestaande genealogieplatformen zijn complex, gesloten of nemen
+            de controle over je data over. MyFamTreeCollab kiest bewust een andere aanpak.
+        </p>
+
+        <p>
+            <span class="highlight">Jij blijft eigenaar van je data.</span>
+            Je kan je stamboom lokaal opslaan of in de cloud, en exporteren als CSV,
+            GEDCOM of JSON bestand. Alles wat je invoert — inclusief relaties —
+            zit volledig in jouw bestand.
+        </p>
+
+        <h2>🧠 Hoe het werkt</h2>
+        <p>
+            Je bouwt je stamboom op via een eenvoudige structuur waarin personen
+            en relaties centraal staan. Ouders, partners en kinderen worden visueel
+            weergegeven, zodat je snel inzicht krijgt in je familiegeschiedenis.
+        </p>
+
+        <p>
+            In tegenstelling tot veel andere tools is jouw bestand volledig
+            transparant en overdraagbaar. Geen verborgen structuren, geen lock-in.
+        </p>
+
+        <h2>🔄 Lokaal of samen</h2>
+        <p>
+            Je kan perfect lokaal werken en je bestand delen met familie.
+            Dat is de eenvoudigste manier om te starten.
+        </p>
+
+        <p>
+            Samenwerken brengt uitdagingen met zich mee zoals versiebeheer
+            en wijzigingen bijhouden. Daarom wordt er gewerkt aan een
+            cloud-oplossing die samenwerking eenvoudiger en overzichtelijker maakt.
+        </p>
+
+        <h2>🚀 Toekomst</h2>
+        <p>
+            Dit project blijft evolueren. In de toekomst worden onder andere
+            volgende uitbreidingen voorzien:
+        </p>
+
+        <p>
+            Foto’s koppelen aan personen, familie-events visualiseren,
+            samenwerken in een beveiligde omgeving en communicatie
+            tussen familieleden binnen de stamboom.
+        </p>
+
+        <h2>❤️ Waarom beginnen</h2>
+        <p>
+            Omdat jouw familieverhaal het waard is om bewaard te blijven.
+            Omdat herinneringen verdwijnen, maar verhalen kunnen blijven bestaan.
+        </p>
+
+        <p>
+            <span class="highlight">Een stamboom bouw je niet alleen, maar samen.</span>
+        </p>
+
         <a href="/MyFamTreeCollab/" class="knop-home">Terug naar Home</a>
+
     </div>
 </main>
 
 <!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
-<!-- =============================================================
-     SCRIPTS — volgorde verplicht:
-     1. Supabase SDK        — vereist door auth.js
-     2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. TopBar fetch        — laadt HTML, daarna pas topbar.js
-     5. Navbar + Footer     — onafhankelijk, mag parallel
-     about.html heeft geen pagina-specifieke scripts
-     ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
+<!-- ======================= SCRIPTS ======================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
+<script src="../js/utils.js"></script> <!-- Basis utilities -->
+<script src="../js/auth.js"></script> <!-- Authenticatie -->
 
 <script>
-    // TopBar laden — topbar.js pas injecteren nadat #top-auth in de DOM zit
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
+    // ======================= TopBar laden =======================
+    fetch('/MyFamTreeCollab/Layout/TopBar.html') // Haalt HTML op
+        .then(resp => resp.text()) // Zet response om naar tekst
         .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
+            document.getElementById('topbar-placeholder').innerHTML = data; // Injecteert HTML
+            var s = document.createElement('script'); // Maakt script element
+            s.src = '../js/topbar.js'; // Koppelt script
+            document.body.appendChild(s); // Voegt toe aan DOM
         });
 
-    // Navbar laden — geen auth-afhankelijkheid
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    // ======================= Navbar laden =======================
+    fetch('/MyFamTreeCollab/Layout/Navbar.html') // Haalt navbar op
         .then(resp => resp.text())
         .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;
+            document.getElementById('navbar-placeholder').innerHTML = data; // Injecteert navbar
         });
 
-    // Footer laden
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
+    // ======================= Footer laden =======================
+    fetch('/MyFamTreeCollab/Layout/Footer.html') // Haalt footer op
         .then(resp => resp.text())
         .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
+            document.getElementById('footer-placeholder').innerHTML = data; // Injecteert footer
         });
 </script>
 
