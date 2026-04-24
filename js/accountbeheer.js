@@ -7,7 +7,7 @@
 
 // ─── Supabase client ophalen ───────────────────────────────────────────────
 // auth.js stelt window._supabase in na initialisatie
-const sb = window._supabase; // Supabase client instantie
+const sb = window.AuthModule.getClient(); // Supabase client via AuthModule
 
 // ─── Staat ────────────────────────────────────────────────────────────────
 let allUsers   = [];   // volledige gebruikerslijst (gecached na laden)
