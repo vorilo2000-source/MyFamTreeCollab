@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-04-23
+## Bijgewerkt: 2026-04-24
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -229,55 +229,52 @@
 
 ---
 
-## Fase 6 — Rolmodel implementatie 🔄 HUIDIG
+## Fase 6 — Rolmodel implementatie ✅ AFGEROND
 
 > Herziening van het tier-systeem naar een vereenvoudigd rolmodel.
 > Rollen: gast (geen account) · viewer · editor · owner · admin
 > Volledig besluitvormingsdocument in PROJECT_LOG.md Sessie 14.
->
-> **Volgorde verplicht:** F6-01 en F6-02 (Supabase migratie) ALTIJD eerst uitvoeren
-> voordat andere F6-taken worden opgepakt.
 
-### 6A — Supabase & auth (eerst uitvoeren)
+### 6A — Supabase & auth
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
 | F6-01 | 🔴 Hoog | Supabase: tier constraint aanpassen naar `viewer`, `editor`, `owner`, `admin` | ✅ Gedaan |
 | F6-02 | 🔴 Hoog | Supabase: bestaande accounts migreren naar nieuw tier-model | ✅ Gedaan |
-| F6-03 | 🔴 Hoog | `js/auth.js` — `getTier()` mapping aanpassen naar nieuw rolmodel | 📋 Open |
-| F6-04 | 🔴 Hoog | `js/cloudSync.js` — `CLOUD_TIERS` → `['owner', 'admin']`, gast limiet → 60 personen | 📋 Open |
-| F6-05 | 🔴 Hoog | `js/shareModule.js` — tier-check: alleen `owner` mag uitnodigen | 📋 Open |
-| F6-06 | 🔴 Hoog | `js/accessGuard.js` — rolnamen aanpassen aan nieuw model | 📋 Open |
-| F6-07 | 🟡 Middel | `js/storage.js` — persoonslimiet gast aanpassen van 100 naar 60 | 📋 Open |
+| F6-03 | 🔴 Hoog | `js/auth.js` v2.4.1 — `getTier()` fallback `'free'` → `'viewer'`, JSDoc bijgewerkt | ✅ Gedaan |
+| F6-04 | 🔴 Hoog | `js/cloudSync.js` v2.2.0 — `CLOUD_TIERS` → `['owner','admin']`, viewer/editor check | ✅ Gedaan |
+| F6-05 | 🔴 Hoog | `js/shareModule.js` v1.1.0 — alleen owner/admin mag uitnodigen, elke ingelogde gebruiker kan worden uitgenodigd | ✅ Gedaan |
+| F6-06 | 🔴 Hoog | `js/accessGuard.js` v1.1.0 — rolnamen correct, dubbele inhoud verwijderd | ✅ Gedaan |
+| F6-07 | 🟡 Middel | `js/storage.js` v2.2.0 — MAX_LOCAL_FREE = 60, canAdd() aangepast aan nieuw rolmodel | ✅ Gedaan |
 
 ### 6B — Demo database
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-08 | 🔴 Hoog | `js/demo.js` aanmaken — hardcoded fictieve demo stamboom, laadt bij gast-sessie, reset per sessie | 📋 Open |
-| F6-09 | 🟡 Middel | Demo stamboom inhoud samenstellen (fictieve familie, gevarieerde data, meerdere generaties) | 📋 Open |
-| F6-10 | 🟡 Middel | Demo-melding tonen voor gast: "Je werkt met een demo stamboom — maak een account aan om op te slaan" | 📋 Open |
+| F6-08 | 🔴 Hoog | `js/demo.js` v1.0.0 aangemaakt — hardcoded fictieve demo stamboom, laadt bij gast-sessie | ✅ Gedaan |
+| F6-09 | 🟡 Middel | Demo stamboom inhoud: 37 personen, 2 families (De Vries + Martens), 6 generaties, ex-partners, kinderen van beide relaties | ✅ Gedaan |
+| F6-10 | 🟡 Middel | Demo-melding in handleiding bijgewerkt: demo laadt automatisch voor gasten | ✅ Gedaan |
 
 ### 6C — Upgrade flow & UI
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-11 | 🔴 Hoog | Lokale data overnemen bij upgrade gast → owner (upload naar cloud bij eerste opwaardering) | 📋 Open |
-| F6-12 | 🟡 Middel | UI: upgrade-prompt tonen voor gast/viewer/editor op cloud-functies | 📋 Open |
-| F6-13 | 🟡 Middel | Tekstaanpassing uitnodiging `storage.html`: "Uitnodiging verstuurd" → "[email] toegevoegd als [rol]" | 📋 Open |
+| F6-11 | 🔴 Hoog | `js/storage.js` v2.2.0 — canAdd() viewer/editor zelfde limiet als gast, owner/admin onbeperkt | ✅ Gedaan |
+| F6-12 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — upgrade-prompt voor viewer/editor op cloud-functies, Ko-fi link bijgewerkt | ✅ Gedaan |
+| F6-13 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — actieve stamboom balk op "Mijn data" tabblad, uitnodigingstekst bijgewerkt | ✅ Gedaan |
 
 ### 6D — Versiebeheer aanpassen
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-14 | 🟡 Middel | Versielimiet aanpassen van 20 naar 5 per stamboom in `versionControl.js` | 📋 Open |
-| F6-15 | 🟡 Middel | Versies terugzetten alleen beschikbaar voor owner en admin | 📋 Open |
+| F6-14 | 🟡 Middel | `js/versionControl.js` v1.1.0 — MAX_VERSIONS = 5 | ✅ Gedaan |
+| F6-15 | 🟡 Middel | `js/versionControl.js` v1.1.0 — restoreVersion() alleen voor owner en admin | ✅ Gedaan |
 
 ### 6E — Handleiding & UI teksten
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-16 | 🟡 Middel | `bronnen/handleiding.html` — rolbeschrijvingen herschrijven naar nieuw model | ✅ Gedaan |
+| F6-16 | 🟡 Middel | `bronnen/handleiding.html` v1.7.0 — rolbeschrijvingen herschreven naar nieuw model | ✅ Gedaan |
 | F6-17 | 🟢 Laag | `abonnementen/overzicht.html` bijwerken naar nieuwe rollen | 📋 Open |
 
 ---
@@ -324,6 +321,13 @@
 | BF-13 | Bevestigingsmail redirect naar root GitHub Pages i.p.v. /MyFamTreeCollab/ — opgelost via `{{ .SiteURL }}/#{{ .TokenHash }}&type=signup` in Confirm signup template | ✅ Opgelost |
 | BF-14 | topbar.js — developDropdown niet zichtbaar voor admin | ✅ Opgelost |
 
+## Bugfixes sessie 2026-04-24
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-15 | storage.html v2.7.1 — verwijderStamboom() wiste actieve ID/naam niet uit localStorage — cloud lijst toonde nog 'actief' badge en laadknop bleef uitgeschakeld na verwijdering | ✅ Opgelost |
+| BF-16 | storage.html v2.7.1 — resetBtn wiste actieve ID/naam niet — ACTIEF-balk bleef zichtbaar na reset | ✅ Opgelost |
+
 ---
 
 ## Verbeteringen
@@ -333,6 +337,7 @@
 | VB-01 | topbar.js v2.2.0 — gebruikersmenu dropdown (Account / Versiegeschiedenis / Uitloggen) | ✅ Gedaan |
 | VB-02 | storage.html v2.5.0 — wissel modal bij laden andere stamboom (3 knoppen) | ✅ Gedaan |
 | VB-03 | topbar.js v2.2.2 — developDropdown zichtbaar voor admin naast adminDropdown | ✅ Gedaan |
+| VB-04 | storage.html v2.7.0 — actieve stamboom balk op "Mijn data" tabblad (consistent met cloud tabblad) | ✅ Gedaan |
 
 ---
 
