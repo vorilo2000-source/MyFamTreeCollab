@@ -1,13 +1,13 @@
-// js/accountbeheer.js — v1.0.7 — Admin accountbeheer logica
+// js/accountbeheer.js — v1.0.5 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
 // Vereist: window.AuthModule (auth.js), Supabase SDK geladen via topbar/auth
 // Toegang: alleen admin — AccessGuard blokkeert andere rollen voor de pagina laadt
 
 'use strict'; // strikte modus — voorkomt stille fouten
 
-// ─── Supabase client ───────────────────────────────────────────────────────
-// sb wordt geïnitialiseerd in init() nadat de sessie hersteld is
-let sb = null; // Supabase client — wordt gezet na DOMContentLoaded
+// ─── Supabase client ophalen ───────────────────────────────────────────────
+// auth.js stelt window._supabase in na initialisatie
+const sb = window.AuthModule.getClient(); // Supabase client via AuthModule
 
 // ─── Staat ────────────────────────────────────────────────────────────────
 let allUsers   = [];   // volledige gebruikerslijst (gecached na laden)
@@ -303,29 +303,20 @@ document.getElementById('logoutLink').addEventListener('click', async e => {
   window.location.href = '../index.html';  // terug naar hoofdpagina
 });
 
-// Wachten tot DOM klaar is én sessie hersteld is
-document.addEventListener('DOMContentLoaded', () => {
-  sb = window.AuthModule.getClient(); // client alvast ophalen
+// ─── Init ─────────────────────────────────────────────────────────────────
+/**
+ * Startpunt: controleer of gebruiker admin is, laad dan gebruikers.
+ * AccessGuard op de HTML-pagina blokkeert al niet-admins,
+ * maar we controleren hier nogmaals als extra beveiliging.
+ */
+async function init() {
+  const tier = await window.AuthModule.getTier(); // huidig tier ophalen
+  if (tier !== 'admin') {                          // niet-admin geblokkeerd
+    window.location.href = '../index.html';    // doorsturen naar home
+    return;
+  }
+  await loadUsers(); // gebruikers laden
+}
 
-  // Wacht op Supabase auth state — sessie kan nog laden via cookie
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-      if (session) {
-        await loadUsers(); // sessie beschikbaar — gebruikers laden
-      } else {
-        window.location.href = '../index.html'; // geen sessie — terug naar home
-      }
-    }
-  });
-
-  // Controleer ook direct of er al een sessie is
-  sb.auth.getSession().then(async ({ data }) => {
-    if (!data.session) return; // wachten op onAuthStateChange
-    const tier = await window.AuthModule.getTier();
-    if (tier !== 'admin') {
-      window.location.href = '../index.html'; // niet-admin doorsturen
-      return;
-    }
-    await loadUsers();
-  });
-});
+// Wachten tot DOM klaar is
+document.addEventListener('DOMContentLoaded', init);
