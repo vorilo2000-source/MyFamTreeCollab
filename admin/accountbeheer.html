@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin/accountbeheer.html — v1.0.4 — Admin accountbeheer pagina -->
+<!-- admin/accountbeheer.html — v1.0.5 — Admin accountbeheer pagina -->
 <!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
 <html lang="nl">
 <head>
@@ -415,6 +415,9 @@
   <!-- TopBar placeholder — gevuld via fetch -->
   <div id="topbar-placeholder"></div>
 
+  <!-- Navbar placeholder — gevuld via fetch -->
+  <div id="navbar-placeholder"></div>
+
   <!-- Eigen topbar verwijderd — topbar.js laadt de globale TopBar -->
 
   <!-- ─── Hoofd content ─── -->
@@ -528,6 +531,14 @@
           document.body.appendChild(p);
         };
         document.body.appendChild(s);
+      });
+
+    // Navbar laden — geen auth-afhankelijkheid, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+      .then(r => r.text())
+      .then(function(data) {
+        var el = document.getElementById('navbar-placeholder');
+        if (el) el.innerHTML = data;
       });
   </script>
 
