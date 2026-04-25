@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin/accountbeheer.html — v1.0.2 — Admin accountbeheer pagina -->
+<!-- admin/accountbeheer.html — v1.0.3 — Admin accountbeheer pagina -->
 <!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
 <html lang="nl">
 <head>
@@ -412,7 +412,10 @@
 </head>
 <body>
 
-  <!-- ─── Topbar ─── -->
+  <!-- TopBar placeholder — gevuld via fetch -->
+  <div id="topbar-placeholder"></div>
+
+  <!-- ─── Eigen topbar als fallback ─── -->
   <header class="topbar">
     <div class="topbar-brand">
       MyFamTreeCollab <span>// accountbeheer</span>
@@ -515,15 +518,27 @@
     </div>
   </div>
 
-  <!-- ─── Scripts — minimale laadvolgorde voor admin pagina ─── -->
-  <!-- AccessGuard, shareModule, cloudSync en topbar zijn NIET nodig -->
-  <!-- Beveiliging loopt via AuthModule.getTier() in accountbeheer.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK — geen defer, moet eerst laden -->
-  <script defer src="../js/utils.js"></script>         <!-- window.ftSafe e.a. -->
-  <script defer src="../js/schema.js"></script>        <!-- window.StamboomSchema -->
-  <script defer src="../js/storage.js"></script>       <!-- window.StamboomStorage -->
-  <script defer src="../js/auth.js"></script>          <!-- window.AuthModule -->
-  <script defer src="../js/accountbeheer.js"></script> <!-- pagina-logica + admin-check -->
+  <!-- ─── Scripts — zelfde patroon als andere admin pagina's ─── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
+  <script src="/MyFamTreeCollab/js/utils.js"></script>   <!-- window.ftSafe e.a. -->
+  <script src="/MyFamTreeCollab/js/auth.js"></script>    <!-- window.AuthModule -->
+  <script>
+    // TopBar laden en daarna topbar.js injecteren — sessie wordt hierin hersteld
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+      .then(r => r.text())
+      .then(function(data) {
+        document.getElementById('topbar-placeholder').innerHTML = data;
+        var s = document.createElement('script');
+        s.src = '/MyFamTreeCollab/js/topbar.js';       // topbar.js herstelt de sessie
+        s.onload = function() {
+          // Sessie is nu hersteld — accountbeheer.js laden
+          var p = document.createElement('script');
+          p.src = '/MyFamTreeCollab/js/accountbeheer.js';
+          document.body.appendChild(p);
+        };
+        document.body.appendChild(s);
+      });
+  </script>
 
 </body>
 </html>
