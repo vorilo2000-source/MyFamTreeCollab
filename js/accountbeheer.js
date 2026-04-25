@@ -1,13 +1,13 @@
-// js/accountbeheer.js — v1.0.5 — Admin accountbeheer logica
+// js/accountbeheer.js — v1.0.6 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
 // Vereist: window.AuthModule (auth.js), Supabase SDK geladen via topbar/auth
 // Toegang: alleen admin — AccessGuard blokkeert andere rollen voor de pagina laadt
 
 'use strict'; // strikte modus — voorkomt stille fouten
 
-// ─── Supabase client ophalen ───────────────────────────────────────────────
-// auth.js stelt window._supabase in na initialisatie
-const sb = window.AuthModule.getClient(); // Supabase client via AuthModule
+// ─── Supabase client ───────────────────────────────────────────────────────
+// sb wordt geïnitialiseerd in init() nadat de sessie hersteld is
+let sb = null; // Supabase client — wordt gezet na DOMContentLoaded
 
 // ─── Staat ────────────────────────────────────────────────────────────────
 let allUsers   = [];   // volledige gebruikerslijst (gecached na laden)
@@ -310,6 +310,7 @@ document.getElementById('logoutLink').addEventListener('click', async e => {
  * maar we controleren hier nogmaals als extra beveiliging.
  */
 async function init() {
+  sb = window.AuthModule.getClient();              // Supabase client ophalen na sessie herstel
   const tier = await window.AuthModule.getTier(); // huidig tier ophalen
   if (tier !== 'admin') {                          // niet-admin geblokkeerd
     window.location.href = '../index.html';    // doorsturen naar home
