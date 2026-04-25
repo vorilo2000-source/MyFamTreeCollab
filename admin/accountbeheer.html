@@ -1,4 +1,4 @@
-<!-- admin/accountbeheer.html — v2.0.0 — Admin accountbeheer pagina -->
+<!-- admin/accountbeheer.html — v2.0.2 — Admin accountbeheer pagina -->
 <!-- Gebaseerd op standaardpagina.html — gebruikt style.css van de site -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -17,237 +17,237 @@
     <style>
         /* ─── Accountbeheer pagina stijlen ─── */
         .admin-wrap {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 32px 24px;
+            max-width: 1100px;                /* maximale breedte van de content */
+            margin: 0 auto;                   /* horizontaal centreren */
+            padding: 32px 24px;              /* ruimte rondom de content */
         }
 
         .admin-wrap h1 {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: #222;
-            margin-bottom: 8px;
+            font-size: 1.6rem;               /* paginatitel grootte */
+            font-weight: bold;               /* vetgedrukt */
+            color: #222;                     /* donkere tekst — aanpasbaar */
+            margin-bottom: 8px;              /* ruimte onder de titel */
         }
 
         .admin-wrap .subtitel {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 28px;
+            font-size: 0.9rem;               /* kleinere tekst voor subtitel */
+            color: #666;                     /* grijze tekst — aanpasbaar */
+            margin-bottom: 28px;             /* ruimte onder de subtitel */
         }
 
         /* ─── Statistieken ─── */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 28px;
+            display: grid;                   /* grid layout voor de kaarten */
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* responsief — min 140px per kaart */
+            gap: 12px;                       /* ruimte tussen de kaarten */
+            margin-bottom: 28px;             /* ruimte onder het grid */
         }
 
         .stat-card {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
+            background: #f8f9fa;             /* lichtgrijze achtergrond — aanpasbaar */
+            border: 1px solid #dee2e6;       /* subtiele rand — aanpasbaar */
+            border-radius: 8px;              /* afgeronde hoeken */
+            padding: 16px;                   /* ruimte binnen de kaart */
+            text-align: center;              /* tekst centreren */
         }
 
         .stat-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #888;
-            margin-bottom: 6px;
+            font-size: 0.75rem;              /* kleine label tekst */
+            text-transform: uppercase;       /* hoofdletters */
+            letter-spacing: 0.08em;          /* ruimte tussen letters */
+            color: #888;                     /* grijze tekst — aanpasbaar */
+            margin-bottom: 6px;              /* ruimte onder het label */
         }
 
         .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #222;
+            font-size: 2rem;                 /* groot getal */
+            font-weight: bold;              /* vetgedrukt */
+            color: #222;                     /* donkere tekst — aanpasbaar */
         }
 
-        /* ─── Toolbar ─── */
+        /* ─── Toolbar (zoekbalk + filter + knop) ─── */
         .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            align-items: center;
+            display: flex;                   /* horizontale rij */
+            gap: 10px;                       /* ruimte tussen elementen */
+            margin-bottom: 16px;             /* ruimte onder de toolbar */
+            flex-wrap: wrap;                 /* doorbreken op kleine schermen */
+            align-items: center;             /* verticaal uitlijnen */
         }
 
         .toolbar input {
-            flex: 1;
-            min-width: 200px;
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            font-size: 0.9rem;
+            flex: 1;                         /* neemt beschikbare ruimte in */
+            min-width: 200px;                /* minimale breedte */
+            padding: 8px 12px;              /* ruimte binnen het invoerveld */
+            border: 1px solid #ced4da;       /* rand — aanpasbaar */
+            border-radius: 5px;              /* afgeronde hoeken */
+            font-size: 0.9rem;               /* tekstgrootte */
         }
 
         .toolbar select, .toolbar button {
-            padding: 8px 14px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            background: #fff;
-            cursor: pointer;
+            padding: 8px 14px;              /* ruimte binnen select en knop */
+            border: 1px solid #ced4da;       /* rand — aanpasbaar */
+            border-radius: 5px;              /* afgeronde hoeken */
+            font-size: 0.9rem;               /* tekstgrootte */
+            background: #fff;               /* witte achtergrond — aanpasbaar */
+            cursor: pointer;                 /* handcursor */
         }
 
-        .toolbar button:hover { background: #e9ecef; }
+        .toolbar button:hover { background: #e9ecef; } /* hover kleur vernieuwen knop — aanpasbaar */
 
-        /* ─── Tabel ─── */
+        /* ─── Gebruikerstabel ─── */
         .table-wrap {
-            overflow-x: auto;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
+            overflow-x: auto;                /* horizontaal scrollen op kleine schermen */
+            border: 1px solid #dee2e6;       /* rand om de tabel — aanpasbaar */
+            border-radius: 8px;              /* afgeronde hoeken */
         }
 
         table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
+            width: 100%;                     /* volledige breedte */
+            border-collapse: collapse;       /* geen dubbele randen */
+            font-size: 0.88rem;              /* tekstgrootte in de tabel */
         }
 
-        thead { background: #f1f3f5; }
+        thead { background: #f1f3f5; }      /* achtergrond tabelkop — aanpasbaar */
 
         thead th {
-            padding: 10px 14px;
-            text-align: left;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #666;
-            border-bottom: 1px solid #dee2e6;
-            white-space: nowrap;
+            padding: 10px 14px;             /* ruimte in de koptekst cellen */
+            text-align: left;               /* links uitlijnen */
+            font-size: 0.75rem;             /* kleine koptekst */
+            text-transform: uppercase;      /* hoofdletters */
+            letter-spacing: 0.08em;         /* ruimte tussen letters */
+            color: #666;                    /* grijze koptekst — aanpasbaar */
+            border-bottom: 1px solid #dee2e6; /* scheidingslijn onder kop */
+            white-space: nowrap;            /* geen afbreking */
         }
 
-        tbody tr { border-bottom: 1px solid #f1f3f5; }
-        tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover { background: #f8f9fa; }
-        tbody td { padding: 10px 14px; vertical-align: middle; color: #333; }
+        tbody tr { border-bottom: 1px solid #f1f3f5; } /* scheidingslijn tussen rijen — aanpasbaar */
+        tbody tr:last-child { border-bottom: none; }    /* geen lijn na laatste rij */
+        tbody tr:hover { background: #f8f9fa; }         /* hover achtergrond — aanpasbaar */
+        tbody td { padding: 10px 14px; vertical-align: middle; color: #333; } /* cel opmaak */
 
-        .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* lange e-mails afkappen */
 
-        /* Tier badges */
+        /* ─── Tier badges ─── */
         .tier-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
+            display: inline-block;          /* inline blok element */
+            padding: 3px 10px;             /* ruimte binnen de badge */
+            border-radius: 12px;           /* ronde badge vorm */
+            font-size: 0.75rem;            /* kleine tekst */
+            font-weight: 600;              /* halfvet */
+            text-transform: uppercase;     /* hoofdletters */
         }
 
-        .tier-badge.viewer  { background: #d4edda; color: #155724; }
-        .tier-badge.editor  { background: #cce5ff; color: #004085; }
-        .tier-badge.owner   { background: #fff3cd; color: #856404; }
-        .tier-badge.admin   { background: #f8d7da; color: #721c24; }
+        .tier-badge.viewer  { background: #d4edda; color: #155724; } /* groen — aanpasbaar */
+        .tier-badge.editor  { background: #cce5ff; color: #004085; } /* blauw — aanpasbaar */
+        .tier-badge.owner   { background: #fff3cd; color: #856404; } /* geel — aanpasbaar */
+        .tier-badge.admin   { background: #f8d7da; color: #721c24; } /* rood — aanpasbaar */
 
-        /* Tier select */
+        /* ─── Tier select dropdown ─── */
         .tier-select {
-            padding: 4px 8px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            background: #fff;
-            cursor: pointer;
+            padding: 4px 8px;              /* ruimte binnen de dropdown */
+            border: 1px solid #ced4da;     /* rand — aanpasbaar */
+            border-radius: 4px;            /* afgeronde hoeken */
+            font-size: 0.85rem;            /* tekstgrootte */
+            background: #fff;             /* witte achtergrond — aanpasbaar */
+            cursor: pointer;              /* handcursor */
         }
 
-        /* Actieknoppen */
-        .row-actions { display: flex; gap: 6px; }
+        /* ─── Actieknoppen per rij ─── */
+        .row-actions { display: flex; gap: 6px; } /* horizontale rij knoppen */
 
         .btn-action {
-            padding: 4px 10px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            background: #fff;
-            cursor: pointer;
-            transition: all 0.15s;
+            padding: 4px 10px;            /* ruimte binnen de knop */
+            border: 1px solid #ced4da;    /* rand — aanpasbaar */
+            border-radius: 4px;           /* afgeronde hoeken */
+            font-size: 0.8rem;            /* kleine tekstgrootte */
+            background: #fff;            /* witte achtergrond — aanpasbaar */
+            cursor: pointer;             /* handcursor */
+            transition: all 0.15s;       /* vloeiende hover animatie */
         }
 
-        .btn-action:hover        { background: #e9ecef; }
-        .btn-action.danger:hover { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .btn-action:hover        { background: #e9ecef; }                                    /* hover kleur opslaan — aanpasbaar */
+        .btn-action.danger:hover { background: #f8d7da; border-color: #f5c6cb; color: #721c24; } /* hover kleur verwijderen — aanpasbaar */
 
         .loading-row td, .empty-row td {
-            text-align: center;
-            color: #888;
-            padding: 40px;
+            text-align: center;           /* centreer laad/leeg tekst */
+            color: #888;                  /* grijze tekst — aanpasbaar */
+            padding: 40px;               /* ruimte rondom de tekst */
         }
 
-        /* ─── Toast ─── */
+        /* ─── Toast notificatie ─── */
         #toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #333;
-            color: #fff;
-            font-size: 0.88rem;
-            padding: 10px 18px;
-            border-radius: 6px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity 0.2s, transform 0.2s;
-            pointer-events: none;
-            z-index: 999;
-            max-width: 300px;
+            position: fixed;             /* vast op het scherm */
+            bottom: 24px;               /* afstand van onderkant */
+            right: 24px;                /* afstand van rechterkant */
+            background: #333;           /* donkere achtergrond — aanpasbaar */
+            color: #fff;                /* witte tekst — aanpasbaar */
+            font-size: 0.88rem;         /* tekstgrootte */
+            padding: 10px 18px;         /* ruimte binnen de toast */
+            border-radius: 6px;         /* afgeronde hoeken */
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2); /* schaduw */
+            opacity: 0;                 /* standaard onzichtbaar */
+            transform: translateY(8px); /* licht naar beneden verschoven */
+            transition: opacity 0.2s, transform 0.2s; /* vloeiende animatie */
+            pointer-events: none;       /* niet klikbaar */
+            z-index: 999;               /* boven alles */
+            max-width: 300px;           /* maximale breedte */
         }
 
-        #toast.show  { opacity: 1; transform: translateY(0); }
-        #toast.error { background: #dc3545; }
+        #toast.show  { opacity: 1; transform: translateY(0); }  /* zichtbaar maken */
+        #toast.error { background: #dc3545; }                    /* rode achtergrond bij fout — aanpasbaar */
 
-        /* ─── Modal ─── */
+        /* ─── Bevestigingsmodal ─── */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 500;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
+            position: fixed;            /* vast op het scherm */
+            inset: 0;                   /* volledige viewport bedekken */
+            background: rgba(0,0,0,0.5); /* donkere overlay — aanpasbaar */
+            display: flex;              /* flexbox voor centreren */
+            align-items: center;        /* verticaal centreren */
+            justify-content: center;    /* horizontaal centreren */
+            z-index: 500;               /* boven de pagina */
+            opacity: 0;                 /* standaard onzichtbaar */
+            pointer-events: none;       /* niet klikbaar als gesloten */
+            transition: opacity 0.2s;   /* vloeiende animatie */
         }
 
-        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-overlay.open { opacity: 1; pointer-events: all; } /* modal openen */
 
         .modal-box {
-            background: #fff;
-            border-radius: 8px;
-            padding: 28px;
-            width: 360px;
-            max-width: 90vw;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            background: #fff;           /* witte achtergrond — aanpasbaar */
+            border-radius: 8px;         /* afgeronde hoeken */
+            padding: 28px;             /* ruimte binnen de modal */
+            width: 360px;              /* breedte van de modal */
+            max-width: 90vw;           /* niet breder dan het scherm */
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15); /* schaduw */
         }
 
-        .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: #222; }
-        .modal-box p  { font-size: 0.9rem; color: #555; margin-bottom: 20px; line-height: 1.6; }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: #222; } /* modaltitel */
+        .modal-box p  { font-size: 0.9rem; color: #555; margin-bottom: 20px; line-height: 1.6; }  /* modaltekst */
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }                    /* knoppen rechts uitlijnen */
 
         .btn-cancel {
-            padding: 8px 18px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            background: #fff;
-            font-size: 0.9rem;
-            cursor: pointer;
+            padding: 8px 18px;         /* ruimte binnen annuleerknop */
+            border: 1px solid #ced4da; /* rand — aanpasbaar */
+            border-radius: 5px;        /* afgeronde hoeken */
+            background: #fff;         /* witte achtergrond — aanpasbaar */
+            font-size: 0.9rem;         /* tekstgrootte */
+            cursor: pointer;          /* handcursor */
         }
 
         .btn-confirm-delete {
-            padding: 8px 18px;
-            border: none;
-            border-radius: 5px;
-            background: #dc3545;
-            color: #fff;
-            font-size: 0.9rem;
-            cursor: pointer;
+            padding: 8px 18px;         /* ruimte binnen verwijderknop */
+            border: none;              /* geen rand */
+            border-radius: 5px;        /* afgeronde hoeken */
+            background: #dc3545;       /* rode achtergrond — aanpasbaar */
+            color: #fff;              /* witte tekst */
+            font-size: 0.9rem;         /* tekstgrootte */
+            cursor: pointer;          /* handcursor */
         }
 
-        .btn-confirm-delete:hover { background: #c82333; }
+        .btn-confirm-delete:hover { background: #c82333; } /* donkerder rood bij hover — aanpasbaar */
 
-        /* ─── Timestamp ─── */
-        #lastRefresh { font-size: 0.82rem; color: #888; margin-bottom: 20px; }
+        /* ─── Timestamp label ─── */
+        #lastRefresh { font-size: 0.82rem; color: #888; margin-bottom: 20px; } /* kleine grijze tekst — aanpasbaar */
     </style>
 </head>
 <body>
@@ -354,33 +354,38 @@
 <script src="/MyFamTreeCollab/js/auth.js"></script>
 
 <script>
-    // TopBar laden → daarna topbar.js → daarna accountbeheer.js
+    // Stap 1: TopBar HTML laden en in de placeholder zetten
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen als tekst
         .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '/MyFamTreeCollab/js/topbar.js';
+            document.getElementById('topbar-placeholder').innerHTML = data;    // TopBar HTML in de DOM zetten
+
+            // Stap 2: topbar.js dynamisch laden NA de TopBar HTML
+            // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+            var s = document.createElement('script');                          // nieuw script element aanmaken
+            s.src = '/MyFamTreeCollab/js/topbar.js';                          // pad naar topbar.js
             s.onload = function() {
-                var p = document.createElement('script');
-                p.src = '/MyFamTreeCollab/js/accountbeheer.js';
-                document.body.appendChild(p);
+                // Stap 3: accountbeheer.js laden NA topbar.js
+                // topbar.js herstelt de Supabase sessie — accountbeheer.js heeft dit nodig
+                var p = document.createElement('script');                      // nieuw script element aanmaken
+                p.src = '/MyFamTreeCollab/js/accountbeheer.js';               // pad naar accountbeheer.js
+                document.body.appendChild(p);                                  // script toevoegen aan de DOM
             };
-            document.body.appendChild(s);
+            document.body.appendChild(s);                                      // topbar.js toevoegen aan de DOM
         });
 
-    // Navbar laden
+    // Stap 4: Navbar laden — onafhankelijk van auth, mag parallel
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen als tekst
         .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;
+            document.getElementById('navbar-placeholder').innerHTML = data;    // Navbar HTML in de DOM zetten
         });
 
-    // Footer laden
+    // Stap 5: Footer laden — onafhankelijk van auth, mag parallel
     fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen als tekst
         .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
+            document.getElementById('footer-placeholder').innerHTML = data;    // Footer HTML in de DOM zetten
         });
 </script>
 
