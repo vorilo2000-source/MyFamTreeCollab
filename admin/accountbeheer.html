@@ -1,439 +1,273 @@
+<!-- admin/accountbeheer.html — v2.0.0 — Admin accountbeheer pagina -->
+<!-- Gebaseerd op standaardpagina.html — gebruikt style.css van de site -->
 <!DOCTYPE html>
-<!-- admin/accountbeheer.html — v1.0.9 — Admin accountbeheer pagina -->
-<!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Accountbeheer — MyFamTreeCollab</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accountbeheer — MyFamTreeCollab</title>
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+    <!-- ===== Favicon / App-icoon ===== -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
 
-  <style>
-    /* ─── Reset & variabelen ─── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* ─── Accountbeheer pagina stijlen ─── */
+        .admin-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
 
-    :root {
-      --bg:        #0d0d0f;
-      --surface:   #16161a;
-      --border:    #2a2a32;
-      --accent:    #e8ff5a;
-      --accent2:   #5affd4;
-      --danger:    #ff5a5a;
-      --text:      #f0f0f0;
-      --muted:     #6b6b7a;
-      --font-head: 'Syne', sans-serif;
-      --font-mono: 'DM Mono', monospace;
-      --radius:    6px;
-      --transition: 140ms ease;
-    }
+        .admin-wrap h1 {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 8px;
+        }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-mono);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+        .admin-wrap .subtitel {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 28px;
+        }
 
-    /* ─── Topbar ─── */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      height: 56px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+        /* ─── Statistieken ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
 
-    .topbar-brand {
-      font-family: var(--font-head);
-      font-size: 1rem;
-      letter-spacing: 0.04em;
-      color: var(--accent);
-    }
+        .stat-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
 
-    .topbar-brand span {
-      color: var(--muted);
-      font-size: 0.75rem;
-      margin-left: 0.5rem;
-    }
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #888;
+            margin-bottom: 6px;
+        }
 
-    .topbar-nav { display: flex; gap: 1.5rem; align-items: center; }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #222;
+        }
 
-    .topbar-nav a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.78rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      transition: color var(--transition);
-    }
+        /* ─── Toolbar ─── */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
 
-    .topbar-nav a:hover { color: var(--text); }
+        .toolbar input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
 
-    /* ─── Main ─── */
-    main {
-      flex: 1;
-      padding: 2.5rem 2rem;
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-    }
+        .toolbar select, .toolbar button {
+            padding: 8px 14px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            background: #fff;
+            cursor: pointer;
+        }
 
-    /* ─── Paginatitel ─── */
-    .page-header {
-      margin-bottom: 2.5rem;
-      border-left: 3px solid var(--accent);
-      padding-left: 1rem;
-    }
+        .toolbar button:hover { background: #e9ecef; }
 
-    .page-header h1 {
-      font-family: var(--font-head);
-      font-size: 1.8rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
+        /* ─── Tabel ─── */
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
 
-    .page-header p {
-      color: var(--muted);
-      font-size: 0.8rem;
-      margin-top: 0.3rem;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
 
-    /* ─── Stat kaarten ─── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2.5rem;
-    }
+        thead { background: #f1f3f5; }
 
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.2rem 1.4rem;
-      position: relative;
-      overflow: hidden;
-    }
+        thead th {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #666;
+            border-bottom: 1px solid #dee2e6;
+            white-space: nowrap;
+        }
 
-    /* Gekleurde toprand per tier */
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--accent);
-    }
+        tbody tr { border-bottom: 1px solid #f1f3f5; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #f8f9fa; }
+        tbody td { padding: 10px 14px; vertical-align: middle; color: #333; }
 
-    .stat-card.cyan::before   { background: var(--accent2); }
-    .stat-card.green::before  { background: #7fff7f; }
-    .stat-card.blue::before   { background: #7faeff; }
-    .stat-card.danger::before { background: var(--danger); }
+        .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .stat-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-    }
+        /* Tier badges */
+        .tier-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
 
-    .stat-value {
-      font-family: var(--font-head);
-      font-size: 2rem;
-      font-weight: 800;
-      line-height: 1;
-    }
+        .tier-badge.viewer  { background: #d4edda; color: #155724; }
+        .tier-badge.editor  { background: #cce5ff; color: #004085; }
+        .tier-badge.owner   { background: #fff3cd; color: #856404; }
+        .tier-badge.admin   { background: #f8d7da; color: #721c24; }
 
-    /* ─── Toolbar ─── */
-    .toolbar {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+        /* Tier select */
+        .tier-select {
+            padding: 4px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            background: #fff;
+            cursor: pointer;
+        }
 
-    .search-wrap {
-      flex: 1;
-      min-width: 220px;
-      position: relative;
-    }
+        /* Actieknoppen */
+        .row-actions { display: flex; gap: 6px; }
 
-    .search-wrap input {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      padding: 0.55rem 0.9rem 0.55rem 2.2rem;
-      border-radius: var(--radius);
-      outline: none;
-      transition: border-color var(--transition);
-    }
+        .btn-action {
+            padding: 4px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
 
-    .search-wrap input:focus { border-color: var(--accent); }
+        .btn-action:hover        { background: #e9ecef; }
+        .btn-action.danger:hover { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
 
-    .search-icon {
-      position: absolute;
-      left: 0.7rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      font-size: 0.85rem;
-      pointer-events: none;
-    }
+        .loading-row td, .empty-row td {
+            text-align: center;
+            color: #888;
+            padding: 40px;
+        }
 
-    .filter-select, .btn-refresh {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      padding: 0.55rem 0.9rem;
-      border-radius: var(--radius);
-      outline: none;
-      cursor: pointer;
-      transition: border-color var(--transition);
-    }
+        /* ─── Toast ─── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #333;
+            color: #fff;
+            font-size: 0.88rem;
+            padding: 10px 18px;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 999;
+            max-width: 300px;
+        }
 
-    .btn-refresh { color: var(--muted); letter-spacing: 0.05em; }
-    .btn-refresh:hover { border-color: var(--accent2); color: var(--accent2); }
-    .filter-select:focus { border-color: var(--accent); }
+        #toast.show  { opacity: 1; transform: translateY(0); }
+        #toast.error { background: #dc3545; }
 
-    /* ─── Tabel ─── */
-    .table-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
+        /* ─── Modal ─── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
 
-    thead { background: #1e1e26; }
+        .modal-box {
+            background: #fff;
+            border-radius: 8px;
+            padding: 28px;
+            width: 360px;
+            max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
 
-    thead th {
-      padding: 0.75rem 1rem;
-      text-align: left;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
+        .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: #222; }
+        .modal-box p  { font-size: 0.9rem; color: #555; margin-bottom: 20px; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background var(--transition);
-    }
+        .btn-cancel {
+            padding: 8px 18px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            background: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
 
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #1c1c24; }
+        .btn-confirm-delete {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 5px;
+            background: #dc3545;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
 
-    tbody td { padding: 0.75rem 1rem; vertical-align: middle; }
+        .btn-confirm-delete:hover { background: #c82333; }
 
-    .col-email { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* Tier badges */
-    .tier-badge {
-      display: inline-block;
-      padding: 0.2rem 0.6rem;
-      border-radius: 3px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .tier-badge.viewer  { background: #1e2a1e; color: #7fff7f; border: 1px solid #2a4a2a; }
-    .tier-badge.editor  { background: #1e2233; color: #7faeff; border: 1px solid #2a3a55; }
-    .tier-badge.owner   { background: #2a2205; color: var(--accent); border: 1px solid #4a3a05; }
-    .tier-badge.admin   { background: #2a0505; color: var(--danger); border: 1px solid #5a1010; }
-
-    /* Tier select inline */
-    .tier-select {
-      background: #1e1e26;
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 3px;
-      outline: none;
-      cursor: pointer;
-      transition: border-color var(--transition);
-    }
-
-    .tier-select:focus { border-color: var(--accent); }
-
-    /* Actieknoppen */
-    .row-actions { display: flex; gap: 0.4rem; }
-
-    .btn-action {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      padding: 0.3rem 0.65rem;
-      border-radius: 3px;
-      cursor: pointer;
-      transition: all var(--transition);
-      white-space: nowrap;
-    }
-
-    .btn-action:hover        { border-color: var(--accent2); color: var(--accent2); }
-    .btn-action.danger:hover { border-color: var(--danger);  color: var(--danger); }
-
-    /* Laadrij & lege staat */
-    .loading-row td, .empty-row td {
-      text-align: center;
-      color: var(--muted);
-      padding: 3rem;
-      font-size: 0.82rem;
-    }
-
-    /* ─── Toast ─── */
-    #toast {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      color: var(--text);
-      font-size: 0.82rem;
-      padding: 0.75rem 1.2rem;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.2s, transform 0.2s;
-      pointer-events: none;
-      z-index: 999;
-      max-width: 320px;
-    }
-
-    #toast.show  { opacity: 1; transform: translateY(0); }
-    #toast.error { border-left-color: var(--danger); }
-
-    /* ─── Bevestigingsmodal ─── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 500;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-    .modal-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-top: 3px solid var(--danger);
-      border-radius: var(--radius);
-      padding: 2rem;
-      width: 360px;
-      max-width: 90vw;
-    }
-
-    .modal-box h3 {
-      font-family: var(--font-head);
-      font-size: 1.1rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .modal-box p {
-      color: var(--muted);
-      font-size: 0.82rem;
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
-    }
-
-    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-
-    .btn-cancel {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      padding: 0.5rem 1.2rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .btn-cancel:hover { border-color: var(--text); color: var(--text); }
-
-    .btn-confirm-delete {
-      background: var(--danger);
-      border: none;
-      color: #fff;
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      padding: 0.5rem 1.2rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: opacity var(--transition);
-    }
-
-    .btn-confirm-delete:hover { opacity: 0.85; }
-
-    /* Topbar en navbar gebruiken de originele site-stijl via style.css */
-
-    /* ─── Footer ─── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 1rem 2rem;
-      color: var(--muted);
-      font-size: 0.72rem;
-      display: flex;
-      justify-content: space-between;
-    }
-  </style>
+        /* ─── Timestamp ─── */
+        #lastRefresh { font-size: 0.82rem; color: #888; margin-bottom: 20px; }
+    </style>
 </head>
 <body>
 
-  <!-- ======================= source view enablement  ======================= -->
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init();</script>
+<!-- ======================= source view enablement  ======================= -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 
-  <!-- TopBar placeholder — gevuld via fetch -->
-  <div id="topbar-placeholder"></div>
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div>
 
-  <!-- Navbar placeholder — gevuld via fetch -->
-  <div id="navbar-placeholder"></div>
+<!-- ======================= Navbar ======================= -->
+<div id="navbar-placeholder"></div>
 
-  <!-- Eigen topbar verwijderd — topbar.js laadt de globale TopBar -->
+<!-- ======================= Hoofd content ======================= -->
+<main>
+  <div class="admin-wrap">
 
-  <!-- ─── Hoofd content ─── -->
-  <main>
-
-    <!-- Paginatitel -->
-    <div class="page-header">
-      <h1>Accountbeheer</h1>
-      <p id="lastRefresh">Laden...</p>
-    </div>
+    <h1>Accountbeheer</h1>
+    <p id="lastRefresh" class="subtitel">Laden...</p>
 
     <!-- Statistieken -->
     <div class="stats-grid">
@@ -441,41 +275,38 @@
         <div class="stat-label">Totaal</div>
         <div class="stat-value" id="statTotal">—</div>
       </div>
-      <div class="stat-card green">
+      <div class="stat-card">
         <div class="stat-label">Viewer</div>
         <div class="stat-value" id="statViewer">—</div>
       </div>
-      <div class="stat-card blue">
+      <div class="stat-card">
         <div class="stat-label">Editor</div>
         <div class="stat-value" id="statEditor">—</div>
       </div>
-      <div class="stat-card cyan">
+      <div class="stat-card">
         <div class="stat-label">Owner</div>
         <div class="stat-value" id="statOwner">—</div>
       </div>
-      <div class="stat-card danger">
+      <div class="stat-card">
         <div class="stat-label">Admin</div>
         <div class="stat-value" id="statAdmin">—</div>
       </div>
     </div>
 
-    <!-- Zoekbalk & filter -->
+    <!-- Toolbar -->
     <div class="toolbar">
-      <div class="search-wrap">
-        <span class="search-icon">⌕</span>
-        <input type="text" id="searchInput" placeholder="Zoek op e-mail of gebruikersnaam…" />
-      </div>
-      <select class="filter-select" id="tierFilter">
+      <input type="text" id="searchInput" placeholder="Zoek op e-mail of gebruikersnaam…" />
+      <select id="tierFilter">
         <option value="all">Alle tiers</option>
         <option value="viewer">Viewer</option>
         <option value="editor">Editor</option>
         <option value="owner">Owner</option>
         <option value="admin">Admin</option>
       </select>
-      <button class="btn-refresh" id="btnRefresh">↻ Vernieuwen</button>
+      <button id="btnRefresh">↻ Vernieuwen</button>
     </div>
 
-    <!-- Gebruikerstabel -->
+    <!-- Tabel -->
     <div class="table-wrap">
       <table>
         <thead>
@@ -489,64 +320,69 @@
           </tr>
         </thead>
         <tbody id="usersTbody">
-          <!-- Gevuld door accountbeheer.js -->
           <tr class="loading-row"><td colspan="6">Laden…</td></tr>
         </tbody>
       </table>
     </div>
 
-  </main>
+  </div>
+</main>
 
-  <!-- ─── Footer ─── -->
-  <footer>
-    <span>MyFamTreeCollab — Admin</span>
-    <span>Alleen zichtbaar voor admins</span>
-  </footer>
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
 
-  <!-- ─── Toast notificatie ─── -->
-  <div id="toast"></div>
+<!-- ─── Toast ─── -->
+<div id="toast"></div>
 
-  <!-- ─── Bevestigingsmodal (verwijderen) ─── -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-box">
-      <h3>Gebruiker verwijderen</h3>
-      <p>Weet je zeker dat je <strong id="modalName"></strong> wilt verwijderen uit de profielen? Dit kan niet ongedaan worden gemaakt.</p>
-      <div class="modal-actions">
-        <button class="btn-cancel" id="btnCancel">Annuleren</button>
-        <button class="btn-confirm-delete" id="btnConfirm">Verwijderen</button>
-      </div>
+<!-- ─── Modal ─── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <h3>Gebruiker verwijderen</h3>
+    <p>Weet je zeker dat je <strong id="modalName"></strong> wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnCancel">Annuleren</button>
+      <button class="btn-confirm-delete" id="btnConfirm">Verwijderen</button>
     </div>
   </div>
+</div>
 
-  <!-- ─── Scripts — zelfde patroon als andere admin pagina's ─── -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
-  <script src="/MyFamTreeCollab/js/utils.js"></script>   <!-- window.ftSafe e.a. -->
-  <script src="/MyFamTreeCollab/js/auth.js"></script>    <!-- window.AuthModule -->
-  <script>
-    // TopBar laden en daarna topbar.js injecteren — sessie wordt hierin hersteld
+<!-- =============================================================
+     SCRIPTS — verplichte volgorde
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/MyFamTreeCollab/js/utils.js"></script>
+<script src="/MyFamTreeCollab/js/auth.js"></script>
+
+<script>
+    // TopBar laden → daarna topbar.js → daarna accountbeheer.js
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-      .then(r => r.text())
-      .then(function(data) {
-        document.getElementById('topbar-placeholder').innerHTML = data;
-        var s = document.createElement('script');
-        s.src = '/MyFamTreeCollab/js/topbar.js';       // topbar.js herstelt de sessie
-        s.onload = function() {
-          // Sessie is nu hersteld — accountbeheer.js laden
-          var p = document.createElement('script');
-          p.src = '/MyFamTreeCollab/js/accountbeheer.js';
-          document.body.appendChild(p);
-        };
-        document.body.appendChild(s);
-      });
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '/MyFamTreeCollab/js/topbar.js';
+            s.onload = function() {
+                var p = document.createElement('script');
+                p.src = '/MyFamTreeCollab/js/accountbeheer.js';
+                document.body.appendChild(p);
+            };
+            document.body.appendChild(s);
+        });
 
-    // Navbar laden — geen auth-afhankelijkheid, mag parallel
+    // Navbar laden
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-      .then(r => r.text())
-      .then(function(data) {
-        var el = document.getElementById('navbar-placeholder');
-        if (el) el.innerHTML = data;
-      });
-  </script>
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+
+    // Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+</script>
 
 </body>
 </html>
