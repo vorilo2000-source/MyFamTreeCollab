@@ -1,13 +1,8 @@
 <!DOCTYPE html>
-<!-- admin/accountbeheer.html — v1.0.1 — Admin accountbeheer pagina -->
+<!-- admin/accountbeheer.html — v1.0.2 — Admin accountbeheer pagina -->
 <!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
 <html lang="nl">
 <head>
-
-<!-- ======================= source view enablement  ======================= -->
-     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-     <script>eruda.init();</script>
-  
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Accountbeheer — MyFamTreeCollab</title>
@@ -523,12 +518,12 @@
   <!-- ─── Scripts — minimale laadvolgorde voor admin pagina ─── -->
   <!-- AccessGuard, shareModule, cloudSync en topbar zijn NIET nodig -->
   <!-- Beveiliging loopt via AuthModule.getTier() in accountbeheer.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
-  <script src="../js/utils.js"></script>         <!-- window.ftSafe e.a. -->
-  <script src="../js/schema.js"></script>        <!-- window.StamboomSchema -->
-  <script src="../js/storage.js"></script>       <!-- window.StamboomStorage -->
-  <script src="../js/auth.js"></script>          <!-- window.AuthModule — getTier() voor admin-check -->
-  <script src="../js/accountbeheer.js"></script> <!-- pagina-logica + admin-check -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK — geen defer, moet eerst laden -->
+  <script defer src="../js/utils.js"></script>         <!-- window.ftSafe e.a. -->
+  <script defer src="../js/schema.js"></script>        <!-- window.StamboomSchema -->
+  <script defer src="../js/storage.js"></script>       <!-- window.StamboomStorage -->
+  <script defer src="../js/auth.js"></script>          <!-- window.AuthModule -->
+  <script defer src="../js/accountbeheer.js"></script> <!-- pagina-logica + admin-check -->
 
 </body>
 </html>
