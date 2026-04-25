@@ -1,5 +1,4 @@
-
-// js/accountbeheer.js — v1.0.4 — Admin accountbeheer logica
+// js/accountbeheer.js — v1.0.5 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
 // Vereist: window.AuthModule (auth.js), Supabase SDK geladen via topbar/auth
 // Toegang: alleen admin — init() controleert tier via AuthModule.getTier()
@@ -251,12 +250,23 @@ document.getElementById('logoutLink').addEventListener('click', async e => {
 
 // ─── Init ─────────────────────────────────────────────────────────────────
 async function init() {
-  const tier = await window.AuthModule.getTier(); // tier ophalen
-  if (tier !== 'admin') {                          // niet-admin doorsturen
-    window.location.href = '../index.html';
-    return;
-  }
-  await loadUsers(); // gebruikers laden
+  // Wacht tot Supabase sessie hersteld is via onAuthStateChange
+  const client = window.AuthModule.getClient(); // client ophalen
+
+  client.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') { // sessie beschikbaar
+      if (!session) {                                            // geen sessie — redirect
+        window.location.href = '../index.html';
+        return;
+      }
+      const tier = await window.AuthModule.getTier();            // tier ophalen
+      if (tier !== 'admin') {                                    // niet-admin redirect
+        window.location.href = '../index.html';
+        return;
+      }
+      await loadUsers();                                         // gebruikers laden
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init); // starten na DOM laden
