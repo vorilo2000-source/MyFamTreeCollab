@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin/accountbeheer.html — v1.0.3 — Admin accountbeheer pagina -->
+<!-- admin/accountbeheer.html — v1.0.4 — Admin accountbeheer pagina -->
 <!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
 <html lang="nl">
 <head>
@@ -415,16 +415,7 @@
   <!-- TopBar placeholder — gevuld via fetch -->
   <div id="topbar-placeholder"></div>
 
-  <!-- ─── Eigen topbar als fallback ─── -->
-  <header class="topbar">
-    <div class="topbar-brand">
-      MyFamTreeCollab <span>// accountbeheer</span>
-    </div>
-    <nav class="topbar-nav">
-      <a href="../index.html">← Terug naar app</a>
-      <a href="#" id="logoutLink">Uitloggen</a>
-    </nav>
-  </header>
+  <!-- Eigen topbar verwijderd — topbar.js laadt de globale TopBar -->
 
   <!-- ─── Hoofd content ─── -->
   <main>
