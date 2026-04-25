@@ -1,4 +1,5 @@
-// js/accountbeheer.js — v1.0.8 — Admin accountbeheer logica
+
+// js/accountbeheer.js — v1.0.9 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
 // Vereist: window.AuthModule (auth.js), Supabase SDK, topbar.js (sessie herstel)
 // Toegang: alleen admin — init() controleert tier via AuthModule.getTier()
