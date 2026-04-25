@@ -1,4 +1,4 @@
-<!-- ======================= home/index.html v2.2.0 =======================
+<!-- ======================= home/index.html v2.2.2 =======================
      v2.2.0: Demo knop toegevoegd naast "Start je stamboom"
      - Knop "Bekijk demo" laadt demo stamboom via DemoModule
      - Demotekst toegevoegd in hero sectie
@@ -177,13 +177,10 @@
         </button>
     </div>
 
-     
-<!-- Uitleg bij de demo knop -->
-<div class="benefit">
-        <h3>🌳 Bekijk demo</h3>
-        <p>Geen account nodig, </p>
-         <p> de demo toont een fictieve stamboom met 37 personen, 2 families en 6 generaties.</p>
-    </div>
+    <!-- Uitleg bij de demo knop -->
+    <p class="demo-intro">
+        Geen account nodig — de demo toont een fictieve stamboom met 37 personen, 2 families en 6 generaties.
+    </p>
 
 </section>
 
@@ -265,11 +262,12 @@
 
 <!-- ======================= SCRIPTS ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
-<script src="js/utils.js"></script>  <!-- Utilities: ftSafe, ftFormatDate, ftParseBirthday -->
-<script src="js/schema.js"></script> <!-- Schema: StamboomSchema -->
-<script src="js/storage.js"></script> <!-- Opslag: StamboomStorage -->
-<script src="js/auth.js"></script>   <!-- Auth: AuthModule -->
-<script src="js/demo.js"></script>   <!-- Demo: DemoModule — laadt fictieve stamboom -->
+<script src="js/utils.js"></script>        <!-- Utilities: ftSafe, ftFormatDate, ftParseBirthday -->
+<script src="js/schema.js"></script>       <!-- Schema: StamboomSchema — veldnamen en validatie -->
+<script src="js/idGenerator.js"></script>  <!-- ID generator: genereerCode — vereist door storage.js -->
+<script src="js/storage.js"></script>      <!-- Opslag: StamboomStorage — lokale data via localStorage -->
+<script src="js/auth.js"></script>         <!-- Auth: AuthModule — inloggen en tier ophalen -->
+<script src="js/demo.js"></script>         <!-- Demo: DemoModule — laadt fictieve stamboom voor gasten -->
 
 <script>
     // ======================= TopBar laden =======================
@@ -313,7 +311,7 @@
             await window.DemoModule.loadDemo(true);               // Demo stamboom laden (force = true)
 
             // Doorsturen naar manage.html na laden van de demo
-            window.location.href = '/MyFamTreeCollab/stamboom/manage.html'; // Navigeren naar stamboom
+            window.location.href = '/MyFamTreeCollab/stamboom/storage.html'; // Navigeren naar opslag na demo laden
         });
     });
 </script>
