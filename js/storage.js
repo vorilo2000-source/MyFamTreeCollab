@@ -1,12 +1,7 @@
-/* ======================= js/storage.js v2.2.1 =======================
+/* ======================= js/storage.js v2.2.0 =======================
    Persistente opslag voor MyFamTreeCollab via localStorage
    Exporteert: window.StamboomStorage
    Vereist: schema.js (voor veldnamen), idGenerator.js (voor ID-fallback)
-
-   Wijzigingen v2.2.1:
-   - replaceAll() roept nu migrate() aan op elk record
-     zodat lowercase veldnamen (bijv. uit demo.js) correct worden opgeslagen
-     conform schema.js (Doopnaam, VaderID etc.)
 
    Wijzigingen v2.2.0 (F6-11):
    - canAdd() aangepast aan nieuw rolmodel:
@@ -35,7 +30,7 @@
    ======================================================================= */
 
 (function () {
-    'use strict'; // Strikte modus — voorkomt stille fouten
+    'use strict';
 
     // Sleutel waaronder stamboomdata in localStorage staat
     var STORAGE_KEY = 'stamboomData';
@@ -67,38 +62,20 @@
 
     /* ======================= MIGRATIE ======================= */
 
-    // Normaliseert een record naar het huidige schema (hoofdletter veldnamen)
-    // Ondersteunt zowel hoofdletter- als lowercase veldnamen als invoer
     function migrate(record) {
-        if (!record || typeof record !== 'object') return null;            // Ongeldig record — overslaan
+        if (!record || typeof record !== 'object') return null;            // Ongeldig record
 
-        // Maak een genormaliseerde versie van het record met lowercase keys
-        // zodat we zowel 'ID' als 'id', 'Doopnaam' als 'doopnaam' kunnen vergelijken
-        var lowerRecord = {};                                              // Hulpobject met lowercase keys
-        Object.keys(record).forEach(function(key) {
-            lowerRecord[key.toLowerCase()] = record[key];                  // Alle keys lowercase maken
-        });
-
-        var migrated = {};                                                 // Nieuw genormaliseerd object
+        var migrated = Object.assign({}, record);                          // Ondiepe kopie
 
         if (window.StamboomSchema && Array.isArray(window.StamboomSchema.fields)) {
             window.StamboomSchema.fields.forEach(function(field) {
-                // Zoek waarde via exacte key of via lowercase vergelijking
-                if (field in record) {
-                    migrated[field] = record[field];                       // Exacte match — direct overnemen
-                } else if (field.toLowerCase() in lowerRecord) {
-                    migrated[field] = lowerRecord[field.toLowerCase()];    // Lowercase match — overnemen
-                } else {
-                    migrated[field] = '';                                  // Veld ontbreekt — lege string
-                }
+                if (!(field in migrated)) migrated[field] = '';            // Ontbrekend veld aanvullen
             });
         } else {
             console.warn('storage.js: StamboomSchema niet geladen — migratie overgeslagen.');
-            migrated = Object.assign({}, record);                          // Kopieer record ongewijzigd
         }
 
-        // ID genereren als het ontbreekt of leeg is
-        if (!migrated.ID || String(migrated.ID).trim() === '') {
+        if (!migrated.ID || migrated.ID.trim() === '') {
             migrated.ID = window.genereerCode                              // ID genereren via centrale module
                 ? window.genereerCode(migrated, [])
                 : 'P' + Date.now();                                        // Noodoplossing zonder idGenerator
@@ -220,7 +197,7 @@
             return false;
         }
 
-        var check = await canAdd();                                        // Controleer limiet
+        var check = await canAdd();
         if (!check.allowed) {
             console.warn('storage.js: add() geblokkeerd — limiet bereikt (' + check.count + '/' + check.max + ')');
             return { blocked: true, count: check.count, max: check.max }; // Geef blockinfo terug voor UI
@@ -242,13 +219,13 @@
     /* ======================= UPDATE ======================= */
 
     function update(personID, updates) {
-        var dataset = get();                                               // Haal dataset op
-        var idx = dataset.findIndex(function(p) { return p.ID === personID; }); // Zoek persoon op ID
+        var dataset = get();
+        var idx = dataset.findIndex(function(p) { return p.ID === personID; });
         if (idx === -1) {
             console.warn('storage.js: update() persoon ' + personID + ' niet gevonden.');
             return false;
         }
-        dataset[idx] = Object.assign({}, dataset[idx], updates);           // Merge updates in record
+        dataset[idx] = Object.assign({}, dataset[idx], updates);           // Merge updates
         set(dataset);                                                      // Sla op + update timestamp
         return true;
     }
@@ -264,22 +241,15 @@
     /* ======================= REPLACE ALL ======================= */
 
     // Overschrijft de volledige localStorage dataset met een nieuwe array.
-    // Roept migrate() aan op elk record zodat veldnamen altijd genormaliseerd worden.
-    // Gebruikt door cloudSync.js (cloud backup) en demo.js (demo stamboom).
+    // Gebruikt door cloudSync.js bij het laden van een cloud backup.
     function replaceAll(dataset) {
         if (!Array.isArray(dataset)) {
             console.error('storage.js: replaceAll() verwacht een array.');
             return false;
         }
         try {
-            // Migreer elk record zodat lowercase veldnamen correct worden opgeslagen
-            var normalized = dataset.map(function(record) {
-                var migrated = migrate(record);                            // Normaliseer veldnamen
-                return migrated || record;                                 // Gebruik origineel als migratie faalt
-            });
-
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)); // Schrijf genormaliseerde data weg
-            _updateModified();                                             // Bijwerken timestamp
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset));    // Schrijf cloud data weg
+            _updateModified();                                              // Bijwerken timestamp
             return true;
         } catch (e) {
             console.error('storage.js: replaceAll() localStorage schrijffout:', e);
@@ -289,20 +259,20 @@
 
     /* ======================= PUBLIEKE API ======================= */
     window.StamboomStorage = {
-        get,                    // ()            → Array
-        set,                    // (dataset)     → boolean
-        add,                    // (person)      → true | false | { blocked, count, max }
-        update,                 // (id, updates) → boolean
-        clear,                  // ()            → boolean
-        replaceAll,             // (dataset)     → boolean — normaliseert veldnamen via migrate()
-        canAdd,                 // ()            → { allowed } of { allowed: false, count, max }
-        getModified,            // ()            → ISO string of null
-        getActiveTreeId,        // ()            → UUID string of null       (F5-07)
-        setActiveTreeId,        // (id)          → void                      (F5-07)
-        getActiveTreeName,      // ()            → string of null            (F5-07)
-        setActiveTreeName,      // (naam)        → void                      (F5-07)
+        get,                    // ()           → Array
+        set,                    // (dataset)    → boolean
+        add,                    // (person)     → true | false | { blocked, count, max }
+        update,                 // (id, updates)→ boolean
+        clear,                  // ()           → boolean
+        replaceAll,             // (dataset)    → boolean
+        canAdd,                 // ()           → { allowed } of { allowed: false, count, max }
+        getModified,            // ()           → ISO string of null
+        getActiveTreeId,        // ()           → UUID string of null       (F5-07)
+        setActiveTreeId,        // (id)         → void                      (F5-07)
+        getActiveTreeName,      // ()           → string of null            (F5-07)
+        setActiveTreeName,      // (naam)       → void                      (F5-07)
         MAX_LOCAL_FREE,         // 60
-        version: 'v2.2.1'
+        version: 'v2.2.0'
     };
 
 })();
