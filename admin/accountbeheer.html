@@ -1,13 +1,8 @@
 <!DOCTYPE html>
-<!-- admin/accountbeheer.html — v1.0.7 — Admin accountbeheer pagina -->
+<!-- admin/accountbeheer.html — v1.0.9 — Admin accountbeheer pagina -->
 <!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
 <html lang="nl">
 <head>
-
-  <!-- ======================= source view enablement  ======================= -->
-     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-     <script>eruda.init();</script>
-  
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Accountbeheer — MyFamTreeCollab</title>
@@ -404,23 +399,7 @@
 
     .btn-confirm-delete:hover { opacity: 0.85; }
 
-    /* ─── Topbar overrides — betere leesbaarheid ─── */
-    /* TopBar: lichtere achtergrond + witte tekst */
-    #topbar-placeholder * {
-      background-color: #1c3a6e !important;  /* middenblauw — duidelijk zichtbaar */
-      color: #ffffff !important;             /* witte tekst */
-    }
-
-    /* Navbar: andere kleur dan topbar — duidelijk onderscheid */
-    #navbar-placeholder * {
-      background-color: #0f1f40 !important;  /* donkerder blauw dan topbar */
-      color: #ffffff !important;             /* witte tekst voor maximaal contrast */
-    }
-
-    #navbar-placeholder a:hover,
-    #navbar-placeholder li:hover {
-      color: #e8ff5a !important;             /* accent kleur bij hover */
-    }
+    /* Topbar en navbar gebruiken de originele site-stijl via style.css */
 
     /* ─── Footer ─── */
     footer {
@@ -434,6 +413,10 @@
   </style>
 </head>
 <body>
+
+  <!-- ======================= source view enablement  ======================= -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
 
   <!-- TopBar placeholder — gevuld via fetch -->
   <div id="topbar-placeholder"></div>
