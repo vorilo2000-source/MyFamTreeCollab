@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- admin/accountbeheer.html — v1.0.5 — Admin accountbeheer pagina -->
+<!-- admin/accountbeheer.html — v1.0.7 — Admin accountbeheer pagina -->
 <!-- Toegang: alleen admin — AccessGuard + accountbeheer.js blokkeren andere rollen -->
 <html lang="nl">
 <head>
@@ -398,6 +398,24 @@
     }
 
     .btn-confirm-delete:hover { opacity: 0.85; }
+
+    /* ─── Topbar overrides — betere leesbaarheid ─── */
+    /* TopBar: lichtere achtergrond + witte tekst */
+    #topbar-placeholder * {
+      background-color: #1c3a6e !important;  /* middenblauw — duidelijk zichtbaar */
+      color: #ffffff !important;             /* witte tekst */
+    }
+
+    /* Navbar: andere kleur dan topbar — duidelijk onderscheid */
+    #navbar-placeholder * {
+      background-color: #0f1f40 !important;  /* donkerder blauw dan topbar */
+      color: #ffffff !important;             /* witte tekst voor maximaal contrast */
+    }
+
+    #navbar-placeholder a:hover,
+    #navbar-placeholder li:hover {
+      color: #e8ff5a !important;             /* accent kleur bij hover */
+    }
 
     /* ─── Footer ─── */
     footer {
