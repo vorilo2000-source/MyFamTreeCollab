@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-04-24
+## Bijgewerkt: 2026-04-26
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -151,7 +151,7 @@
 | FA-11 | 🟢 Laag | Donateurs-badge (toekomstig — na Ko-fi webhook integratie) | 🔮 Toekomst |
 | FA-12 | 🟡 Middel | E-mail templates huisstijl (alle 5 templates) | ✅ Gedaan |
 | FA-13 | 🔴 Hoog | Admin dropdown verbergen voor niet-admins | ✅ Gedaan |
-| FA-14 | 🟡 Middel | Admin beheerpagina in `develop/admin/` — gebruikers en tiers beheren via website | 📋 Open |
+| FA-14 | 🟡 Middel | Admin beheerpagina `admin/accountbeheer.html` — gebruikers en tiers beheren via website | ✅ Gedaan |
 
 ---
 
@@ -275,7 +275,7 @@
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
 | F6-16 | 🟡 Middel | `bronnen/handleiding.html` v1.7.0 — rolbeschrijvingen herschreven naar nieuw model | ✅ Gedaan |
-| F6-17 | 🟢 Laag | `abonnementen/overzicht.html` bijwerken naar nieuwe rollen | 📋 Open |
+| F6-17 | 🟢 Laag | `abonnementen/vergelijk.html` + `voordelen.html` bijwerken naar nieuwe rollen | ✅ Gedaan |
 
 ---
 
@@ -327,6 +327,23 @@
 |----|-------------|--------|
 | BF-15 | storage.html v2.7.1 — verwijderStamboom() wiste actieve ID/naam niet uit localStorage — cloud lijst toonde nog 'actief' badge en laadknop bleef uitgeschakeld na verwijdering | ✅ Opgelost |
 | BF-16 | storage.html v2.7.1 — resetBtn wiste actieve ID/naam niet — ACTIEF-balk bleef zichtbaar na reset | ✅ Opgelost |
+
+## Bugfixes sessie 2026-04-25
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-17 | Supabase RLS — infinite recursion in profiles SELECT policy — policy verwijderd | ✅ Opgelost |
+| BF-18 | accountbeheer.js — `window._supabase` bestaat niet — vervangen door `window.AuthModule.getClient()` | ✅ Opgelost |
+| BF-19 | accountbeheer.html — uitlogknop verwees naar `../../index.html` (buiten repo root) — gecorrigeerd naar `../index.html` | ✅ Opgelost |
+
+---
+
+## Bugfixes sessie 2026-04-26
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-21 | demo.js gebruikte lowercase veldnamen — lege cellen in storage — herschreven als hardcoded CSV via StamboomSchema.fromCSV() | ✅ Opgelost |
+| BF-22 | demo.js had 19-kolommen CSV — aangepast naar 14 kolommen conform schema.js | ✅ Opgelost |
 
 ---
 
