@@ -1,221 +1,301 @@
-<!-- ======================= abonnementen/voordelen.html v1.2.0 ======================= 
-  consistente opmaak — Navbar + TopBar + 'komt binnenkort' blok, geen aparte header meer, 
-    script.js verwijderd. Login + Favicon / App-icoon toegevoegd
+<!-- ======================= abonnementen/voordelen.html v2.0.0 =======================
+     v2.0.0: Bijgewerkt naar nieuw rolmodel
+     - Verwijzingen naar oude abonnementen verwijderd
+     - Links bijgewerkt naar overzicht.html en vergelijk.html
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voordelen</title>
-        
+    <meta charset="UTF-8"> <!-- Tekencodering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive -->
+    <title>Voordelen — MyFamTreeCollab</title>
+
     <!-- ===== Favicon / App-icoon ===== -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/favicon-192x192.png">
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css"> <!-- Globale CSS -->
+
     <style>
-        /* ======================= BINNENKORT BLOK ======================= */
-        .binnenkort-blok {                                                 /* Centraal informatieblok */
-            max-width: 520px;                                              /* Niet te breed */
-            margin: 0 auto;                                                /* Horizontaal centreren */
-            text-align: center;                                            /* Tekst centreren */
-            padding: 48px 24px;                                            /* Ruimte rondom de inhoud */
+        /* ======================= PAGINA LAYOUT ======================= */
+        .voordelen-wrapper {
+            max-width: 760px;          /* Leesbare breedte — aanpasbaar */
+            margin: 0 auto;            /* Horizontaal centreren */
+            padding: 40px 20px 64px;   /* Ruimte boven en onder */
         }
-        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; } /* Groot icoon boven de tekst */
-        .binnenkort-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
-        .binnenkort-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 24px 0; }
-        .knop-home {                                                       /* Knop terug naar home */
-            display: inline-block; padding: 10px 24px;
-            background: #1E90FF; color: #fff; text-decoration: none;
-            border-radius: 5px; font-size: 0.95rem; font-weight: bold;
+
+        .voordelen-wrapper h1 {
+            font-size: 1.5rem;         /* Paginatitel grootte — aanpasbaar */
+            font-weight: bold;         /* Vetgedrukt */
+            color: #1a1a1a;            /* Donkere tekst — aanpasbaar */
+            margin: 0 0 8px 0;         /* Ruimte onder de titel */
         }
-        .knop-home:hover { background: #1278d4; }
+
+        .voordelen-intro {
+            font-size: 0.95rem;        /* Intro tekst grootte — aanpasbaar */
+            color: #555;               /* Grijze tekst — aanpasbaar */
+            line-height: 1.7;          /* Leesbaarheid */
+            margin: 0 0 40px 0;        /* Ruimte onder de intro */
+            max-width: 640px;          /* Maximale breedte */
+        }
+
+        .sectie-titel {
+            font-size: 1.05rem;        /* Sectietitel grootte — aanpasbaar */
+            font-weight: bold;         /* Vetgedrukt */
+            color: #1E90FF;            /* Blauwe kleur — aanpasbaar */
+            margin: 0 0 16px 0;        /* Ruimte onder de titel */
+            padding-bottom: 8px;       /* Ruimte boven de streep */
+            border-bottom: 2px solid #e8f4ff; /* Blauwe streep — aanpasbaar */
+        }
+
+        /* ======================= VOORDELEN GRID ======================= */
+        .voordelen-grid {
+            display: grid;             /* Grid layout */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsief — aanpasbaar */
+            gap: 16px;                 /* Ruimte tussen kaarten — aanpasbaar */
+            margin-bottom: 48px;       /* Ruimte onder het grid */
+        }
+
+        .voordeel-kaart {
+            border: 1px solid #e0e0e0; /* Rand — aanpasbaar */
+            border-radius: 10px;       /* Afgeronde hoeken */
+            padding: 20px;             /* Ruimte binnen de kaart */
+            background: #fff;          /* Witte achtergrond — aanpasbaar */
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05); /* Subtiele schaduw */
+            position: relative;        /* Voor de accentbalk */
+            overflow: hidden;          /* Accentbalk binnen border-radius houden */
+        }
+
+        /* Gekleurde accentbalk bovenaan elke kaart */
+        .voordeel-kaart::before {
+            content: '';               /* Lege inhoud */
+            display: block;            /* Blok element */
+            height: 4px;               /* Hoogte van de balk — aanpasbaar */
+            border-radius: 10px 10px 0 0; /* Afgeronde hoeken boven */
+            position: absolute;        /* Absoluut gepositioneerd */
+            top: 0; left: 0; right: 0; /* Volledige breedte bovenaan */
+        }
+
+        .voordeel-kaart.blauw::before   { background: #1E90FF; } /* Blauw — aanpasbaar */
+        .voordeel-kaart.groen::before   { background: #28a745; } /* Groen — aanpasbaar */
+        .voordeel-kaart.oranje::before  { background: #f39c12; } /* Oranje — aanpasbaar */
+        .voordeel-kaart.paars::before   { background: #8e44ad; } /* Paars — aanpasbaar */
+        .voordeel-kaart.cyaan::before   { background: #17a2b8; } /* Cyaan — aanpasbaar */
+
+        .voordeel-icoon {
+            font-size: 2rem;           /* Groot icoon — aanpasbaar */
+            margin: 8px 0 10px 0;      /* Ruimte rondom het icoon */
+            display: block;            /* Blok element */
+        }
+
+        .voordeel-kaart h3 {
+            font-size: 1rem;           /* Kaarttitel grootte — aanpasbaar */
+            font-weight: bold;         /* Vetgedrukt */
+            color: #1a1a1a;            /* Donkere tekst — aanpasbaar */
+            margin: 0 0 8px 0;         /* Ruimte onder de titel */
+        }
+
+        .voordeel-kaart p {
+            font-size: 0.88rem;        /* Beschrijving tekstgrootte — aanpasbaar */
+            color: #555;               /* Grijze tekst — aanpasbaar */
+            line-height: 1.6;          /* Leesbaarheid */
+            margin: 0 0 12px 0;        /* Ruimte onder de tekst */
+        }
+
+        .voordeel-kaart ul {
+            list-style: none;          /* Geen standaard bullets */
+            padding: 0;                /* Geen inspringing */
+            margin: 0;                 /* Geen marge */
+        }
+
+        .voordeel-kaart ul li {
+            font-size: 0.84rem;        /* Kleine lijsttekst — aanpasbaar */
+            color: #444;               /* Donkergrijze tekst — aanpasbaar */
+            padding: 3px 0;            /* Ruimte tussen lijstitems */
+            display: flex;             /* Flexbox voor icoon + tekst */
+            align-items: flex-start;   /* Bovenaan uitlijnen */
+            gap: 7px;                  /* Ruimte tussen icoon en tekst */
+            line-height: 1.4;          /* Leesbaarheid */
+        }
+
+        .vink { color: #28a745; font-weight: bold; flex-shrink: 0; } /* Groen vinkje — aanpasbaar */
+
+        /* ======================= CTA ======================= */
+        .cta-blok {
+            text-align: center;        /* Centreren */
+            padding: 32px 24px;        /* Ruimte binnen het blok */
+            background: #f4f8ff;       /* Lichtblauwe achtergrond — aanpasbaar */
+            border-radius: 10px;       /* Afgeronde hoeken */
+            border: 1px solid #d0e4ff; /* Rand — aanpasbaar */
+        }
+
+        .cta-blok h2 { font-size: 1.1rem; font-weight: bold; color: #1a1a1a; margin: 0 0 8px 0; }
+        .cta-blok p  { font-size: 0.9rem; color: #555; margin: 0 0 20px 0; line-height: 1.6; }
+
+        .knop-cta {
+            display: inline-block;     /* Inline blok */
+            padding: 10px 26px;        /* Ruimte binnen de knop */
+            background: #1E90FF;       /* Blauwe achtergrond — aanpasbaar */
+            color: #fff;               /* Witte tekst */
+            text-decoration: none;     /* Geen underline */
+            border-radius: 6px;        /* Afgeronde hoeken */
+            font-size: 0.92rem;        /* Tekstgrootte */
+            font-weight: bold;         /* Vetgedrukt */
+        }
+
+        .knop-cta:hover { background: #1278d4; } /* Donkerder blauw bij hover — aanpasbaar */
+
+        .knop-cta.secundair {
+            background: #fff;          /* Witte achtergrond */
+            color: #1E90FF;            /* Blauwe tekst — aanpasbaar */
+            border: 1px solid #1E90FF; /* Blauwe rand — aanpasbaar */
+            margin-left: 8px;          /* Ruimte tussen knoppen */
+        }
+
+        .knop-cta.secundair:hover { background: #e8f4ff; } /* Lichtblauwe hover — aanpasbaar */
     </style>
 </head>
 <body>
 
-<!-- ======================= TopBar ======================= -->
+<!-- ======================= TopBar placeholder ======================= -->
 <div id="topbar-placeholder"></div>
-     
-<!-- Scripts: Supabase + auth ALTIJD vóór topbar.js -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/auth.js"></script>
-     
-<script>
-fetch('/MyFamTreeCollab/Layout/TopBar.html')
-    .then(resp => resp.text())
-    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
-</script>
 
-<!-- ======================= Navbar ======================= -->
-<div id="Navbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/Navbar.html')
-    .then(resp => resp.text())
-    .then(data => {
-        const placeholder = document.getElementById('Navbar-placeholder');
-        if (placeholder) placeholder.innerHTML = data;
-    });
-</script>
+<!-- ======================= Navbar placeholder ======================= -->
+<div id="navbar-placeholder"></div>
 
 <!-- ======================= Hoofd content ======================= -->
 <main>
-    <div class="voordelen-container">
+<div class="voordelen-wrapper">
 
-        <!-- ======================= Header ======================= -->
-        <div class="voordelen-header">
-            <div class="icoon">✨</div> <!-- voordelen / highlight icoon -->
-            <h1>Waarom MyFamTreeCollab?</h1>
-            <p>
-                Een moderne, privacy-first stamboomtool die groeit met jouw behoeften.<br>
-                Van lokaal beheer tot samenwerking — jij bepaalt.
-            </p>
+    <h1>Waarom MyFamTreeCollab?</h1>
+    <p class="voordelen-intro">
+        Een moderne, privacy-first stamboomtool die groeit met jouw behoeften.
+        Van lokaal beheer tot cloud-samenwerking — jij bepaalt wanneer en hoe.
+    </p>
+
+    <!-- ===== VOORDELEN GRID ===== -->
+    <h2 class="sectie-titel">Onze voordelen</h2>
+    <div class="voordelen-grid">
+
+        <!-- PRIVACY -->
+        <div class="voordeel-kaart blauw">
+            <span class="voordeel-icoon">🔐</span>   <!-- Privacy icoon -->
+            <h3>Volledige controle over je data</h3>
+            <p>Jouw stamboom blijft standaard lokaal in je browser. Geen verplicht account, geen tracking.</p>
+            <ul>
+                <li><span class="vink">✓</span> Data lokaal opgeslagen</li>
+                <li><span class="vink">✓</span> Geen verplicht account</li>
+                <li><span class="vink">✓</span> Jij bepaalt wat gedeeld wordt</li>
+            </ul>
         </div>
 
-        <!-- ======================= Voordelen grid ======================= -->
-        <div class="voordelen-grid">
-
-            <!-- ======================= PRIVACY ======================= -->
-            <div class="voordeel-card">
-                <div class="badge">PRIVACY FIRST</div>
-                <h2>Volledige controle over je data</h2>
-                <p>
-                    Jouw stamboom blijft standaard lokaal in je browser.
-                    Geen verplicht account, geen tracking.
-                </p>
-                <ul>
-                    <li>✔ Data lokaal opgeslagen</li>
-                    <li>✔ Geen verplicht account</li>
-                    <li>✔ Jij bepaalt wat gedeeld wordt</li>
-                </ul>
-            </div>
-
-            <!-- ======================= EXPORT ======================= -->
-            <div class="voordeel-card">
-                <div class="badge">OPEN STANDAARDEN</div>
-                <h2>Altijd exporteerbaar</h2>
-                <p>
-                    Je data zit nooit vast in het systeem.
-                    Exporteren kan altijd in open formaten.
-                </p>
-                <ul>
-                    <li>✔ CSV export</li>
-                    <li>✔ JSON export</li>
-                    <li>✔ GEDCOM voorbereid (toekomst)</li>
-                </ul>
-            </div>
-
-            <!-- ======================= VISUALISATIE ======================= -->
-            <div class="voordeel-card">
-                <div class="badge">VISUALISATIE</div>
-                <h2>Heldere stamboomweergave</h2>
-                <p>
-                    Bouw en bekijk je familiegeschiedenis op een visuele manier.
-                </p>
-                <ul>
-                    <li>✔ Stamboom view</li>
-                    <li>✔ Tijdlijn weergave</li>
-                    <li>✔ Statistieken dashboard</li>
-                </ul>
-            </div>
-
-            <!-- ======================= FLEXIBILITEIT ======================= -->
-            <div class="voordeel-card">
-                <div class="badge">FLEXIBEL</div>
-                <h2>Van lokaal naar cloud</h2>
-                <p>
-                    Start gratis lokaal en groei mee naar cloud of samenwerking wanneer jij dat wil.
-                </p>
-                <ul>
-                    <li>✔ Local-first start</li>
-                    <li>✔ Optionele cloud sync</li>
-                    <li>✔ Toekomstige samenwerking</li>
-                </ul>
-            </div>
-
-            <!-- ======================= SAMENWERKING ======================= -->
-            <div class="voordeel-card highlight">
-                <div class="badge">TOEKOMST</div>
-                <h2>Samen bouwen aan familiegeschiedenis</h2>
-                <p>
-                    Werk samen met familieleden aan één gedeelde stamboom.
-                </p>
-                <ul>
-                    <li>✔ Gedeelde stambomen</li>
-                    <li>✔ Rechtenbeheer</li>
-                    <li>✔ Versiebeheer per persoon</li>
-                </ul>
-
-                <div class="cta">
-                    <a href="#" class="knop-secondary">Bekijk roadmap</a>
-                </div>
-            </div>
-
+        <!-- EXPORT -->
+        <div class="voordeel-kaart groen">
+            <span class="voordeel-icoon">📤</span>   <!-- Export icoon -->
+            <h3>Altijd exporteerbaar</h3>
+            <p>Je data zit nooit vast in het systeem. Exporteren kan altijd in open formaten.</p>
+            <ul>
+                <li><span class="vink">✓</span> CSV export</li>
+                <li><span class="vink">✓</span> JSON export</li>
+                <li><span class="vink">✓</span> GEDCOM voorbereid (toekomst)</li>
+            </ul>
         </div>
 
-        <!-- ======================= CTA ======================= -->
-        <div class="voordelen-cta">
-            <h3>Klaar om te starten?</h3>
-            <p>Begin gratis en breid later uit wanneer je wil.</p>
+        <!-- VISUALISATIE -->
+        <div class="voordeel-kaart oranje">
+            <span class="voordeel-icoon">🌳</span>   <!-- Stamboom icoon -->
+            <h3>Heldere stamboomweergave</h3>
+            <p>Bouw en bekijk je familiegeschiedenis op een visuele manier.</p>
+            <ul>
+                <li><span class="vink">✓</span> Stamboom view</li>
+                <li><span class="vink">✓</span> Tijdlijn weergave</li>
+                <li><span class="vink">✓</span> Statistieken dashboard</li>
+            </ul>
+        </div>
 
-            <div class="cta-buttons">
-                <a href="/MyFamTreeCollab/" class="knop-primary">Start gratis</a>
-                <a href="/MyFamTreeCollab/abonnementen/vergelijk.html" class="knop-secondary">Bekijk abonnementen</a>
-            </div>
+        <!-- ROLLEN -->
+        <div class="voordeel-kaart paars">
+            <span class="voordeel-icoon">👥</span>   <!-- Rollen icoon -->
+            <h3>Flexibel rolmodel</h3>
+            <p>Start gratis lokaal en groei naar cloud-samenwerking met het rolmodel dat bij jou past.</p>
+            <ul>
+                <li><span class="vink">✓</span> Gratis lokaal gebruik</li>
+                <li><span class="vink">✓</span> Viewer · Editor · Owner rollen</li>
+                <li><span class="vink">✓</span> Uitnodigen via e-mail</li>
+            </ul>
+        </div>
+
+        <!-- SAMENWERKING -->
+        <div class="voordeel-kaart cyaan">
+            <span class="voordeel-icoon">🤝</span>   <!-- Samenwerking icoon -->
+            <h3>Samen bouwen</h3>
+            <p>Werk samen met familieleden aan één gedeelde stamboom via berichten en wijzigingen.</p>
+            <ul>
+                <li><span class="vink">✓</span> Gedeelde stambomen</li>
+                <li><span class="vink">✓</span> Berichtenboard per persoon</li>
+                <li><span class="vink">✓</span> Versiebeheer per persoon</li>
+            </ul>
         </div>
 
     </div>
+
+    <!-- ===== CTA ===== -->
+    <div class="cta-blok">
+        <h2>Klaar om te starten?</h2>
+        <p>Begin gratis met een lokale stamboom of bekijk het rolmodel in detail.</p>
+        <a href="/MyFamTreeCollab/home/create.html" class="knop-cta">Start gratis</a>
+        <a href="overzicht.html" class="knop-cta secundair">Bekijk rollen</a>
+    </div>
+
+</div>
 </main>
 
-<!-- ======================= Footer ======================= -->
+<!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — volgorde is verplicht:
+     SCRIPTS — verplichte volgorde:
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
-     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
-     5. Navbar fetch        — onafhankelijk, mag parallel
-     6. Pagina-scripts      — altijd als laatste
+     4. TopBar HTML laden → daarna topbar.js injecteren
+     5. Navbar HTML laden   — onafhankelijk, mag parallel
+     6. Footer HTML laden   — onafhankelijk, mag parallel
      ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
+<script src="../js/utils.js"></script> <!-- Utilities -->
+<script src="../js/auth.js"></script>  <!-- Auth module -->
 
 <script>
-    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
-    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+    // TopBar laden → daarna topbar.js injecteren
+    // Garandeert dat #top-auth in DOM zit vóór topbar.js initialiseert
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen
         .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            // #top-auth bestaat nu — veilig om topbar.js te laden
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
+            document.getElementById('topbar-placeholder').innerHTML = data;    // TopBar in DOM
+            var s = document.createElement('script');                          // Script element aanmaken
+            s.src = '../js/topbar.js';                                         // Pad naar topbar.js
+            document.body.appendChild(s);                                      // Script laden
         });
 
-    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
+    // Navbar laden — onafhankelijk van auth
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen
         .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;
+            var ph = document.getElementById('navbar-placeholder');
+            if (ph) ph.innerHTML = data;                                        // Navbar in DOM
         });
 
-    // Stap 3: Footer laden
+    // Footer laden
     fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen
         .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
+            var ph = document.getElementById('footer-placeholder');
+            if (ph) ph.innerHTML = data;                                        // Footer in DOM
         });
 </script>
-
-<!-- Pagina-specifieke scripts: ... → ... → -->
 
 </body>
 </html>
