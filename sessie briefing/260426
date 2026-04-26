@@ -1,0 +1,11 @@
+Volgende sessie: Berichtenboard testen
+Openstaande punten:
+Berichtenboard (stamboom/collab.html) testen — berichten plaatsen, modereren, discussiestatus
+Invite e-mail template Supabase — {{ .ConfirmationURL }} → {{ .SiteURL }}/#{{ .TokenHash }}&type=invite
+Gewijzigd deze sessie:
+index.html v2.2.2 — demo knop
+js/demo.js v1.2.1 — hardcoded CSV via schema.js
+abonnementen/vergelijk.html v2.0.0
+abonnementen/voordelen.html v2.0.0
+admin/accountbeheer.html v2.0.2
+js/accountbeheer.js v1.0.9
