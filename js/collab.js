@@ -219,8 +219,8 @@
             .from('collab_messages')
             .select('*')
             .eq('boom_id', boomId)
-            .order('persoon_id',    { ascending: true })
-            .order('aangemaakt_op', { ascending: true });
+            .order('persoon_id',  { ascending: true })
+            .order('created_at',  { ascending: true });    // Kolomnaam in Supabase (was: aangemaakt_op)
 
         if (result.error) {
             console.warn('[collab] berichten laden mislukt voor boom', boomId, result.error.message);
@@ -286,6 +286,13 @@
                 aantalOnderwerpen + ' onderwerp' + (aantalOnderwerpen !== 1 ? 'en' : '') +
             '</span>';
         sectie.appendChild(header);
+
+        // Ledenlijst — asynchroon laden via ShareModule, zichtbaar voor alle rollen
+        var ledenEl = document.createElement('div');
+        ledenEl.className = 'boom-leden-lijst';
+        ledenEl.innerHTML = '<span class="boom-leden-laden">Leden laden…</span>';
+        sectie.appendChild(ledenEl);
+        laadEnToonLeden(boomId, boom.rol, ledenEl);    // Niet-blokkerend
 
         // Inactief-banner
         if (!boom.isActief) {
@@ -421,11 +428,11 @@
         item.className = 'bericht-item' + (isEigen ? ' eigen' : '');
         item.dataset.id = bericht.id;
 
-        var tijdstip = bericht.aangemaakt_op
-            ? new Date(bericht.aangemaakt_op).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })
+        var tijdstip = bericht.created_at                          // Kolomnaam in Supabase (was: aangemaakt_op)
+            ? new Date(bericht.created_at).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })
             : '';
 
-        var voornaam = (bericht.auteur_naam || 'Onbekend').split(' ')[0];
+        var voornaam = (bericht.username || 'Onbekend').split(' ')[0];    // Kolomnaam: username (was: auteur_naam)
         var berichtStatusConf = STATUS_CONFIG[bericht.status] || STATUS_CONFIG[STATUS_FALLBACK];
 
         var magVerwijderen = isOwner || isEigen;
@@ -450,7 +457,7 @@
                     verwijderHtml +
                 '</span>' +
             '</div>' +
-            '<div class="bericht-tekst">' + ftSafe(bericht.bericht) + '</div>' +
+            '<div class="bericht-tekst">' + ftSafe(bericht.message) + '</div>' +    // Kolomnaam: message (was: bericht)
             diffHtml;
 
         if (magVerwijderen) {
@@ -564,15 +571,15 @@
         var rolVoorDezeBoom = staat.bomen[boomId] ? staat.bomen[boomId].rol : staat.rol;
 
         var record = {
-            boom_id:       boomId,
-            persoon_id:    persoonId,
-            persoon_naam:  persoonNaam,
-            user_id:       staat.gebruiker.id,
-            auteur_naam:   auteurNaam,
-            rol:           rolVoorDezeBoom,
-            bericht:       tekst,
-            diff_voorstel: diffVoorstel || null,
-            status:        status
+            boom_id:       boomId,              // UUID van de stamboom
+            persoon_id:    persoonId,            // ID van de besproken persoon
+            persoon_naam:  persoonNaam,          // Naam van de persoon (denormalisatie)
+            user_id:       staat.gebruiker.id,   // UUID van de afzender
+            username:      auteurNaam,           // Kolomnaam in Supabase tabel (was: auteur_naam)
+            rol:           rolVoorDezeBoom,      // Rol van de afzender voor deze boom
+            message:       tekst,               // Kolomnaam in Supabase tabel (was: bericht)
+            diff_voorstel: diffVoorstel || null, // Optioneel wijzigingsvoorstel
+            status:        status               // Discussiestatus
         };
 
         var result = await staat.supabase
@@ -802,6 +809,60 @@
             var nieuw = document.querySelector('[data-boom-id="' + boomId + '"][data-persoon-id="' + persoonId + '"]');
             if (nieuw) nieuw.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
+    }
+
+    // ---------------------------------------------------------------------------
+    // LEDENLIJST PER STAMBOOM
+    // ---------------------------------------------------------------------------
+
+    // Laad de lijst van leden (eigenaar + viewers/editors) voor een stamboom
+    // en render deze in het ledenEl element.
+    // Zichtbaar voor alle rollen — owner ziet iedereen, viewer/editor ook.
+    async function laadEnToonLeden(boomId, rolVanGebruiker, ledenEl) {
+        var leden = [];    // Accumuleert { naam, rol }
+
+        // Haal eigenaar op: de stamboom heeft één eigenaar (user_id in stambomen tabel)
+        // We kennen de eigenaarsnaam via ShareModule.listSharedWith() (eigenaar_id)
+        // Voor viewers/editors: haal gedeelde leden op via listSharedWith()
+        // Voor owners: haal zelf ook op via listSharedWith() voor de editors/viewers
+
+        var gedeeldResult = await window.ShareModule.listSharedWith(boomId);
+
+        if (!gedeeldResult.error && gedeeldResult.data) {
+            gedeeldResult.data.forEach(function (lid) {
+                leden.push({
+                    naam: lid.display_name || 'Onbekend',
+                    rol:  lid.rol                              // 'viewer' of 'editor'
+                });
+            });
+        }
+
+        // Voeg de huidige gebruiker toe als owner bovenaan (altijd zichtbaar)
+        if (rolVanGebruiker === 'owner' || rolVanGebruiker === 'admin') {
+            var eigenNaam = (staat.profiel && staat.profiel.username)
+                ? staat.profiel.username
+                : (staat.gebruiker ? staat.gebruiker.email : 'Owner');
+            leden.unshift({ naam: eigenNaam, rol: rolVanGebruiker });    // Bovenaan plaatsen
+        }
+
+        // Render de ledenlijst
+        if (leden.length === 0) {
+            ledenEl.innerHTML = '<span class="boom-leden-leeg">Alleen jij hebt toegang tot deze stamboom.</span>';
+            return;
+        }
+
+        var html = '<span class="boom-leden-label">👥 Leden:</span>';
+        leden.forEach(function (lid) {
+            html +=
+                '<span class="boom-lid-item">' +
+                    '<span class="boom-lid-naam">' + ftSafe(lid.naam) + '</span>' +
+                    '<span class="boom-lid-rol boom-lid-rol-' + ftSafe(lid.rol) + '">' +
+                        rolLabel(lid.rol) +
+                    '</span>' +
+                '</span>';
+        });
+
+        ledenEl.innerHTML = html;
     }
 
     // ---------------------------------------------------------------------------
