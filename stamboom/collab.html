@@ -1,11 +1,13 @@
-<!-- ======================= stamboom/collab.html v2.0.0 =======================
+<!-- ======================= stamboom/collab.html v2.1.0 =======================
      Collaboratie-pagina: berichtenboard per stamboom + persoon-ID
 
-     Wijzigingen v2.0.0 (F5-04):
-     - Laadvolgorde bijgewerkt: schema.js + storage.js + shareModule.js + accessGuard.js
-     - AccessGuard check toegevoegd (viewer/editor/owner)
-     - Livesearch dropdown op StamboomStorage (persoon-zoeker)
-     - collab.js herschreven: AuthModule + ShareModule ipv window.supabaseClient
+     Wijzigingen v2.1.0 (sessie 19):
+     - Status uitgebreid naar 4 waarden: nieuw / open / inbehandeling / gesloten
+     - Statusicoontjes toegevoegd: 🆕 🔓 🔄 ✅
+     - Berichtweergave: bijdrager voornaam + tekst + statusicoon per bericht
+     - Stamboom-header boven discussielijst
+     - CSS badges bijgewerkt naar 4 varianten
+     - Diff-voorstel sectie behouden voor editor/owner
 
      Rollen: Owner (modereren + berichten), Editor (berichten + diff + status),
              Viewer (berichten plaatsen)
@@ -31,11 +33,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samenwerken</title>
 
-<!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
 
@@ -43,9 +45,9 @@
         /* ======================= COLLAB PAGINA STIJLEN ======================= */
 
         .collab-wrapper {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 24px 16px 48px;
+            max-width: 960px;        /* Maximale breedte van de pagina-inhoud */
+            margin: 0 auto;          /* Horizontaal centreren */
+            padding: 24px 16px 48px; /* Ruimte boven, zijkanten en onder */
         }
 
         .collab-titel {
@@ -96,7 +98,7 @@
             margin-bottom: 24px;
             align-items: center;
             flex-wrap: wrap;
-            position: relative;    /* Ankerpunt voor livesearch dropdown */
+            position: relative;      /* Ankerpunt voor livesearch dropdown */
         }
         .zoek-sectie input[type="text"] {
             flex: 1;
@@ -116,6 +118,33 @@
             color: #555;
             width: 100%;
             margin-bottom: 4px;
+        }
+
+        /* ======================= STAMBOOM SECTIE HEADER ======================= */
+        /* Toont de naam van de stamboom boven de bijbehorende discussies */
+        .stamboom-sectie-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 14px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8ecf2;   /* Scheidingslijn onder stamboom-naam */
+        }
+        .stamboom-sectie-naam {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+        .stamboom-sectie-icoon {
+            font-size: 1.1rem;
+        }
+        .stamboom-sectie-teller {
+            margin-left: auto;
+            font-size: 0.78rem;
+            color: #999;
+            background: #f0f2f5;
+            padding: 2px 8px;
+            border-radius: 10px;
         }
 
         /* ======================= DISCUSSIE CLUSTERS ======================= */
@@ -148,17 +177,28 @@
         .discussie-persoon-naam { font-weight: bold; font-size: 0.95rem; color: #1a1a1a; }
         .discussie-persoon-id   { font-size: 0.75rem; color: #888; margin-left: 8px; font-family: monospace; }
 
+        /* ======================= STATUS BADGES — 4 varianten ======================= */
+        /* Elke status heeft een eigen kleur en icoontje voor directe herkenning */
         .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             padding: 3px 10px;
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+            text-transform: capitalize;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
         }
-        .status-open     { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
-        .status-review   { background: #cce5ff; color: #004085; border: 1px solid #1E90FF; }
-        .status-opgelost { background: #d4edda; color: #155724; border: 1px solid #28a745; }
+        /* Nieuw: geel — nog niet opgepakt */
+        .status-nieuw        { background: #fff8e1; color: #7c5800; border: 1px solid #ffd54f; }
+        /* Open: blauw — actief en openstaand */
+        .status-open         { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+        /* In behandeling: oranje — iemand is ermee bezig */
+        .status-inbehandeling { background: #fff3e0; color: #bf360c; border: 1px solid #ffb74d; }
+        /* Gesloten: groen — afgehandeld */
+        .status-gesloten     { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
 
         .discussie-toggle-pijl {
             font-size: 0.8rem;
@@ -175,13 +215,14 @@
         .bericht-lijst {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 16px;
-            max-height: 320px;
+            max-height: 360px;
             overflow-y: auto;
             padding-right: 4px;
         }
 
+        /* Elk bericht toont: bijdrager + tekst + eigen statusicoontje */
         .bericht-item {
             background: #f9f9f9;
             border: 1px solid #eee;
@@ -190,34 +231,50 @@
             font-size: 0.88rem;
             line-height: 1.5;
         }
+        /* Eigen berichten krijgen een lichtblauwe achtergrond */
         .bericht-item.eigen {
             background: #e8f4ff;
             border-color: #b8d9f5;
-            align-self: flex-end;
-            max-width: 80%;
         }
 
+        /* Bovenste regel van elk bericht: naam + rol + tijdstip + verwijderknop */
         .bericht-meta {
             font-size: 0.75rem;
             color: #999;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
         }
-        .bericht-auteur { font-weight: bold; color: #555; }
+        .bericht-auteur { font-weight: bold; color: #444; font-size: 0.82rem; }
 
+        /* Rol-labels naast de auteursnaam */
         .rol-label {
             font-size: 0.68rem;
             padding: 1px 6px;
             border-radius: 8px;
-            margin-left: 5px;
+            margin-left: 4px;
             font-weight: bold;
         }
         .rol-owner  { background: #ffeaa7; color: #6c4f00; }
         .rol-editor { background: #dfe6e9; color: #2d3436; }
         .rol-viewer { background: #e8f5e9; color: #1b5e20; }
 
+        /* Statusicoontje per bericht — toont de status op het moment van verzenden */
+        .bericht-status-icoon {
+            font-size: 0.78rem;
+            opacity: 0.75;
+            margin-left: 2px;
+        }
+
+        /* Berichttekst zelf */
+        .bericht-tekst {
+            color: #222;
+            word-break: break-word;
+        }
+
+        /* Verwijderknop — subtiel, rood bij hover */
         .bericht-verwijder {
             background: none;
             border: none;
@@ -226,9 +283,11 @@
             font-size: 0.8rem;
             padding: 0 2px;
             line-height: 1;
+            flex-shrink: 0;
         }
         .bericht-verwijder:hover { color: #e74c3c; }
 
+        /* Diff-voorstel blok — gele achtergrond, alleen zichtbaar als aanwezig */
         .diff-blok {
             margin-top: 8px;
             padding: 8px 10px;
@@ -244,7 +303,7 @@
             text-align: center;
             color: #bbb;
             font-size: 0.85rem;
-            padding: 16px 0;
+            padding: 20px 0;
         }
 
         /* ======================= NIEUW BERICHT FORMULIER ======================= */
@@ -279,6 +338,7 @@
             flex-wrap: wrap;
         }
 
+        /* Status-selector met 4 opties + icoontjes */
         .status-select {
             padding: 7px 10px;
             border: 1px solid #ccc;
@@ -414,6 +474,7 @@
         }
         .knop-annuleer:hover { background: #e0e0e0; }
 
+        /* ======================= RESPONSIVE ======================= */
         @media (max-width: 600px) {
             .form-acties { flex-direction: column; align-items: stretch; }
             .knop-verzend { margin-left: 0; }
@@ -495,6 +556,7 @@
 <div id="footer-placeholder"></div>
 
 <script>
+    /* Laad TopBar, Navbar en Footer via fetch en voeg toe aan placeholders */
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
         .then(resp => resp.text())
         .then(function(data) {
@@ -522,14 +584,14 @@
 <script src="../js/storage.js"></script>         <!-- StamboomStorage — voor livesearch -->
 <script src="../js/shareModule.js"></script>     <!-- Rolcheck via stamboom_gedeeld -->
 <script src="../js/accessGuard.js"></script>     <!-- Paginabeveiliging -->
-<script src="../js/collab.js"></script>          <!-- Pagina-logica — altijd LAATSTE -->
+<script src="../js/collab.js"></script>          <!-- Paginalogica — altijd LAATSTE -->
 
 <script>
     /* Rolcheck: collab.html is toegankelijk voor viewer, editor en owner.
        Gratis gebruikers zonder rol krijgen het geen-toegang blok te zien
        via collab.js zelf — AccessGuard wordt hier als extra laag gebruikt. */
     document.addEventListener('DOMContentLoaded', function () {
-        window.AccessGuard.check(['viewer', 'editor']);    // Owner altijd doorgelaten
+        window.AccessGuard.check(['viewer', 'editor']);    /* Owner altijd doorgelaten */
     });
 </script>
 
