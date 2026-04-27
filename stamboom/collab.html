@@ -1,13 +1,17 @@
-<!-- ======================= stamboom/collab.html v2.1.0 =======================
+<!-- ======================= stamboom/collab.html v2.2.0 =======================
      Collaboratie-pagina: berichtenboard per stamboom + persoon-ID
+
+     Wijzigingen v2.2.0 (sessie 19):
+     - Hoofd-zoekbalk verwijderd van paginaniveau (zit nu per stamboom-sectie)
+     - CSS toegevoegd voor stamboom-secties: actief vs. inactief
+     - CSS voor rol-badges per boom (owner/editor/viewer/admin)
+     - CSS voor inactief-banner en lees-only melding
+     - CloudSync toegevoegd aan laadvolgorde (voor owner eigen bomen)
 
      Wijzigingen v2.1.0 (sessie 19):
      - Status uitgebreid naar 4 waarden: nieuw / open / inbehandeling / gesloten
-     - Statusicoontjes toegevoegd: 🆕 🔓 🔄 ✅
-     - Berichtweergave: bijdrager voornaam + tekst + statusicoon per bericht
-     - Stamboom-header boven discussielijst
-     - CSS badges bijgewerkt naar 4 varianten
-     - Diff-voorstel sectie behouden voor editor/owner
+     - Statusicoontjes: 🆕 🔓 🔄 ✅
+     - Stamboom-sectie header boven discussielijst
 
      Rollen: Owner (modereren + berichten), Editor (berichten + diff + status),
              Viewer (berichten plaatsen)
@@ -22,9 +26,10 @@
        6. Footer HTML (via fetch)
        7. schema.js
        8. storage.js
-       9. shareModule.js
-      10. accessGuard.js
-      11. collab.js (altijd LAATSTE)
+       9. cloudSync.js      ← nieuw in v2.2.0 (voor owner eigen bomen)
+      10. shareModule.js
+      11. accessGuard.js
+      12. collab.js (altijd LAATSTE)
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -45,9 +50,9 @@
         /* ======================= COLLAB PAGINA STIJLEN ======================= */
 
         .collab-wrapper {
-            max-width: 960px;        /* Maximale breedte van de pagina-inhoud */
-            margin: 0 auto;          /* Horizontaal centreren */
-            padding: 24px 16px 48px; /* Ruimte boven, zijkanten en onder */
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
         }
 
         .collab-titel {
@@ -91,16 +96,146 @@
         }
         .knop-primair:hover { background: #1278d4; }
 
+        /* ======================= DISCUSSIE CONTAINER ======================= */
+        #discussie-container {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;              /* Ruimte tussen stamboom-secties */
+        }
+
+        /* ======================= STAMBOOM SECTIE ======================= */
+        /* Omhulsel voor één stamboom met al zijn discussies */
+        .stamboom-sectie {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+
+        /* Actieve stamboom: blauwe accentkleur aan de linkerkant */
+        .stamboom-actief {
+            border-color: #90caf9;
+            border-left: 4px solid #1E90FF;    /* Blauwe accentlijn links */
+            box-shadow: 0 2px 12px rgba(30,144,255,0.10);
+        }
+
+        /* Inactieve stamboom: iets grijzer, geen accentlijn */
+        .stamboom-inactief {
+            border-color: #e0e0e0;
+            background: #fafafa;
+            opacity: 0.92;          /* Lichte dimming voor inactieve bomen */
+        }
+
+        /* ======================= STAMBOOM SECTIE HEADER ======================= */
+        .stamboom-sectie-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #f4f6f9;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .stamboom-actief .stamboom-sectie-header {
+            background: #e8f4ff;    /* Lichtblauw voor actieve boom */
+            border-bottom-color: #b8d9f5;
+        }
+
+        .stamboom-sectie-icoon { font-size: 1.1rem; flex-shrink: 0; }
+
+        .stamboom-sectie-naam {
+            font-size: 1.0rem;
+            font-weight: bold;
+            color: #1a1a2e;
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stamboom-sectie-teller {
+            font-size: 0.78rem;
+            color: #999;
+            background: #f0f2f5;
+            padding: 2px 8px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        /* ======================= ROL BADGES PER BOOM ======================= */
+        /* Toont de rol die de gebruiker heeft voor déze specifieke boom */
+        .boom-rol-badge {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .boom-rol-owner  { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+        .boom-rol-editor { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+        .boom-rol-viewer { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
+        .boom-rol-admin  { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+
+        /* Actief-badge: groene badge voor de actieve stamboom */
+        .boom-actief-badge {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #28a745;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Inactief-hint: subtiele grijze tekst voor niet-actieve bomen */
+        .boom-inactief-hint {
+            font-size: 0.72rem;
+            color: #aaa;
+            font-style: italic;
+            flex-shrink: 0;
+        }
+
+        /* ======================= INACTIEF BANNER ======================= */
+        /* Uitlegbanner in inactieve stamboom-secties */
+        .inactief-banner {
+            background: #fffde7;
+            border-bottom: 1px solid #fff176;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            color: #795548;
+        }
+        .inactief-banner a {
+            color: #1E90FF;
+            text-decoration: underline;
+        }
+
+        /* ======================= LEES-ONLY MELDING IN DISCUSSIEBLOK ======================= */
+        /* Vervangt het formulier in inactieve stambomen */
+        .lees-only-melding {
+            border-top: 1px solid #eee;
+            padding: 10px 12px;
+            font-size: 0.82rem;
+            color: #aaa;
+            font-style: italic;
+            text-align: center;
+        }
+
         /* ======================= PERSOON-ZOEKER ======================= */
         .zoek-sectie {
             display: flex;
             gap: 8px;
-            margin-bottom: 24px;
+            padding: 12px 16px;
+            background: #f9fbff;    /* Lichtblauwe achtergrond voor zoekbalk */
+            border-bottom: 1px solid #e8ecf2;
             align-items: center;
             flex-wrap: wrap;
-            position: relative;      /* Ankerpunt voor livesearch dropdown */
+            position: relative;     /* Ankerpunt voor livesearch dropdown */
         }
-        .zoek-sectie input[type="text"] {
+        .zoek-sectie input[type="text"],
+        .zoek-sectie .persoon-zoek-input {
             flex: 1;
             padding: 9px 12px;
             border: 1px solid #ccc;
@@ -108,7 +243,8 @@
             font-size: 0.9rem;
             min-width: 200px;
         }
-        .zoek-sectie input[type="text"]:focus {
+        .zoek-sectie input[type="text"]:focus,
+        .zoek-sectie .persoon-zoek-input:focus {
             outline: none;
             border-color: #1E90FF;
             box-shadow: 0 0 0 2px rgba(30,144,255,0.15);
@@ -120,65 +256,37 @@
             margin-bottom: 4px;
         }
 
-        /* ======================= STAMBOOM SECTIE HEADER ======================= */
-        /* Toont de naam van de stamboom boven de bijbehorende discussies */
-        .stamboom-sectie-header {
+        /* ======================= DISCUSSIES INNER CONTAINER ======================= */
+        .discussie-container-inner {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0 0 14px 0;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e8ecf2;   /* Scheidingslijn onder stamboom-naam */
-        }
-        .stamboom-sectie-naam {
-            font-size: 1.05rem;
-            font-weight: bold;
-            color: #1a1a2e;
-        }
-        .stamboom-sectie-icoon {
-            font-size: 1.1rem;
-        }
-        .stamboom-sectie-teller {
-            margin-left: auto;
-            font-size: 0.78rem;
-            color: #999;
-            background: #f0f2f5;
-            padding: 2px 8px;
-            border-radius: 10px;
+            flex-direction: column;
+            gap: 0;                 /* Discussieblokken naadloos aansluiten */
         }
 
         /* ======================= DISCUSSIE CLUSTERS ======================= */
-        #discussie-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
         .discussie-blok {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
+            border-top: 1px solid #eee;
             background: #fff;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
+        .discussie-blok:first-child { border-top: none; }
 
         .discussie-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
-            background: #f4f6f9;
-            border-bottom: 1px solid #ddd;
+            padding: 10px 16px;
+            background: #f9f9fb;
             cursor: pointer;
             user-select: none;
+            border-top: 1px solid #eee;
         }
         .discussie-header:hover { background: #eaecf0; }
+        .discussie-blok:first-child .discussie-header { border-top: none; }
 
         .discussie-persoon-naam { font-weight: bold; font-size: 0.95rem; color: #1a1a1a; }
         .discussie-persoon-id   { font-size: 0.75rem; color: #888; margin-left: 8px; font-family: monospace; }
 
         /* ======================= STATUS BADGES — 4 varianten ======================= */
-        /* Elke status heeft een eigen kleur en icoontje voor directe herkenning */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -191,14 +299,10 @@
             letter-spacing: 0.02em;
             white-space: nowrap;
         }
-        /* Nieuw: geel — nog niet opgepakt */
-        .status-nieuw        { background: #fff8e1; color: #7c5800; border: 1px solid #ffd54f; }
-        /* Open: blauw — actief en openstaand */
-        .status-open         { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
-        /* In behandeling: oranje — iemand is ermee bezig */
+        .status-nieuw         { background: #fff8e1; color: #7c5800; border: 1px solid #ffd54f; }
+        .status-open          { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
         .status-inbehandeling { background: #fff3e0; color: #bf360c; border: 1px solid #ffb74d; }
-        /* Gesloten: groen — afgehandeld */
-        .status-gesloten     { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
+        .status-gesloten      { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
 
         .discussie-toggle-pijl {
             font-size: 0.8rem;
@@ -222,7 +326,6 @@
             padding-right: 4px;
         }
 
-        /* Elk bericht toont: bijdrager + tekst + eigen statusicoontje */
         .bericht-item {
             background: #f9f9f9;
             border: 1px solid #eee;
@@ -231,13 +334,11 @@
             font-size: 0.88rem;
             line-height: 1.5;
         }
-        /* Eigen berichten krijgen een lichtblauwe achtergrond */
         .bericht-item.eigen {
             background: #e8f4ff;
             border-color: #b8d9f5;
         }
 
-        /* Bovenste regel van elk bericht: naam + rol + tijdstip + verwijderknop */
         .bericht-meta {
             font-size: 0.75rem;
             color: #999;
@@ -249,7 +350,6 @@
         }
         .bericht-auteur { font-weight: bold; color: #444; font-size: 0.82rem; }
 
-        /* Rol-labels naast de auteursnaam */
         .rol-label {
             font-size: 0.68rem;
             padding: 1px 6px;
@@ -261,20 +361,9 @@
         .rol-editor { background: #dfe6e9; color: #2d3436; }
         .rol-viewer { background: #e8f5e9; color: #1b5e20; }
 
-        /* Statusicoontje per bericht — toont de status op het moment van verzenden */
-        .bericht-status-icoon {
-            font-size: 0.78rem;
-            opacity: 0.75;
-            margin-left: 2px;
-        }
+        .bericht-status-icoon { font-size: 0.78rem; opacity: 0.75; margin-left: 2px; }
+        .bericht-tekst { color: #222; word-break: break-word; }
 
-        /* Berichttekst zelf */
-        .bericht-tekst {
-            color: #222;
-            word-break: break-word;
-        }
-
-        /* Verwijderknop — subtiel, rood bij hover */
         .bericht-verwijder {
             background: none;
             border: none;
@@ -287,7 +376,6 @@
         }
         .bericht-verwijder:hover { color: #e74c3c; }
 
-        /* Diff-voorstel blok — gele achtergrond, alleen zichtbaar als aanwezig */
         .diff-blok {
             margin-top: 8px;
             padding: 8px 10px;
@@ -311,7 +399,6 @@
             border-top: 1px solid #eee;
             padding-top: 14px;
         }
-
         .nieuw-bericht-form textarea {
             width: 100%;
             padding: 9px 12px;
@@ -338,7 +425,6 @@
             flex-wrap: wrap;
         }
 
-        /* Status-selector met 4 opties + icoontjes */
         .status-select {
             padding: 7px 10px;
             border: 1px solid #ccc;
@@ -348,23 +434,11 @@
             cursor: pointer;
         }
 
-        .diff-invoer-wrapper {
-            width: 100%;
-            margin-top: 8px;
-            display: none;
-        }
+        .diff-invoer-wrapper { width: 100%; margin-top: 8px; display: none; }
         .diff-invoer-wrapper.zichtbaar { display: block; }
-        .diff-invoer-wrapper textarea {
-            min-height: 52px;
-            background: #fff8e1;
-            border-color: #f39c12;
-        }
+        .diff-invoer-wrapper textarea { min-height: 52px; background: #fff8e1; border-color: #f39c12; }
         .diff-invoer-wrapper label {
-            font-size: 0.78rem;
-            color: #e67e22;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 4px;
+            font-size: 0.78rem; color: #e67e22; font-weight: bold; display: block; margin-bottom: 4px;
         }
 
         .knop-diff-toggle {
@@ -410,23 +484,6 @@
             margin-bottom: 16px;
         }
 
-        /* ======================= NIEUWE DISCUSSIE KNOP ======================= */
-        .knop-nieuwe-discussie {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            background: #fff;
-            border: 1px dashed #1E90FF;
-            color: #1E90FF;
-            border-radius: 6px;
-            font-size: 0.88rem;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 8px;
-        }
-        .knop-nieuwe-discussie:hover { background: #e8f4ff; }
-
         /* ======================= MODAL ======================= */
         .modal-overlay {
             display: none;
@@ -458,12 +515,7 @@
             box-sizing: border-box;
         }
         .modal-box input[type="text"]:focus { outline: none; border-color: #1E90FF; }
-        .modal-acties {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 8px;
-        }
+        .modal-acties { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
         .knop-annuleer {
             padding: 8px 16px;
             background: #f0f0f0;
@@ -478,6 +530,7 @@
         @media (max-width: 600px) {
             .form-acties { flex-direction: column; align-items: stretch; }
             .knop-verzend { margin-left: 0; }
+            .stamboom-sectie-naam { font-size: 0.92rem; }
         }
     </style>
 </head>
@@ -495,12 +548,12 @@
     <div class="collab-wrapper">
 
         <h1 class="collab-titel">💬 Samenwerken</h1>
-        <p class="collab-subtitel" id="actieve-boom-label">Actieve stamboom wordt geladen…</p>
+        <p class="collab-subtitel" id="actieve-boom-label">Stambomen worden geladen…</p>
 
         <!-- Foutmelding container -->
         <div id="fout-container" style="display:none;"></div>
 
-        <!-- Geen-toegang blok — zichtbaar voor gebruikers zonder rol -->
+        <!-- Geen-toegang blok -->
         <div class="geen-toegang-blok" id="geen-toegang-blok" style="display:none;">
             <div class="icoon">🔒</div>
             <h2>Geen toegang tot samenwerken</h2>
@@ -513,24 +566,12 @@
             </a>
         </div>
 
-        <!-- Hoofd collab interface — verborgen totdat rol bevestigd is -->
+        <!-- Hoofd collab interface -->
         <div id="collab-interface" style="display:none;">
 
-            <!-- Persoon-zoeker met livesearch dropdown -->
-            <div class="zoek-sectie">
-                <span class="zoek-label">Voeg een persoon toe aan de discussie:</span>
-                <input
-                    type="text"
-                    id="persoon-zoek-input"
-                    placeholder="Zoek op naam of ID…"
-                    autocomplete="off"
-                >
-                <button class="knop-primair" id="zoek-knop">Discussie starten</button>
-            </div>
-
-            <!-- Discussies container — gevuld door collab.js -->
+            <!-- Discussies container — gevuld door collab.js met één sectie per boom -->
             <div id="discussie-container">
-                <div class="laad-indicator" id="laad-indicator">Berichten laden…</div>
+                <div class="laad-indicator" id="laad-indicator">Stambomen en berichten laden…</div>
             </div>
 
         </div>
@@ -556,7 +597,7 @@
 <div id="footer-placeholder"></div>
 
 <script>
-    /* Laad TopBar, Navbar en Footer via fetch en voeg toe aan placeholders */
+    /* Laad TopBar, Navbar en Footer via fetch */
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
         .then(resp => resp.text())
         .then(function(data) {
@@ -582,14 +623,14 @@
 <!-- Verplichte laadvolgorde pagina-scripts -->
 <script src="../js/schema.js"></script>          <!-- Veldnamen stamboom -->
 <script src="../js/storage.js"></script>         <!-- StamboomStorage — voor livesearch -->
-<script src="../js/shareModule.js"></script>     <!-- Rolcheck via stamboom_gedeeld -->
+<script src="../js/cloudSync.js"></script>       <!-- CloudSync — eigen bomen voor owner (v2.2.0) -->
+<script src="../js/shareModule.js"></script>     <!-- Rolcheck + gedeelde bomen -->
 <script src="../js/accessGuard.js"></script>     <!-- Paginabeveiliging -->
 <script src="../js/collab.js"></script>          <!-- Paginalogica — altijd LAATSTE -->
 
 <script>
     /* Rolcheck: collab.html is toegankelijk voor viewer, editor en owner.
-       Gratis gebruikers zonder rol krijgen het geen-toegang blok te zien
-       via collab.js zelf — AccessGuard wordt hier als extra laag gebruikt. */
+       AccessGuard wordt als extra laag gebruikt naast de interne rolcheck. */
     document.addEventListener('DOMContentLoaded', function () {
         window.AccessGuard.check(['viewer', 'editor']);    /* Owner altijd doorgelaten */
     });
