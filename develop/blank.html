@@ -1,133 +1,130 @@
-<!-- ======================= abonnementen/prijzen.html v2.2.0 =======================
-     v2.2.0 inhoudelijke update:
-       - Rollen correct gepositioneerd (Owner = activatie & beheer)
-       - Donatie = activatie + uitbreiding (niet per gebruiker)
-       - "Stichtend" optie verwijderd (kan later terugkomen)
-       - FAQ herschreven naar Owner-centrisch model
+<!-- ======================= Admin/blank.html v0.1.0  =======================
+consistente opmaak — Navbar + TopBar + 'komt binnenkort' blok, geen aparte header meer, 
+    script.js verwijderd. Login + Favicon / App-icoon toegevoegd
      ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blank</title>
+        
+       <!-- ======================= Favicon ======================= -->
+     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
+     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
+     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
+     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
-<!-- ======================= TITEL + INTRO ======================= -->
-<h1>Toegang & samenwerking</h1>
-<p class="prijzen-intro">
-    Begin gratis met een lokale stamboom. Zet je project om naar de cloud om
-    samen te werken met familie en vrienden.
-    <br><br>
-    De Owner activeert de stamboom en beheert wie toegang krijgt als Viewer of Editor.
-</p>
+    <link rel="stylesheet" href="../css/style.css">
+    
+    <style>
+        /* ======================= BINNENKORT BLOK ======================= */
+        .binnenkort-blok {                                                 /* Centraal informatieblok */
+            max-width: 520px;                                              /* Niet te breed */
+            margin: 0 auto;                                                /* Horizontaal centreren */
+            text-align: center;                                            /* Tekst centreren */
+            padding: 48px 24px;                                            /* Ruimte rondom de inhoud */
+        }
+        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; } /* Groot icoon boven de tekst */
+        .binnenkort-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
+        .binnenkort-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 24px 0; }
+        .knop-home {                                                       /* Knop terug naar home */
+            display: inline-block; padding: 10px 24px;
+            background: #1E90FF; color: #fff; text-decoration: none;
+            border-radius: 5px; font-size: 0.95rem; font-weight: bold;
+        }
+        .knop-home:hover { background: #1278d4; }
+    </style>
+</head>
+<body>
 
-<!-- ======================= TABEL TITEL ======================= -->
-<h2 class="sectie-titel">Wat kan je per rol binnen een stamboom?</h2>
+<!-- ======================= source view enablement  ======================= -->
+     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+     <script>eruda.init();</script>
+     
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div>
+     
+<!-- Scripts: Supabase + auth ALTIJD vóór topbar.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/auth.js"></script>
+     
+<script>
+fetch('/MyFamTreeCollab/Layout/TopBar.html')
+    .then(resp => resp.text())
+    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
+</script>
 
-<!-- ======================= KOLOM BADGES ======================= -->
+<!-- ======================= Navbar ======================= -->
+<div id="Navbar-placeholder"></div>
+<script>
+fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    .then(resp => resp.text())
+    .then(data => {
+        const placeholder = document.getElementById('Navbar-placeholder');
+        if (placeholder) placeholder.innerHTML = data;
+    });
+</script>
 
-<!-- GRATIS -->
-<span class="th-donatie badge-gratis">Altijd gratis</span> <!-- Gratis blijft volledig vrij toegankelijk -->
-
-<!-- VIEWER -->
-<span class="th-uitnodiging badge-uitnodiging">Uitnodiging door Owner</span> <!-- Toegang via Owner -->
-
-<!-- EDITOR -->
-<span class="th-uitnodiging badge-uitnodiging">Uitnodiging door Owner</span> <!-- Geen eigen betaling -->
-
-<!-- OWNER -->
-<span class="th-donatie badge-donatie">Activeert & beheert</span> <!-- Belangrijk: Owner is de betalende rol -->
-
-<!-- ======================= DONATIE SECTIE ======================= -->
-
-<h2 class="sectie-titel">☕ Activeer & breid je stamboom uit</h2>
-<p style="font-size:0.88rem;color:#555;margin:0 0 20px 0;line-height:1.6;">
-    Met een donatie activeer je een cloud-stamboom als Owner.
-    <br>
-    Je kan daarna deelnemers uitnodigen en je stamboom uitbreiden naargelang je project groeit.
-</p>
-
-<!-- ======================= EENMALIG ======================= -->
-<div class="donatie-kaart eenmalig">
-    <div class="donatie-kaart-naam">Eenmalig</div>
-    <div class="donatie-kaart-bedrag">€10</div>
-    <div class="donatie-kaart-periode">eenmalig</div>
-    <ul>
-        <li><span class="vink">✓</span> Activeert 1 cloud-stamboom</li> <!-- Basis activatie -->
-        <li><span class="vink">✓</span> Owner beheer & uitnodigingen</li> <!-- Owner krijgt controle -->
-        <li><span class="vink">✓</span> Basis samenwerking mogelijk</li> <!-- Start samenwerking -->
-    </ul>
-</div>
-
-<!-- ======================= PERIODIEK ======================= -->
-<div class="donatie-kaart periodiek">
-    <div class="donatie-kaart-naam">Periodiek</div>
-    <div class="donatie-kaart-bedrag">€3 – €5</div>
-    <div class="donatie-kaart-periode">per maand</div>
-    <ul>
-        <li><span class="vink">✓</span> Houdt je stamboom actief</li> <!-- Continuïteit -->
-        <li><span class="vink">✓</span> Laat uitbreiding toe (meer deelnemers / groei)</li> <!-- Schaalbaarheid -->
-        <li><span class="vink">✓</span> Flexibel opzegbaar</li> <!-- Lage drempel -->
-    </ul>
-</div>
-
-<!-- ======================= TRANSPARANTIE ======================= -->
-<div class="donatie-noot">
-    <strong>Transparantie:</strong> de Owner activeert en beheert de stamboom.
-    Toegang voor deelnemers wordt momenteel handmatig bevestigd.
-    Automatisatie volgt in een latere fase.
-</div>
-
-<!-- ======================= FAQ ======================= -->
-
-<div class="faq-sectie">
-    <h2 class="sectie-titel">Veelgestelde vragen</h2>
-
-    <!-- GRATIS -->
-    <div class="faq-item">
-        <p class="faq-vraag">Blijft de lokale versie gratis?</p>
-        <p class="faq-antwoord">
-            Ja. Je kan altijd gratis een lokale stamboom maken en beheren in je browser.
+<!-- ======================= Hoofd content ======================= -->
+<main>
+    <div class="binnenkort-blok">
+        <div class="icoon">📰</div>                                        <!-- Printer icoon passend bij afdrukfunctie -->
+        <h1>Artikelen</h1>
+        <p>
+            De artikelen pagina is momenteel in ontwikkeling.<br>
+            Binnenkort kun je hier de stamboom artikelen bekijken.
         </p>
+        <a href="/MyFamTreeCollab/" class="knop-home">Terug naar Home</a>
     </div>
+</main>
 
-    <!-- WIE BETAALT -->
-    <div class="faq-item">
-        <p class="faq-vraag">Wie moet doneren?</p>
-        <p class="faq-antwoord">
-            De Owner activeert de stamboom via een donatie.
-            De Owner beslist vervolgens wie toegang krijgt als Viewer of Editor.
-        </p>
-    </div>
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
 
-    <!-- DEELNAME -->
-    <div class="faq-item">
-        <p class="faq-vraag">Kan ik deelnemen zonder zelf te doneren?</p>
-        <p class="faq-antwoord">
-            Ja. De Owner kan je uitnodigen als Viewer of Editor.
-            Toegang wordt volledig beheerd door de Owner.
-        </p>
-    </div>
+<!-- =============================================================
+     SCRIPTS — volgorde is verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
+     5. Navbar fetch        — onafhankelijk, mag parallel
+     6. Pagina-scripts      — altijd als laatste
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
 
-    <!-- PERIODIEK -->
-    <div class="faq-item">
-        <p class="faq-vraag">Wat gebeurt er als de Owner stopt met een periodieke donatie?</p>
-        <p class="faq-antwoord">
-            De stamboom blijft bestaan, maar uitbreiding of actieve cloudfunctionaliteit
-            kan beperkt worden. De Owner behoudt controle.
-        </p>
-    </div>
+<script>
+    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            // #top-auth bestaat nu — veilig om topbar.js te laden
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
 
-    <!-- DATA -->
-    <div class="faq-item">
-        <p class="faq-vraag">Wat met mijn data?</p>
-        <p class="faq-antwoord">
-            Lokale data blijft op je toestel. Cloud-data kan je op elk moment exporteren
-            als back-up.
-        </p>
-    </div>
-</div>
+    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data;
+        });
 
-<!-- ======================= CTA ======================= -->
-<div class="cta-blok">
-    <h2>Start lokaal. Activeer wanneer je wil.</h2>
-    <p>
-        Begin gratis in je browser. Zet je stamboom om naar de cloud zodra je wil samenwerken.
-    </p>
-    <a href="/MyFamTreeCollab/home/create.html" class="knop-cta">Start gratis</a>
-    <a href="overzicht.html" class="knop-cta secundair">Terug naar overzicht</a>
-</div>
+    // Stap 3: Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+</script>
+
+<!-- Pagina-specifieke scripts: ... → ... → -->
+
+</body>
+</html>
