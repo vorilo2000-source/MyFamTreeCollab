@@ -101,6 +101,16 @@
         .th-rol-icoon { display: block; font-size: 1.3rem; margin-bottom: 4px; }
         .th-rol-naam  { display: block; font-size: 0.9rem; font-weight: bold; }
 
+                 /* FIX: Donatie-uitnodiging in kolomhoofd — eigen kleur, niet geërfd van th */
+        .th-uitnodiging {
+            display: inline-block;
+            font-size: 0.68rem;
+            padding: 1px 7px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
         /* FIX: Donatie-badge in kolomhoofd — eigen kleur, niet geërfd van th */
         .th-donatie {
             display: inline-block;
@@ -322,7 +332,7 @@
     <h1>Rolvergelijking</h1>
     <p class="prijzen-intro">
         Wat kan elke rol precies? De tabel hieronder geeft een volledig overzicht per feature.
-        Alle rollen behalve Gratis vereisen een uitnodiging van de Owner én een donatie.
+        Alle rollen behalve Gratis vereisen een uitnodiging van de Owner.
     </p>
 
     <!-- ===== VERGELIJKINGSTABEL ===== -->
@@ -345,7 +355,7 @@
                     <th class="th-editor">
                         <span class="th-rol-icoon">✏️</span>
                         <span class="th-rol-naam">Editor</span>
-                        <span class="th-donatie badge-donatie">Donatie vereist</span>
+                        <span class="th-uitnodiging badge-uitnodiging">uitnodiging vereist</span>
                     </th>
                     <th class="th-owner">
                         <span class="th-rol-icoon">👑</span>
