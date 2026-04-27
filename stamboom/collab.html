@@ -198,6 +198,45 @@
             flex-shrink: 0;
         }
 
+        /* ======================= LEDENLIJST PER STAMBOOM ======================= */
+        /* Toont alle leden (owner + editors + viewers) onder de stamboom-header */
+        .boom-leden-lijst {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #f9f9fb;
+            border-bottom: 1px solid #e8ecf2;
+            font-size: 0.82rem;
+        }
+        .boom-leden-label {
+            color: #888;
+            font-weight: bold;
+            margin-right: 2px;
+        }
+        .boom-leden-laden { color: #bbb; font-style: italic; font-size: 0.8rem; }
+        .boom-leden-leeg  { color: #bbb; font-style: italic; font-size: 0.8rem; }
+
+        /* Eén lid-item: naam + rol-badge naast elkaar */
+        .boom-lid-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 2px 8px 2px 6px;
+        }
+        .boom-lid-naam { color: #333; font-weight: 500; }
+
+        /* Rol-kleuren per lid */
+        .boom-lid-rol { font-size: 0.68rem; font-weight: bold; }
+        .boom-lid-rol-owner  { color: #856404; }
+        .boom-lid-rol-editor { color: #0d47a1; }
+        .boom-lid-rol-viewer { color: #1b5e20; }
+        .boom-lid-rol-admin  { color: #880e4f; }
+
         /* ======================= INACTIEF BANNER ======================= */
         /* Uitlegbanner in inactieve stamboom-secties */
         .inactief-banner {
