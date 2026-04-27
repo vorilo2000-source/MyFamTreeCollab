@@ -1,0 +1,31 @@
+---
+
+## Sessie 19 — Berichtenboard redesign (collab.html + collab.js)
+
+**Datum:** 2026-04-27
+**Doel:** Berichtenboard herschrijven met 4 statussen + icoontjes, stamboom-sectie header, bijdrager voornaam per bericht.
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `stamboom/collab.html` | v2.0.0 | v2.1.0 | CSS bijgewerkt naar 4 statusbadges (nieuw/open/inbehandeling/gesloten), stamboom-sectie header stijlen toegevoegd |
+| `js/collab.js` | v2.0.0 | v2.1.0 | STATUS_CONFIG met 4 statussen + icoontjes, stamboom-sectie header, voornaam uit auteur_naam, statusbadge update na verzenden |
+
+### Wijzigingen
+
+| Onderdeel | Omschrijving |
+|-----------|-------------|
+| Status enum | Uitgebreid van 3 (open/review/opgelost) naar 4: nieuw 🆕 / open 🔓 / inbehandeling 🔄 / gesloten ✅ |
+| Statusicoontjes | Zichtbaar in discussie-header badge EN per bericht als kleine hint |
+| Stamboom-sectie header | Toont boomnaam + aantal onderwerpen boven de discussielijst |
+| Bijdrager voornaam | Eerste woord van `auteur_naam` getoond (bijv. "Jan" i.p.v. "Jan de Vries") |
+| CSS | `.status-nieuw`, `.status-open`, `.status-inbehandeling`, `.status-gesloten` met eigen kleur per status |
+| Teller update | Stamboom-teller wordt bijgewerkt bij elke nieuwe discussie |
+
+### Openstaande punten volgende sessie
+
+| Punt | Actie |
+|------|-------|
+| Invite e-mail template Supabase | `{{ .ConfirmationURL }}` → `{{ .SiteURL }}/#{{ .TokenHash }}&type=invite` |
+| collab.html testen in browser | Berichten plaatsen, status wijzigen, modereren |
