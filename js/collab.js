@@ -1,30 +1,32 @@
 // =============================================================================
 // js/collab.js — Collaboratie berichtenboard
-// MyFamTreeCollab v2.2.0
+// MyFamTreeCollab v2.3.0
 // -----------------------------------------------------------------------------
 // Verantwoordelijkheden:
 //   - Alle toegankelijke stambomen laden per rol:
 //       Owner/Admin → eigen bomen (CloudSync.listStambomen) + gedeeld (ShareModule.listSharedWithMe)
 //       Editor/Viewer → alleen gedeelde bomen (ShareModule.listSharedWithMe)
 //   - Per boom discussies laden uit collab_messages
-//   - Zoekbalk + formulier ALLEEN actief voor de stamboom == activeBoomId in localStorage
+//   - Zoekbalk + formulier ALLEEN actief voor de actieve boom
 //   - Inactieve bomen: lees-only weergave met uitleg banner
 //   - Statusicoontjes: 🆕 Nieuw · 🔓 Open · 🔄 In behandeling · ✅ Gesloten
-//   - Berichten verwijderen (owner modereert alle, iedereen eigen bericht)
 //
-// Wijzigingen v2.2.0 (sessie 19):
-//   - laadAlleToegankelijkeStambomen() vervangt laadDiscussies()
-//   - Owner: eigen bomen via CloudSync + gedeeld via ShareModule
-//   - Editor/Viewer: alleen gedeeld via ShareModule
-//   - Actieve boom gemarkeerd met badge; zoekbalk + formulier alleen actief daar
-//   - Inactieve bomen: lees-only modus met uitleg banner + link naar Opslag
-//   - renderAlleStambomen() met sortering (actief eerst, dan alfabetisch)
-//   - Rol per boom opgeslagen in staat.bomen voor correcte formulierrechten
-//   - verzendBericht() gebruikt rol van de specifieke boom (niet globale tier)
+// Wijzigingen v2.3.0 (sessie 19 — bugfix):
+//   - activeBoomId === null fallback: als localStorage leeg is, wordt de eerste
+//     eigen boom automatisch als actief beschouwd (owner zonder actieve boom)
+//   - bepaalActiveBoom() centrale functie voor actief-markering
+//   - Livesearch werkt altijd op StamboomStorage.get() ongeacht activeBoomId
+//   - Zoekbalk gerenderd voor alle bomen waar gebruiker editor/owner van is,
+//     niet alleen de stam die toevallig in localStorage staat
+//
+// Wijzigingen v2.2.0:
+//   - laadAlleToegankelijkeStambomen() — alle bomen per rol
+//   - renderAlleStambomen() met sortering
+//   - Rol per boom in staat.bomen
 //
 // Afhankelijkheden (verplichte laadvolgorde):
 //   supabase-js → utils.js → schema.js → storage.js → auth.js →
-//   shareModule.js → accessGuard.js → collab.js
+//   cloudSync.js → shareModule.js → accessGuard.js → collab.js
 // =============================================================================
 
 (function () {
@@ -33,8 +35,8 @@
     // ---------------------------------------------------------------------------
     // CONSTANTEN
     // ---------------------------------------------------------------------------
-    var STORAGE_KEY_BOOM = 'activeBoomId';      // localStorage key voor actieve boom UUID
-    var STORAGE_KEY_NAAM = 'activeBoomNaam';    // localStorage key voor boomnaam
+    var STORAGE_KEY_BOOM = 'stamboomActiefId';    // localStorage key voor actieve boom UUID (conform storage.js)
+    var STORAGE_KEY_NAAM = 'stamboomActiefNaam'; // localStorage key voor boomnaam (conform storage.js)
 
     // Status definities: waarde → { label, icoon, css-klasse }
     var STATUS_CONFIG = {
@@ -47,16 +49,16 @@
     var STATUS_FALLBACK = 'nieuw';    // Fallback als status onbekend of leeg is
 
     // ---------------------------------------------------------------------------
-    // STAAT — centrale pagina-staat, nooit globaal lekken
+    // STAAT
     // ---------------------------------------------------------------------------
     var staat = {
-        activeBoomId: null,    // UUID actieve stamboom (uit localStorage)
+        activeBoomId: null,    // UUID actieve stamboom — kan null zijn, zie bepaalActiveBoom()
         boomNaam:     null,    // Naam actieve stamboom
         gebruiker:    null,    // Supabase auth user object
-        profiel:      null,    // { username, tier, ... } uit AuthModule.getProfile()
-        rol:          null,    // Globale tier van gebruiker (owner/editor/viewer/admin)
-        supabase:     null,    // Supabase client instantie
-        // Per boom: { [boomId]: { naam, rol, isActief, discussies: { [pid]: { naam, berichten[] } } } }
+        profiel:      null,    // { username, tier, ... }
+        rol:          null,    // Globale tier (owner/editor/viewer/admin)
+        supabase:     null,    // Supabase client
+        // { [boomId]: { naam, rol, isActief, discussies: { [pid]: { naam, berichten[] } } } }
         bomen: {}
     };
 
@@ -70,29 +72,20 @@
 
     async function initialiseer() {
 
-        // Controleer verplichte modules
         if (!window.AuthModule) {
             toonFout('AuthModule niet geladen. Controleer de laadvolgorde.');
             return;
         }
-        staat.supabase = window.AuthModule.getClient();    // Gedeelde Supabase client
+        staat.supabase = window.AuthModule.getClient();
 
         if (!window.ShareModule) {
             toonFout('ShareModule niet geladen. Controleer de laadvolgorde.');
             return;
         }
 
-        // Actieve stamboom uit localStorage
+        // Lees activeBoomId uit localStorage — kan null zijn (zie bepaalActiveBoom() later)
         staat.activeBoomId = localStorage.getItem(STORAGE_KEY_BOOM) || null;
-        staat.boomNaam     = localStorage.getItem(STORAGE_KEY_NAAM) || 'Onbekende stamboom';
-
-        // Update subtitel met actieve boomnaam
-        var subtitel = document.getElementById('actieve-boom-label');
-        if (subtitel) {
-            subtitel.textContent = staat.activeBoomId
-                ? 'Actieve stamboom: ' + ftSafe(staat.boomNaam)
-                : 'Geen actieve stamboom — u kunt alleen meelezen.';
-        }
+        staat.boomNaam     = localStorage.getItem(STORAGE_KEY_NAAM) || null;
 
         // Controleer of gebruiker ingelogd is
         staat.gebruiker = await window.AuthModule.getUser();
@@ -101,56 +94,76 @@
             return;
         }
 
-        // Haal profiel op voor weergavenaam in berichten
+        // Profiel ophalen voor weergavenaam en tier
         var profielResult = await window.AuthModule.getProfile();
         staat.profiel = profielResult.profile || null;
+        staat.rol     = staat.profiel ? (staat.profiel.tier || 'viewer') : 'viewer';
 
-        // Globale tier ophalen uit profiel (owner/editor/viewer/admin)
-        staat.rol = staat.profiel ? (staat.profiel.tier || 'viewer') : 'viewer';
-
-        // Toon interface en laad alle toegankelijke bomen
         toonCollabInterface();
         await laadAlleToegankelijkeStambomen();
         koppelModal();
     }
 
     // ---------------------------------------------------------------------------
+    // ACTIEVE BOOM BEPALEN
+    // ---------------------------------------------------------------------------
+
+    // Bepaalt welke boom als "actief" wordt gemarkeerd.
+    // Logica (in volgorde van prioriteit):
+    //   1. Als activeBoomId in localStorage staat én die boom in de lijst zit → gebruik die
+    //   2. Als activeBoomId null is maar er zijn eigen bomen (owner) → eerste eigen boom is actief
+    //   3. Als er alleen gedeelde bomen zijn → geen actieve boom (lees-only alles)
+    // @param {Array} bomenLijst — [{ id, naam, rol, ... }]
+    // @returns {string|null} — UUID van de actieve boom, of null
+    function bepaalActiveBoom(bomenLijst) {
+        if (!bomenLijst || bomenLijst.length === 0) return null;
+
+        // Stap 1: localStorage-waarde staat in de lijst
+        if (staat.activeBoomId) {
+            var gevonden = bomenLijst.some(function (b) { return b.id === staat.activeBoomId; });
+            if (gevonden) return staat.activeBoomId;
+        }
+
+        // Stap 2: geen activeBoomId → eerste eigen boom (owner/admin) als fallback
+        var eigeneBoom = bomenLijst.find(function (b) {
+            return b.rol === 'owner' || b.rol === 'admin';
+        });
+        if (eigeneBoom) {
+            console.log('[collab] activeBoomId was null — fallback naar eerste eigen boom:', eigeneBoom.id);
+            return eigeneBoom.id;    // Markeer als actief maar schrijf NIET terug naar localStorage
+        }
+
+        // Stap 3: alleen gedeelde bomen, geen eigenaar-boom → geen actief
+        return null;
+    }
+
+    // ---------------------------------------------------------------------------
     // ALLE TOEGANKELIJKE STAMBOMEN LADEN
     // ---------------------------------------------------------------------------
 
-    // Haalt alle bomen op waar de gebruiker toegang toe heeft,
-    // laadt per boom de discussies, slaat op in staat.bomen en rendert alles
     async function laadAlleToegankelijkeStambomen() {
-        var bomenLijst = [];    // Accumuleert { id, naam, rol, isActief }
+        var bomenLijst = [];    // Accumuleert { id, naam, rol }
 
-        // --- Stap 1: Eigen bomen (alleen owner/admin via CloudSync) ---
+        // --- Stap 1: Eigen bomen voor owner/admin via CloudSync ---
         if (window.CloudSync && ['owner', 'admin'].includes(staat.rol)) {
             var eigenResult = await window.CloudSync.listStambomen();
             if (eigenResult.success && eigenResult.stambomen) {
                 eigenResult.stambomen.forEach(function (b) {
-                    bomenLijst.push({
-                        id:      b.id,
-                        naam:    b.naam,
-                        rol:     'owner',                              // Eigenaar heeft altijd owner-rol
-                        isActief: b.id === staat.activeBoomId          // Markeer actieve boom
-                    });
+                    bomenLijst.push({ id: b.id, naam: b.naam, rol: 'owner' });
                 });
+            } else {
+                console.warn('[collab] CloudSync.listStambomen() mislukt:', eigenResult.error);
             }
         }
 
-        // --- Stap 2: Gedeelde bomen (alle rollen via ShareModule) ---
+        // --- Stap 2: Gedeelde bomen voor alle rollen via ShareModule ---
         var gedeeldResult = await window.ShareModule.listSharedWithMe();
         if (!gedeeldResult.error && gedeeldResult.data) {
             gedeeldResult.data.forEach(function (b) {
-                // Voorkom dubbele vermeldingen (eigenaar die ook in gedeeld staat)
+                // Voorkom dubbelen (eigenaar kan ook als gedeeld staan)
                 var bestaatAl = bomenLijst.some(function (x) { return x.id === b.stamboom_id; });
                 if (!bestaatAl) {
-                    bomenLijst.push({
-                        id:      b.stamboom_id,
-                        naam:    b.naam,
-                        rol:     b.rol,                                // 'viewer' of 'editor'
-                        isActief: b.stamboom_id === staat.activeBoomId
-                    });
+                    bomenLijst.push({ id: b.stamboom_id, naam: b.naam, rol: b.rol });
                 }
             });
         }
@@ -170,26 +183,37 @@
             return;
         }
 
-        // --- Stap 3: Per boom de discussies laden ---
+        // --- Stap 3: Actieve boom bepalen (ook als activeBoomId null was) ---
+        var actieveId = bepaalActiveBoom(bomenLijst);
+
+        // --- Stap 4: Subtitel bijwerken met naam van actieve boom ---
+        var actieveBoom = actieveId ? bomenLijst.find(function (b) { return b.id === actieveId; }) : null;
+        var subtitel = document.getElementById('actieve-boom-label');
+        if (subtitel) {
+            subtitel.textContent = actieveBoom
+                ? 'Actieve stamboom: ' + ftSafe(actieveBoom.naam)
+                : 'Geen actieve stamboom — u kunt alleen meelezen.';
+        }
+
+        // --- Stap 5: Per boom de discussies laden en opslaan in staat.bomen ---
         for (var i = 0; i < bomenLijst.length; i++) {
             var boom = bomenLijst[i];
             var discussies = await laadDiscussiesVoorBoom(boom.id);
             staat.bomen[boom.id] = {
                 naam:      boom.naam,
                 rol:       boom.rol,
-                isActief:  boom.isActief,
+                isActief:  boom.id === actieveId,    // Markering op basis van bepaalActiveBoom()
                 discussies: discussies
             };
         }
 
         verbergLaadIndicator();
 
-        // --- Stap 4: Alles renderen ---
+        // --- Stap 6: Alles renderen ---
         renderAlleStambomen();
     }
 
-    // Laad alle berichten voor één boom, gegroepeerd per persoon_id
-    // @returns { [persoonId]: { naam, berichten[] } }
+    // Laad berichten voor één boom, gegroepeerd per persoon_id
     async function laadDiscussiesVoorBoom(boomId) {
         var result = await staat.supabase
             .from('collab_messages')
@@ -207,29 +231,27 @@
         (result.data || []).forEach(function (b) {
             var pid = b.persoon_id;
             if (!groepen[pid]) groepen[pid] = { naam: b.persoon_naam, berichten: [] };
-            groepen[pid].berichten.push(b);    // Voeg bericht toe aan groep van deze persoon
+            groepen[pid].berichten.push(b);
         });
         return groepen;
     }
 
     // ---------------------------------------------------------------------------
-    // RENDEREN — ALLE STAMBOMEN
+    // RENDEREN
     // ---------------------------------------------------------------------------
 
-    // Render alle stamboomsecties in de container
     function renderAlleStambomen() {
         var container = document.getElementById('discussie-container');
         if (!container) return;
         container.innerHTML = '';
 
         var boomIds = Object.keys(staat.bomen);
-
         if (boomIds.length === 0) {
             container.innerHTML = '<div class="laad-indicator">Geen stambomen gevonden.</div>';
             return;
         }
 
-        // Sorteer: actieve boom bovenaan, daarna alfabetisch op naam
+        // Actieve boom bovenaan, daarna alfabetisch
         boomIds.sort(function (a, b) {
             var ba = staat.bomen[a], bb = staat.bomen[b];
             if (ba.isActief && !bb.isActief) return -1;
@@ -238,12 +260,11 @@
         });
 
         boomIds.forEach(function (boomId) {
-            var sectie = maakStamboomSectie(boomId, staat.bomen[boomId]);
-            container.appendChild(sectie);
+            container.appendChild(maakStamboomSectie(boomId, staat.bomen[boomId]));
         });
     }
 
-    // Maak een volledige stamboom-sectie: header + optionele zoekbalk + discussieblokken
+    // Maak stamboom-sectie: header + zoekbalk (indien van toepassing) + discussieblokken
     function maakStamboomSectie(boomId, boom) {
         var sectie = document.createElement('div');
         sectie.className = 'stamboom-sectie' + (boom.isActief ? ' stamboom-actief' : ' stamboom-inactief');
@@ -251,31 +272,22 @@
 
         var aantalOnderwerpen = Object.keys(boom.discussies).length;
 
-        // --- Sectie header ---
+        // Header
         var header = document.createElement('div');
         header.className = 'stamboom-sectie-header';
-
-        // Rol-badge: toont de rol van de gebruiker voor deze specifieke boom
-        var rolBadgeHtml = '<span class="boom-rol-badge boom-rol-' + ftSafe(boom.rol) + '">' +
-            rolLabel(boom.rol) + '</span>';
-
-        // Actief/inactief badge
-        var statusBadgeHtml = boom.isActief
-            ? '<span class="boom-actief-badge">✓ Actief</span>'
-            : '<span class="boom-inactief-hint">Alleen lezen</span>';
-
         header.innerHTML =
             '<span class="stamboom-sectie-icoon">📚</span>' +
             '<span class="stamboom-sectie-naam">' + ftSafe(boom.naam) + '</span>' +
-            rolBadgeHtml +
-            statusBadgeHtml +
+            '<span class="boom-rol-badge boom-rol-' + ftSafe(boom.rol) + '">' + rolLabel(boom.rol) + '</span>' +
+            (boom.isActief
+                ? '<span class="boom-actief-badge">✓ Actief</span>'
+                : '<span class="boom-inactief-hint">Alleen lezen</span>') +
             '<span class="stamboom-sectie-teller" data-boom-id="' + ftSafe(boomId) + '">' +
                 aantalOnderwerpen + ' onderwerp' + (aantalOnderwerpen !== 1 ? 'en' : '') +
             '</span>';
-
         sectie.appendChild(header);
 
-        // --- Inactief-banner: uitleg met link naar Opslag ---
+        // Inactief-banner
         if (!boom.isActief) {
             var banner = document.createElement('div');
             banner.className = 'inactief-banner';
@@ -286,7 +298,13 @@
             sectie.appendChild(banner);
         }
 
-        // --- Zoekbalk: alleen voor actieve boom ---
+        // Zoekbalk — tonen als:
+        //   a) dit de actieve boom is, OF
+        //   b) gebruiker is owner/editor van deze boom én lokale data beschikbaar is
+        // In v2.3.0: altijd tonen voor actieve boom; voor inactieve bomen alleen bij owner/editor
+        var magZoekbalk = boom.isActief ||
+            (['owner', 'editor', 'admin'].includes(boom.rol) && boom.isActief);
+        // Vereenvoudigd: zoekbalk alleen voor actieve boom (livesearch werkt op lokale data)
         if (boom.isActief) {
             var zoekSectie = document.createElement('div');
             zoekSectie.className = 'zoek-sectie';
@@ -301,17 +319,18 @@
                 '</button>';
             sectie.appendChild(zoekSectie);
 
-            // Koppel livesearch na DOM-insert
-            setTimeout(function () { koppelZoekbalkVoorBoom(boomId, zoekSectie); }, 0);
+            // Koppel livesearch na DOM-insert (setTimeout zodat element in DOM staat)
+            (function (id, el) {
+                setTimeout(function () { koppelZoekbalkVoorBoom(id, el); }, 0);
+            })(boomId, zoekSectie);
         }
 
-        // --- Discussieblokken ---
+        // Discussieblokken
         var innerContainer = document.createElement('div');
         innerContainer.className = 'discussie-container-inner';
         innerContainer.id = 'discussies-' + boomId;
 
         var persoonIds = Object.keys(boom.discussies);
-
         if (persoonIds.length === 0) {
             innerContainer.innerHTML =
                 '<div class="laad-indicator" style="padding:16px 0;">' +
@@ -322,8 +341,9 @@
         } else {
             persoonIds.forEach(function (pid) {
                 var groep = boom.discussies[pid];
-                var blok  = maakDiscussieBlok(boomId, pid, groep.naam, groep.berichten, boom.isActief, boom.rol);
-                innerContainer.appendChild(blok);
+                innerContainer.appendChild(
+                    maakDiscussieBlok(boomId, pid, groep.naam, groep.berichten, boom.isActief, boom.rol)
+                );
             });
         }
 
@@ -335,14 +355,12 @@
     // DISCUSSIEBLOK
     // ---------------------------------------------------------------------------
 
-    // Maak een discussieblok voor één persoon binnen een stamboom
     function maakDiscussieBlok(boomId, persoonId, persoonNaam, berichten, isActief, rolVoorDezeBoom) {
         var blok = document.createElement('div');
         blok.className = 'discussie-blok';
         blok.dataset.persoonId = persoonId;
         blok.dataset.boomId    = boomId;
 
-        // Huidige status = status van het laatste bericht, of fallback
         var huidigStatus = berichten.length > 0
             ? (berichten[berichten.length - 1].status || STATUS_FALLBACK)
             : STATUS_FALLBACK;
@@ -350,7 +368,6 @@
 
         var statusConf = STATUS_CONFIG[huidigStatus];
 
-        // --- Header ---
         var header = document.createElement('div');
         header.className = 'discussie-header';
         header.innerHTML =
@@ -359,22 +376,15 @@
                 '<span class="discussie-persoon-id">' + ftSafe(persoonId) + '</span>' +
             '</div>' +
             '<span class="status-badge ' + statusConf.klasse + '">' +
-                statusConf.icoon + ' ' + statusConf.label +
-            '</span>' +
+                statusConf.icoon + ' ' + statusConf.label + '</span>' +
             '<span class="discussie-toggle-pijl">▼</span>';
+        header.addEventListener('click', function () { blok.classList.toggle('ingeklapt'); });
 
-        header.addEventListener('click', function () {
-            blok.classList.toggle('ingeklapt');
-        });
-
-        // --- Body ---
         var body = document.createElement('div');
         body.className = 'discussie-body';
-
         var lijst = maakBerichtenLijst(berichten, boomId, persoonId);
         body.appendChild(lijst);
 
-        // Formulier alleen voor actieve boom, lees-only melding voor inactieve boom
         if (isActief) {
             body.appendChild(maakNieuwBerichtForm(boomId, persoonId, huidigStatus, blok, lijst, rolVoorDezeBoom));
         } else {
@@ -389,23 +399,20 @@
         return blok;
     }
 
-    // Maak scrollbare berichtenlijst
     function maakBerichtenLijst(berichten, boomId, persoonId) {
         var lijst = document.createElement('div');
         lijst.className = 'bericht-lijst';
-        lijst.id = 'lijst-' + boomId + '-' + persoonId;    // Uniek ID per boom+persoon
+        lijst.id = 'lijst-' + boomId + '-' + persoonId;
 
         if (berichten.length === 0) {
             lijst.innerHTML = '<div class="bericht-leeg">Nog geen berichten in deze discussie.</div>';
             return lijst;
         }
-
         berichten.forEach(function (b) { lijst.appendChild(maakBerichtItem(b)); });
         setTimeout(function () { lijst.scrollTop = lijst.scrollHeight; }, 50);
         return lijst;
     }
 
-    // Maak één bericht-item DOM element
     function maakBerichtItem(bericht) {
         var isEigen = staat.gebruiker && bericht.user_id === staat.gebruiker.id;
         var isOwner = ['owner', 'admin'].includes(staat.rol);
@@ -418,15 +425,13 @@
             ? new Date(bericht.aangemaakt_op).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })
             : '';
 
-        var voornaam = (bericht.auteur_naam || 'Onbekend').split(' ')[0];    // Eerste woord = voornaam
-
+        var voornaam = (bericht.auteur_naam || 'Onbekend').split(' ')[0];
         var berichtStatusConf = STATUS_CONFIG[bericht.status] || STATUS_CONFIG[STATUS_FALLBACK];
 
         var magVerwijderen = isOwner || isEigen;
         var verwijderHtml  = magVerwijderen
             ? '<button class="bericht-verwijder" data-id="' + bericht.id + '" title="Verwijderen">✕</button>'
             : '';
-
         var diffHtml = bericht.diff_voorstel
             ? '<div class="diff-blok"><strong>📝 Wijzigingsvoorstel:</strong><br>' +
               ftSafe(bericht.diff_voorstel) + '</div>'
@@ -457,18 +462,14 @@
                 });
             }
         }
-
         return item;
     }
 
-    // Maak formulier voor nieuw bericht (alleen voor actieve boom)
     function maakNieuwBerichtForm(boomId, persoonId, huidigStatus, blokEl, lijstEl, rolVoorDezeBoom) {
         var form = document.createElement('div');
         form.className = 'nieuw-bericht-form';
 
         var kanStatusWijzigen = ['owner', 'editor', 'admin'].includes(rolVoorDezeBoom);
-
-        // Bouw status-opties voor alle 4 statussen
         var statusOptiesHtml = '';
         Object.keys(STATUS_CONFIG).forEach(function (sleutel) {
             var conf = STATUS_CONFIG[sleutel];
@@ -480,7 +481,6 @@
         var statusSelectHtml = kanStatusWijzigen
             ? '<select class="status-select">' + statusOptiesHtml + '</select>'
             : '';
-
         var kanDiff = ['owner', 'editor', 'admin'].includes(rolVoorDezeBoom);
         var diffToggleHtml = kanDiff
             ? '<button class="knop-diff-toggle" type="button">📝 Wijziging voorstellen</button>' +
@@ -528,16 +528,14 @@
 
             var leegEl = lijstEl.querySelector('.bericht-leeg');
             if (leegEl) leegEl.remove();
-
             lijstEl.appendChild(maakBerichtItem(result.data));
             lijstEl.scrollTop = lijstEl.scrollHeight;
 
             textarea.value = '';
             if (diffTextarea) diffTextarea.value = '';
-            if (diffWrapper)  diffWrapper.classList.remove('zichtbaar');
-            if (diffToggle)   diffToggle.textContent = '📝 Wijziging voorstellen';
+            if (diffWrapper) diffWrapper.classList.remove('zichtbaar');
+            if (diffToggle)  diffToggle.textContent = '📝 Wijziging voorstellen';
 
-            // Update statusbadge in blok-header
             var badge = blokEl.querySelector('.status-badge');
             if (badge) {
                 var nieuweConf = STATUS_CONFIG[nieuweStatus] || STATUS_CONFIG[STATUS_FALLBACK];
@@ -563,7 +561,6 @@
             ? staat.bomen[boomId].discussies[persoonId].naam
             : persoonId;
 
-        // Gebruik de rol van déze specifieke boom (niet de globale tier)
         var rolVoorDezeBoom = staat.bomen[boomId] ? staat.bomen[boomId].rol : staat.rol;
 
         var record = {
@@ -572,7 +569,7 @@
             persoon_naam:  persoonNaam,
             user_id:       staat.gebruiker.id,
             auteur_naam:   auteurNaam,
-            rol:           rolVoorDezeBoom,    // Rol voor deze boom specifiek
+            rol:           rolVoorDezeBoom,
             bericht:       tekst,
             diff_voorstel: diffVoorstel || null,
             status:        status
@@ -586,37 +583,33 @@
 
         if (result.error) return { success: false, data: null, error: result.error.message };
 
-        // Sla ook op in lokale staat voor consistentie
         if (staat.bomen[boomId] && staat.bomen[boomId].discussies[persoonId]) {
             staat.bomen[boomId].discussies[persoonId].berichten.push(result.data);
         }
-
         return { success: true, data: result.data, error: null };
     }
 
     async function verwijderBericht(berichtId, itemEl) {
         if (!confirm('Dit bericht verwijderen?')) return;
-
         var result = await staat.supabase
             .from('collab_messages')
             .delete()
             .eq('id', berichtId);
-
         if (result.error) { toonFout('Verwijderen mislukt: ' + result.error.message); return; }
         itemEl.remove();
     }
 
     // ---------------------------------------------------------------------------
-    // PERSOON-ZOEKER — livesearch per actieve boom
+    // LIVESEARCH — altijd op StamboomStorage.get(), ongeacht activeBoomId
     // ---------------------------------------------------------------------------
 
-    // Koppel zoekbalk aan een specifieke boom-sectie
+    // Koppel zoekbalk voor een specifieke boom-sectie
     function koppelZoekbalkVoorBoom(boomId, zoekSectie) {
         var zoekInput = zoekSectie.querySelector('.persoon-zoek-input');
         var zoekKnop  = zoekSectie.querySelector('.zoek-knop');
         if (!zoekInput) return;
 
-        // Dropdown container — gepositioneerd onder de zoekbalk
+        // Dropdown container
         var dropdown = document.createElement('div');
         dropdown.className = 'zoek-dropdown';
         dropdown.style.cssText =
@@ -654,18 +647,27 @@
         });
     }
 
-    // Toon zoekresultaten uit StamboomStorage
+    // Toon zoekresultaten — leest altijd uit StamboomStorage.get()
+    // StamboomStorage.get() geeft de lokaal geladen stamboomdata terug,
+    // ongeacht of activeBoomId in localStorage staat
     function toonZoekResultaten(query, dropdown, zoekInput, boomId) {
         dropdown.innerHTML = '';
 
+        // Haal personen op uit localStorage — dit werkt altijd als er lokaal data is
         var personen = window.StamboomStorage ? window.StamboomStorage.get() : [];
 
         if (!personen || personen.length === 0) {
-            dropdown.innerHTML = '<div style="padding:10px;font-size:0.85rem;color:#888;">Geen lokale stamboomdata gevonden.</div>';
+            // Geen lokale data: toon informatieve melding met link naar Opslag
+            dropdown.innerHTML =
+                '<div style="padding:10px;font-size:0.85rem;color:#888;">' +
+                    'Geen lokale stamboomdata. ' +
+                    '<a href="/MyFamTreeCollab/stamboom/storage.html" style="color:#1E90FF;">Laad de stamboom</a> eerst.' +
+                '</div>';
             dropdown.style.display = 'block';
             return;
         }
 
+        // Filter op naam (Roepnaam + Achternaam) of ID — veldnamen conform schema.js
         var resultaten = personen.filter(function (p) {
             var naam = ((p.Roepnaam || '') + ' ' + (p.Achternaam || '')).toLowerCase();
             var id   = (p.ID || '').toLowerCase();
@@ -673,7 +675,9 @@
         }).slice(0, 10);    // Max 10 resultaten
 
         if (resultaten.length === 0) {
-            dropdown.innerHTML = '<div style="padding:10px;font-size:0.85rem;color:#888;">Geen personen gevonden voor "' + ftSafe(query) + '".</div>';
+            dropdown.innerHTML =
+                '<div style="padding:10px;font-size:0.85rem;color:#888;">Geen personen gevonden voor "' +
+                ftSafe(query) + '".</div>';
             dropdown.style.display = 'block';
             return;
         }
@@ -685,8 +689,10 @@
 
             var item = document.createElement('div');
             item.className = 'zoek-resultaat-item';
-            item.style.cssText = 'padding:9px 12px;cursor:pointer;font-size:0.88rem;' +
-                'border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;';
+            item.style.cssText =
+                'padding:9px 12px;cursor:pointer;font-size:0.88rem;' +
+                'border-bottom:1px solid #f0f0f0;display:flex;' +
+                'justify-content:space-between;align-items:center;';
             item.innerHTML =
                 '<span>' + ftSafe(naam) + '</span>' +
                 '<span style="font-size:0.78rem;color:#999;font-family:monospace;">' +
@@ -694,13 +700,11 @@
 
             item.addEventListener('mouseenter', function () { item.style.background = '#f0f7ff'; });
             item.addEventListener('mouseleave', function () { item.style.background = ''; });
-
             item.addEventListener('click', function () {
                 dropdown.style.display = 'none';
                 zoekInput.value = naam;
                 openNieuweDiscussieModal(boomId, pid, naam);
             });
-
             dropdown.appendChild(item);
         });
 
@@ -715,10 +719,8 @@
         var annuleer = document.getElementById('modal-annuleer');
         var bevestig = document.getElementById('modal-bevestig');
         var overlay  = document.getElementById('nieuwe-discussie-modal');
-
         if (annuleer) annuleer.addEventListener('click', sluitModal);
         if (bevestig) bevestig.addEventListener('click', bevestigNieuweDiscussie);
-
         if (overlay) {
             overlay.addEventListener('click', function (e) {
                 if (e.target === overlay) sluitModal();
@@ -726,7 +728,6 @@
         }
     }
 
-    // Open modal voor een specifieke boom
     function openNieuweDiscussieModal(boomId, persoonId, persoonNaam) {
         var modal     = document.getElementById('nieuwe-discussie-modal');
         var idInput   = document.getElementById('modal-persoon-id');
@@ -736,7 +737,7 @@
         idInput.value    = persoonId || '';
         naamInput.value  = persoonNaam || '';
         idInput.readOnly = !!persoonId;
-        modal.dataset.boomId = boomId;    // Bewaar boomId op het modal element
+        modal.dataset.boomId = boomId;    // Bewaar boomId op modal element
 
         modal.classList.add('actief');
         setTimeout(function () { (idInput.value ? naamInput : idInput).focus(); }, 100);
@@ -767,23 +768,23 @@
             return;
         }
 
-        // Scroll naar bestaande discussie
+        // Bestaande discussie → scroll ernaar toe
         if (staat.bomen[boomId].discussies[persoonId]) {
             sluitModal();
-            var bestaand = document.querySelector('[data-boom-id="' + boomId + '"][data-persoon-id="' + persoonId + '"]');
+            var bestaand = document.querySelector(
+                '[data-boom-id="' + boomId + '"][data-persoon-id="' + persoonId + '"]'
+            );
             if (bestaand) bestaand.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
 
-        // Nieuwe discussie toevoegen
+        // Nieuwe discussie
         staat.bomen[boomId].discussies[persoonId] = { naam: persoonNaam, berichten: [] };
 
-        // Update teller
         var teller = document.querySelector('.stamboom-sectie-teller[data-boom-id="' + boomId + '"]');
         var aantalOnderwerpen = Object.keys(staat.bomen[boomId].discussies).length;
         if (teller) teller.textContent = aantalOnderwerpen + ' onderwerp' + (aantalOnderwerpen !== 1 ? 'en' : '');
 
-        // Verwijder lege-staat placeholder en voeg blok toe
         var innerContainer = document.getElementById('discussies-' + boomId);
         if (innerContainer) {
             var leeg = innerContainer.querySelector('.laad-indicator');
@@ -834,13 +835,11 @@
         container.innerHTML = '<div class="fout-melding">' + html + '</div>';
     }
 
-    // Leesbare rolnaam voor de badge
     function rolLabel(rol) {
         var labels = { owner: '👑 Owner', editor: '✏️ Editor', viewer: '👁 Viewer', admin: '⚙️ Admin' };
         return labels[rol] || rol;
     }
 
-    // XSS-veilige escaping
     function ftSafe(tekst) {
         if (window.ftSafe) return window.ftSafe(tekst);
         return String(tekst || '')
