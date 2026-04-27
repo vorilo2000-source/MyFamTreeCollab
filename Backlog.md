@@ -219,7 +219,7 @@
 | F5-02 | Gebruikersaccounts: registreren, inloggen, uitloggen | ✅ Gedaan |
 | F5-03 | Data sync tussen apparaten | ✅ Gedaan |
 | F5-04 | Stamboom delen met andere gebruikers (viewer + editor rollen) | ✅ Gedaan |
-| F5-05 | Samenwerkingsmodus: berichtenboard per persoon (collab.html) | ✅ Gedaan |
+|| F5-05 | Samenwerkingsmodus: berichtenboard per persoon (collab.html) | ✅ Gedaan (v2.1.0) |
 | F5-06 | Versiebeheer per persoon (wijzigingshistorie) | ✅ Gedaan |
 | F5-07 | Meerdere stambomen per gebruiker in cloud | ✅ Gedaan |
 | F5-08 | account.html — overzicht stambomen, backups, profiel | ✅ Gedaan |
@@ -338,12 +338,15 @@
 
 ---
 
-## Bugfixes sessie 2026-04-26
+### Voeg toe aan "Bugfixes / Verbeteringen sessie 2026-04-27":
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
 | BF-21 | demo.js gebruikte lowercase veldnamen — lege cellen in storage — herschreven als hardcoded CSV via StamboomSchema.fromCSV() | ✅ Opgelost |
 | BF-22 | demo.js had 19-kolommen CSV — aangepast naar 14 kolommen conform schema.js | ✅ Opgelost |
+| VB-05 | collab.js v2.1.0 — 4 statussen (nieuw/open/inbehandeling/gesloten) met icoontjes 🆕🔓🔄✅ | ✅ Gedaan |
+| VB-06 | collab.js v2.1.0 — Stamboom-sectie header boven discussielijst | ✅ Gedaan |
+| VB-07 | collab.js v2.1.0 — Bijdrager voornaam (eerste woord) per bericht | ✅ Gedaan |
 
 ---
 
