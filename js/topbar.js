@@ -229,28 +229,14 @@
       }
 
       /* ── Dropdown paneel ── */
-  /* ── Dropdown paneel (FIX: binnen viewport houden) ── */
-.top-user-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 6px);
-
-  right: 0; /* standaard rechts uitlijnen */
-  transform: translateX(10px); /* alles naar rechts duwen */
-  left: auto;
-
-  min-width: 190px;
-  max-width: calc(100vw - 16px); /* voorkomt buiten scherm */
-  box-sizing: border-box;
-
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  z-index: 2000;
-  overflow: hidden;
-  padding: 4px 0;
-}
+      .top-user-dropdown {
+        display: none;
+        position: absolute; top: calc(100% + 6px); right: 0;
+        min-width: 190px; background: #ffffff;
+        border: 1px solid #e5e7eb; border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        z-index: 2000; overflow: hidden; padding: 4px 0;
+      }
       .top-user-wrapper.open .top-user-dropdown { display: block; }
 
       .top-user-dropdown-header {
