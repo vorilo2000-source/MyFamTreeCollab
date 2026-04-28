@@ -1,7 +1,12 @@
 // =============================================================================
 // topbar.js — TopBar Auth Modal & Status
-// MyFamTreeCollab v2.3.0
+// MyFamTreeCollab v2.3.1
 // -----------------------------------------------------------------------------
+// Nieuw in v2.3.1:
+// - _fixDropdownPosition() — voorkomt dat dropdown buiten viewport valt
+//   Controleert na openen of de rechter- of linkerrand buiten beeld valt
+//   en past left/right dynamisch aan via de CSS-klasse .align-right
+//
 // Nieuw in v2.3.0:
 // - Notificatie-badge op gebruikersnaamknop voor ongelezen collab berichten
 // - updateCollabBadge() — telt berichten na collabLaatstGezien, van anderen
@@ -25,6 +30,7 @@
 
   // ---------------------------------------------------------------------------
   // _clearLocalData()
+  // Wist alle stamboom-gerelateerde data uit localStorage.
   // ---------------------------------------------------------------------------
   function _clearLocalData() {
     localStorage.removeItem('stamboomData');
@@ -36,9 +42,10 @@
 
   // ---------------------------------------------------------------------------
   // _injectModal()
+  // Maakt de auth-modal HTML aan en voegt deze toe aan de body (eenmalig).
   // ---------------------------------------------------------------------------
   function _injectModal() {
-    if (document.getElementById("auth-modal-root")) return;
+    if (document.getElementById("auth-modal-root")) return; // Voorkom dubbele injectie
 
     const root = document.createElement("div");
     root.id = "auth-modal-root";
@@ -108,9 +115,10 @@
 
   // ---------------------------------------------------------------------------
   // _injectStyles()
+  // Voegt alle CSS toe voor de auth-modal en topbar-dropdown (eenmalig).
   // ---------------------------------------------------------------------------
   function _injectStyles() {
-    if (document.getElementById("auth-modal-styles")) return;
+    if (document.getElementById("auth-modal-styles")) return; // Voorkom dubbele injectie
 
     const style = document.createElement("style");
     style.id = "auth-modal-styles";
@@ -229,13 +237,22 @@
       }
 
       /* ── Dropdown paneel ── */
+      /* Standaard: links uitgelijnd met de knop.                              */
+      /* .align-right wordt via JS gezet als de rechterrand buiten beeld valt. */
       .top-user-dropdown {
         display: none;
-        position: absolute; top: calc(100% + 6px); right: 0;
+        position: absolute; top: calc(100% + 6px);
+        left: 0;            /* Default: uitlijnen op linkerrand van de knop   */
+        right: auto;        /* right: 0 wordt overschreven door .align-right   */
         min-width: 190px; background: #ffffff;
         border: 1px solid #e5e7eb; border-radius: 8px;
         box-shadow: 0 4px 16px rgba(0,0,0,0.12);
         z-index: 2000; overflow: hidden; padding: 4px 0;
+      }
+      /* Flip naar rechts uitgelijnd wanneer JS dit detecteert */
+      .top-user-dropdown.align-right {
+        left: auto;
+        right: 0;
       }
       .top-user-wrapper.open .top-user-dropdown { display: block; }
 
@@ -273,6 +290,35 @@
     `;
 
     document.head.appendChild(style);
+  }
+
+  // ---------------------------------------------------------------------------
+  // _fixDropdownPosition(dropdownEl)
+  // Controleert na het openen of de dropdown buiten de viewport valt.
+  // Zet .align-right als de rechterrand buiten beeld valt (knop staat links).
+  // Past left inline aan als de linkerrand buiten beeld valt (extreem geval).
+  // Gebruikt requestAnimationFrame zodat de browser de layout heeft berekend.
+  // ---------------------------------------------------------------------------
+  function _fixDropdownPosition(dropdownEl) {
+    // Reset naar default (links uitgelijnd) voor een correcte meting
+    dropdownEl.classList.remove("align-right");    // Verwijder eventuele vorige flip
+    dropdownEl.style.left  = "";                   // Verwijder eventuele inline override
+    dropdownEl.style.right = "";                   // Verwijder eventuele inline override
+
+    requestAnimationFrame(function () {
+      var rect      = dropdownEl.getBoundingClientRect();  // Positie na render
+      var viewportW = window.innerWidth || document.documentElement.clientWidth;
+      var MARGE     = 8;  // Minimale afstand tot de rand van het scherm (px)
+
+      if (rect.right > viewportW - MARGE) {
+        // Rechterrand valt buiten beeld → flip naar rechts uitgelijnd met de knop
+        dropdownEl.classList.add("align-right");
+      } else if (rect.left < MARGE) {
+        // Linkerrand valt buiten beeld (zeldzaam) → vastpinnen aan viewport-rand
+        dropdownEl.style.left  = MARGE + "px";
+        dropdownEl.style.right = "auto";
+      }
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -350,6 +396,7 @@
 
   // ---------------------------------------------------------------------------
   // _renderTopBar(username)
+  // Rendert de ingelogde gebruikersknop met dropdown, of de login-knop.
   // ---------------------------------------------------------------------------
   function _renderTopBar(username) {
     const slot = document.getElementById("top-auth");
@@ -377,14 +424,20 @@
         </div>
       `;
 
-      const wrapper = document.getElementById("top-user-wrapper");
-      const btn     = document.getElementById("top-user-btn");
+      const wrapper  = document.getElementById("top-user-wrapper");
+      const btn      = document.getElementById("top-user-btn");
+      const dropdown = document.getElementById("top-user-dropdown"); // Referentie voor positie-fix
 
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const isOpen = wrapper.classList.toggle("open");
         btn.classList.toggle("open", isOpen);
         btn.setAttribute("aria-expanded", isOpen);
+
+        // Positie corrigeren na elke opening zodat de dropdown altijd in beeld blijft
+        if (isOpen) {
+          _fixDropdownPosition(dropdown);
+        }
       });
 
       document.getElementById("btn-dropdown-logout").addEventListener("click", async () => {
@@ -402,6 +455,8 @@
   // ---------------------------------------------------------------------------
   // Hulpfuncties
   // ---------------------------------------------------------------------------
+
+  // Escapet HTML-speciale tekens om XSS te voorkomen
   function _escHtml(str) {
     return String(str)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -409,6 +464,7 @@
       .replace(/'/g, "&#39;");
   }
 
+  // Sluit de gebruikers-dropdown en reset aria-attributen
   function _closeUserDropdown() {
     const wrapper = document.getElementById("top-user-wrapper");
     const btn     = document.getElementById("top-user-btn");
@@ -417,6 +473,7 @@
     if (btn) { btn.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); }
   }
 
+  // Toont of verbergt de admin/develop menu-items in de navigatie
   function _showAdminDropdown(isAdmin) {
     var attempts = 0;
     var interval = setInterval(function () {
@@ -427,10 +484,11 @@
         if (adminDd)   adminDd.style.display   = isAdmin ? "list-item" : "none";
         if (developDd) developDd.style.display = isAdmin ? "list-item" : "none";
       }
-      if (++attempts >= 20) clearInterval(interval);
+      if (++attempts >= 20) clearInterval(interval); // Stop na 2 seconden
     }, 100);
   }
 
+  // Haalt de weergavenaam op uit het profiel, valt terug op e-mail prefix
   async function _getUsernameFromSession(session) {
     if (!session) return null;
     try {
@@ -444,6 +502,8 @@
   // ---------------------------------------------------------------------------
   // Modal functies
   // ---------------------------------------------------------------------------
+
+  // Opent de auth-modal en focust het e-mailinvoerveld
   function openModal() {
     _injectModal();
     switchTab("login");
@@ -451,6 +511,7 @@
     setTimeout(() => { const f = document.getElementById("auth-login-email"); if (f) f.focus(); }, 50);
   }
 
+  // Sluit de auth-modal en wist alle fout-/succesboodschappen
   function closeModal() {
     const root = document.getElementById("auth-modal-root");
     if (root) root.classList.remove("open");
@@ -460,6 +521,7 @@
     });
   }
 
+  // Wisselt tussen de tabbladen login / register / forgot
   function switchTab(tab) {
     ["login", "register", "forgot"].forEach(function (name) {
       const s = document.getElementById("auth-section-" + name);
@@ -475,6 +537,7 @@
     if (rb) rb.classList.toggle("active", tab === "register");
   }
 
+  // Toont een feedback-boodschap (error of success) in het opgegeven element
   function _showMsg(id, text, type) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -482,18 +545,20 @@
     el.className   = "auth-msg " + type;
   }
 
+  // Verwerkt het loginformulier en roept AuthModule.login() aan
   async function doLogin() {
-    const email = document.getElementById("auth-login-email").value.trim();
+    const email    = document.getElementById("auth-login-email").value.trim();
     const password = document.getElementById("auth-login-password").value;
-    const btn = document.getElementById("auth-btn-login");
+    const btn      = document.getElementById("auth-btn-login");
     btn.disabled = true; btn.textContent = "Bezig…";
     const { user, error } = await AuthModule.login(email, password);
     btn.disabled = false; btn.textContent = "Inloggen";
     if (error) { _showMsg("auth-msg-login", error, "error"); return; }
     _showMsg("auth-msg-login", "Ingelogd!", "success");
-    setTimeout(() => closeModal(), 800);
+    setTimeout(() => closeModal(), 800); // Sluit modal na korte bevestiging
   }
 
+  // Verwerkt het registratieformulier en roept AuthModule.register() aan
   async function doRegister() {
     const username  = document.getElementById("auth-reg-username").value.trim();
     const email     = document.getElementById("auth-reg-email").value.trim();
@@ -511,6 +576,7 @@
     _showMsg("auth-msg-login", "Account aangemaakt! Controleer je e-mail en bevestig je adres, log daarna in.", "success");
   }
 
+  // Verwerkt het wachtwoord-vergeten formulier en verstuurt een resetlink
   async function doForgotPassword() {
     const email = document.getElementById("auth-forgot-email").value.trim();
     const btn   = document.getElementById("auth-btn-forgot");
@@ -523,18 +589,19 @@
 
   // ---------------------------------------------------------------------------
   // init()
+  // Initialiseert de topbar: laadt sessie, rendert UI, start auth-listener.
   // ---------------------------------------------------------------------------
   async function init() {
-    _injectModal();
+    _injectModal(); // Modal alvast injecteren zodat hij direct beschikbaar is
 
-    const session = await AuthModule.getSession();
+    const session = await AuthModule.getSession(); // Controleer bestaande sessie
 
     if (session) {
       _currentUserId = session.user.id;
       const username = await _getUsernameFromSession(session);
       _renderTopBar(username);
 
-      // Badge asynchroon bijwerken — niet-blokkerend
+      // Badge asynchroon bijwerken — niet-blokkerend voor de rest van de init
       const supabase = AuthModule.getClient();
       updateCollabBadge(session.user.id, supabase);
 
@@ -544,14 +611,15 @@
       } catch (e) { _showAdminDropdown(false); }
 
     } else {
-      _renderTopBar(null);
-      _showAdminDropdown(false);
+      _renderTopBar(null);          // Toon login-knop
+      _showAdminDropdown(false);    // Verberg admin-items
     }
 
+    // Luister naar auth-wijzigingen (login, logout, token refresh)
     AuthModule.onAuthChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
         const inkomendUserId = session.user.id;
-        if (_currentUserId && _currentUserId !== inkomendUserId) _clearLocalData();
+        if (_currentUserId && _currentUserId !== inkomendUserId) _clearLocalData(); // Andere gebruiker
         _currentUserId = inkomendUserId;
       }
       if (event === "SIGNED_OUT") { _clearLocalData(); _currentUserId = null; }
@@ -571,13 +639,15 @@
       }
     });
 
+    // Klik buiten de dropdown sluit hem
     document.addEventListener("click", () => _closeUserDropdown());
+    // Escape-toets sluit dropdown en modal
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") { _closeUserDropdown(); closeModal(); }
     });
   }
 
-  // Auto-init
+  // Auto-init: wacht op DOM als die nog niet klaar is
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
