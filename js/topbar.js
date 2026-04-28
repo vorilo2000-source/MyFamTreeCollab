@@ -236,6 +236,7 @@
   top: calc(100% + 6px);
 
   right: 0; /* standaard rechts uitlijnen */
+  transform: translateX(10px); /* alles naar rechts duwen */
   left: auto;
 
   min-width: 190px;
