@@ -102,6 +102,16 @@
         toonCollabInterface();
         await laadAlleToegankelijkeStambomen();
         koppelModal();
+
+        // Sla timestamp op van dit bezoek aan collab.html
+        // topbar.js gebruikt deze waarde om ongelezen berichten te tellen
+        localStorage.setItem('collabLaatstGezien', new Date().toISOString());
+
+        // Reset de notificatie-badge in de TopBar — gebruiker heeft de pagina bezocht
+        // TopBarAuth.refreshCollabBadge() herberekent de telling (nu 0)
+        if (window.TopBarAuth && typeof window.TopBarAuth.refreshCollabBadge === 'function') {
+            window.TopBarAuth.refreshCollabBadge();    // Badge wordt 0 → verborgen
+        }
     }
 
     // ---------------------------------------------------------------------------
