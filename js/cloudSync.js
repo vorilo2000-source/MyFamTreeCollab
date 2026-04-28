@@ -1,36 +1,23 @@
-// ========================= js/cloudSync.js v2.2.0 =========================
+// ========================= js/cloudSync.js v2.2.1 =========================
 // Cloud sync module for MyFamTreeCollab
-// Manages multiple family trees per user in Supabase (table: stambomen)
-// Requires: auth.js (window.AuthModule), storage.js (window.StamboomStorage)
-//           versionControl.js (window.VersionControl) — optional, non-fatal if absent
-// Exported as: window.CloudSync
+//
+// Fix v2.2.1:
+// - loadFromCloud() en listSharedWithMe() doen geen _checkCloudAccess() meer
+//   Viewers en editors mogen gedeelde stambomen laden — alleen opslaan is beperkt
 //
 // Fix v2.2.0 (F6-04):
 // - CLOUD_TIERS aangepast aan nieuw rolmodel: alleen 'owner' en 'admin'
 // - _checkCloudAccess(): 'free' check vervangen door check op ['viewer', 'editor']
 //
 // Fix v2.1.2:
-//   editors gedeelde stambomen kunnen laden. RLS regelt de toegang.
-// - saveToCloud() ondersteunt nu editor-opslag: als de actieve stamboom niet
-//   van de ingelogde gebruiker is, wordt alleen .eq('id') gefilterd (geen
-//   user_id check). RLS editor-schrijftoegang via stamboom_gedeeld regelt dit.
-//
-// Fix v2.1.1:
-// - saveToCloud() roept nu ook setActiveTreeName(stamNaam) aan na succesvolle opslag
-//
-// Nieuw in v2.1.0 (F5-06):
-// - saveToCloud() slaat na elke succesvolle opslag een versie-snapshot op
-// - enforceLimit() wordt aangeroepen na elke saveToCloud() (max 20 versies)
-//
-// Nieuw in v2.0.0 (F5-07):
-// - Meerdere stambomen per gebruiker
-// - saveToCloud, loadFromCloud, listStambomen, deleteFromCloud, getCloudMeta
+// - loadFromCloud() blokkeerde viewers/editors door user_id filter — opgelost
+// - saveToCloud() ondersteunt editor-opslag via stamboom_gedeeld RLS
 // ==========================================================================
 
 (function () {
     'use strict';
 
-    // Tiers die cloud backup mogen gebruiken (nieuw rolmodel: alleen owner en admin)
+    // Tiers die cloud backup mogen opslaan (nieuw rolmodel: alleen owner en admin)
     var CLOUD_TIERS = ['owner', 'admin'];
 
     // Maximum aantal personen per stamboom voor niet-admin gebruikers
@@ -66,6 +53,9 @@
 
     // -----------------------------------------------------------------------
     // _checkCloudAccess
+    // Controleert of de gebruiker cloud-opslag mag gebruiken (owner/admin).
+    // Viewers en editors mogen NIET opslaan maar WEL laden — gebruik deze
+    // check alleen in saveToCloud() en deleteFromCloud(), NIET in loadFromCloud().
     // -----------------------------------------------------------------------
     async function _checkCloudAccess() {
         if (!window.AuthModule || typeof window.AuthModule.getTier !== 'function') {
@@ -75,7 +65,7 @@
         var tier = await window.AuthModule.getTier();
 
         if (['viewer', 'editor'].includes(tier)) {
-            return { allowed: false, error: 'no_cloud_access', tier: tier }; // viewer/editor hebben geen cloud toegang
+            return { allowed: false, error: 'no_cloud_access', tier: tier };
         }
 
         if (!CLOUD_TIERS.includes(tier)) {
@@ -86,7 +76,7 @@
     }
 
     // -----------------------------------------------------------------------
-    // listStambomen
+    // listStambomen — eigen bomen (alleen owner/admin)
     // -----------------------------------------------------------------------
     async function listStambomen() {
         var userId = await _getCurrentUserId();
@@ -100,7 +90,7 @@
         var result = await client
             .from(TABLE)
             .select('id, naam, updated_at, data')
-            .eq('user_id', userId)                                         // Eigen stambomen — user_id filter correct hier
+            .eq('user_id', userId)
             .order('updated_at', { ascending: false });
 
         if (result.error) {
@@ -122,17 +112,13 @@
 
     // -----------------------------------------------------------------------
     // saveToCloud(naam, stamboumId)
-    // Slaat de huidige lokale stamboom op in de cloud.
-    //
-    // Voor editors van een gedeelde stamboom: de update filtert alleen op
-    // stamboom-id, niet op user_id. De RLS editor-schrijftoegang via
-    // stamboom_gedeeld regelt de beveiliging server-side.
+    // Alleen voor owner en admin — viewers/editors mogen niet opslaan.
     // -----------------------------------------------------------------------
     async function saveToCloud(naam, stamboumId) {
         var userId = await _getCurrentUserId();
         if (!userId) return { success: false, error: 'not_logged_in' };
 
-        var access = await _checkCloudAccess();
+        var access = await _checkCloudAccess();    // Blokkeer viewer/editor bij opslaan
         if (!access.allowed) return { success: false, error: access.error, tier: access.tier };
 
         if (!window.StamboomStorage) return { success: false, error: 'storage_unavailable' };
@@ -148,28 +134,14 @@
         var result;
 
         if (stamboumId) {
-            // ---- Bestaande stamboom overschrijven ----
-            // Geen .eq('user_id') filter zodat editors ook kunnen opslaan.
-            // RLS policy "editor schrijftoegang" via stamboom_gedeeld regelt beveiliging.
             result = await client
                 .from(TABLE)
-                .update({
-                    naam:       stamNaam,                                  // Werk naam bij
-                    data:       allPersons,                                // Vervang personen data
-                    updated_at: nu                                         // Bijwerk tijdstip
-                })
-                .eq('id', stamboumId);                                     // Alleen filter op UUID — RLS doet de rest
-
+                .update({ naam: stamNaam, data: allPersons, updated_at: nu })
+                .eq('id', stamboumId);
         } else {
-            // ---- Nieuwe stamboom aanmaken — altijd op naam van de eigenaar ----
             result = await client
                 .from(TABLE)
-                .insert({
-                    user_id:    userId,                                    // Nieuwe stamboom is altijd van de aanmaker
-                    naam:       stamNaam,
-                    data:       allPersons,
-                    updated_at: nu
-                })
+                .insert({ user_id: userId, naam: stamNaam, data: allPersons, updated_at: nu })
                 .select('id')
                 .single();
         }
@@ -183,15 +155,13 @@
 
         if (nieuwId) {
             window.StamboomStorage.setActiveTreeId(nieuwId);
-            window.StamboomStorage.setActiveTreeName(stamNaam);           // v2.1.1: naam synchroon houden
+            window.StamboomStorage.setActiveTreeName(stamNaam);
         }
 
-        // F5-06: versie-snapshot (niet-fataal)
         if (window.VersionControl) {
             try {
                 await window.VersionControl.saveVersion(nieuwId, allPersons, null);
                 await window.VersionControl.enforceLimit(nieuwId);
-                console.log('[cloudSync] Versie-snapshot aangemaakt:', nieuwId);
             } catch (versionErr) {
                 console.warn('[cloudSync] Versie-snapshot mislukt (niet-fataal):', versionErr.message);
             }
@@ -202,29 +172,25 @@
 
     // -----------------------------------------------------------------------
     // loadFromCloud(stamboumId)
-    // Laadt een specifieke cloud stamboom naar localStorage.
-    //
-    // Fix v2.1.2: geen .eq('user_id') filter meer zodat viewers en editors
-    // gedeelde stambomen kunnen laden. RLS select-policy regelt de toegang.
+    // Toegankelijk voor ALLE ingelogde gebruikers (ook viewer/editor).
+    // _checkCloudAccess() wordt hier NIET aangeroepen — alleen login vereist.
+    // RLS in Supabase regelt welke rijen de gebruiker mag zien.
     // -----------------------------------------------------------------------
     async function loadFromCloud(stamboumId) {
         if (!stamboumId) return { success: false, error: 'geen_id' };
 
+        // Alleen login vereist — geen tier-check voor laden
         var userId = await _getCurrentUserId();
         if (!userId) return { success: false, error: 'not_logged_in' };
 
-        var access = await _checkCloudAccess();
-        if (!access.allowed) return { success: false, error: access.error, tier: access.tier };
-
         var client = _getClient();
 
-        // Geen .eq('user_id') filter — RLS regelt toegang voor owners én viewers/editors
-        // Met user_id filter konden viewers/editors de stamboom niet laden (0 rijen → .single() fout)
+        // Geen user_id filter — RLS regelt toegang voor owners én viewers/editors
         var result = await client
             .from(TABLE)
             .select('id, naam, data, updated_at')
-            .eq('id', stamboumId)                                          // Filter alleen op UUID
-            .single();                                                     // RLS garandeert max 1 toegankelijke rij
+            .eq('id', stamboumId)
+            .single();
 
         if (result.error) {
             console.error('[cloudSync] loadFromCloud fout:', result.error);
@@ -241,15 +207,15 @@
 
         if (!window.StamboomStorage) return { success: false, error: 'storage_unavailable' };
 
-        window.StamboomStorage.replaceAll(cloudData);                     // Overschrijf localStorage
-        window.StamboomStorage.setActiveTreeId(stamboumId);               // Sla UUID op als actief
-        window.StamboomStorage.setActiveTreeName(stamNaam);               // Sla naam op als actief
+        window.StamboomStorage.replaceAll(cloudData);
+        window.StamboomStorage.setActiveTreeId(stamboumId);
+        window.StamboomStorage.setActiveTreeName(stamNaam);
 
         return { success: true, naam: stamNaam, count: cloudData.length, updatedAt: updatedAt };
     }
 
     // -----------------------------------------------------------------------
-    // deleteFromCloud(stamboumId)
+    // deleteFromCloud(stamboumId) — alleen owner
     // -----------------------------------------------------------------------
     async function deleteFromCloud(stamboumId) {
         if (!stamboumId) return { success: false, error: 'geen_id' };
@@ -257,7 +223,7 @@
         var userId = await _getCurrentUserId();
         if (!userId) return { success: false, error: 'not_logged_in' };
 
-        var access = await _checkCloudAccess();
+        var access = await _checkCloudAccess();    // Blokkeer viewer/editor bij verwijderen
         if (!access.allowed) return { success: false, error: access.error, tier: access.tier };
 
         var client = _getClient();
@@ -266,7 +232,7 @@
             .from(TABLE)
             .delete()
             .eq('id', stamboumId)
-            .eq('user_id', userId);                                        // Verwijderen alleen door eigenaar
+            .eq('user_id', userId);
 
         if (result.error) {
             console.error('[cloudSync] deleteFromCloud fout:', result.error);
@@ -283,7 +249,7 @@
     }
 
     // -----------------------------------------------------------------------
-    // getCloudMeta
+    // getCloudMeta — alleen voor owner/admin
     // -----------------------------------------------------------------------
     async function getCloudMeta() {
         var userId = await _getCurrentUserId();
@@ -313,9 +279,9 @@
     // -----------------------------------------------------------------------
     window.CloudSync = {
         saveToCloud:     saveToCloud,
-        loadFromCloud:   loadFromCloud,
+        loadFromCloud:   loadFromCloud,     // Toegankelijk voor alle ingelogde gebruikers
         deleteFromCloud: deleteFromCloud,
-        listStambomen:   listStambomen,
+        listStambomen:   listStambomen,     // Alleen voor owner/admin
         getCloudMeta:    getCloudMeta,
         MAX_PERSONS:     MAX_PERSONS
     };
