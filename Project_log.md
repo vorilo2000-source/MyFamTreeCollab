@@ -1,7 +1,79 @@
 # MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-04-26
+## Bijgewerkt: 2026-04-29
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+---
+
+## Sessie 19 — Berichtenboard herontwerp + notificatie-badge + bugfixes
+
+**Datum:** 2026-04-29
+**Doel:** Berichtenboard uitbreiden met multi-boom weergave per rol, 4 statussen, notificatie-badge in TopBar, en diverse bugfixes.
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `stamboom/collab.html` | v2.0.0 | v2.2.0 | 4 statusbadges, stamboom-sectie header CSS, ledenlijst CSS, cloudSync.js toegevoegd aan laadvolgorde |
+| `js/collab.js` | v2.0.0 | v2.3.1 | Multi-boom weergave per rol, correcte localStorage keys (stamboomActiefId/Naam), kolomnamen gecorrigeerd (username/message/created_at), ledenlijst per boom, badge reset na paginabezoek |
+| `js/topbar.js` | v2.2.2 | v2.3.0 | Notificatie-badge op gebruikersnaamknop, badge in dropdown menu, 💬 Samenwerken link in dropdown, updateCollabBadge() + refreshCollabBadge() |
+| `js/cloudSync.js` | v2.2.0 | v2.2.1 | loadFromCloud() zonder _checkCloudAccess() — viewer/editor mogen laden, alleen login vereist |
+
+### Supabase wijzigingen
+
+| Onderdeel | Actie |
+|-----------|-------|
+| `collab_messages` tabel | Kolommen toegevoegd: persoon_id, persoon_naam, rol, diff_voorstel, status |
+| Database Webhook `collab-notify` | Aangemaakt op collab_messages (INSERT + UPDATE) — voorbereid, nog niet actief |
+| Edge Function `bright-handler` | Aangemaakt met collab-notify code — deployment nog niet geslaagd |
+
+### Bugfixes
+
+| ID | Omschrijving | Oplossing |
+|----|-------------|-----------|
+| BF-23 | collab.js las `activeBoomId` maar storage.js schrijft `stamboomActiefId` | Keys gecorrigeerd naar `stamboomActiefId` / `stamboomActiefNaam` |
+| BF-24 | Bericht verzenden mislukt: `auteur_naam` kolom bestaat niet | Gecorrigeerd naar `username`, `bericht` → `message`, `aangemaakt_op` → `created_at` |
+| BF-25 | Viewer kon gedeelde stamboom niet laden: `no_cloud_access` fout | `loadFromCloud()` gebruikt geen `_checkCloudAccess()` meer — alleen login vereist |
+
+### Openstaande punten volgende sessie
+
+| Punt | Actie |
+|------|-------|
+| Storage pagina — lokale en cloud zijn gescheiden frames | Samenvoegen tot één overzicht |
+| Edge Function deployment afronden | `collab-notify` correct deployen in Supabase |
+| Berichtenboard testen | Owner + viewer + editor testen, berichten plaatsen, status wijzigen |
+| Invite e-mail template | `{{ .ConfirmationURL }}` → `{{ .SiteURL }}/#{{ .TokenHash }}&type=invite` |
+
+---
+
+
+
+## Sessie 18 — Demo knop + F6-17 abonnementen
+
+**Datum:** 2026-04-26
+**Doel:** Demo knop toevoegen op index.html, demo.js herschrijven met correcte CSV, abonnementen bijwerken naar nieuw rolmodel.
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `index.html` | v2.1.0 | v2.2.2 | Demo knop + demotekst in hero, `demo.js` + `idGenerator.js` in laadvolgorde |
+| `js/demo.js` | v1.0.0 | v1.2.1 | Herschreven met hardcoded CSV (14 kolommen conform schema.js), parsing via `StamboomSchema.fromCSV()` |
+| `abonnementen/vergelijk.html` | v1.1.0 | v2.0.0 | Volledig herschreven — oude abonnementsstructuur vervangen door rolvergelijkingstabel |
+| `abonnementen/voordelen.html` | v1.2.0 | v2.0.0 | Bijgewerkt naar nieuw rolmodel, verwijzingen naar oude abonnementen verwijderd |
+
+### Bugfixes
+
+| ID | Omschrijving | Oplossing |
+|----|-------------|-----------|
+| BF-21 | demo.js gebruikte lowercase veldnamen — lege cellen in storage | Herschreven als hardcoded CSV, geparsed via `StamboomSchema.fromCSV()` |
+| BF-22 | demo.js had 19-kolommen CSV in plaats van 14 — verkeerde kolom mapping | CSV aangepast naar exact 14 kolommen conform `schema.js FIELDS` |
+
+### Openstaande punten volgende sessie
+
+| Punt | Actie |
+|------|-------|
+| Berichtenboard testen | Sessie 19 |
+| Invite e-mail template Supabase | `type=invite` redirect fix |
 
 ---
 
@@ -35,36 +107,6 @@
 | BF-18 | `window._supabase` bestaat niet | Vervangen door `window.AuthModule.getClient()` |
 | BF-19 | Uitlogknop verwees naar `../../index.html` — 404 | Gecorrigeerd naar `../index.html` |
 | BF-20 | Tabel laadde niet automatisch — DOMContentLoaded te vroeg | `onAuthStateChange` + directe sessiecheck als fallback |
-
----
-
-## Sessie 18 — Demo knop + F6-17 abonnementen
-
-**Datum:** 2026-04-26
-**Doel:** Demo knop toevoegen op index.html, demo.js herschrijven met correcte CSV, abonnementen bijwerken naar nieuw rolmodel.
-
-### Gewijzigde bestanden
-
-| Bestand | Van | Naar | Wijziging |
-|---------|-----|------|-----------|
-| `index.html` | v2.1.0 | v2.2.2 | Demo knop + demotekst in hero, `demo.js` + `idGenerator.js` in laadvolgorde |
-| `js/demo.js` | v1.0.0 | v1.2.1 | Herschreven met hardcoded CSV (14 kolommen conform schema.js), parsing via `StamboomSchema.fromCSV()` |
-| `abonnementen/vergelijk.html` | v1.1.0 | v2.0.0 | Volledig herschreven — oude abonnementsstructuur vervangen door rolvergelijkingstabel |
-| `abonnementen/voordelen.html` | v1.2.0 | v2.0.0 | Bijgewerkt naar nieuw rolmodel, verwijzingen naar oude abonnementen verwijderd |
-
-### Bugfixes
-
-| ID | Omschrijving | Oplossing |
-|----|-------------|-----------|
-| BF-21 | demo.js gebruikte lowercase veldnamen — lege cellen in storage | Herschreven als hardcoded CSV, geparsed via `StamboomSchema.fromCSV()` |
-| BF-22 | demo.js had 19-kolommen CSV in plaats van 14 — verkeerde kolom mapping | CSV aangepast naar exact 14 kolommen conform `schema.js FIELDS` |
-
-### Openstaande punten volgende sessie
-
-| Punt | Actie |
-|------|-------|
-| Berichtenboard testen | Sessie 19 |
-| Invite e-mail template Supabase | `type=invite` redirect fix |
 
 ---
 
