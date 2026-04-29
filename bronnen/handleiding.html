@@ -1,28 +1,20 @@
-<!-- ======================= bronnen/handleiding.html v1.8.0 =======================
+<!-- ======================= bronnen/handleiding.html v1.9.0 =======================
      Gebruikershandleiding voor MyFamTreeCollab
      Beschrijft alle functies van de applicatie stap voor stap
 
-     Wijzigingen v1.8.0 (Sessie 16 — Fase 6 code aanpassingen):
-     - Sectie 1  — demo-melding bijgewerkt: demo.js laadt automatisch voor gasten
-     - Sectie 8  — actieve stamboom balk vermeld op "Mijn data" tabblad
-     - Sectie 10 — verwijderen cloud stamboom: actief-status wordt correct gewist
-     - Sectie 14 — uitnodiging: elke gebruiker met account (ook viewer) kan worden uitgenodigd
-     - Sectie 14 — roltabel bijgewerkt: demo stamboom voor gasten toegevoegd
+     Wijzigingen v1.9.0 (Sessie 19):
+     - Sectie 2  — gebruikersmenu bijgewerkt: 💬 Samenwerken link + notificatie-badge uitleg
+     - Sectie 14 — roltabel: gedeelde stamboom laden toegevoegd voor viewer/editor
+     - Sectie 15 — berichtenboard volledig herschreven:
+                   multi-boom weergave per rol, 4 statussen met icoontjes,
+                   ledenlijst per stamboom, actief vs. lees-only bomen,
+                   notificatie-badge uitleg
 
-     Wijzigingen v1.7.0 (Sessie 15 — overdracht + Fase 6 rolmodel):
-     - Sectie 2  — gebruikersmenu bijgewerkt
-     - Sectie 9  — versielimiet aangepast van 20 naar 5
-     - Sectie 10 — tiers bijgewerkt naar nieuw rolmodel (owner i.p.v. supporter/personal/etc.)
-     - Sectie 14 — roltabel bijgewerkt naar nieuw model (gast/viewer/editor/owner/admin)
-     - Sectie 14 — uitnodigingstekst bijgewerkt: alleen owner mag uitnodigen
-     - Sectie 15 — toegangstekst bijgewerkt naar nieuw rolmodel
-     - Ko-fi link bijgewerkt naar https://ko-fi.com/vorilo
-
-     Wijzigingen v1.6.0 (F5-04):
-     - Sectie 15 "Stamboom delen & samenwerken" toegevoegd
-     - Subsecties: uitnodigen, rollen, gedeeld met mij, collab berichtenboard
-     - Sectie 14 "Steun" hernummerd naar 16
-     - Inhoudsopgave bijgewerkt naar 16 items
+     Wijzigingen v1.8.0 (Sessie 16):
+     - Sectie 1  — demo-melding bijgewerkt
+     - Sectie 8  — actieve stamboom balk vermeld
+     - Sectie 10 — verwijderen cloud stamboom bugfix gedocumenteerd
+     - Sectie 14 — roltabel bijgewerkt naar nieuw rolmodel
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -32,13 +24,13 @@
     <title>Handleiding</title>
 
    <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
+     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
      <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-     
+
     <style>
         .handleiding-wrapper { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
         .welkom-blok { margin-bottom: 32px; }
@@ -77,6 +69,10 @@
         .rol-tabel tr:last-child td { border-bottom: none; }
         .check-ja  { color: #166534; font-weight: bold; }
         .check-nee { color: #991b1b; }
+        .status-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .status-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .status-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; }
+        .status-tabel tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -88,7 +84,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Handleiding <span class="versie-badge">v1.8.0</span></h1>
+            <h1>Handleiding <span class="versie-badge">v1.9.0</span></h1>
             <p>
                 Welkom bij de handleiding van MyFamTreeCollab. Hier vind je stap voor stap uitleg
                 over alle functies van de applicatie — van je eerste persoon aanmaken tot je stamboom
@@ -175,8 +171,16 @@
             <ul>
                 <li><strong>⚙️ Mijn Account</strong> — profiel, wachtwoord, cloud stambomen</li>
                 <li><strong>📜 Versiegeschiedenis</strong> — bekijk en herstel eerdere versies van je stamboom</li>
+                <li><strong>💬 Samenwerken</strong> — ga direct naar het berichtenboard. Als er een rood getal naast staat, zijn er ongelezen berichten in jouw stambomen.</li>
                 <li><strong>🚪 Uitloggen</strong> — beëindigt je sessie en wist lokale data</li>
             </ul>
+
+            <h3>Notificatie-badge</h3>
+            <p>
+                Naast je gebruikersnaam verschijnt een rood getal zodra er nieuwe berichten zijn
+                geplaatst in stambomen waar jij toegang toe hebt — door iemand anders dan jijzelf.
+                Het getal verdwijnt automatisch zodra je de <strong>Samenwerken</strong>-pagina bezoekt.
+            </p>
 
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
@@ -241,7 +245,6 @@
             </ul>
             <div class="tip">
                 <strong>Tip:</strong> Het ID van een persoon vind je in de ID-kolom van de tabel.
-                Zoek eerst de partner op om het ID te noteren, vul het dan in bij de andere persoon.
             </div>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
@@ -259,14 +262,6 @@
                 <li>De stamboom toont de geselecteerde persoon (geel) met zijn/haar ouders (groen), partner(s) (paars) en kinderen (blauw).</li>
                 <li>Klik op een node om die persoon als nieuw middelpunt te kiezen.</li>
             </ul>
-            <p>
-                Rechts van de stamboom zie je de broers en zussen van de geselecteerde persoon,
-                elk met hun partner naast zich.
-            </p>
-            <div class="tip">
-                <strong>Tip:</strong> Heeft iemand meerdere partners? Dan worden alle partners
-                naast de persoon getoond. De kleurcodering helpt je snel het verband te zien.
-            </div>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
@@ -276,33 +271,12 @@
             <p>
                 De Tijdlijn toont alle familieleden van een geselecteerde persoon op een
                 horizontale tijdas. Elke persoon is een balk van geboortejaar tot overlijdensjaar.
-                Nog levende personen krijgen een stippellijn tot vandaag.
             </p>
             <ul class="stappen">
                 <li>Klik op <strong>Tijdlijn</strong> in de navigatie.</li>
                 <li>Zoek een persoon via de zoekbalk.</li>
                 <li>De tijdlijn laadt automatisch met alle familieleden gegroepeerd per generatie.</li>
-                <li>Beweeg je muis over een balk voor meer details (naam, geboortedatum, overlijdensdatum, leeftijd).</li>
-                <li>Klik op een balk om die persoon als nieuw middelpunt te kiezen.</li>
-            </ul>
-
-            <h3>Generatiekolom</h3>
-            <p>
-                Links van de tijdlijn staat een kolom met de generatienamen (Betovergrootouders,
-                Grootouders, Ouders, Hoofdpersoon, Kinderen, enzovoort). Deze kolom blijft
-                zichtbaar als je horizontaal scrollt, zodat je altijd weet bij welke generatie
-                je kijkt.
-            </p>
-
-            <h3>Kleuren</h3>
-            <ul>
-                <li><strong>Amber</strong> — Hoofdpersoon</li>
-                <li><strong>Groen</strong> — Ouders en voorouders</li>
-                <li><strong>Paars</strong> — Partner van hoofdpersoon</li>
-                <li><strong>Oranje</strong> — Broers en zussen</li>
-                <li><strong>Blauw</strong> — Kinderen (gen +1)</li>
-                <li><strong>Teal tinten</strong> — Verdere nakomelingen (gen +2, +3, ...)</li>
-                <li><strong>Grijs</strong> — Partners van kinderen en broers/zussen</li>
+                <li>Beweeg je muis over een balk voor meer details.</li>
             </ul>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
@@ -330,39 +304,19 @@
             </p>
 
             <h3>Profiel</h3>
-            <p>
-                Bovenaan zie je je avatar, gebruikersnaam, e-mailadres, rol en de datum
-                waarop je lid bent geworden. Je ziet ook of je cloud-toegang hebt.
-            </p>
+            <p>Bovenaan zie je je avatar, gebruikersnaam, e-mailadres, rol en lidmaatschapsdatum.</p>
 
-            <h3>Cloud stambomen beheren</h3>
-            <p>
-                Een overzicht van al je cloud-stambomen met naam en tijdstip van laatste opslag.
-                Per stamboom kun je:
-            </p>
-            <ul>
-                <li><strong>Laden</strong> — laadt de stamboom in je browser. Let op: dit overschrijft je huidige lokale data.</li>
-                <li><strong>Verwijderen</strong> — verwijdert de stamboom permanent uit de cloud.</li>
-            </ul>
-            <div class="waarschuwing">
-                <strong>Let op:</strong> Alleen Owner- en Admin-accounts hebben cloud-toegang.
-                Viewers en Editors zien een melding met uitleg over het upgraden naar Owner.
-            </div>
-
-            <h3>Lokale data & actieve stamboom</h3>
+            <h3>Lokale data &amp; actieve stamboom</h3>
             <p>
                 Op het tabblad <strong>"📋 Mijn data"</strong> zie je bovenaan een blauwe balk
-                met de naam van de stamboom die momenteel actief is (geladen vanuit de cloud).
-                Zo weet je altijd met welke stamboom je werkt, ook als je de cloudpagina nog
-                niet open hebt. De balk verdwijnt automatisch als je de stamboom verwijdert
-                of de lokale data reset.
+                met de naam van de stamboom die momenteel actief is. Zo weet je altijd met welke
+                stamboom je werkt.
             </p>
 
             <h3>Avatar kiezen</h3>
             <ul class="stappen">
                 <li>Klik op een van de 8 emoji-avatars.</li>
                 <li>De keuze wordt direct opgeslagen in je account.</li>
-                <li>Je avatar verschijnt meteen bovenaan de profielkaart.</li>
             </ul>
 
             <h3>Wachtwoord wijzigen</h3>
@@ -370,14 +324,7 @@
                 <li>Vul je nieuwe wachtwoord in (minimaal 8 tekens).</li>
                 <li>Bevestig het wachtwoord in het tweede veld.</li>
                 <li>Klik op <strong>"Opslaan"</strong>.</li>
-                <li>Je ontvangt een bevestiging op de pagina. Je hoeft niet opnieuw in te loggen.</li>
             </ul>
-
-            <div class="tip">
-                <strong>Tip:</strong> Gebruik de <a href="/MyFamTreeCollab/stamboom/storage.html">Opslag &amp; Cloud</a>-pagina
-                om nieuwe stambomen naar de cloud te uploaden. De accountpagina is alleen voor
-                beheren en laden — niet voor uploaden.
-            </div>
 
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
@@ -386,85 +333,19 @@
         <div class="sectie" id="versiegeschiedenis">
             <h2>9. Versiegeschiedenis</h2>
             <p>
-                Met de Versiegeschiedenis kun je de volledige wijzigingshistorie van een stamboom
-                bekijken, een oude versie previews, twee versies vergelijken en een eerdere versie
-                terugzetten. Elke keer dat je een stamboom opslaat in de cloud, wordt automatisch
-                een snapshot bewaard. Je hebt altijd de laatste <strong>5 versies</strong> beschikbaar.
+                Met de Versiegeschiedenis kun je eerdere versies van een stamboom bekijken,
+                vergelijken en terugzetten. Per stamboom worden maximaal <strong>5 versies</strong> bewaard.
             </p>
-
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn als <strong>Owner</strong> of <strong>Admin</strong>.
-                Versies worden automatisch aangemaakt bij elke cloud-opslag — je hoeft hier niets voor te doen.
+                <strong>Vereist:</strong> Ingelogd als <strong>Owner</strong> of <strong>Admin</strong>.
             </div>
-
-            <h3>Versiehistorie openen</h3>
             <ul class="stappen">
-                <li>Ga naar <strong>Mijn Account</strong> via het gebruikersmenu rechtsboven.</li>
-                <li>Klik op <strong>"📜 Versiegeschiedenis"</strong> in het accountmenu, of navigeer rechtstreeks naar <a href="/MyFamTreeCollab/account/history.html">account/history.html</a>.</li>
-                <li>Kies een stamboom uit de dropdown bovenaan de pagina.</li>
-                <li>De lijst met opgeslagen versies verschijnt, nieuwste bovenaan.</li>
+                <li>Ga naar <strong>Mijn Account → 📜 Versiegeschiedenis</strong>.</li>
+                <li>Kies een stamboom uit de dropdown.</li>
+                <li>Klik op <strong>"👁 Preview"</strong> om een versie te bekijken zonder te laden.</li>
+                <li>Klik op <strong>"⏪ Terugzetten"</strong> om een versie te herstellen.</li>
+                <li>Klik twee keer op <strong>"🔍 Vergelijk"</strong> om twee versies naast elkaar te zien.</li>
             </ul>
-
-            <h3>Versie previews</h3>
-            <p>
-                Met Preview bekijk je welke personen in een historische versie aanwezig waren,
-                zonder de versie te laden of je huidige data te wijzigen.
-            </p>
-            <ul class="stappen">
-                <li>Klik op <strong>"👁 Preview"</strong> naast de gewenste versie.</li>
-                <li>Een overzicht van alle personen in die versie verschijnt onderaan de pagina.</li>
-                <li>Klik op een andere versie of sluit het paneel om verder te gaan.</li>
-            </ul>
-
-            <h3>Versie terugzetten</h3>
-            <p>
-                Terugzetten laadt een historische snapshot terug als je actieve stamboom. Je
-                huidige versie wordt vóór het terugzetten automatisch opgeslagen als nieuwe versie,
-                zodat je niets kwijtraakt.
-            </p>
-            <ul class="stappen">
-                <li>Klik op <strong>"⏪ Terugzetten"</strong> naast de gewenste versie.</li>
-                <li>Bevestig de melding in het venster dat verschijnt.</li>
-                <li>Je stamboom wordt teruggezet. De pagina ververst de versie-lijst automatisch.</li>
-            </ul>
-            <div class="waarschuwing">
-                <strong>Let op:</strong> Terugzetten overschrijft zowel je lokale data als de
-                cloud-versie. Je huidige staat wordt wél eerst als nieuwe versie opgeslagen,
-                dus je kunt altijd terug.
-            </div>
-
-            <h3>Twee versies vergelijken</h3>
-            <p>
-                De vergelijkingsfunctie toont wat er veranderd is tussen twee versies: welke
-                personen zijn toegevoegd, welke zijn gewijzigd en welke zijn verwijderd.
-            </p>
-            <ul class="stappen">
-                <li>Klik op <strong>"🔍 Vergelijk"</strong> naast de eerste versie (de basis). De rij wordt blauw omrand.</li>
-                <li>Klik op <strong>"🔍 Vergelijk"</strong> naast een tweede versie om de vergelijking te starten.</li>
-                <li>Het resultaat verschijnt in drie kolommen onderaan de pagina.</li>
-            </ul>
-
-            <div class="diff-voorbeeld">
-                <div class="diff-voorbeeld-kolom diff-toegevoegd-ex">
-                    <strong>✅ Toegevoegd</strong>
-                    Personen die in de nieuwere versie aanwezig zijn maar niet in de oudere.
-                </div>
-                <div class="diff-voorbeeld-kolom diff-gewijzigd-ex">
-                    <strong>✏️ Gewijzigd</strong>
-                    Personen in beide versies waarbij minstens één veld is gewijzigd, met de oude én nieuwe waarde.
-                </div>
-                <div class="diff-voorbeeld-kolom diff-verwijderd-ex">
-                    <strong>🗑️ Verwijderd</strong>
-                    Personen die in de oudere versie aanwezig waren maar niet meer in de nieuwere.
-                </div>
-            </div>
-
-            <h3>Automatisch opruimen</h3>
-            <p>
-                Per stamboom worden maximaal <strong>5 versies</strong> bewaard. Zodra die grens wordt bereikt,
-                wordt de oudste versie automatisch verwijderd bij de volgende opslag.
-            </p>
-
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
@@ -473,70 +354,30 @@
             <h2>10. Cloud stambomen</h2>
             <p>
                 Met een <strong>Owner</strong>- of <strong>Admin</strong>-account kun je meerdere stambomen
-                opslaan in de cloud. Ze zijn dan beschikbaar op al je apparaten.
+                opslaan in de cloud.
             </p>
-
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn met een <strong>Owner</strong>- of
-                <strong>Admin</strong>-account. Viewer- en Editor-accounts hebben geen eigen cloud-opslag.
-                Wil je upgraden naar Owner? Steun het project via Ko-fi.
+                <strong>Vereist:</strong> Owner of Admin voor opslaan. Viewers en Editors kunnen
+                gedeelde stambomen wel <strong>laden</strong> via het tabblad "🔗 Gedeeld met mij".
             </div>
 
-            <h3>Actieve stamboom</h3>
-            <p>
-                Zodra je een stamboom laadt vanuit de cloud, wordt deze gemarkeerd als
-                <strong>ACTIEF</strong> — zichtbaar als blauwe balk bovenaan zowel het
-                tabblad <strong>"☁️ Cloud stambomen"</strong> als het tabblad
-                <strong>"📋 Mijn data"</strong>. Zo zie je altijd direct met welke stamboom
-                je werkt, ongeacht welk tabblad je open hebt.
-            </p>
-
-            <h3>Stamboom opslaan in de cloud</h3>
+            <h3>Stamboom opslaan</h3>
             <ul class="stappen">
-                <li>Ga naar <strong>Opslag</strong> via de navigatie.</li>
-                <li>Klik op het tabblad <strong>"☁️ Cloud stambomen"</strong>.</li>
-                <li>Vul een naam in voor je stamboom, bijv. <em>"Familie De Smedt"</em>.</li>
-                <li>Klik op <strong>"➕ Opslaan als nieuw"</strong>.</li>
-                <li>De stamboom verschijnt in de lijst onderaan met naam, aantal personen en datum.</li>
+                <li>Ga naar <strong>Opslag → ☁️ Cloud stambomen</strong>.</li>
+                <li>Vul een naam in en klik <strong>"➕ Opslaan als nieuw"</strong>.</li>
             </ul>
 
-            <h3>Bestaande stamboom overschrijven</h3>
+            <h3>Stamboom laden</h3>
             <ul class="stappen">
-                <li>Laad eerst de stamboom die je wilt bijwerken.</li>
-                <li>Pas je lokale data aan via Beheren.</li>
-                <li>Ga terug naar <strong>Opslag → Cloud stambomen</strong>.</li>
-                <li>Klik op <strong>"🔄 Huidige overschrijven"</strong>.</li>
-            </ul>
-
-            <h3>Stamboom laden vanuit de cloud</h3>
-            <ul class="stappen">
-                <li>Ga naar <strong>Opslag → Cloud stambomen</strong>.</li>
+                <li>Ga naar <strong>Opslag → ☁️ Cloud stambomen</strong>.</li>
                 <li>Klik op <strong>"⬇️ Laden"</strong> naast de gewenste stamboom.</li>
-                <li>Bevestig de melding — je huidige lokale data wordt overschreven.</li>
-                <li>De stamboom is nu lokaal beschikbaar en gemarkeerd als <strong>ACTIEF</strong> op beide tabbladen.</li>
-            </ul>
-
-            <div class="waarschuwing">
-                <strong>Let op:</strong> Laden overschrijft je huidige lokale data.
-                Maak eerst een JSON-export als je de lokale data wilt bewaren.
-            </div>
-
-            <h3>Wisselen tussen stambomen</h3>
-            <p>
-                Als je een andere stamboom wilt laden terwijl er al een actieve stamboom aanwezig is,
-                verschijnt een waarschuwingsvenster met drie keuzes:
-            </p>
-            <ul>
-                <li><strong>Annuleren</strong> — niets gebeurt</li>
-                <li><strong>Toch laden</strong> — laadt direct, huidige data wordt overschreven</li>
-                <li><strong>Eerst opslaan</strong> — slaat de huidige stamboom op en laadt daarna de nieuwe</li>
+                <li>De stamboom is nu lokaal beschikbaar en gemarkeerd als <strong>ACTIEF</strong>.</li>
             </ul>
 
             <h3>Stamboom verwijderen</h3>
             <ul class="stappen">
-                <li>Klik op <strong>"🗑️ Verwijderen"</strong> naast de stamboom in de lijst.</li>
-                <li>Bevestig de melding. Definitief verwijderd — je lokale data blijft onaangetast.</li>
-                <li>Als de verwijderde stamboom de actieve was, verdwijnt de ACTIEF-balk automatisch op beide tabbladen.</li>
+                <li>Klik op <strong>"🗑️ Verwijderen"</strong> naast de stamboom.</li>
+                <li>Bevestig de melding. De ACTIEF-balk verdwijnt automatisch als dit de actieve stamboom was.</li>
             </ul>
 
             <a href="#" class="terug-top">↑ Terug naar boven</a>
@@ -545,20 +386,16 @@
         <!-- 11. Importeren -->
         <div class="sectie" id="importeren">
             <h2>11. Importeren</h2>
-            <p>
-                Je kunt bestaande stamboomdata importeren via een CSV-bestand. Dit is handig
-                als je data hebt uit Excel of een ander programma.
-            </p>
+            <p>Je kunt bestaande stamboomdata importeren via een CSV-bestand.</p>
             <ul class="stappen">
-                <li>Download eerst het <a href="/MyFamTreeCollab/bronnen/template.html">CSV-sjabloon</a> om de juiste opmaak te zien.</li>
+                <li>Download het <a href="/MyFamTreeCollab/bronnen/template.html">CSV-sjabloon</a>.</li>
                 <li>Vul het sjabloon in met je familiegegevens.</li>
                 <li>Ga naar <strong>Importeren</strong> via de navigatie.</li>
-                <li>Klik op <strong>"Bestand kiezen"</strong> en selecteer je CSV-bestand.</li>
+                <li>Klik op <strong>"Bestand kiezen"</strong> en kies je CSV.</li>
                 <li>Klik op <strong>"Importeren"</strong>.</li>
             </ul>
             <div class="waarschuwing">
-                <strong>Let op:</strong> Importeren is alleen beschikbaar voor <strong>Owner</strong>- en
-                <strong>Admin</strong>-accounts. Viewers en Editors kunnen niet importeren.
+                <strong>Let op:</strong> Alleen voor <strong>Owner</strong>- en <strong>Admin</strong>-accounts.
             </div>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
@@ -566,42 +403,23 @@
         <!-- 12. Exporteren -->
         <div class="sectie" id="exporteren">
             <h2>12. Exporteren</h2>
-            <p>
-                Je kunt je stamboom exporteren als CSV (voor Excel) of JSON (volledige back-up).
-                Exporteren is alleen beschikbaar voor <strong>Owner</strong>- en <strong>Admin</strong>-accounts.
-            </p>
-
-            <h3>CSV exporteren</h3>
+            <p>Exporteer je stamboom als CSV of JSON. Alleen voor <strong>Owner</strong>- en <strong>Admin</strong>-accounts.</p>
             <ul class="stappen">
                 <li>Ga naar <strong>Exporteren</strong> via de navigatie.</li>
-                <li>Klik op <strong>"Exporteer CSV"</strong>.</li>
-                <li>Het bestand wordt opgeslagen in je downloadmap.</li>
+                <li>Klik op <strong>"Exporteer CSV"</strong> of <strong>"Export JSON"</strong>.</li>
             </ul>
-
-            <h3>JSON exporteren</h3>
-            <ul class="stappen">
-                <li>Ga naar <strong>Exporteren</strong> via de navigatie.</li>
-                <li>Klik op <strong>"Export JSON"</strong>.</li>
-                <li>Bewaar dit bestand op een veilige plek als back-up.</li>
-            </ul>
-            <div class="tip">
-                <strong>Tip:</strong> Maak regelmatig een JSON-export als back-up van je stamboom.
-            </div>
+            <div class="tip"><strong>Tip:</strong> Maak regelmatig een JSON-export als back-up.</div>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
         <!-- 13. Wachtwoord vergeten -->
         <div class="sectie" id="wachtwoord-reset">
             <h2>13. Wachtwoord vergeten</h2>
-            <p>
-                Ben je je wachtwoord vergeten? Je kunt via je e-mailadres een nieuw wachtwoord instellen.
-            </p>
             <ul class="stappen">
                 <li>Klik op <strong>Login</strong> bovenaan de pagina.</li>
-                <li>Klik op <strong>"Wachtwoord vergeten?"</strong> onder het inlogformulier.</li>
+                <li>Klik op <strong>"Wachtwoord vergeten?"</strong>.</li>
                 <li>Vul je e-mailadres in en klik <strong>"Resetlink versturen"</strong>.</li>
-                <li>Controleer je e-mail — ook je spammap.</li>
-                <li>Klik op de link in de mail.</li>
+                <li>Controleer je e-mail en klik op de link.</li>
                 <li>Vul je nieuwe wachtwoord in en klik <strong>"Wachtwoord opslaan"</strong>.</li>
             </ul>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
@@ -613,19 +431,15 @@
             <p>
                 Als <strong>Owner</strong> kun je anderen uitnodigen om mee te kijken of mee te werken
                 aan je stamboom. Uitgenodigde gebruikers krijgen een rol: <strong>Viewer</strong> of
-                <strong>Editor</strong>. Elke gebruiker met een account — ook een gratis Viewer-account —
-                kan worden uitgenodigd. De Owner maakt de samenwerking mogelijk.
+                <strong>Editor</strong>.
             </p>
 
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn als <strong>Owner</strong> of <strong>Admin</strong>.
-                De stamboom moet opgeslagen zijn in de cloud. Alleen de Owner kan anderen uitnodigen —
-                maximaal 5 uitgenodigden per stamboom.
+                <strong>Vereist:</strong> Ingelogd als <strong>Owner</strong> of <strong>Admin</strong>.
+                De stamboom moet opgeslagen zijn in de cloud.
             </div>
 
             <h3>Rollen overzicht</h3>
-            <p>Elk account heeft een rol die bepaalt wat er mogelijk is:</p>
-
             <table class="rol-tabel">
                 <thead>
                     <tr>
@@ -652,14 +466,14 @@
                         <td class="check-ja">✓ max 60</td>
                     </tr>
                     <tr>
-                        <td>Cloud stambomen aanmaken (max 3)</td>
+                        <td>Cloud stambomen aanmaken</td>
                         <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
                         <td class="check-nee">✗</td>
                         <td class="check-nee">✗</td>
                     </tr>
                     <tr>
-                        <td>Gedeelde stamboom bekijken</td>
+                        <td>Gedeelde stamboom laden</td>
                         <td class="check-ja">✓</td>
                         <td class="check-ja">✓</td>
                         <td class="check-ja">✓</td>
@@ -680,7 +494,7 @@
                         <td class="check-nee">✗</td>
                     </tr>
                     <tr>
-                        <td>Anderen uitnodigen (max 5)</td>
+                        <td>Anderen uitnodigen</td>
                         <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
                         <td class="check-nee">✗</td>
@@ -707,60 +521,32 @@
                         <td class="check-ja">✓</td>
                         <td class="check-nee">✗</td>
                     </tr>
-                    <tr>
-                        <td>Account vereist</td>
-                        <td class="check-ja">✓ betaald</td>
-                        <td class="check-ja">✓ gratis</td>
-                        <td class="check-ja">✓ gratis</td>
-                        <td class="check-nee">✗</td>
-                    </tr>
                 </tbody>
             </table>
 
             <h3>Iemand uitnodigen</h3>
             <ul class="stappen">
-                <li>Ga naar <strong>Opslag</strong> via de navigatie.</li>
-                <li>Klik op het tabblad <strong>"☁️ Cloud stambomen"</strong>.</li>
-                <li>Klik op <strong>"🔗 Delen"</strong> naast de stamboom die je wilt delen.</li>
-                <li>Een paneel opent zich onder de rij. Vul het e-mailadres in van de persoon die je wilt uitnodigen.</li>
-                <li>Kies een rol in de dropdown: <strong>👁 Viewer</strong> of <strong>✏️ Editor</strong>.</li>
+                <li>Ga naar <strong>Opslag → ☁️ Cloud stambomen</strong>.</li>
+                <li>Klik op <strong>"🔗 Delen"</strong> naast de stamboom.</li>
+                <li>Vul het e-mailadres in van de uitgenodigde.</li>
+                <li>Kies een rol: <strong>👁 Viewer</strong> of <strong>✏️ Editor</strong>.</li>
                 <li>Klik op <strong>"Uitnodigen"</strong>.</li>
-                <li>De uitgenodigde gebruiker verschijnt in de lijst onder het paneel.</li>
             </ul>
-
             <div class="tip">
-                <strong>Let op:</strong> De uitgenodigde gebruiker moet al een account hebben op MyFamTreeCollab.
-                Een gratis account (Viewer of Editor) is voldoende — de Owner maakt de samenwerking mogelijk.
+                <strong>Let op:</strong> De uitgenodigde gebruiker moet al een account hebben.
+                Een gratis account is voldoende.
             </div>
 
             <h3>Toegang intrekken</h3>
             <ul class="stappen">
-                <li>Open het deelpaneel via de <strong>"🔗 Delen"</strong> knop naast de stamboom.</li>
-                <li>Je ziet de lijst van huidige viewers en editors.</li>
-                <li>Klik op <strong>"Intrekken"</strong> naast de gewenste gebruiker.</li>
-                <li>Bevestig de melding. De gebruiker verliest direct zijn toegang.</li>
+                <li>Open het deelpaneel via <strong>"🔗 Delen"</strong>.</li>
+                <li>Klik op <strong>"Intrekken"</strong> naast de gebruiker.</li>
             </ul>
 
-            <h3>Gedeelde stambomen bekijken (als Viewer/Editor)</h3>
-            <p>
-                Stambomen die anderen met jou hebben gedeeld, vind je op een aparte plek in de Opslag-pagina.
-            </p>
+            <h3>Gedeelde stambomen bekijken (Viewer/Editor)</h3>
             <ul class="stappen">
-                <li>Ga naar <strong>Opslag</strong> via de navigatie.</li>
-                <li>Klik op het tabblad <strong>"🔗 Gedeeld met mij"</strong>.</li>
-                <li>Je ziet een lijst van stambomen met de naam van de eigenaar, jouw rol en de datum waarop de toegang verleend is.</li>
-                <li>Klik op <strong>"⬇️ Laden"</strong> om de stamboom te laden en te bekijken.</li>
-            </ul>
-
-            <h3>Samenwerking verlaten</h3>
-            <p>
-                Als Viewer of Editor kun je jezelf verwijderen uit een gedeelde stamboom. Je verliest
-                daarna de toegang en de stamboom verdwijnt uit je "Gedeeld met mij" lijst.
-            </p>
-            <ul class="stappen">
-                <li>Ga naar <strong>Opslag → Gedeeld met mij</strong>.</li>
-                <li>Klik op <strong>"🚪 Verlaten"</strong> naast de stamboom.</li>
-                <li>Bevestig de melding.</li>
+                <li>Ga naar <strong>Opslag → 🔗 Gedeeld met mij</strong>.</li>
+                <li>Klik op <strong>"⬇️ Laden"</strong> om de stamboom te laden.</li>
             </ul>
 
             <a href="#" class="terug-top">↑ Terug naar boven</a>
@@ -770,73 +556,88 @@
         <div class="sectie" id="collab">
             <h2>15. Berichtenboard (Samenwerken)</h2>
             <p>
-                Het berichtenboard laat iedereen met toegang tot een stamboom discussies voeren
-                over specifieke personen. Je kunt berichten plaatsen, wijzigingsvoorstellen doen
-                en de status van een discussie bijhouden.
+                Het berichtenboard toont alle stambomen waar je toegang toe hebt — eigen bomen
+                en bomen die met je zijn gedeeld. Per stamboom zie je discussies over specifieke
+                personen, geordend per persoon-ID.
             </p>
 
             <div class="tip">
-                <strong>Vereist:</strong> Je moet ingelogd zijn als <strong>Viewer</strong>, <strong>Editor</strong>,
-                <strong>Owner</strong> of <strong>Admin</strong> en toegang hebben tot de actieve stamboom.
-                Gasten (zonder account) hebben geen toegang tot het berichtenboard.
+                <strong>Vereist:</strong> Ingelogd als <strong>Viewer</strong>, <strong>Editor</strong>,
+                <strong>Owner</strong> of <strong>Admin</strong> met toegang tot minimaal één stamboom.
             </div>
 
             <h3>Berichtenboard openen</h3>
             <ul class="stappen">
-                <li>Laad eerst de stamboom via <strong>Opslag → Gedeeld met mij</strong> of je eigen cloud stambomen.</li>
-                <li>Klik op <strong>Samenwerken</strong> in de navigatie.</li>
-                <li>Het berichtenboard laadt de bestaande discussies voor de actieve stamboom.</li>
+                <li>Klik op <strong>💬 Samenwerken</strong> in de navigatie of in het gebruikersmenu.</li>
+                <li>Alle stambomen waar je toegang toe hebt worden geladen, elk in een eigen sectie.</li>
             </ul>
+
+            <h3>Actieve vs. lees-only stambomen</h3>
+            <p>
+                De pagina toont twee soorten stambomen:
+            </p>
+            <ul>
+                <li><strong>✓ Actief</strong> (blauwe accentlijn) — de stamboom die je hebt geladen via Opslag. Hier kun je discussies starten en berichten plaatsen.</li>
+                <li><strong>Alleen lezen</strong> — andere stambomen. Je kunt de berichten lezen maar niet reageren. Klik op de link in de gele banner om die stamboom te activeren.</li>
+            </ul>
+            <div class="tip">
+                <strong>Tip:</strong> Laad de gewenste stamboom via <strong>Opslag</strong> om hem
+                actief te maken en te kunnen reageren.
+            </div>
+
+            <h3>Ledenlijst</h3>
+            <p>
+                Onder elke stamboom-header zie je een ledenlijst met alle gebruikers die toegang
+                hebben: de owner en alle uitgenodigde editors en viewers.
+            </p>
 
             <h3>Discussie starten over een persoon</h3>
             <ul class="stappen">
-                <li>Typ een naam of ID in de zoekbalk bovenaan het berichtenboard.</li>
-                <li>Een dropdown verschijnt met overeenkomende personen uit de stamboom.</li>
-                <li>Klik op de gewenste persoon — een modal verschijnt met het persoon-ID en de naam.</li>
-                <li>Klik op <strong>"Discussie aanmaken"</strong>.</li>
-                <li>Een nieuw discussieblok verschijnt onderaan de pagina.</li>
+                <li>Typ een naam of ID in de zoekbalk van de <strong>actieve</strong> stamboom.</li>
+                <li>Klik op de gewenste persoon in de dropdown.</li>
+                <li>Bevestig in de modal — een nieuw discussieblok verschijnt.</li>
             </ul>
 
             <h3>Bericht plaatsen</h3>
             <ul class="stappen">
-                <li>Open het discussieblok van de persoon door erop te klikken.</li>
-                <li>Typ je bericht in het tekstveld onderaan het blok.</li>
+                <li>Open een discussieblok door op de header te klikken.</li>
+                <li>Typ je bericht in het tekstveld onderaan.</li>
                 <li>Klik op <strong>"Versturen"</strong>.</li>
-                <li>Je bericht verschijnt direct in de lijst, gemarkeerd met je naam en rol.</li>
+                <li>Je bericht verschijnt met je voornaam, rol en tijdstip.</li>
             </ul>
+
+            <h3>Discussiestatus</h3>
+            <p>Elke discussie heeft een status. Editors en Owners kunnen de status wijzigen bij het verzenden van een bericht:</p>
+            <table class="status-tabel">
+                <thead>
+                    <tr><th>Status</th><th>Betekenis</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>🆕 Nieuw</td><td>Nog niet opgepakt</td></tr>
+                    <tr><td>🔓 Open</td><td>Actief en openstaand</td></tr>
+                    <tr><td>🔄 In behandeling</td><td>Iemand is ermee bezig</td></tr>
+                    <tr><td>✅ Gesloten</td><td>Afgehandeld</td></tr>
+                </tbody>
+            </table>
 
             <h3>Wijzigingsvoorstel plaatsen (Editor/Owner)</h3>
-            <p>
-                Als Editor of Owner kun je bij een bericht een concreet wijzigingsvoorstel toevoegen.
-                Dit is bedoeld om voorgestelde correcties duidelijk te communiceren.
-            </p>
             <ul class="stappen">
                 <li>Klik op <strong>"📝 Wijziging voorstellen"</strong> in het berichtformulier.</li>
-                <li>Beschrijf de voorgestelde wijziging in het gele tekstveld dat verschijnt.</li>
-                <li>Verzend het bericht — het voorstel wordt als apart geel blok getoond onder de berichttekst.</li>
-            </ul>
-
-            <h3>Discussiestatus wijzigen (Editor/Owner)</h3>
-            <p>
-                De status van een discussie geeft aan hoe ver de behandeling is gevorderd.
-                Bij elk bericht kun je de status aanpassen via de dropdown in het formulier.
-            </p>
-            <ul>
-                <li><strong>🟡 Open</strong> — discussie is actief en nog niet behandeld</li>
-                <li><strong>🔵 In review</strong> — iemand bekijkt of werkt aan de kwestie</li>
-                <li><strong>🟢 Opgelost</strong> — de kwestie is afgehandeld</li>
+                <li>Beschrijf de voorgestelde wijziging in het gele tekstveld.</li>
+                <li>Verzend het bericht — het voorstel wordt als apart geel blok getoond.</li>
             </ul>
 
             <h3>Bericht verwijderen</h3>
             <p>
-                Owners kunnen elk bericht verwijderen via de <strong>✕</strong> knop rechtsboven in het bericht.
+                Owners kunnen elk bericht verwijderen via <strong>✕</strong>.
                 Viewers en Editors kunnen alleen hun eigen berichten verwijderen.
             </p>
 
-            <h3>Discussieblok in- en uitklappen</h3>
+            <h3>Notificatie-badge</h3>
             <p>
-                Klik op de header van een discussieblok om het in of uit te klappen.
-                De status-badge in de header toont altijd de huidige status van de discussie.
+                Als iemand anders een bericht plaatst in een stamboom waar jij toegang toe hebt,
+                verschijnt een rood getal naast je gebruikersnaam bovenaan de pagina.
+                Het getal verdwijnt zodra je de Samenwerken-pagina bezoekt.
             </p>
 
             <a href="#" class="terug-top">↑ Terug naar boven</a>
@@ -847,8 +648,7 @@
             <h2>16. Steun dit project</h2>
             <p>
                 MyFamTreeCollab is gratis te gebruiken. Als je de app waardevol vindt,
-                kun je de ontwikkeling steunen via Ko-fi. Elk ☕ kopje koffie helpt om
-                de app verder te verbeteren.
+                kun je de ontwikkeling steunen via Ko-fi.
             </p>
             <a href="https://ko-fi.com/vorilo"
                target="_blank"
