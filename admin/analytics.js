@@ -1,373 +1,375 @@
 /**
  * =============================================================================
- * analytics.js — MyFamTreeCollab Internal Analytics Module
+ * analytics-dashboard.js — MyFamTreeCollab Analytics Dashboard Controller
  * =============================================================================
  * Version    : 1.0.0
  * Author     : MyFamTreeCollab Dev
- * Description: Privacy-first, local-only analytics module.
- *              Tracks sessions, page views and user events.
- *              No external calls, no cookies, no IP tracking.
- *              Designed for future Supabase cloud sync.
- * Storage    : localStorage key "ft_analytics"
- * Global     : window.Analytics
- * Load order : utils.js → schema.js → storage.js → analytics.js → [page].js
+ * Description: Leest data via window.Analytics.getStats() en rendert
+ *              alle dashboard UI-elementen dynamisch in analytics.html.
+ *              Geen externe dependencies. Volledig vanilla JS.
+ * Vereist    : analytics.js geladen vóór dit script
+ * Pagina     : admin/analytics.html
  * =============================================================================
  */
 
-// ======================= IIFE WRAPPER =======================
-// Wrap everything in an Immediately Invoked Function Expression
-// to avoid polluting the global scope beyond window.Analytics
-(function () {
+// ======================= GUARD: ANALYTICS BESCHIKBAAR? =======================
 
-  "use strict"; // Enable strict mode for safer JS execution
+// Controleer of de Analytics module correct geladen is
+if (typeof window.Analytics === "undefined") {
+    // Analytics niet beschikbaar — log waarschuwing en stop
+    console.error("[Dashboard] window.Analytics niet gevonden. Is analytics.js geladen?");
+}
 
-  // ======================= CONSTANTS =======================
+// ======================= HELPER FUNCTIES =======================
 
-  const STORAGE_KEY = "ft_analytics";       // localStorage key for all analytics data
-  const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes inactivity = new session
-  const MAX_EVENTS = 2000;                  // Max events stored before pruning oldest
-  const MAX_SESSIONS = 200;                 // Max sessions stored before pruning oldest
-  const MODULE_VERSION = "1.0.0";           // Module version for future migration checks
+/**
+ * formatDuration(seconds)
+ * Zet seconden om naar leesbare string: "Xm Ys"
+ * @param {number} seconds - duur in seconden
+ * @returns {string} opgemaakte duur
+ */
+function formatDuration(seconds) {
+    if (!seconds || seconds <= 0) return "0s";             // Niets of negatief
+    const m = Math.floor(seconds / 60);                    // Volle minuten
+    const s = seconds % 60;                                // Resterende seconden
+    return m > 0 ? m + "m " + s + "s" : s + "s";          // Formaat: "2m 14s" of "45s"
+}
 
-  // ======================= ID GENERATORS =======================
+/**
+ * formatTimestamp(ms)
+ * Zet een Unix milliseconde timestamp om naar leesbare datum+tijd string.
+ * @param {number} ms - timestamp in milliseconden
+ * @returns {string} bv. "29/04/2026 14:32"
+ */
+function formatTimestamp(ms) {
+    if (!ms) return "—";                                   // Geen waarde → streepje
+    const d = new Date(ms);                                // Maak Date object
+    const date = d.toLocaleDateString("nl-BE");            // Datum in Belgisch formaat
+    const time = d.toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit" }); // HH:MM
+    return date + " " + time;                              // Combineer datum + tijd
+}
 
-  /**
-   * generateId(prefix)
-   * Generates a short pseudo-unique ID string.
-   * Format: "{prefix}_{timestamp}_{random}"
-   * @param {string} prefix - e.g. "sess" or "evt"
-   * @returns {string} unique ID
-   */
-  function generateId(prefix) {
-    const timestamp = Date.now().toString(36);         // Base-36 timestamp (compact)
-    const random = Math.random().toString(36).slice(2, 7); // 5 random base-36 chars
-    return prefix + "_" + timestamp + "_" + random;   // Combine into readable ID
-  }
+/**
+ * el(id)
+ * Korte wrapper voor document.getElementById — bespaart herhaling.
+ * @param {string} id - element ID
+ * @returns {HTMLElement|null}
+ */
+function el(id) {
+    return document.getElementById(id);                    // Geef element terug
+}
 
-  // ======================= DEVICE DETECTION =======================
+/**
+ * escHtml(str)
+ * Escaped een string voor veilig gebruik in innerHTML.
+ * Voorkomt XSS als event-namen of meta-data vreemde tekens bevatten.
+ * @param {string} str
+ * @returns {string} escaped string
+ */
+function escHtml(str) {
+    return String(str)                                     // Zeker een string
+        .replace(/&/g, "&amp;")                            // Ampersand escapen
+        .replace(/</g, "&lt;")                             // Kleiner-dan escapen
+        .replace(/>/g, "&gt;")                             // Groter-dan escapen
+        .replace(/"/g, "&quot;");                          // Aanhalingstekens escapen
+}
 
-  /**
-   * detectDevice()
-   * Detects device type based on screen width and user agent.
-   * Returns one of: "mobile", "tablet", "desktop"
-   * No external API — fully local check.
-   * @returns {string} device type
-   */
-  function detectDevice() {
-    const ua = navigator.userAgent.toLowerCase();      // Get user agent string
-    const width = window.innerWidth;                   // Get current viewport width
+// ======================= STAT KAARTEN RENDEREN =======================
 
-    // Check for mobile keywords in user agent
-    if (/mobile|android|iphone|ipod|blackberry|windows phone/.test(ua)) {
-      return "mobile"; // Definitely a phone
-    }
+/**
+ * renderStatCards(stats)
+ * Bouwt de vier bovenste statistiekenkaarten op basis van Analytics.getStats().
+ * @param {Object} stats - resultaat van Analytics.getStats()
+ */
+function renderStatCards(stats) {
+    const grid = el("stat-grid");                          // Grid container ophalen
+    if (!grid) return;                                     // Veiligheidscheck
 
-    // Check for tablet keywords or intermediate screen width
-    if (/ipad|tablet/.test(ua) || (width >= 600 && width < 1024)) {
-      return "tablet"; // Tablet-sized device
-    }
-
-    return "desktop"; // Default: desktop/laptop
-  }
-
-  // ======================= STORAGE HELPERS =======================
-
-  /**
-   * loadStore()
-   * Reads and parses the analytics data from localStorage.
-   * Returns a default empty store if nothing is saved yet.
-   * @returns {Object} analytics store { version, sessions, events }
-   */
-  function loadStore() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY); // Read raw JSON string
-      if (!raw) return createEmptyStore();            // Nothing saved yet
-      return JSON.parse(raw);                         // Parse and return
-    } catch (e) {
-      // JSON parse failed (corrupted data) — reset to empty store
-      console.warn("[Analytics] Failed to parse store, resetting.", e);
-      return createEmptyStore();                      // Safe fallback
-    }
-  }
-
-  /**
-   * saveStore(store)
-   * Serializes and writes the analytics store to localStorage.
-   * Silently fails if storage is full or unavailable.
-   * @param {Object} store - the full analytics store to save
-   */
-  function saveStore(store) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); // Serialize and write
-    } catch (e) {
-      // Storage quota exceeded or unavailable — log and continue
-      console.warn("[Analytics] Could not save store:", e);
-    }
-  }
-
-  /**
-   * createEmptyStore()
-   * Returns a fresh, empty analytics data structure.
-   * @returns {Object} empty store
-   */
-  function createEmptyStore() {
-    return {
-      version: MODULE_VERSION, // Track module version for future migrations
-      sessions: [],            // Array of session objects
-      events: []               // Array of event objects
-    };
-  }
-
-  // ======================= PRUNING =======================
-
-  /**
-   * pruneStore(store)
-   * Removes oldest sessions and events if limits are exceeded.
-   * Keeps data manageable in localStorage.
-   * @param {Object} store - the analytics store to prune in-place
-   */
-  function pruneStore(store) {
-    // If sessions exceed max, remove the oldest ones (from the front)
-    if (store.sessions.length > MAX_SESSIONS) {
-      store.sessions = store.sessions.slice(-MAX_SESSIONS); // Keep newest
-    }
-
-    // If events exceed max, remove the oldest ones (from the front)
-    if (store.events.length > MAX_EVENTS) {
-      store.events = store.events.slice(-MAX_EVENTS); // Keep newest
-    }
-  }
-
-  // ======================= SESSION MANAGEMENT =======================
-
-  let _currentSession = null; // In-memory reference to the active session object
-
-  /**
-   * startSession()
-   * Creates and stores a new session.
-   * Called once on page load.
-   */
-  function startSession() {
-    const store = loadStore();                   // Load existing data
-
-    _currentSession = {
-      id: generateId("sess"),                   // Unique session ID
-      start: Date.now(),                        // Session start timestamp (ms)
-      end: null,                                // Will be set on page unload
-      pages: [],                                // List of page names visited
-      device: detectDevice()                    // Device type at session start
-    };
-
-    store.sessions.push(_currentSession);       // Add to store
-    pruneStore(store);                          // Remove excess old data
-    saveStore(store);                           // Persist immediately
-  }
-
-  /**
-   * endSession()
-   * Marks the current session as ended.
-   * Triggered by beforeunload / visibilitychange events.
-   */
-  function endSession() {
-    if (!_currentSession) return;               // No active session — nothing to do
-
-    const store = loadStore();                  // Load current store
-
-    // Find the session in the store by ID and update its end time
-    const sessionInStore = store.sessions.find(s => s.id === _currentSession.id);
-    if (sessionInStore) {
-      sessionInStore.end = Date.now();          // Mark end timestamp
-      sessionInStore.pages = _currentSession.pages; // Sync visited pages list
-    }
-
-    saveStore(store);                           // Persist updated session
-    _currentSession = null;                     // Clear in-memory reference
-  }
-
-  // ======================= PAGE TRACKING =======================
-
-  /**
-   * trackPage(pageName)
-   * Records a page view within the current session.
-   * Call manually at the top of each page's JS file.
-   * Example: Analytics.trackPage("create");
-   * @param {string} pageName - human-readable page identifier
-   */
-  function trackPage(pageName) {
-    if (!pageName || typeof pageName !== "string") return; // Validate input
-
-    if (_currentSession) {
-      _currentSession.pages.push({              // Add page visit to session
-        name: pageName,                         // Page identifier
-        timestamp: Date.now()                   // When the page was visited
-      });
-    }
-
-    // Also track as an event for granular reporting
-    trackEvent("page_view", { page: pageName }); // Unified event stream
-  }
-
-  // ======================= EVENT TRACKING =======================
-
-  /**
-   * trackEvent(type, meta)
-   * Records a named event with optional metadata.
-   * The primary data collection method — call throughout the app.
-   * Example: Analytics.trackEvent("add_person", { success: true });
-   * @param {string} type - event name (snake_case recommended)
-   * @param {Object} [meta={}] - optional key/value metadata
-   */
-  function trackEvent(type, meta) {
-    if (!type || typeof type !== "string") return; // Validate event type
-
-    const store = loadStore();                  // Load current store
-
-    const event = {
-      id: generateId("evt"),                   // Unique event ID
-      sessionId: _currentSession               // Link to current session
-        ? _currentSession.id
-        : null,                                // null if called outside session
-      type: type,                              // Event name/type
-      timestamp: Date.now(),                   // When the event occurred (ms)
-      meta: meta || {}                         // Metadata payload (default empty)
-    };
-
-    store.events.push(event);                  // Add to events array
-    pruneStore(store);                         // Enforce size limits
-    saveStore(store);                          // Persist to localStorage
-  }
-
-  // ======================= STATS HELPER =======================
-
-  /**
-   * getStats()
-   * Returns a summary of all tracked analytics data.
-   * Useful for a future analytics dashboard page.
-   * @returns {Object} stats summary
-   */
-  function getStats() {
-    const store = loadStore();                 // Load all stored data
-
-    const totalSessions = store.sessions.length; // Count all sessions
-
-    // Calculate average session duration (only for completed sessions)
-    const completedSessions = store.sessions.filter(s => s.end !== null); // Has end time
-    const avgDurationMs = completedSessions.length > 0
-      ? completedSessions.reduce((sum, s) => sum + (s.end - s.start), 0) // Sum durations
-        / completedSessions.length                                         // Divide by count
-      : 0;                                     // No completed sessions yet
-
-    // Count events per type using a frequency map
-    const eventCounts = {};                    // { event_type: count }
-    store.events.forEach(function (evt) {
-      if (!eventCounts[evt.type]) {
-        eventCounts[evt.type] = 0;            // Initialize counter
-      }
-      eventCounts[evt.type]++;               // Increment
-    });
-
-    // Count unique pages visited across all sessions
-    const allPages = {};                       // { page_name: visit_count }
-    store.sessions.forEach(function (sess) {
-      (sess.pages || []).forEach(function (p) { // Safely iterate pages
-        if (!allPages[p.name]) {
-          allPages[p.name] = 0;              // Initialize
+    // Definieer de vier kaarten: label, waarde, eenheid
+    const cards = [
+        {
+            label: "Sessies",                              // Kaarttitel
+            value: stats.totalSessions,                   // Statistische waarde
+            unit:  ""                                      // Geen eenheid
+        },
+        {
+            label: "Events",
+            value: stats.totalEvents,
+            unit:  ""
+        },
+        {
+            label: "Gem. sessieduur",
+            value: formatDuration(stats.avgSessionDurationSeconds), // Opgemaakte duur
+            unit:  ""
+        },
+        {
+            label: "Voltooide sessies",
+            value: stats.completedSessions,
+            unit:  ""
         }
-        allPages[p.name]++;                  // Increment
-      });
-    });
+    ];
 
-    return {
-      totalSessions: totalSessions,           // Total number of sessions
-      totalEvents: store.events.length,       // Total number of tracked events
-      completedSessions: completedSessions.length, // Sessions with an end time
-      avgSessionDurationSeconds: Math.round(avgDurationMs / 1000), // In seconds
-      eventCounts: eventCounts,               // Per-type event frequency map
-      pagesVisited: allPages,                 // Per-page visit count
-      deviceBreakdown: getDeviceBreakdown(store.sessions) // Device type distribution
-    };
-  }
+    // Bouw HTML voor alle kaarten tegelijk
+    grid.innerHTML = cards.map(function(card) {
+        return (
+            '<div class="stat-card">' +                    // Kaart container
+            '  <div class="label">' + escHtml(card.label) + '</div>' + // Label bovenaan
+            '  <div class="value">' + escHtml(String(card.value)) +    // Grote waarde
+            '    <span class="unit">' + escHtml(card.unit) + '</span>' + // Eenheid
+            '  </div>' +
+            '</div>'
+        );
+    }).join("");                                           // Array samenvoegen tot één HTML-string
+}
 
-  /**
-   * getDeviceBreakdown(sessions)
-   * Counts how many sessions came from each device type.
-   * @param {Array} sessions - array of session objects
-   * @returns {Object} { desktop: N, mobile: N, tablet: N }
-   */
-  function getDeviceBreakdown(sessions) {
-    const breakdown = { desktop: 0, mobile: 0, tablet: 0 }; // Initialize counts
+// ======================= EVENTS BALKGRAFIEK RENDEREN =======================
 
-    sessions.forEach(function (sess) {
-      const device = sess.device || "desktop"; // Default to desktop if missing
-      if (breakdown.hasOwnProperty(device)) {
-        breakdown[device]++;                   // Increment matching device type
-      }
-    });
+/**
+ * renderEventsChart(eventCounts)
+ * Rendert een horizontale balkgrafiek van events per type.
+ * Sorteert van meest naar minst voorkomend.
+ * @param {Object} eventCounts - { event_type: count }
+ */
+function renderEventsChart(eventCounts) {
+    const container = el("events-chart");                  // Container ophalen
+    if (!container) return;                                // Veiligheidscheck
 
-    return breakdown;                          // Return frequency map
-  }
+    const entries = Object.entries(eventCounts);           // Zet object om naar [[type, count], ...]
 
-  // ======================= EXPORT HELPER =======================
-
-  /**
-   * exportData()
-   * Returns a full copy of the analytics store as a plain object.
-   * For future use: export to JSON file or sync to Supabase.
-   * @returns {Object} full analytics store
-   */
-  function exportData() {
-    return loadStore();                        // Return parsed store copy
-  }
-
-  /**
-   * clearData()
-   * Wipes all analytics data from localStorage.
-   * Use with care — irreversible.
-   */
-  function clearData() {
-    localStorage.removeItem(STORAGE_KEY);     // Delete the analytics key
-    _currentSession = null;                   // Clear in-memory session
-    console.info("[Analytics] All analytics data cleared."); // Confirm in console
-  }
-
-  // ======================= LIFECYCLE EVENT LISTENERS =======================
-
-  // Listen for page unload to close the current session cleanly
-  window.addEventListener("beforeunload", function () {
-    endSession();                              // Mark session end on tab close / navigation
-  });
-
-  // Also handle tab switching to background (mobile / PWA scenarios)
-  document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "hidden") {
-      endSession();                            // Tab went to background — end session
-    } else if (document.visibilityState === "visible" && !_currentSession) {
-      startSession();                          // Tab came back to foreground — new session
+    if (entries.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Nog geen events geregistreerd.</p>';
+        return;                                            // Vroegtijdig stoppen bij lege data
     }
-  });
 
-  // ======================= MODULE INIT =======================
+    // Sorteer aflopend op count (meest voorkomend bovenaan)
+    entries.sort(function(a, b) { return b[1] - a[1]; }); // b[1] = count van b
 
-  // Start a session immediately when the script loads
-  startSession();
+    const max = entries[0][1];                             // Hoogste count = 100% breedte referentie
 
-  // ======================= PUBLIC API =======================
+    // Bouw HTML voor alle rijen
+    container.innerHTML = entries.map(function(entry) {
+        const type  = entry[0];                            // Event naam
+        const count = entry[1];                            // Event teller
+        const pct   = max > 0 ? (count / max) * 100 : 0; // Percentage t.o.v. maximum
 
-  /**
-   * window.Analytics
-   * Public interface — the only global this module exposes.
-   * All other functions are private (inside IIFE scope).
-   */
-  window.Analytics = {
-    trackEvent: trackEvent,   // Track a named event with optional metadata
-    trackPage: trackPage,     // Track a page view (call manually per page)
-    getStats: getStats,       // Get aggregated analytics summary
-    exportData: exportData,   // Get raw store copy (for export / sync)
-    clearData: clearData      // Wipe all analytics data from localStorage
+        return (
+            '<div class="event-row">' +
+            '  <span class="event-label">' + escHtml(type) + '</span>' + // Event naam
+            '  <div class="event-bar-wrap">' +
+            '    <div class="event-bar" data-pct="' + pct + '"></div>' + // Balk — breedte via JS
+            '  </div>' +
+            '  <span class="event-count">' + escHtml(String(count)) + '</span>' + // Getal rechts
+            '</div>'
+        );
+    }).join("");
 
-    // ─── Future Supabase sync hooks (not yet implemented) ─────────────────
-    // syncToCloud: syncToCloud,  // Push local data to Supabase
-    // pullFromCloud: pullFromCloud // Merge cloud data into local store
-  };
+    // Zet balken op correcte breedte NADAT DOM gerenderd is (voor animatie)
+    requestAnimationFrame(function() {
+        container.querySelectorAll(".event-bar").forEach(function(bar) {
+            bar.style.width = bar.dataset.pct + "%";       // Pas breedte toe — triggert CSS transitie
+        });
+    });
+}
 
-})(); // End IIFE — module is self-contained
+// ======================= PAGINA BEZOEKEN RENDEREN =======================
+
+/**
+ * renderPagesChart(pagesVisited)
+ * Rendert balkgrafiek van pagina bezoeken — zelfde opzet als events.
+ * @param {Object} pagesVisited - { page_name: visit_count }
+ */
+function renderPagesChart(pagesVisited) {
+    const container = el("pages-chart");                   // Container ophalen
+    if (!container) return;                                // Veiligheidscheck
+
+    // Verwijder page_view events die al in events chart staan — toon alleen echte pagina namen
+    const entries = Object.entries(pagesVisited)
+        .filter(function(e) { return e[0] !== "page_view"; }) // Verberg interne page_view entries
+        .sort(function(a, b) { return b[1] - a[1]; });        // Sorteren aflopend
+
+    if (entries.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Nog geen pagina bezoeken.</p>';
+        return;
+    }
+
+    const max = entries[0][1];                             // Hoogste bezoekcount
+
+    container.innerHTML = entries.map(function(entry) {
+        const page  = entry[0];                            // Paginanaam
+        const count = entry[1];                            // Bezoekteller
+        const pct   = max > 0 ? (count / max) * 100 : 0; // Percentage
+
+        return (
+            '<div class="event-row">' +
+            '  <span class="event-label">' + escHtml(page) + '</span>' +
+            '  <div class="event-bar-wrap">' +
+            '    <div class="event-bar" data-pct="' + pct + '"></div>' +
+            '  </div>' +
+            '  <span class="event-count">' + escHtml(String(count)) + '</span>' +
+            '</div>'
+        );
+    }).join("");
+
+    // Animeer balken na DOM render
+    requestAnimationFrame(function() {
+        container.querySelectorAll(".event-bar").forEach(function(bar) {
+            bar.style.width = bar.dataset.pct + "%";       // Breedte instellen
+        });
+    });
+}
+
+// ======================= DEVICE BREAKDOWN RENDEREN =======================
+
+/**
+ * renderDeviceGrid(deviceBreakdown)
+ * Rendert pills voor desktop / mobile / tablet sessieaantallen.
+ * @param {Object} deviceBreakdown - { desktop: N, mobile: N, tablet: N }
+ */
+function renderDeviceGrid(deviceBreakdown) {
+    const container = el("device-grid");                   // Container ophalen
+    if (!container) return;                                // Veiligheidscheck
+
+    // Iconen per device type
+    const icons = {
+        desktop: "🖥️",                                    // Desktop icoon
+        mobile:  "📱",                                    // Mobiel icoon
+        tablet:  "📋"                                     // Tablet icoon
+    };
+
+    // Bouw een pill per device type
+    container.innerHTML = Object.entries(deviceBreakdown).map(function(entry) {
+        const device = entry[0];                           // Device naam
+        const count  = entry[1];                           // Sessieaantal
+        const icon   = icons[device] || "💻";             // Fallback icoon
+
+        return (
+            '<div class="device-pill">' +
+            '  ' + icon +                                  // Icoon
+            '  <span>' + escHtml(device) + '</span>' +    // Device naam
+            '  <strong>' + escHtml(String(count)) + '</strong>' + // Aantal
+            '</div>'
+        );
+    }).join("");
+}
+
+// ======================= RECENTE SESSIES TABEL RENDEREN =======================
+
+/**
+ * renderSessionsTable(stats)
+ * Toont de 10 meest recente sessies in een HTML-tabel.
+ * Haalt ruwe sessie data op via Analytics.exportData().
+ * @param {Object} stats - (niet direct gebruikt, maar meegestuurd voor consistentie)
+ */
+function renderSessionsTable() {
+    const container = el("sessions-table");                // Container ophalen
+    if (!container) return;                                // Veiligheidscheck
+
+    const store = window.Analytics.exportData();           // Ruwe localStorage data ophalen
+    const sessions = (store.sessions || [])
+        .slice()                                           // Kopie maken — origineel niet aanpassen
+        .reverse()                                         // Meest recente eerst
+        .slice(0, 10);                                     // Maximaal 10 rijen tonen
+
+    if (sessions.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Nog geen sessies geregistreerd.</p>';
+        return;
+    }
+
+    // Tabel header
+    let html = (
+        '<table>' +
+        '<thead><tr>' +
+        '  <th>ID</th>' +                                  // Sessie-ID
+        '  <th>Start</th>' +                               // Starttijd
+        '  <th>Einde</th>' +                               // Eindtijd
+        '  <th>Duur</th>' +                                // Berekende duur
+        '  <th>Pagina\'s</th>' +                           // Aantal bezochte pagina's
+        '  <th>Device</th>' +                              // Device type
+        '</tr></thead><tbody>'
+    );
+
+    // Tabel rijen
+    sessions.forEach(function(sess) {
+        const duur = sess.end && sess.start              // Duur berekenen als beide aanwezig
+            ? formatDuration(Math.round((sess.end - sess.start) / 1000)) // In seconden
+            : "Actief";                                    // Sessie nog niet afgesloten
+
+        const aantalPaginas = Array.isArray(sess.pages)   // Controleer of pages array is
+            ? sess.pages.length                            // Gebruik lengte
+            : 0;                                           // Fallback: 0
+
+        html += (
+            '<tr>' +
+            '  <td style="color:var(--text-muted);font-size:0.68rem;">' + escHtml(sess.id) + '</td>' + // Sessie ID gedimed
+            '  <td>' + formatTimestamp(sess.start) + '</td>' +             // Starttijd opgemaakt
+            '  <td>' + (sess.end ? formatTimestamp(sess.end) : '<em style="color:var(--accent)">actief</em>') + '</td>' + // Einde of "actief"
+            '  <td>' + escHtml(duur) + '</td>' +                           // Duur
+            '  <td>' + escHtml(String(aantalPaginas)) + '</td>' +          // Aantal pagina's
+            '  <td><span class="badge">' + escHtml(sess.device || "?") + '</span></td>' + // Device badge
+            '</tr>'
+        );
+    });
+
+    html += '</tbody></table>';                            // Tabel afsluiten
+    container.innerHTML = html;                            // Injecteren in DOM
+}
+
+// ======================= TIMESTAMP FOOTER =======================
+
+/**
+ * renderFooter()
+ * Toont het tijdstip van de laatste data refresh onderaan het dashboard.
+ */
+function renderFooter() {
+    const footer = el("dash-footer");                      // Footer element ophalen
+    if (!footer) return;                                   // Veiligheidscheck
+    footer.textContent = "Laatste update: " + formatTimestamp(Date.now()); // Huidige tijd tonen
+}
+
+// ======================= HOOFD RENDER FUNCTIE =======================
+
+/**
+ * renderDashboard()
+ * Laadt alle statistieken en rendert alle dashboard-secties opnieuw.
+ * Wordt opgeroepen bij paginalaad én bij klik op "Vernieuwen".
+ */
+function renderDashboard() {
+    if (typeof window.Analytics === "undefined") return;   // Analytics niet geladen — stop
+
+    const stats = window.Analytics.getStats();             // Alle statistieken ophalen
+
+    renderStatCards(stats);                                // Bovenste kaarten renderen
+    renderEventsChart(stats.eventCounts);                  // Events balkgrafiek renderen
+    renderPagesChart(stats.pagesVisited);                  // Pagina bezoeken renderen
+    renderDeviceGrid(stats.deviceBreakdown);               // Device pills renderen
+    renderSessionsTable();                                 // Sessies tabel renderen
+    renderFooter();                                        // Timestamp onderaan renderen
+}
+
+// ======================= EVENT LISTENERS =======================
+
+// Vernieuwen-knop: herlaad statistieken zonder pagina refresh
+document.getElementById("btn-refresh").addEventListener("click", function() {
+    renderDashboard();                                     // Herrender alle secties
+});
+
+// Wis-knop: verwijder alle analytics data na bevestiging
+document.getElementById("btn-clear").addEventListener("click", function() {
+    // Bevestigingsdialoog — gebruiker moet expliciet akkoord gaan
+    if (!confirm("Alle analytics data definitief wissen? Dit kan niet ongedaan gemaakt worden.")) {
+        return;                                            // Geannuleerd — niets doen
+    }
+    window.Analytics.clearData();                          // Wis data via Analytics API
+    renderDashboard();                                     // Herrender (toont lege staat)
+});
+
+// ======================= PAGINA TRACKING =======================
+
+// Registreer dit als een analytics pagina-bezoek
+window.Analytics.trackPage("analytics-dashboard");        // Zelfregistratie voor consistentie
+
+// ======================= INITIALISATIE =======================
+
+// Render het dashboard zodra dit script geladen is
+// Alle HTML-placeholders zijn al aanwezig in analytics.html
+renderDashboard();
