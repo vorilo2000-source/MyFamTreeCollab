@@ -1,0 +1,90 @@
+<!--
+  =============================================================================
+  VOORBEELD INTEGRATIE — analytics.js in MyFamTreeCollab
+  =============================================================================
+  Kopieren / aanpassen per pagina. Zie ook: Handleiding.html
+  =============================================================================
+-->
+
+<!-- 1. LAADVOLGORDE in <head> of voor </body> -->
+<script src="js/utils.js"></script>
+<script src="js/schema.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/analytics.js"></script>   <!-- ← Analytics VOOR pagina-scripts -->
+<script src="js/LiveSearch.js"></script>
+<script src="js/relatieEngine.js"></script>
+<script src="js/create.js"></script>      <!-- ← Pagina-specifiek script (voorbeeld) -->
+
+
+<!-- 2. PAGINANAAM REGISTREREN (bovenaan elke pagina's JS-bestand) -->
+<script>
+  // Track welke pagina de gebruiker bezoekt
+  Analytics.trackPage("create"); // Verander "create" per pagina: "index", "detail", etc.
+</script>
+
+
+<!-- 3. EVENTS TRACKEN (voorbeelden) -->
+<script>
+
+  // ── Voorbeeld A: persoon toegevoegd ──────────────────────────────────────
+  function handleAddPerson(person) {
+    const success = Storage.savePerson(person); // Jouw bestaande opslag-functie
+
+    // Track het resultaat als event
+    Analytics.trackEvent("add_person", {
+      success: success,            // Was de opslag succesvol?
+      hasPhoto: !!person.photo,    // Heeft de persoon een foto?
+      gender: person.gender        // Optionele metadata
+    });
+  }
+
+  // ── Voorbeeld B: CSV export ───────────────────────────────────────────────
+  function handleExportCSV() {
+    const data = Storage.getAllPersons(); // Haal data op
+
+    // Track vóór de export (zodat ook mislukte exports getrackt worden)
+    Analytics.trackEvent("export_csv", {
+      personCount: data.length     // Hoeveel personen geëxporteerd?
+    });
+
+    exportToCSV(data);             // Jouw bestaande export-functie
+  }
+
+  // ── Voorbeeld C: zoekfunctie gebruikt ────────────────────────────────────
+  function handleSearch(query) {
+    Analytics.trackEvent("search_used", {
+      queryLength: query.length,   // Lengte van de zoekterm (GEEN inhoud — privacy!)
+      timestamp: Date.now()        // Extra tijdstempel
+    });
+
+    return LiveSearch.search(query); // Jouw bestaande zoekfunctie
+  }
+
+  // ── Voorbeeld D: statistieken ophalen (voor toekomstig dashboard) ─────────
+  function showAnalyticsDashboard() {
+    const stats = Analytics.getStats();
+    console.table(stats.eventCounts);       // Toon events per type in console
+    console.log("Sessies:", stats.totalSessions);
+    console.log("Gem. duur:", stats.avgSessionDurationSeconds, "sec");
+  }
+
+</script>
+
+
+<!--
+  =============================================================================
+  MUST-HAVE EVENTS — voeg toe op de juiste plaatsen in jouw pagina-scripts
+  =============================================================================
+
+  Analytics.trackEvent("add_person",       { success: bool });
+  Analytics.trackEvent("edit_person",      { field: "name" });
+  Analytics.trackEvent("delete_person",    { confirmed: true });
+  Analytics.trackEvent("export_csv",       { personCount: N });
+  Analytics.trackEvent("export_json",      { personCount: N });
+  Analytics.trackEvent("import_start",     { fileType: "csv" });
+  Analytics.trackEvent("import_success",   { imported: N });
+  Analytics.trackEvent("search_used",      { queryLength: N });
+  Analytics.trackEvent("relation_computed",{ type: "cousin" });
+
+  =============================================================================
+-->
