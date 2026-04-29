@@ -1,90 +1,477 @@
-<!--
-  =============================================================================
-  VOORBEELD INTEGRATIE — analytics.js in MyFamTreeCollab
-  =============================================================================
-  Kopieren / aanpassen per pagina. Zie ook: Handleiding.html
-  =============================================================================
--->
+<!-- ======================= admin/analytics.html v1.0.0 =======================
+     Analytics Dashboard — interne gebruiksstatistieken van MyFamTreeCollab
+     Toont: sessies, events per type, pagina gebruik, device breakdown
+     Data bron: localStorage via window.Analytics (js/analytics.js)
+     Achtergrond main: #565656 (zoals gevraagd)
+     Laadvolgorde: utils.js → auth.js → analytics.js → analytics-dashboard.js
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">                                                 <!-- UTF-8 tekenset -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive viewport -->
+    <title>Analytics Dashboard — MyFamTreeCollab</title>
 
-<!-- 1. LAADVOLGORDE in <head> of voor </body> -->
-<script src="js/utils.js"></script>
-<script src="js/schema.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/analytics.js"></script>   <!-- ← Analytics VOOR pagina-scripts -->
-<script src="js/LiveSearch.js"></script>
-<script src="js/relatieEngine.js"></script>
-<script src="js/create.js"></script>      <!-- ← Pagina-specifiek script (voorbeeld) -->
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
+    <link rel="stylesheet" href="../css/style.css">                        <!-- Globale stijlen -->
 
-<!-- 2. PAGINANAAM REGISTREREN (bovenaan elke pagina's JS-bestand) -->
+    <!-- ======================= Google Font: IBM Plex Mono ======================= -->
+    <!-- Monospace font geeft dashboard een data/terminal karakter — past bij analytics -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ======================= CSS VARIABELEN ======================= */
+        :root {
+            --bg-main:      #565656;                                       /* Achtergrond main — zoals gevraagd */
+            --bg-card:      #3a3a3a;                                       /* Donkere kaart achtergrond */
+            --bg-card-alt:  #444444;                                       /* Lichtere kaart variant */
+            --accent:       #00d4aa;                                       /* Teal accent — energie + data-vibe */
+            --accent-dim:   rgba(0, 212, 170, 0.15);                      /* Transparante accent tint */
+            --text-primary: #f0f0f0;                                       /* Hoofdtekst licht */
+            --text-muted:   #aaa;                                          /* Gedimde labels */
+            --border:       rgba(255,255,255,0.08);                        /* Subtiele border */
+            --font-mono:    'IBM Plex Mono', monospace;                    /* Data / getallen */
+            --font-sans:    'IBM Plex Sans', sans-serif;                   /* Labels / titels */
+            --radius:       8px;                                           /* Consistente afronding */
+            --shadow:       0 4px 20px rgba(0,0,0,0.35);                  /* Kaart schaduw */
+        }
+
+        /* ======================= MAIN ACHTERGROND ======================= */
+        main {
+            background-color: var(--bg-main);                             /* #565656 zoals gevraagd */
+            min-height: 100vh;                                             /* Volledige hoogte */
+            padding: 32px 20px 64px;                                       /* Ruimte rondom content */
+            font-family: var(--font-sans);                                 /* Basislettertype */
+        }
+
+        /* ======================= DASHBOARD WRAPPER ======================= */
+        .dash-wrap {
+            max-width: 1100px;                                             /* Niet te breed op groot scherm */
+            margin: 0 auto;                                                /* Horizontaal centreren */
+        }
+
+        /* ======================= DASHBOARD HEADER ======================= */
+        .dash-header {
+            display: flex;                                                 /* Flex layout */
+            align-items: baseline;                                         /* Uitlijnen op tekst baseline */
+            justify-content: space-between;                                /* Titel links, knop rechts */
+            flex-wrap: wrap;                                               /* Wrappen op smal scherm */
+            gap: 12px;                                                     /* Ruimte tussen elementen */
+            margin-bottom: 32px;                                           /* Afstand tot kaarten */
+            border-bottom: 1px solid var(--border);                        /* Subtiele scheiding */
+            padding-bottom: 16px;                                          /* Ruimte onder scheiding */
+        }
+
+        .dash-header h1 {
+            font-family: var(--font-mono);                                 /* Monospace voor dashboard-gevoel */
+            font-size: 1.3rem;                                             /* Niet te groot */
+            font-weight: 600;                                              /* Halfvet */
+            color: var(--accent);                                          /* Teal accent kleur */
+            margin: 0;                                                     /* Geen standaard margin */
+            letter-spacing: -0.5px;                                        /* Licht samengetrokken */
+        }
+
+        .dash-header h1 span {
+            color: var(--text-muted);                                      /* "Dashboard" in gedimde kleur */
+            font-weight: 400;                                              /* Normaal gewicht */
+        }
+
+        /* ======================= REFRESH KNOP ======================= */
+        .btn-refresh {
+            font-family: var(--font-mono);                                 /* Monospace stijl */
+            font-size: 0.8rem;                                             /* Klein */
+            background: var(--accent-dim);                                 /* Transparante teal achtergrond */
+            color: var(--accent);                                          /* Teal tekst */
+            border: 1px solid var(--accent);                               /* Teal rand */
+            border-radius: var(--radius);                                  /* Afgeronde hoeken */
+            padding: 6px 14px;                                             /* Compacte knop */
+            cursor: pointer;                                               /* Klikbaar uiterlijk */
+            transition: background 0.2s;                                   /* Vloeiende hover overgang */
+        }
+        .btn-refresh:hover {
+            background: rgba(0,212,170,0.28);                              /* Iets meer teal bij hover */
+        }
+
+        /* ======================= WIS KNOP ======================= */
+        .btn-clear {
+            font-family: var(--font-mono);                                 /* Monospace stijl */
+            font-size: 0.8rem;                                             /* Klein */
+            background: rgba(255,80,80,0.12);                             /* Rode tint achtergrond */
+            color: #ff6b6b;                                                /* Rode tekst */
+            border: 1px solid #ff6b6b;                                     /* Rode rand */
+            border-radius: var(--radius);                                  /* Afgeronde hoeken */
+            padding: 6px 14px;                                             /* Compacte knop */
+            cursor: pointer;                                               /* Klikbaar uiterlijk */
+            transition: background 0.2s;                                   /* Vloeiende hover */
+            margin-left: 8px;                                              /* Afstand naast refresh */
+        }
+        .btn-clear:hover { background: rgba(255,80,80,0.25); }            /* Meer rood bij hover */
+
+        /* ======================= STAT KAARTEN GRID ======================= */
+        .stat-grid {
+            display: grid;                                                 /* CSS Grid */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));   /* Responsief: 1-4 kolommen */
+            gap: 16px;                                                     /* Ruimte tussen kaarten */
+            margin-bottom: 28px;                                           /* Afstand tot volgende sectie */
+        }
+
+        /* ======================= INDIVIDUELE STAT KAART ======================= */
+        .stat-card {
+            background: var(--bg-card);                                    /* Donkere kaart */
+            border: 1px solid var(--border);                               /* Subtiele rand */
+            border-radius: var(--radius);                                  /* Afronding */
+            padding: 20px 20px 16px;                                       /* Interne ruimte */
+            box-shadow: var(--shadow);                                     /* Schaduw */
+            position: relative;                                            /* Voor accent-lijn */
+            overflow: hidden;                                              /* Accent-lijn afkappen */
+            animation: fadeUp 0.4s ease both;                             /* Instap animatie */
+        }
+
+        /* Teal accent streep bovenaan elke kaart */
+        .stat-card::before {
+            content: '';                                                   /* Pseudo-element */
+            position: absolute;                                            /* Absoluut t.o.v. kaart */
+            top: 0; left: 0; right: 0;                                    /* Volle breedte bovenaan */
+            height: 3px;                                                   /* Dunne streep */
+            background: var(--accent);                                     /* Teal kleur */
+        }
+
+        .stat-card .label {
+            font-size: 0.72rem;                                            /* Klein label */
+            text-transform: uppercase;                                     /* Hoofdletters */
+            letter-spacing: 1px;                                           /* Spatiëring */
+            color: var(--text-muted);                                      /* Gedimde kleur */
+            margin-bottom: 8px;                                            /* Ruimte onder label */
+            font-family: var(--font-sans);                                 /* Sans-serif label */
+        }
+
+        .stat-card .value {
+            font-family: var(--font-mono);                                 /* Monospace voor getallen */
+            font-size: 2rem;                                               /* Groot getal */
+            font-weight: 600;                                              /* Halfvet */
+            color: var(--text-primary);                                    /* Lichte kleur */
+            line-height: 1;                                                /* Strak */
+        }
+
+        .stat-card .unit {
+            font-size: 0.8rem;                                             /* Kleine eenheid */
+            color: var(--text-muted);                                      /* Gedimde kleur */
+            margin-left: 4px;                                              /* Afstand achter getal */
+            font-family: var(--font-sans);                                 /* Sans-serif eenheid */
+        }
+
+        /* ======================= SECTIE TITELS ======================= */
+        .section-title {
+            font-family: var(--font-mono);                                 /* Monospace */
+            font-size: 0.8rem;                                             /* Klein */
+            text-transform: uppercase;                                     /* Hoofdletters */
+            letter-spacing: 1.5px;                                        /* Gespatieerd */
+            color: var(--accent);                                          /* Teal */
+            margin: 0 0 12px 0;                                            /* Alleen ondermarge */
+        }
+
+        /* ======================= TWEE-KOLOM LAYOUT VOOR ONDERSTE SECTIES ======================= */
+        .bottom-grid {
+            display: grid;                                                 /* CSS Grid */
+            grid-template-columns: 1fr 1fr;                               /* Twee gelijke kolommen */
+            gap: 20px;                                                     /* Ruimte ertussen */
+            margin-bottom: 28px;                                           /* Afstand eronder */
+        }
+
+        @media (max-width: 700px) {
+            .bottom-grid { grid-template-columns: 1fr; }                  /* Eén kolom op mobiel */
+        }
+
+        /* ======================= PANEEL (events en pagina's) ======================= */
+        .panel {
+            background: var(--bg-card);                                    /* Donkere achtergrond */
+            border: 1px solid var(--border);                               /* Subtiele rand */
+            border-radius: var(--radius);                                  /* Afronding */
+            padding: 20px;                                                 /* Interne ruimte */
+            box-shadow: var(--shadow);                                     /* Schaduw */
+            animation: fadeUp 0.4s ease both;                             /* Instap animatie */
+        }
+
+        /* ======================= EVENT BAR RIJEN ======================= */
+        .event-row {
+            display: flex;                                                 /* Flex rij */
+            align-items: center;                                           /* Verticaal centreren */
+            gap: 10px;                                                     /* Ruimte tussen elementen */
+            margin-bottom: 10px;                                           /* Ruimte onder rij */
+        }
+
+        .event-row:last-child { margin-bottom: 0; }                       /* Geen marge na laatste rij */
+
+        .event-label {
+            font-family: var(--font-mono);                                 /* Monospace naam */
+            font-size: 0.78rem;                                            /* Klein */
+            color: var(--text-primary);                                    /* Lichte tekst */
+            min-width: 160px;                                              /* Vaste minimale breedte */
+            white-space: nowrap;                                           /* Geen afbreking */
+            overflow: hidden;                                              /* Afkappen indien te lang */
+            text-overflow: ellipsis;                                       /* Ellipsis bij overflow */
+        }
+
+        .event-bar-wrap {
+            flex: 1;                                                       /* Vul resterende ruimte */
+            background: rgba(255,255,255,0.06);                           /* Subtiele achtergrond balk */
+            border-radius: 3px;                                            /* Lichte afronding */
+            height: 8px;                                                   /* Hoogte van de balk */
+            overflow: hidden;                                              /* Balk binnen wrapper houden */
+        }
+
+        .event-bar {
+            height: 100%;                                                  /* Volledige hoogte */
+            background: var(--accent);                                     /* Teal invulling */
+            border-radius: 3px;                                            /* Afronding */
+            transition: width 0.6s cubic-bezier(0.16,1,0.3,1);           /* Vloeiende breedte animatie */
+            width: 0%;                                                     /* Startbreedte — JS zet de echte waarde */
+        }
+
+        .event-count {
+            font-family: var(--font-mono);                                 /* Monospace getal */
+            font-size: 0.78rem;                                            /* Klein */
+            color: var(--accent);                                          /* Teal getal */
+            min-width: 28px;                                               /* Vaste breedte */
+            text-align: right;                                             /* Rechts uitlijnen */
+        }
+
+        /* ======================= DEVICE BREAKDOWN BOLLEN ======================= */
+        .device-grid {
+            display: flex;                                                 /* Horizontale rij */
+            gap: 16px;                                                     /* Ruimte tussen bollen */
+            flex-wrap: wrap;                                               /* Wrappen indien nodig */
+            margin-top: 8px;                                               /* Ruimte boven */
+        }
+
+        .device-pill {
+            background: var(--bg-card-alt);                               /* Iets lichter */
+            border: 1px solid var(--border);                               /* Subtiele rand */
+            border-radius: 20px;                                           /* Volledig afgerond */
+            padding: 6px 14px;                                             /* Ruimte binnenin */
+            font-family: var(--font-mono);                                 /* Monospace */
+            font-size: 0.78rem;                                            /* Klein */
+            color: var(--text-primary);                                    /* Lichte tekst */
+            display: flex;                                                 /* Flex voor icoon + tekst */
+            align-items: center;                                           /* Verticaal centreren */
+            gap: 6px;                                                      /* Ruimte icoon/tekst */
+        }
+
+        /* ======================= LEEG STATUS BERICHT ======================= */
+        .empty-msg {
+            font-family: var(--font-mono);                                 /* Monospace */
+            font-size: 0.82rem;                                            /* Klein */
+            color: var(--text-muted);                                      /* Gedimde kleur */
+            text-align: center;                                            /* Gecentreerd */
+            padding: 24px 0;                                               /* Ruimte */
+            letter-spacing: 0.5px;                                         /* Lichte spatiëring */
+        }
+
+        /* ======================= LAATSTE SESSIES TABEL ======================= */
+        .sessions-panel {
+            background: var(--bg-card);                                    /* Donkere achtergrond */
+            border: 1px solid var(--border);                               /* Rand */
+            border-radius: var(--radius);                                  /* Afronding */
+            padding: 20px;                                                 /* Interne ruimte */
+            box-shadow: var(--shadow);                                     /* Schaduw */
+            margin-bottom: 28px;                                           /* Afstand eronder */
+            animation: fadeUp 0.4s ease both;                             /* Instap animatie */
+            overflow-x: auto;                                              /* Horizontaal scrollen op mobiel */
+        }
+
+        table {
+            width: 100%;                                                   /* Volle breedte */
+            border-collapse: collapse;                                     /* Geen dubbele randen */
+            font-family: var(--font-mono);                                 /* Monospace tabel */
+            font-size: 0.78rem;                                            /* Klein */
+        }
+
+        thead th {
+            text-align: left;                                              /* Links uitlijnen */
+            color: var(--text-muted);                                      /* Gedimde koptekst */
+            padding: 0 12px 10px 0;                                        /* Ruimte onder header */
+            border-bottom: 1px solid var(--border);                        /* Lijn onder header */
+            font-weight: 600;                                              /* Halfvet */
+            text-transform: uppercase;                                     /* Hoofdletters */
+            letter-spacing: 1px;                                           /* Gespatieerd */
+            font-size: 0.68rem;                                            /* Zeer klein */
+        }
+
+        tbody td {
+            padding: 9px 12px 9px 0;                                       /* Rij ruimte */
+            color: var(--text-primary);                                    /* Lichte tekst */
+            border-bottom: 1px solid var(--border);                        /* Rij scheiding */
+            vertical-align: middle;                                        /* Verticaal midden */
+        }
+
+        tbody tr:last-child td { border-bottom: none; }                   /* Geen lijn na laatste rij */
+
+        tbody tr:hover td {
+            background: rgba(255,255,255,0.03);                           /* Subtiele hover highlight */
+        }
+
+        /* Badge voor device type */
+        .badge {
+            display: inline-block;                                         /* Inline blok */
+            padding: 2px 8px;                                              /* Kleine ruimte */
+            border-radius: 10px;                                           /* Volledig afgerond */
+            font-size: 0.7rem;                                             /* Zeer klein */
+            font-weight: 600;                                              /* Halfvet */
+            background: var(--accent-dim);                                /* Transparante teal */
+            color: var(--accent);                                          /* Teal tekst */
+        }
+
+        /* ======================= FADE-UP ANIMATIE ======================= */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }             /* Start: onzichtbaar + laag */
+            to   { opacity: 1; transform: translateY(0); }                /* Eind: zichtbaar + op positie */
+        }
+
+        /* Staggered animatie vertraging per kaart */
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.10s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.20s; }
+        .panel:nth-child(1)     { animation-delay: 0.25s; }
+        .panel:nth-child(2)     { animation-delay: 0.30s; }
+
+        /* ======================= TIMESTAMP FOOTER ======================= */
+        .dash-footer {
+            font-family: var(--font-mono);                                 /* Monospace */
+            font-size: 0.72rem;                                            /* Zeer klein */
+            color: var(--text-muted);                                      /* Gedimde kleur */
+            text-align: right;                                             /* Rechts uitlijnen */
+            margin-top: 8px;                                               /* Ruimte erboven */
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======================= Eruda dev console (develop only) ======================= -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>                                             <!-- Mobile dev console -->
+
+<!-- ======================= TopBar placeholder ======================= -->
+<div id="topbar-placeholder"></div>
+
+<!-- Scripts: Supabase + auth ALTIJD vóór topbar.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/analytics.js"></script>                                   <!-- Analytics module laden -->
+
+<!-- ======================= Navbar placeholder ======================= -->
+<div id="navbar-placeholder"></div>
+
+<!-- ======================= Hoofd content ======================= -->
+<main>
+    <div class="dash-wrap">
+
+        <!-- Header rij: titel + knoppen -->
+        <div class="dash-header">
+            <h1>Analytics <span>Dashboard</span></h1>                     <!-- Paginatitel -->
+            <div>
+                <!-- Knop: herlaad statistieken zonder pagina te refreshen -->
+                <button class="btn-refresh" id="btn-refresh">↻ Vernieuwen</button>
+                <!-- Knop: wist alle analytics data na bevestiging -->
+                <button class="btn-clear"   id="btn-clear">✕ Data wissen</button>
+            </div>
+        </div>
+
+        <!-- ======================= STAT KAARTEN ======================= -->
+        <div class="stat-grid" id="stat-grid">
+            <!-- Gevuld door analytics-dashboard.js -->
+        </div>
+
+        <!-- ======================= EVENTS + PAGINA'S ======================= -->
+        <div class="bottom-grid">
+            <!-- Linker paneel: events per type als balkgrafiek -->
+            <div class="panel" id="panel-events">
+                <p class="section-title">Events per type</p>
+                <div id="events-chart">
+                    <!-- Gevuld door analytics-dashboard.js -->
+                </div>
+            </div>
+
+            <!-- Rechter paneel: pagina bezoeken + device breakdown -->
+            <div class="panel" id="panel-pages">
+                <p class="section-title">Pagina bezoeken</p>
+                <div id="pages-chart" style="margin-bottom:20px;">
+                    <!-- Gevuld door analytics-dashboard.js -->
+                </div>
+                <p class="section-title">Device breakdown</p>
+                <div class="device-grid" id="device-grid">
+                    <!-- Gevuld door analytics-dashboard.js -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= RECENTE SESSIES TABEL ======================= -->
+        <div class="sessions-panel">
+            <p class="section-title">Recente sessies</p>
+            <div id="sessions-table">
+                <!-- Gevuld door analytics-dashboard.js -->
+            </div>
+        </div>
+
+        <!-- Timestamp laatste update -->
+        <div class="dash-footer" id="dash-footer"></div>
+
+    </div>
+</main>
+
+<!-- ======================= Footer placeholder ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — verplichte laadvolgorde:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. analytics.js        — vereist door analytics-dashboard.js
+     5. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
+     6. Navbar / Footer     — onafhankelijk, mag parallel
+     7. analytics-dashboard.js — paginaspecifiek, altijd als laatste
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/analytics.js"></script>                                 <!-- Analytics vóór dashboard-script -->
+
 <script>
-  // Track welke pagina de gebruiker bezoekt
-  Analytics.trackPage("create"); // Verander "create" per pagina: "index", "detail", etc.
+    // Stap 1: TopBar HTML laden, daarna topbar.js injecteren
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())                                         // Lees response als tekst
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data; // Injecteren
+            var s = document.createElement('script');                      // Script-element aanmaken
+            s.src = '../js/topbar.js';                                    // Bron instellen
+            document.body.appendChild(s);                                  // Toevoegen aan DOM
+        });
+
+    // Stap 2: Navbar laden — geen auth-afhankelijkheid
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('navbar-placeholder').innerHTML = data; // Injecteren
+        });
+
+    // Stap 3: Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data; // Injecteren
+        });
 </script>
 
+<!-- Pagina-specifiek dashboard script — altijd als laatste -->
+<script src="analytics-dashboard.js"></script>
 
-<!-- 3. EVENTS TRACKEN (voorbeelden) -->
-<script>
-
-  // ── Voorbeeld A: persoon toegevoegd ──────────────────────────────────────
-  function handleAddPerson(person) {
-    const success = Storage.savePerson(person); // Jouw bestaande opslag-functie
-
-    // Track het resultaat als event
-    Analytics.trackEvent("add_person", {
-      success: success,            // Was de opslag succesvol?
-      hasPhoto: !!person.photo,    // Heeft de persoon een foto?
-      gender: person.gender        // Optionele metadata
-    });
-  }
-
-  // ── Voorbeeld B: CSV export ───────────────────────────────────────────────
-  function handleExportCSV() {
-    const data = Storage.getAllPersons(); // Haal data op
-
-    // Track vóór de export (zodat ook mislukte exports getrackt worden)
-    Analytics.trackEvent("export_csv", {
-      personCount: data.length     // Hoeveel personen geëxporteerd?
-    });
-
-    exportToCSV(data);             // Jouw bestaande export-functie
-  }
-
-  // ── Voorbeeld C: zoekfunctie gebruikt ────────────────────────────────────
-  function handleSearch(query) {
-    Analytics.trackEvent("search_used", {
-      queryLength: query.length,   // Lengte van de zoekterm (GEEN inhoud — privacy!)
-      timestamp: Date.now()        // Extra tijdstempel
-    });
-
-    return LiveSearch.search(query); // Jouw bestaande zoekfunctie
-  }
-
-  // ── Voorbeeld D: statistieken ophalen (voor toekomstig dashboard) ─────────
-  function showAnalyticsDashboard() {
-    const stats = Analytics.getStats();
-    console.table(stats.eventCounts);       // Toon events per type in console
-    console.log("Sessies:", stats.totalSessions);
-    console.log("Gem. duur:", stats.avgSessionDurationSeconds, "sec");
-  }
-
-</script>
-
-
-<!--
-  =============================================================================
-  MUST-HAVE EVENTS — voeg toe op de juiste plaatsen in jouw pagina-scripts
-  =============================================================================
-
-  Analytics.trackEvent("add_person",       { success: bool });
-  Analytics.trackEvent("edit_person",      { field: "name" });
-  Analytics.trackEvent("delete_person",    { confirmed: true });
-  Analytics.trackEvent("export_csv",       { personCount: N });
-  Analytics.trackEvent("export_json",      { personCount: N });
-  Analytics.trackEvent("import_start",     { fileType: "csv" });
-  Analytics.trackEvent("import_success",   { imported: N });
-  Analytics.trackEvent("search_used",      { queryLength: N });
-  Analytics.trackEvent("relation_computed",{ type: "cousin" });
-
-  =============================================================================
--->
+</body>
+</html>
