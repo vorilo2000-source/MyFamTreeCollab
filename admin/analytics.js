@@ -363,13 +363,43 @@ document.getElementById("btn-clear").addEventListener("click", function() {
     renderDashboard();                                     // Herrender (toont lege staat)
 });
 
-// ======================= PAGINA TRACKING =======================
+// ======================= BEVEILIGINGSCHECK + INITIALISATIE =======================
 
-// Registreer dit als een analytics pagina-bezoek
-window.Analytics.trackPage("analytics-dashboard");        // Zelfregistratie voor consistentie
+/**
+ * Controleer of de gebruiker ingelogd én admin is voordat het dashboard getoond wordt.
+ * Gebruikt AuthModule.getProfile() uit auth.js — haalt profiel op uit Supabase profiles tabel.
+ * Als de gebruiker niet ingelogd is of geen admin — doorsturen naar home.
+ * Als de gebruiker wel admin is — dashboard renderen.
+ */
+window.addEventListener("load", function() {
 
-// ======================= INITIALISATIE =======================
+    // Stap 1: controleer of AuthModule beschikbaar is (auth.js geladen?)
+    if (typeof window.AuthModule === "undefined") {
+        console.error("[Dashboard] AuthModule niet gevonden. Is auth.js geladen?"); // Foutmelding
+        window.location.href = "/MyFamTreeCollab/index.html";                       // Veilig doorsturen
+        return;                                                                      // Stoppen
+    }
 
-// Render het dashboard zodra dit script geladen is
-// Alle HTML-placeholders zijn al aanwezig in analytics.html
-renderDashboard();
+    // Stap 2: haal profiel op uit Supabase via auth.js
+    AuthModule.getProfile().then(function(result) {
+        const profile = result.profile;                    // profiel object { tier, is_admin, ... }
+
+        // Stap 3: geen profiel = niet ingelogd → terug naar home
+        if (!profile) {
+            window.location.href = "/MyFamTreeCollab/index.html"; // niet ingelogd — weg
+            return;                                                // stoppen
+        }
+
+        // Stap 4: profiel aanwezig maar is_admin is false → geen toegang
+        if (!profile.is_admin) {
+            window.location.href = "/MyFamTreeCollab/index.html"; // geen admin — weg
+            return;                                                // stoppen
+        }
+
+        // Stap 5: gebruiker is admin — pagina tracking registreren
+        window.Analytics.trackPage("analytics-dashboard");        // bezoek registreren
+
+        // Stap 6: dashboard renderen — alle secties opbouwen
+        renderDashboard();
+    });
+});
