@@ -1,5 +1,7 @@
-<!-- admin/accountbeheer.html — v2.0.2 — Admin accountbeheer pagina -->
-<!-- Gebaseerd op standaardpagina.html — gebruikt style.css van de site -->
+<!-- ======================= admin/accountbeheer.html v2.1.0 =======================
+     Admin accountbeheer pagina — kleurenschema bijgewerkt naar #565656 thema
+     Wijziging t.o.v. v2.0.2: alleen kleuren in <style> aangepast, geen structuur
+     ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -7,248 +9,309 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accountbeheer</title>
 
-       <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-    
+
     <style>
+        /* ─── Kleurvariabelen — centrale definitie voor heel de pagina ─── */
+        :root {
+            --bg-page:        #565656;    /* hoofdachtergrond van <main> */
+            --bg-card:        #4a4a4a;    /* kaart achtergrond */
+            --bg-card-hover:  #505050;    /* kaart hover */
+            --bg-thead:       #3e3e3e;    /* tabelkop achtergrond */
+            --bg-row-hover:   #4e4e4e;    /* rij hover */
+            --bg-input:       #3e3e3e;    /* invoervelden en dropdowns */
+            --bg-modal:       #3e3e3e;    /* modal achtergrond */
+            --bg-toast:       #2a2a2a;    /* toast achtergrond */
+            --border:         #6a6a6a;    /* standaard rand kleur */
+            --border-light:   #5a5a5a;    /* lichtere rand variant */
+            --text-primary:   #f0f0f0;    /* hoofdtekst */
+            --text-secondary: #c0c0c0;    /* subtitel / labels */
+            --text-muted:     #999;       /* gedimde tekst */
+            --accent:         #00d4aa;    /* teal accent (zelfde als analytics) */
+
+            /* ─── Tier kleuren — aangepast voor donker thema ─── */
+            --tier-totaal-bg:  #4a4a5a;   /* grijsblauw — neutraal totaal */
+            --tier-totaal-fg:  #c8c8ff;   /* lichtpaars op grijsblauw */
+            --tier-viewer-bg:  #1a3a2a;   /* donkergroen */
+            --tier-viewer-fg:  #6ee09a;   /* helder groen */
+            --tier-editor-bg:  #1a2a3a;   /* donkerblauw */
+            --tier-editor-fg:  #6ab4f0;   /* helder blauw */
+            --tier-owner-bg:   #3a2e0a;   /* donkergoud */
+            --tier-owner-fg:   #f0c040;   /* helder goud */
+            --tier-admin-bg:   #3a1a1a;   /* donkerrood */
+            --tier-admin-fg:   #f08080;   /* helder rood */
+        }
+
+        /* ─── Main achtergrond ─── */
+        main {
+            background-color: var(--bg-page);            /* #565656 — zoals afgesproken */
+            min-height: 100vh;                           /* volledige hoogte */
+        }
+
         /* ─── Accountbeheer pagina stijlen ─── */
         .admin-wrap {
-            max-width: 1100px;                /* maximale breedte van de content */
-            margin: 0 auto;                   /* horizontaal centreren */
-            padding: 32px 24px;              /* ruimte rondom de content */
+            max-width: 1100px;                           /* maximale breedte van de content */
+            margin: 0 auto;                              /* horizontaal centreren */
+            padding: 32px 24px;                         /* ruimte rondom de content */
         }
 
         .admin-wrap h1 {
-            font-size: 1.6rem;               /* paginatitel grootte */
-            font-weight: bold;               /* vetgedrukt */
-            color: #222;                     /* donkere tekst — aanpasbaar */
-            margin-bottom: 8px;              /* ruimte onder de titel */
+            font-size: 1.6rem;                           /* paginatitel grootte */
+            font-weight: bold;                           /* vetgedrukt */
+            color: var(--text-primary);                  /* lichte tekst op donkere achtergrond */
+            margin-bottom: 8px;                          /* ruimte onder de titel */
         }
 
         .admin-wrap .subtitel {
-            font-size: 0.9rem;               /* kleinere tekst voor subtitel */
-            color: #666;                     /* grijze tekst — aanpasbaar */
-            margin-bottom: 28px;             /* ruimte onder de subtitel */
+            font-size: 0.9rem;                           /* kleinere tekst voor subtitel */
+            color: var(--text-secondary);                /* gedimde lichte tekst */
+            margin-bottom: 28px;                         /* ruimte onder de subtitel */
         }
 
         /* ─── Statistieken ─── */
         .stats-grid {
-            display: grid;                   /* grid layout voor de kaarten */
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* responsief — min 140px per kaart */
-            gap: 12px;                       /* ruimte tussen de kaarten */
-            margin-bottom: 28px;             /* ruimte onder het grid */
+            display: grid;                               /* grid layout voor de kaarten */
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* responsief */
+            gap: 12px;                                   /* ruimte tussen de kaarten */
+            margin-bottom: 28px;                         /* ruimte onder het grid */
         }
 
         .stat-card {
-            background: #f8f9fa;             /* lichtgrijze achtergrond — aanpasbaar */
-            border: 1px solid #dee2e6;       /* subtiele rand — aanpasbaar */
-            border-radius: 8px;              /* afgeronde hoeken */
-            padding: 16px;                   /* ruimte binnen de kaart */
-            text-align: center;              /* tekst centreren */
+            background: var(--bg-card);                  /* donkere kaart achtergrond */
+            border: 1px solid var(--border);             /* subtiele rand */
+            border-radius: 8px;                          /* afgeronde hoeken */
+            padding: 16px;                               /* ruimte binnen de kaart */
+            text-align: center;                          /* tekst centreren */
+            border-top: 3px solid var(--accent);         /* teal accent streep bovenaan */
         }
 
+        /* Tier-specifieke accentkleur bovenaan elke stat-kaart */
+        .stat-card:nth-child(1) { border-top-color: var(--tier-totaal-fg); }  /* totaal — paars */
+        .stat-card:nth-child(2) { border-top-color: var(--tier-viewer-fg); }  /* viewer — groen */
+        .stat-card:nth-child(3) { border-top-color: var(--tier-editor-fg); }  /* editor — blauw */
+        .stat-card:nth-child(4) { border-top-color: var(--tier-owner-fg);  }  /* owner — goud */
+        .stat-card:nth-child(5) { border-top-color: var(--tier-admin-fg);  }  /* admin — rood */
+
         .stat-label {
-            font-size: 0.75rem;              /* kleine label tekst */
-            text-transform: uppercase;       /* hoofdletters */
-            letter-spacing: 0.08em;          /* ruimte tussen letters */
-            color: #888;                     /* grijze tekst — aanpasbaar */
-            margin-bottom: 6px;              /* ruimte onder het label */
+            font-size: 0.75rem;                          /* kleine label tekst */
+            text-transform: uppercase;                   /* hoofdletters */
+            letter-spacing: 0.08em;                      /* ruimte tussen letters */
+            color: var(--text-muted);                    /* gedimde tekst */
+            margin-bottom: 6px;                          /* ruimte onder het label */
         }
 
         .stat-value {
-            font-size: 2rem;                 /* groot getal */
-            font-weight: bold;              /* vetgedrukt */
-            color: #222;                     /* donkere tekst — aanpasbaar */
+            font-size: 2rem;                             /* groot getal */
+            font-weight: bold;                           /* vetgedrukt */
+            color: var(--text-primary);                  /* lichte tekst */
         }
+
+        /* Tier-specifieke kleur voor het getal zelf */
+        #statTotal  { color: var(--tier-totaal-fg); }   /* totaal — paars */
+        #statViewer { color: var(--tier-viewer-fg); }   /* viewer — groen */
+        #statEditor { color: var(--tier-editor-fg); }   /* editor — blauw */
+        #statOwner  { color: var(--tier-owner-fg);  }   /* owner — goud */
+        #statAdmin  { color: var(--tier-admin-fg);  }   /* admin — rood */
 
         /* ─── Toolbar (zoekbalk + filter + knop) ─── */
         .toolbar {
-            display: flex;                   /* horizontale rij */
-            gap: 10px;                       /* ruimte tussen elementen */
-            margin-bottom: 16px;             /* ruimte onder de toolbar */
-            flex-wrap: wrap;                 /* doorbreken op kleine schermen */
-            align-items: center;             /* verticaal uitlijnen */
+            display: flex;                               /* horizontale rij */
+            gap: 10px;                                   /* ruimte tussen elementen */
+            margin-bottom: 16px;                         /* ruimte onder de toolbar */
+            flex-wrap: wrap;                             /* doorbreken op kleine schermen */
+            align-items: center;                         /* verticaal uitlijnen */
         }
 
         .toolbar input {
-            flex: 1;                         /* neemt beschikbare ruimte in */
-            min-width: 200px;                /* minimale breedte */
-            padding: 8px 12px;              /* ruimte binnen het invoerveld */
-            border: 1px solid #ced4da;       /* rand — aanpasbaar */
-            border-radius: 5px;              /* afgeronde hoeken */
-            font-size: 0.9rem;               /* tekstgrootte */
+            flex: 1;                                     /* neemt beschikbare ruimte in */
+            min-width: 200px;                            /* minimale breedte */
+            padding: 8px 12px;                          /* ruimte binnen het invoerveld */
+            border: 1px solid var(--border);             /* rand */
+            border-radius: 5px;                          /* afgeronde hoeken */
+            font-size: 0.9rem;                           /* tekstgrootte */
+            background: var(--bg-input);                 /* donkere invoer achtergrond */
+            color: var(--text-primary);                  /* lichte tekst */
         }
+
+        .toolbar input::placeholder { color: var(--text-muted); }  /* gedimde placeholder tekst */
 
         .toolbar select, .toolbar button {
-            padding: 8px 14px;              /* ruimte binnen select en knop */
-            border: 1px solid #ced4da;       /* rand — aanpasbaar */
-            border-radius: 5px;              /* afgeronde hoeken */
-            font-size: 0.9rem;               /* tekstgrootte */
-            background: #fff;               /* witte achtergrond — aanpasbaar */
-            cursor: pointer;                 /* handcursor */
+            padding: 8px 14px;                          /* ruimte binnen select en knop */
+            border: 1px solid var(--border);             /* rand */
+            border-radius: 5px;                          /* afgeronde hoeken */
+            font-size: 0.9rem;                           /* tekstgrootte */
+            background: var(--bg-input);                 /* donkere achtergrond */
+            color: var(--text-primary);                  /* lichte tekst */
+            cursor: pointer;                             /* handcursor */
         }
 
-        .toolbar button:hover { background: #e9ecef; } /* hover kleur vernieuwen knop — aanpasbaar */
+        .toolbar button:hover { background: var(--bg-card-hover); }  /* iets lichter bij hover */
 
         /* ─── Gebruikerstabel ─── */
         .table-wrap {
-            overflow-x: auto;                /* horizontaal scrollen op kleine schermen */
-            border: 1px solid #dee2e6;       /* rand om de tabel — aanpasbaar */
-            border-radius: 8px;              /* afgeronde hoeken */
+            overflow-x: auto;                            /* horizontaal scrollen op kleine schermen */
+            border: 1px solid var(--border);             /* rand om de tabel */
+            border-radius: 8px;                          /* afgeronde hoeken */
         }
 
         table {
-            width: 100%;                     /* volledige breedte */
-            border-collapse: collapse;       /* geen dubbele randen */
-            font-size: 0.88rem;              /* tekstgrootte in de tabel */
+            width: 100%;                                 /* volledige breedte */
+            border-collapse: collapse;                   /* geen dubbele randen */
+            font-size: 0.88rem;                          /* tekstgrootte in de tabel */
         }
 
-        thead { background: #f1f3f5; }      /* achtergrond tabelkop — aanpasbaar */
+        thead { background: var(--bg-thead); }          /* donkere tabelkop */
 
         thead th {
-            padding: 10px 14px;             /* ruimte in de koptekst cellen */
-            text-align: left;               /* links uitlijnen */
-            font-size: 0.75rem;             /* kleine koptekst */
-            text-transform: uppercase;      /* hoofdletters */
-            letter-spacing: 0.08em;         /* ruimte tussen letters */
-            color: #666;                    /* grijze koptekst — aanpasbaar */
-            border-bottom: 1px solid #dee2e6; /* scheidingslijn onder kop */
-            white-space: nowrap;            /* geen afbreking */
+            padding: 10px 14px;                         /* ruimte in de koptekst cellen */
+            text-align: left;                            /* links uitlijnen */
+            font-size: 0.75rem;                          /* kleine koptekst */
+            text-transform: uppercase;                   /* hoofdletters */
+            letter-spacing: 0.08em;                      /* ruimte tussen letters */
+            color: var(--text-secondary);                /* gedimde lichte koptekst */
+            border-bottom: 1px solid var(--border);      /* scheidingslijn onder kop */
+            white-space: nowrap;                         /* geen afbreking */
         }
 
-        tbody tr { border-bottom: 1px solid #f1f3f5; } /* scheidingslijn tussen rijen — aanpasbaar */
-        tbody tr:last-child { border-bottom: none; }    /* geen lijn na laatste rij */
-        tbody tr:hover { background: #f8f9fa; }         /* hover achtergrond — aanpasbaar */
-        tbody td { padding: 10px 14px; vertical-align: middle; color: #333; } /* cel opmaak */
+        tbody tr { border-bottom: 1px solid var(--border-light); }  /* subtiele rijscheiding */
+        tbody tr:last-child { border-bottom: none; }                 /* geen lijn na laatste rij */
+        tbody tr:hover { background: var(--bg-row-hover); }         /* donkerder bij hover */
+        tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); } /* cel opmaak */
 
         .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* lange e-mails afkappen */
 
         /* ─── Tier badges ─── */
         .tier-badge {
-            display: inline-block;          /* inline blok element */
-            padding: 3px 10px;             /* ruimte binnen de badge */
-            border-radius: 12px;           /* ronde badge vorm */
-            font-size: 0.75rem;            /* kleine tekst */
-            font-weight: 600;              /* halfvet */
-            text-transform: uppercase;     /* hoofdletters */
+            display: inline-block;                       /* inline blok element */
+            padding: 3px 10px;                          /* ruimte binnen de badge */
+            border-radius: 12px;                         /* ronde badge vorm */
+            font-size: 0.75rem;                          /* kleine tekst */
+            font-weight: 600;                            /* halfvet */
+            text-transform: uppercase;                   /* hoofdletters */
         }
 
-        .tier-badge.viewer  { background: #d4edda; color: #155724; } /* groen — aanpasbaar */
-        .tier-badge.editor  { background: #cce5ff; color: #004085; } /* blauw — aanpasbaar */
-        .tier-badge.owner   { background: #fff3cd; color: #856404; } /* geel — aanpasbaar */
-        .tier-badge.admin   { background: #f8d7da; color: #721c24; } /* rood — aanpasbaar */
+        .tier-badge.viewer { background: var(--tier-viewer-bg); color: var(--tier-viewer-fg); } /* groen */
+        .tier-badge.editor { background: var(--tier-editor-bg); color: var(--tier-editor-fg); } /* blauw */
+        .tier-badge.owner  { background: var(--tier-owner-bg);  color: var(--tier-owner-fg);  } /* goud */
+        .tier-badge.admin  { background: var(--tier-admin-bg);  color: var(--tier-admin-fg);  } /* rood */
 
         /* ─── Tier select dropdown ─── */
         .tier-select {
-            padding: 4px 8px;              /* ruimte binnen de dropdown */
-            border: 1px solid #ced4da;     /* rand — aanpasbaar */
-            border-radius: 4px;            /* afgeronde hoeken */
-            font-size: 0.85rem;            /* tekstgrootte */
-            background: #fff;             /* witte achtergrond — aanpasbaar */
-            cursor: pointer;              /* handcursor */
+            padding: 4px 8px;                            /* ruimte binnen de dropdown */
+            border: 1px solid var(--border);             /* rand */
+            border-radius: 4px;                          /* afgeronde hoeken */
+            font-size: 0.85rem;                          /* tekstgrootte */
+            background: var(--bg-input);                 /* donkere achtergrond */
+            color: var(--text-primary);                  /* lichte tekst */
+            cursor: pointer;                             /* handcursor */
         }
 
         /* ─── Actieknoppen per rij ─── */
-        .row-actions { display: flex; gap: 6px; } /* horizontale rij knoppen */
+        .row-actions { display: flex; gap: 6px; }       /* horizontale rij knoppen */
 
         .btn-action {
-            padding: 4px 10px;            /* ruimte binnen de knop */
-            border: 1px solid #ced4da;    /* rand — aanpasbaar */
-            border-radius: 4px;           /* afgeronde hoeken */
-            font-size: 0.8rem;            /* kleine tekstgrootte */
-            background: #fff;            /* witte achtergrond — aanpasbaar */
-            cursor: pointer;             /* handcursor */
-            transition: all 0.15s;       /* vloeiende hover animatie */
+            padding: 4px 10px;                           /* ruimte binnen de knop */
+            border: 1px solid var(--border);             /* rand */
+            border-radius: 4px;                          /* afgeronde hoeken */
+            font-size: 0.8rem;                           /* kleine tekstgrootte */
+            background: var(--bg-input);                 /* donkere achtergrond */
+            color: var(--text-primary);                  /* lichte tekst */
+            cursor: pointer;                             /* handcursor */
+            transition: all 0.15s;                       /* vloeiende hover animatie */
         }
 
-        .btn-action:hover        { background: #e9ecef; }                                    /* hover kleur opslaan — aanpasbaar */
-        .btn-action.danger:hover { background: #f8d7da; border-color: #f5c6cb; color: #721c24; } /* hover kleur verwijderen — aanpasbaar */
+        .btn-action:hover        { background: var(--bg-card-hover); }                                          /* lichter grijs bij opslaan hover */
+        .btn-action.danger:hover { background: var(--tier-admin-bg); border-color: var(--tier-admin-fg); color: var(--tier-admin-fg); } /* rood bij verwijderen hover */
 
         .loading-row td, .empty-row td {
-            text-align: center;           /* centreer laad/leeg tekst */
-            color: #888;                  /* grijze tekst — aanpasbaar */
-            padding: 40px;               /* ruimte rondom de tekst */
+            text-align: center;                          /* centreer laad/leeg tekst */
+            color: var(--text-muted);                    /* gedimde tekst */
+            padding: 40px;                               /* ruimte rondom de tekst */
         }
 
         /* ─── Toast notificatie ─── */
         #toast {
-            position: fixed;             /* vast op het scherm */
-            bottom: 24px;               /* afstand van onderkant */
-            right: 24px;                /* afstand van rechterkant */
-            background: #333;           /* donkere achtergrond — aanpasbaar */
-            color: #fff;                /* witte tekst — aanpasbaar */
-            font-size: 0.88rem;         /* tekstgrootte */
-            padding: 10px 18px;         /* ruimte binnen de toast */
-            border-radius: 6px;         /* afgeronde hoeken */
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2); /* schaduw */
-            opacity: 0;                 /* standaard onzichtbaar */
-            transform: translateY(8px); /* licht naar beneden verschoven */
-            transition: opacity 0.2s, transform 0.2s; /* vloeiende animatie */
-            pointer-events: none;       /* niet klikbaar */
-            z-index: 999;               /* boven alles */
-            max-width: 300px;           /* maximale breedte */
+            position: fixed;                             /* vast op het scherm */
+            bottom: 24px;                               /* afstand van onderkant */
+            right: 24px;                                /* afstand van rechterkant */
+            background: var(--bg-toast);                 /* zeer donkere achtergrond */
+            color: var(--text-primary);                  /* lichte tekst */
+            font-size: 0.88rem;                          /* tekstgrootte */
+            padding: 10px 18px;                         /* ruimte binnen de toast */
+            border-radius: 6px;                          /* afgeronde hoeken */
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);     /* zwaardere schaduw op donker thema */
+            opacity: 0;                                  /* standaard onzichtbaar */
+            transform: translateY(8px);                  /* licht naar beneden verschoven */
+            transition: opacity 0.2s, transform 0.2s;   /* vloeiende animatie */
+            pointer-events: none;                        /* niet klikbaar */
+            z-index: 999;                                /* boven alles */
+            max-width: 300px;                            /* maximale breedte */
         }
 
-        #toast.show  { opacity: 1; transform: translateY(0); }  /* zichtbaar maken */
-        #toast.error { background: #dc3545; }                    /* rode achtergrond bij fout — aanpasbaar */
+        #toast.show  { opacity: 1; transform: translateY(0); }              /* zichtbaar maken */
+        #toast.error { background: var(--tier-admin-bg); color: var(--tier-admin-fg); } /* rood bij fout */
 
         /* ─── Bevestigingsmodal ─── */
         .modal-overlay {
-            position: fixed;            /* vast op het scherm */
-            inset: 0;                   /* volledige viewport bedekken */
-            background: rgba(0,0,0,0.5); /* donkere overlay — aanpasbaar */
-            display: flex;              /* flexbox voor centreren */
-            align-items: center;        /* verticaal centreren */
-            justify-content: center;    /* horizontaal centreren */
-            z-index: 500;               /* boven de pagina */
-            opacity: 0;                 /* standaard onzichtbaar */
-            pointer-events: none;       /* niet klikbaar als gesloten */
-            transition: opacity 0.2s;   /* vloeiende animatie */
+            position: fixed;                             /* vast op het scherm */
+            inset: 0;                                    /* volledige viewport bedekken */
+            background: rgba(0,0,0,0.65);               /* donkerdere overlay op donker thema */
+            display: flex;                               /* flexbox voor centreren */
+            align-items: center;                         /* verticaal centreren */
+            justify-content: center;                     /* horizontaal centreren */
+            z-index: 500;                                /* boven de pagina */
+            opacity: 0;                                  /* standaard onzichtbaar */
+            pointer-events: none;                        /* niet klikbaar als gesloten */
+            transition: opacity 0.2s;                    /* vloeiende animatie */
         }
 
-        .modal-overlay.open { opacity: 1; pointer-events: all; } /* modal openen */
+        .modal-overlay.open { opacity: 1; pointer-events: all; }            /* modal openen */
 
         .modal-box {
-            background: #fff;           /* witte achtergrond — aanpasbaar */
-            border-radius: 8px;         /* afgeronde hoeken */
-            padding: 28px;             /* ruimte binnen de modal */
-            width: 360px;              /* breedte van de modal */
-            max-width: 90vw;           /* niet breder dan het scherm */
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15); /* schaduw */
+            background: var(--bg-modal);                 /* donkere modal achtergrond */
+            border: 1px solid var(--border);             /* subtiele rand */
+            border-radius: 8px;                          /* afgeronde hoeken */
+            padding: 28px;                               /* ruimte binnen de modal */
+            width: 360px;                                /* breedte van de modal */
+            max-width: 90vw;                             /* niet breder dan het scherm */
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);     /* zwaardere schaduw */
         }
 
-        .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: #222; } /* modaltitel */
-        .modal-box p  { font-size: 0.9rem; color: #555; margin-bottom: 20px; line-height: 1.6; }  /* modaltekst */
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }                    /* knoppen rechts uitlijnen */
+        .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: var(--text-primary); }   /* modaltitel licht */
+        .modal-box p  { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }  /* modaltekst gedimed */
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }                                     /* knoppen rechts */
 
         .btn-cancel {
-            padding: 8px 18px;         /* ruimte binnen annuleerknop */
-            border: 1px solid #ced4da; /* rand — aanpasbaar */
-            border-radius: 5px;        /* afgeronde hoeken */
-            background: #fff;         /* witte achtergrond — aanpasbaar */
-            font-size: 0.9rem;         /* tekstgrootte */
-            cursor: pointer;          /* handcursor */
+            padding: 8px 18px;                           /* ruimte binnen annuleerknop */
+            border: 1px solid var(--border);             /* rand */
+            border-radius: 5px;                          /* afgeronde hoeken */
+            background: var(--bg-input);                 /* donkere achtergrond */
+            color: var(--text-primary);                  /* lichte tekst */
+            font-size: 0.9rem;                           /* tekstgrootte */
+            cursor: pointer;                             /* handcursor */
         }
 
         .btn-confirm-delete {
-            padding: 8px 18px;         /* ruimte binnen verwijderknop */
-            border: none;              /* geen rand */
-            border-radius: 5px;        /* afgeronde hoeken */
-            background: #dc3545;       /* rode achtergrond — aanpasbaar */
-            color: #fff;              /* witte tekst */
-            font-size: 0.9rem;         /* tekstgrootte */
-            cursor: pointer;          /* handcursor */
+            padding: 8px 18px;                           /* ruimte binnen verwijderknop */
+            border: none;                                /* geen rand */
+            border-radius: 5px;                          /* afgeronde hoeken */
+            background: var(--tier-admin-bg);            /* donkerrode achtergrond */
+            color: var(--tier-admin-fg);                 /* heldere rode tekst */
+            font-size: 0.9rem;                           /* tekstgrootte */
+            cursor: pointer;                             /* handcursor */
+            border: 1px solid var(--tier-admin-fg);      /* rode rand */
         }
 
-        .btn-confirm-delete:hover { background: #c82333; } /* donkerder rood bij hover — aanpasbaar */
+        .btn-confirm-delete:hover { background: #4a2020; } /* iets lichter rood bij hover */
 
         /* ─── Timestamp label ─── */
-        #lastRefresh { font-size: 0.82rem; color: #888; margin-bottom: 20px; } /* kleine grijze tekst — aanpasbaar */
+        #lastRefresh { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; } /* gedimde tijdstempel */
     </style>
 </head>
 <body>
