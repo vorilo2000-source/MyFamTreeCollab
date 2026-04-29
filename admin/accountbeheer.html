@@ -2,6 +2,7 @@
      Admin accountbeheer pagina — kleurenschema bijgewerkt naar #565656 thema
      Wijziging t.o.v. v2.0.2: alleen kleuren in <style> aangepast, geen structuur
      ======================================================================= -->
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -139,32 +140,27 @@
             color: var(--text-primary);                  /* lichte tekst */
         }
 
-.toolbar input::placeholder { color: var(--text-muted); }  /* gedimde placeholder tekst */
+        .toolbar input::placeholder { color: var(--text-muted); }  /* gedimde placeholder tekst */
 
-.table-wrap {
-    overflow-x: auto;                    /* horizontaal scrollen op kleine schermen */
-    border: 1px solid var(--border);     /* rand om de tabel */
-    border-radius: 8px;                  /* afgeronde hoeken */
-    background: #fff;                    /* witte achtergrond voor leesbare tabelrijen */
-}
-
-.toolbar select, .toolbar button {
-    padding: 8px 14px;                   /* ruimte binnen select en knop */
-    border: 1px solid var(--border);     /* rand */
-    border-radius: 5px;                  /* afgeronde hoeken */
-    font-size: 0.9rem;                   /* tekstgrootte */
-    background: var(--bg-input);         /* donkere achtergrond */
-    color: #333;                         /* donkere tekst */
-    cursor: pointer;                     /* handcursor */
-}
-
-.toolbar button:hover { background: var(--bg-card-hover); }  /* iets lichter bij hover */
-        /* ─── Gebruikerstabel ─── */
-        .table-wrap {
-            overflow-x: auto;                            /* horizontaal scrollen op kleine schermen */
-            border: 1px solid var(--border);             /* rand om de tabel */
-            border-radius: 8px;                          /* afgeronde hoeken */
+        .toolbar select, .toolbar button {
+            padding: 8px 14px;                          /* ruimte binnen select en knop */
+            border: 1px solid var(--border);             /* rand */
+            border-radius: 5px;                          /* afgeronde hoeken */
+            font-size: 0.9rem;                           /* tekstgrootte */
+            background: var(--bg-input);                 /* donkere achtergrond */
+            color: var(--text-primary);                  /* lichte tekst */
+            cursor: pointer;                             /* handcursor */
         }
+
+        .toolbar button:hover { background: var(--bg-card-hover); }  /* iets lichter bij hover */
+
+        /* ─── Gebruikerstabel ─── */
+ .table-wrap {
+    overflow-x: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #6e6e6e;    /* ← middelgrijs voor de tabelrijen */
+}
 
         table {
             width: 100%;                                 /* volledige breedte */
