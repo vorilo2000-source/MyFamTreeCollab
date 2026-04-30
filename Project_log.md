@@ -4,6 +4,36 @@
 > Chronologisch overzicht van alle sessies en wijzigingen.
 ---
 
+## Sessie 2026-04-30
+
+### Onderwerp
+Kritieke Supabase beveiligingskwetsbaarheden opgelost
+
+### Uitgevoerde acties
+1. `public.admin_users` view verwijderd en opnieuw aangemaakt met `SECURITY INVOKER`
+   — view draait niet meer met superuser-rechten
+2. View selecteert niet langer uit `auth.users` — alleen uit `public.profiles`
+3. RLS policy "Admin kan alle profielen bijwerken" vervangen
+   — verwijzing naar `user_metadata` (gebruiker-aanpasbaar) vervangen door `profiles.is_admin`
+4. Nieuwe RLS policy toegevoegd die voorkomt dat gebruikers `is_admin` zelf kunnen wijzigen
+5. `REVOKE` toegepast: `anon` en `authenticated` kunnen `auth.users` niet direct bevragen
+6. `anon` rol heeft geen toegang meer tot `public.admin_users` view
+
+### Bestanden gewijzigd
+- Supabase database (SQL Editor): schema/policies aangepast
+- `fix_security_vulnerabilities.sql` toegevoegd aan project (documentatie)
+
+### Verificatie
+- View `admin_users` bestaat zonder SECURITY DEFINER ✅
+- 0 policies refereren nog aan `user_metadata` ✅
+- `anon` heeft geen toegang tot view of `auth.users` ✅
+
+### Openstaand
+- Controleer frontend (`admin/`) of JavaScript nog `user_metadata.role` controleert
+  → moet worden aangepast naar query op `profiles.is_admin`
+
+---
+
 ## Sessie 19 — Berichtenboard herontwerp + notificatie-badge + bugfixes
 
 **Datum:** 2026-04-29
