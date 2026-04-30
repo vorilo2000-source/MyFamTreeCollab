@@ -1,5 +1,5 @@
-# BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-04-26
+md — MyFamTreeCollab
+## Bijgewerkt: 2026-04-30
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -219,7 +219,7 @@
 | F5-02 | Gebruikersaccounts: registreren, inloggen, uitloggen | ✅ Gedaan |
 | F5-03 | Data sync tussen apparaten | ✅ Gedaan |
 | F5-04 | Stamboom delen met andere gebruikers (viewer + editor rollen) | ✅ Gedaan |
-|| F5-05 | Samenwerkingsmodus: berichtenboard per persoon (collab.html) | ✅ Gedaan (v2.1.0) |
+| F5-05 | Samenwerkingsmodus: berichtenboard per persoon (collab.html) | ✅ Gedaan (v2.1.0) |
 | F5-06 | Versiebeheer per persoon (wijzigingshistorie) | ✅ Gedaan |
 | F5-07 | Meerdere stambomen per gebruiker in cloud | ✅ Gedaan |
 | F5-08 | account.html — overzicht stambomen, backups, profiel | ✅ Gedaan |
@@ -336,9 +336,7 @@
 | BF-18 | accountbeheer.js — `window._supabase` bestaat niet — vervangen door `window.AuthModule.getClient()` | ✅ Opgelost |
 | BF-19 | accountbeheer.html — uitlogknop verwees naar `../../index.html` (buiten repo root) — gecorrigeerd naar `../index.html` | ✅ Opgelost |
 
----
-
-### Voeg toe aan "Bugfixes / Verbeteringen sessie 2026-04-27":
+## Bugfixes sessie 2026-04-27
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
@@ -347,6 +345,18 @@
 | VB-05 | collab.js v2.1.0 — 4 statussen (nieuw/open/inbehandeling/gesloten) met icoontjes 🆕🔓🔄✅ | ✅ Gedaan |
 | VB-06 | collab.js v2.1.0 — Stamboom-sectie header boven discussielijst | ✅ Gedaan |
 | VB-07 | collab.js v2.1.0 — Bijdrager voornaam (eerste woord) per bericht | ✅ Gedaan |
+
+## Bugfixes & verbeteringen sessie 2026-04-30
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-23 | Supabase CRITICAL — `public.admin_users` view lekte `auth.users` data naar anon/authenticated | ✅ Opgelost |
+| BF-24 | Supabase CRITICAL — `public.admin_users` view had `SECURITY DEFINER` — RLS werd omzeild | ✅ Opgelost |
+| BF-25 | Supabase CRITICAL — RLS policy `Admin kan alle profielen bijwerken` gebruikte `user_metadata` (door gebruiker aanpasbaar) | ✅ Opgelost |
+| BF-26 | `public.profiles` had geen `email` kolom — admintabel toonde lege e-mailkolom | ✅ Opgelost |
+| BF-27 | `accountbeheer.js` bevroeg `last_sign_in_at` uit `admin_users` view — kolom bestaat niet meer na security fix | ✅ Opgelost |
+| VB-08 | `accountbeheer.js` v1.1.0 — email geladen uit `profiles` i.p.v. `auth.users` | ✅ Gedaan |
+| VB-09 | `accountbeheer.html` v2.2.0 — kolom "Laatste login" verwijderd, colspan 6→5 | ✅ Gedaan |
 
 ---
 
