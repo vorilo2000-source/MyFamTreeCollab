@@ -2,6 +2,7 @@
 ## Bijgewerkt: 2026-04-29
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+> 
 ---
 
 ## Sessie 2026-04-30 — Supabase beveiligingsfixes
