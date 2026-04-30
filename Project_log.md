@@ -4,33 +4,33 @@
 > Chronologisch overzicht van alle sessies en wijzigingen.
 ---
 
-## Sessie 2026-04-30
-
-### Onderwerp
-Kritieke Supabase beveiligingskwetsbaarheden opgelost
+## Sessie 2026-04-30 — Supabase beveiligingsfixes
 
 ### Uitgevoerde acties
-1. `public.admin_users` view verwijderd en opnieuw aangemaakt met `SECURITY INVOKER`
-   — view draait niet meer met superuser-rechten
-2. View selecteert niet langer uit `auth.users` — alleen uit `public.profiles`
-3. RLS policy "Admin kan alle profielen bijwerken" vervangen
-   — verwijzing naar `user_metadata` (gebruiker-aanpasbaar) vervangen door `profiles.is_admin`
-4. Nieuwe RLS policy toegevoegd die voorkomt dat gebruikers `is_admin` zelf kunnen wijzigen
-5. `REVOKE` toegepast: `anon` en `authenticated` kunnen `auth.users` niet direct bevragen
-6. `anon` rol heeft geen toegang meer tot `public.admin_users` view
+1. `public.admin_users` view herschreven met `SECURITY INVOKER`
+   — niet meer via `auth.users`, alleen via `public.profiles`
+2. RLS policy "Admin kan alle profielen bijwerken" vervangen
+   — `user_metadata` vervangen door `profiles.is_admin`
+3. RLS policy toegevoegd: gebruiker kan `is_admin` niet zelf wijzigen
+4. `REVOKE` toegepast op `anon` en `authenticated` voor `auth.users`
+5. `email` kolom toegevoegd aan `public.profiles`
+   — trigger `on_auth_user_created` kopieert email bij registratie
+   — bestaande rijen gevuld via UPDATE
+6. `admin_users` view uitgebreid met `email` kolom (uit profiles)
+7. `last_sign_in_at` verwijderd uit view, JS en HTML (kwam uit auth.users)
+8. `accountbeheer.js` bijgewerkt naar v1.1.0
+9. `accountbeheer.html` bijgewerkt naar v2.2.0
 
 ### Bestanden gewijzigd
-- Supabase database (SQL Editor): schema/policies aangepast
-- `fix_security_vulnerabilities.sql` toegevoegd aan project (documentatie)
+- Supabase database (SQL Editor)
+- `js/accountbeheer.js` → v1.1.0
+- `admin/accountbeheer.html` → v2.2.0
+- `fix_security_vulnerabilities.sql` toegevoegd (documentatie)
 
 ### Verificatie
-- View `admin_users` bestaat zonder SECURITY DEFINER ✅
-- 0 policies refereren nog aan `user_metadata` ✅
-- `anon` heeft geen toegang tot view of `auth.users` ✅
-
-### Openstaand
-- Controleer frontend (`admin/`) of JavaScript nog `user_metadata.role` controleert
-  → moet worden aangepast naar query op `profiles.is_admin`
+- Alle 3 Supabase beveiligingswaarschuwingen opgelost ✅
+- Adminpagina laadt gebruikers correct met email uit profiles ✅
+- Geen `user_metadata` meer in RLS policies ✅
 
 ---
 
