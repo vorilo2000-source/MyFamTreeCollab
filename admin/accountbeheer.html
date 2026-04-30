@@ -1,6 +1,8 @@
-<!-- ======================= admin/accountbeheer.html v2.1.0 =======================
-     Admin accountbeheer pagina — kleurenschema bijgewerkt naar #565656 thema
-     Wijziging t.o.v. v2.0.2: alleen kleuren in <style> aangepast, geen structuur
+<!-- ======================= admin/accountbeheer.html v2.2.0 =======================
+     Admin accountbeheer pagina
+     Wijziging t.o.v. v2.1.0:
+     - Kolom "Laatste login" verwijderd (last_sign_in_at kwam uit auth.users — niet meer toegestaan)
+     - colspan aangepast van 6 naar 5
      ======================================================================= -->
 
 <!DOCTYPE html>
@@ -155,12 +157,12 @@
         .toolbar button:hover { background: var(--bg-card-hover); }  /* iets lichter bij hover */
 
         /* ─── Gebruikerstabel ─── */
- .table-wrap {
-    overflow-x: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    background: #6e6e6e;    /* ← middelgrijs voor de tabelrijen */
-}
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #6e6e6e;                         /* middelgrijs voor de tabelrijen */
+        }
 
         table {
             width: 100%;                                 /* volledige breedte */
@@ -182,9 +184,9 @@
         }
 
         tbody tr { border-bottom: 1px solid var(--border-light); background: #6e6e6e; }  /* middelgrijs + rijscheiding */
-tbody tr:last-child { border-bottom: none; }                 /* geen lijn na laatste rij */
-tbody tr:hover { background: var(--bg-row-hover); }         /* donkerder bij hover */
-tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); } /* cel opmaak */
+        tbody tr:last-child { border-bottom: none; }                 /* geen lijn na laatste rij */
+        tbody tr:hover { background: var(--bg-row-hover); }         /* donkerder bij hover */
+        tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); } /* cel opmaak */
 
         .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* lange e-mails afkappen */
 
@@ -228,8 +230,8 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
             transition: all 0.15s;                       /* vloeiende hover animatie */
         }
 
-        .btn-action:hover        { background: var(--bg-card-hover); }                                          /* lichter grijs bij opslaan hover */
-        .btn-action.danger:hover { background: var(--tier-admin-bg); border-color: var(--tier-admin-fg); color: var(--tier-admin-fg); } /* rood bij verwijderen hover */
+        .btn-action:hover        { background: var(--bg-card-hover); }
+        .btn-action.danger:hover { background: var(--tier-admin-bg); border-color: var(--tier-admin-fg); color: var(--tier-admin-fg); }
 
         .loading-row td, .empty-row td {
             text-align: center;                          /* centreer laad/leeg tekst */
@@ -247,7 +249,7 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
             font-size: 0.88rem;                          /* tekstgrootte */
             padding: 10px 18px;                         /* ruimte binnen de toast */
             border-radius: 6px;                          /* afgeronde hoeken */
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);     /* zwaardere schaduw op donker thema */
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);     /* zwaardere schaduw */
             opacity: 0;                                  /* standaard onzichtbaar */
             transform: translateY(8px);                  /* licht naar beneden verschoven */
             transition: opacity 0.2s, transform 0.2s;   /* vloeiende animatie */
@@ -256,14 +258,14 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
             max-width: 300px;                            /* maximale breedte */
         }
 
-        #toast.show  { opacity: 1; transform: translateY(0); }              /* zichtbaar maken */
-        #toast.error { background: var(--tier-admin-bg); color: var(--tier-admin-fg); } /* rood bij fout */
+        #toast.show  { opacity: 1; transform: translateY(0); }
+        #toast.error { background: var(--tier-admin-bg); color: var(--tier-admin-fg); }
 
         /* ─── Bevestigingsmodal ─── */
         .modal-overlay {
             position: fixed;                             /* vast op het scherm */
             inset: 0;                                    /* volledige viewport bedekken */
-            background: rgba(0,0,0,0.65);               /* donkerdere overlay op donker thema */
+            background: rgba(0,0,0,0.65);               /* donkere overlay */
             display: flex;                               /* flexbox voor centreren */
             align-items: center;                         /* verticaal centreren */
             justify-content: center;                     /* horizontaal centreren */
@@ -273,7 +275,7 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
             transition: opacity 0.2s;                    /* vloeiende animatie */
         }
 
-        .modal-overlay.open { opacity: 1; pointer-events: all; }            /* modal openen */
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
 
         .modal-box {
             background: var(--bg-modal);                 /* donkere modal achtergrond */
@@ -285,35 +287,34 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);     /* zwaardere schaduw */
         }
 
-        .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: var(--text-primary); }   /* modaltitel licht */
-        .modal-box p  { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }  /* modaltekst gedimed */
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }                                     /* knoppen rechts */
+        .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: var(--text-primary); }
+        .modal-box p  { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
         .btn-cancel {
-            padding: 8px 18px;                           /* ruimte binnen annuleerknop */
-            border: 1px solid var(--border);             /* rand */
-            border-radius: 5px;                          /* afgeronde hoeken */
-            background: var(--bg-input);                 /* donkere achtergrond */
-            color: var(--text-primary);                  /* lichte tekst */
-            font-size: 0.9rem;                           /* tekstgrootte */
-            cursor: pointer;                             /* handcursor */
+            padding: 8px 18px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
         }
 
         .btn-confirm-delete {
-            padding: 8px 18px;                           /* ruimte binnen verwijderknop */
-            border: none;                                /* geen rand */
-            border-radius: 5px;                          /* afgeronde hoeken */
-            background: var(--tier-admin-bg);            /* donkerrode achtergrond */
-            color: var(--tier-admin-fg);                 /* heldere rode tekst */
-            font-size: 0.9rem;                           /* tekstgrootte */
-            cursor: pointer;                             /* handcursor */
-            border: 1px solid var(--tier-admin-fg);      /* rode rand */
+            padding: 8px 18px;
+            border: 1px solid var(--tier-admin-fg);
+            border-radius: 5px;
+            background: var(--tier-admin-bg);
+            color: var(--tier-admin-fg);
+            font-size: 0.9rem;
+            cursor: pointer;
         }
 
-        .btn-confirm-delete:hover { background: #4a2020; } /* iets lichter rood bij hover */
+        .btn-confirm-delete:hover { background: #4a2020; }
 
         /* ─── Timestamp label ─── */
-        #lastRefresh { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; } /* gedimde tijdstempel */
+        #lastRefresh { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -372,7 +373,7 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
       <button id="btnRefresh">↻ Vernieuwen</button>
     </div>
 
-    <!-- Tabel -->
+    <!-- Tabel — 5 kolommen (laatste login verwijderd) -->
     <div class="table-wrap">
       <table>
         <thead>
@@ -381,12 +382,11 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
             <th>Huidige tier</th>
             <th>Tier wijzigen</th>
             <th>Aangemeld op</th>
-            <th>Laatste login</th>
             <th>Acties</th>
           </tr>
         </thead>
         <tbody id="usersTbody">
-          <tr class="loading-row"><td colspan="6">Laden…</td></tr>
+          <tr class="loading-row"><td colspan="5">Laden…</td></tr>
         </tbody>
       </table>
     </div>
@@ -427,12 +427,10 @@ tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary
             document.getElementById('topbar-placeholder').innerHTML = data;    // TopBar HTML in de DOM zetten
 
             // Stap 2: topbar.js dynamisch laden NA de TopBar HTML
-            // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
             var s = document.createElement('script');                          // nieuw script element aanmaken
             s.src = '/MyFamTreeCollab/js/topbar.js';                          // pad naar topbar.js
             s.onload = function() {
                 // Stap 3: accountbeheer.js laden NA topbar.js
-                // topbar.js herstelt de Supabase sessie — accountbeheer.js heeft dit nodig
                 var p = document.createElement('script');                      // nieuw script element aanmaken
                 p.src = '/MyFamTreeCollab/js/accountbeheer.js';               // pad naar accountbeheer.js
                 document.body.appendChild(p);                                  // script toevoegen aan de DOM
