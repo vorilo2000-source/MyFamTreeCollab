@@ -1,9 +1,11 @@
-
-// js/accountbeheer.js — v1.0.9 — Admin accountbeheer logica
+// js/accountbeheer.js — v1.1.0 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
 // Vereist: window.AuthModule (auth.js), Supabase SDK, topbar.js (sessie herstel)
 // Toegang: alleen admin — init() controleert tier via AuthModule.getTier()
 //
+// v1.1.0: last_sign_in_at verwijderd (kwam uit auth.users — niet meer toegestaan)
+//         email wordt nu geladen uit public.profiles (veilig)
+//         admin_users view updated: bevat nu email kolom vanuit profiles
 // v1.0.8: automatische refresh na laden (setTimeout 1.5s)
 // v1.0.7: eigen topbar en logoutLink verwijderd
 // v1.0.6: init() gebruikt onAuthStateChange + directe sessiecheck als fallback
@@ -12,12 +14,13 @@
 
 'use strict';
 
-const sb = window.AuthModule.getClient();
+const sb = window.AuthModule.getClient(); // Supabase client via AuthModule
 
-let allUsers      = [];
-let filteredUsers = [];
-let deleteTarget  = null;
+let allUsers      = []; // Alle geladen gebruikers
+let filteredUsers = []; // Gefilterde subset voor weergave
+let deleteTarget  = null; // Gebruiker die verwijderd wordt
 
+// DOM referenties
 const tbody        = document.getElementById('usersTbody');
 const searchInput  = document.getElementById('searchInput');
 const tierFilter   = document.getElementById('tierFilter');
@@ -34,181 +37,223 @@ const statEditor   = document.getElementById('statEditor');
 const statOwner    = document.getElementById('statOwner');
 const statAdmin    = document.getElementById('statAdmin');
 
+// ---------------------------------------------------------------------------
+// showToast(msg, isError)
+// Toont een tijdelijke notificatie onderaan het scherm
+// ---------------------------------------------------------------------------
 function showToast(msg, isError = false) {
-  toast.textContent = msg;
-  toast.className = 'show' + (isError ? ' error' : '');
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => { toast.className = ''; }, 3000);
+  toast.textContent = msg; // Bericht instellen
+  toast.className = 'show' + (isError ? ' error' : ''); // Klasse instellen
+  clearTimeout(toast._timer); // Vorige timer annuleren
+  toast._timer = setTimeout(() => { toast.className = ''; }, 3000); // Na 3s verbergen
 }
 
+// ---------------------------------------------------------------------------
+// updateStats(users)
+// Berekent en toont aantallen per tier in de stat-kaarten
+// ---------------------------------------------------------------------------
 function updateStats(users) {
-  statTotal.textContent  = users.length;
-  statViewer.textContent = users.filter(u => u.tier === 'viewer').length;
-  statEditor.textContent = users.filter(u => u.tier === 'editor').length;
-  statOwner.textContent  = users.filter(u => u.tier === 'owner').length;
-  statAdmin.textContent  = users.filter(u => u.tier === 'admin').length;
+  statTotal.textContent  = users.length; // Totaal aantal gebruikers
+  statViewer.textContent = users.filter(u => u.tier === 'viewer').length; // Aantal viewers
+  statEditor.textContent = users.filter(u => u.tier === 'editor').length; // Aantal editors
+  statOwner.textContent  = users.filter(u => u.tier === 'owner').length;  // Aantal owners
+  statAdmin.textContent  = users.filter(u => u.tier === 'admin').length;  // Aantal admins
 }
 
+// ---------------------------------------------------------------------------
+// fmtDate(iso)
+// Formatteert een ISO datumstring naar Nederlands formaat (dd-mm-yyyy)
+// ---------------------------------------------------------------------------
 function fmtDate(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  if (!iso) return '—'; // Geen datum beschikbaar
+  const d = new Date(iso); // Datum object aanmaken
+  return d.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' }); // Nederlands formaat
 }
 
+// ---------------------------------------------------------------------------
+// renderTable(users)
+// Genereert tabelrijen voor de gegeven gebruikerslijst
+// ---------------------------------------------------------------------------
 function renderTable(users) {
-  tbody.innerHTML = '';
+  tbody.innerHTML = ''; // Tabel leegmaken
   if (users.length === 0) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Geen gebruikers gevonden.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Geen gebruikers gevonden.</td></tr>'; // Lege staat
     return;
   }
   users.forEach(u => {
-    const tr = document.createElement('tr');
+    const tr = document.createElement('tr'); // Nieuwe rij aanmaken
     const tierOptions = ['viewer', 'editor', 'owner', 'admin']
-      .map(t => `<option value="${t}" ${t === u.tier ? 'selected' : ''}>${t}</option>`)
+      .map(t => `<option value="${t}" ${t === u.tier ? 'selected' : ''}>${t}</option>`) // Dropdown opties
       .join('');
     tr.innerHTML = `
       <td class="col-email">${u.email || '—'}</td>
       <td><span class="tier-badge ${u.tier}">${u.tier}</span></td>
       <td><select class="tier-select" data-uid="${u.id}">${tierOptions}</select></td>
       <td>${fmtDate(u.created_at)}</td>
-      <td>${fmtDate(u.last_sign_in_at)}</td>
       <td>
         <div class="row-actions">
           <button class="btn-action btn-save-tier" data-uid="${u.id}">Opslaan</button>
           <button class="btn-action danger btn-delete" data-uid="${u.id}" data-email="${u.email}">Verwijderen</button>
         </div>
       </td>`;
-    tbody.appendChild(tr);
+    tbody.appendChild(tr); // Rij toevoegen aan de tabel
   });
-  bindRowEvents();
+  bindRowEvents(); // Knoppen koppelen aan events
 }
 
+// ---------------------------------------------------------------------------
+// bindRowEvents()
+// Koppelt click-events aan opslaan- en verwijderknoppen per rij
+// ---------------------------------------------------------------------------
 function bindRowEvents() {
   document.querySelectorAll('.btn-save-tier').forEach(btn => {
     btn.addEventListener('click', () => {
-      const uid = btn.dataset.uid;
-      const sel = document.querySelector(`.tier-select[data-uid="${uid}"]`);
-      saveTier(uid, sel.value);
+      const uid = btn.dataset.uid; // Gebruikers-ID ophalen
+      const sel = document.querySelector(`.tier-select[data-uid="${uid}"]`); // Dropdown ophalen
+      saveTier(uid, sel.value); // Tier opslaan
     });
   });
   document.querySelectorAll('.btn-delete').forEach(btn => {
     btn.addEventListener('click', () => {
-      deleteTarget = { id: btn.dataset.uid, email: btn.dataset.email };
-      modalName.textContent = deleteTarget.email;
-      modalOverlay.classList.add('open');
+      deleteTarget = { id: btn.dataset.uid, email: btn.dataset.email }; // Doelgebruiker instellen
+      modalName.textContent = deleteTarget.email; // Naam in modal tonen
+      modalOverlay.classList.add('open'); // Modal openen
     });
   });
 }
 
+// ---------------------------------------------------------------------------
+// loadUsers()
+// Haalt alle gebruikers op uit de admin_users view en rendert de tabel
+// ---------------------------------------------------------------------------
 async function loadUsers() {
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Laden...</td></tr>';
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="5">Laden...</td></tr>'; // Laad indicator
   try {
     const { data: profiles, error } = await sb
       .from('admin_users')
-      .select('id, username, tier, created_at, email, last_sign_in_at')
-      .order('created_at', { ascending: false });
+      .select('id, username, email, tier, created_at') // email komt nu uit profiles (veilig)
+      .order('created_at', { ascending: false }); // Nieuwste eerst
     if (error) throw error;
-    allUsers      = profiles || [];
-    filteredUsers = [...allUsers];
-    updateStats(allUsers);
-    renderTable(filteredUsers);
-    lastRefresh.textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+    allUsers      = profiles || []; // Alle gebruikers opslaan
+    filteredUsers = [...allUsers];  // Gefilterde lijst initialiseren
+    updateStats(allUsers);          // Statistieken bijwerken
+    renderTable(filteredUsers);     // Tabel renderen
+    lastRefresh.textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL'); // Tijdstempel
   } catch (err) {
     console.error('[accountbeheer] loadUsers fout:', err);
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Fout bij laden: ${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Fout bij laden: ${err.message}</td></tr>`; // Foutmelding
     showToast('Laden mislukt: ' + err.message, true);
   }
 }
 
+// ---------------------------------------------------------------------------
+// saveTier(uid, newTier)
+// Wijzigt de tier van een gebruiker via een beveiligde RPC call
+// ---------------------------------------------------------------------------
 async function saveTier(uid, newTier) {
   try {
-    const { error } = await sb.rpc('update_user_tier', { target_id: uid, new_tier: newTier });
+    const { error } = await sb.rpc('update_user_tier', { target_id: uid, new_tier: newTier }); // RPC aanroepen
     if (error) throw error;
-    const user = allUsers.find(u => u.id === uid);
-    if (user) user.tier = newTier;
-    updateStats(allUsers);
-    renderTable(filteredUsers);
-    showToast(`Tier bijgewerkt naar "${newTier}"`);
+    const user = allUsers.find(u => u.id === uid); // Gebruiker opzoeken in lokale lijst
+    if (user) user.tier = newTier; // Lokaal bijwerken
+    updateStats(allUsers);     // Statistieken bijwerken
+    renderTable(filteredUsers); // Tabel opnieuw renderen
+    showToast(`Tier bijgewerkt naar "${newTier}"`); // Bevestiging tonen
   } catch (err) {
     console.error('[accountbeheer] saveTier fout:', err);
     showToast('Opslaan mislukt: ' + err.message, true);
   }
 }
 
+// ---------------------------------------------------------------------------
+// deleteUser(uid)
+// Verwijdert een gebruiker via een beveiligde RPC call
+// ---------------------------------------------------------------------------
 async function deleteUser(uid) {
   try {
-    const { error } = await sb.rpc('delete_user_profile', { target_id: uid });
+    const { error } = await sb.rpc('delete_user_profile', { target_id: uid }); // RPC aanroepen
     if (error) throw error;
-    allUsers      = allUsers.filter(u => u.id !== uid);
-    filteredUsers = filteredUsers.filter(u => u.id !== uid);
-    updateStats(allUsers);
-    renderTable(filteredUsers);
-    showToast('Gebruiker verwijderd.');
+    allUsers      = allUsers.filter(u => u.id !== uid);      // Uit lokale lijst verwijderen
+    filteredUsers = filteredUsers.filter(u => u.id !== uid); // Uit gefilterde lijst verwijderen
+    updateStats(allUsers);      // Statistieken bijwerken
+    renderTable(filteredUsers); // Tabel opnieuw renderen
+    showToast('Gebruiker verwijderd.'); // Bevestiging tonen
   } catch (err) {
     console.error('[accountbeheer] deleteUser fout:', err);
     showToast('Verwijderen mislukt: ' + err.message, true);
   }
 }
 
+// ---------------------------------------------------------------------------
+// applyFilters()
+// Filtert gebruikers op zoekterm en tier, rendert de gefilterde tabel
+// ---------------------------------------------------------------------------
 function applyFilters() {
-  const q    = searchInput.value.trim().toLowerCase();
-  const tier = tierFilter.value;
+  const q    = searchInput.value.trim().toLowerCase(); // Zoekterm ophalen
+  const tier = tierFilter.value; // Geselecteerde tier ophalen
   filteredUsers = allUsers.filter(u => {
     const matchQ    = !q || (u.email || '').toLowerCase().includes(q)
-                         || (u.username || '').toLowerCase().includes(q);
-    const matchTier = tier === 'all' || u.tier === tier;
+                         || (u.username || '').toLowerCase().includes(q); // Zoek op email of username
+    const matchTier = tier === 'all' || u.tier === tier; // Filter op tier
     return matchQ && matchTier;
   });
-  renderTable(filteredUsers);
+  renderTable(filteredUsers); // Gefilterde tabel renderen
 }
 
-searchInput.addEventListener('input', applyFilters);
-tierFilter.addEventListener('change', applyFilters);
-btnRefresh.addEventListener('click', loadUsers);
+// ---------------------------------------------------------------------------
+// Event listeners
+// ---------------------------------------------------------------------------
+searchInput.addEventListener('input', applyFilters);   // Zoeken bij typen
+tierFilter.addEventListener('change', applyFilters);   // Filteren bij selectie
+btnRefresh.addEventListener('click', loadUsers);        // Handmatig vernieuwen
 
 btnCancel.addEventListener('click', () => {
-  modalOverlay.classList.remove('open');
-  deleteTarget = null;
+  modalOverlay.classList.remove('open'); // Modal sluiten
+  deleteTarget = null; // Doelgebruiker resetten
 });
 
 btnConfirm.addEventListener('click', async () => {
   if (!deleteTarget) return;
-  modalOverlay.classList.remove('open');
-  await deleteUser(deleteTarget.id);
-  deleteTarget = null;
+  modalOverlay.classList.remove('open'); // Modal sluiten
+  await deleteUser(deleteTarget.id);     // Gebruiker verwijderen
+  deleteTarget = null; // Doelgebruiker resetten
 });
 
 modalOverlay.addEventListener('click', e => {
   if (e.target === modalOverlay) {
-    modalOverlay.classList.remove('open');
+    modalOverlay.classList.remove('open'); // Modal sluiten bij klik buiten de box
     deleteTarget = null;
   }
 });
 
+// ---------------------------------------------------------------------------
+// init()
+// Controleert of de ingelogde gebruiker admin is, laadt daarna de gebruikerslijst
+// ---------------------------------------------------------------------------
 async function init() {
-  const client = window.AuthModule.getClient();
-  let geladen = false;
+  const client = window.AuthModule.getClient(); // Supabase client ophalen
+  let geladen = false; // Voorkomt dubbel laden
 
   client.auth.onAuthStateChange(async (event, session) => {
-    if (geladen) return;
+    if (geladen) return; // Al geladen, niets doen
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-      if (!session) return;
+      if (!session) return; // Geen sessie, niets doen
       geladen = true;
-      const tier = await window.AuthModule.getTier();
-      if (tier !== 'admin') { window.location.href = '/MyFamTreeCollab/index.html'; return; }
-      await loadUsers();
-      setTimeout(loadUsers, 1500);
+      const tier = await window.AuthModule.getTier(); // Tier ophalen uit profiles (veilig)
+      if (tier !== 'admin') { window.location.href = '/MyFamTreeCollab/index.html'; return; } // Geen admin → redirect
+      await loadUsers(); // Gebruikers laden
+      setTimeout(loadUsers, 1500); // Nogmaals laden na 1.5s (sessie volledig hersteld)
     }
   });
 
-  const { data } = await client.auth.getSession();
+  const { data } = await client.auth.getSession(); // Directe sessiecheck als fallback
   if (data.session && !geladen) {
     geladen = true;
-    const tier = await window.AuthModule.getTier();
-    if (tier !== 'admin') { window.location.href = '/MyFamTreeCollab/index.html'; return; }
-    await loadUsers();
-    setTimeout(loadUsers, 1500);
+    const tier = await window.AuthModule.getTier(); // Tier ophalen uit profiles (veilig)
+    if (tier !== 'admin') { window.location.href = '/MyFamTreeCollab/index.html'; return; } // Geen admin → redirect
+    await loadUsers(); // Gebruikers laden
+    setTimeout(loadUsers, 1500); // Nogmaals laden na 1.5s
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', init); // Init starten na laden van de DOM
