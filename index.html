@@ -270,10 +270,6 @@
 <script src="js/demo.js"></script>   <!-- Demo: DemoModule — laadt fictieve stamboom -->
 
 <script>
-    // Pagina tracking registreren — SiteAnalytics.trackPage() stuurt bezoek naar Supabase
-    // Moet na auth.js staan zodat tier van ingelogde gebruiker meegestuurd wordt
-    SiteAnalytics.trackPage("home"); // "home" = naam van deze pagina in de analytics data
-
     // ======================= TopBar laden =======================
     // TopBar HTML ophalen en injecteren, daarna topbar.js laden
     fetch('/MyFamTreeCollab/Layout/TopBar.html') // TopBar HTML ophalen
@@ -299,11 +295,14 @@
             document.getElementById('footer-placeholder').innerHTML = data; // Footer in DOM zetten
         });
 
+    // ======================= Pagina tracking =======================
+    // Na fetch-calls — auth.js is geladen, tier van gebruiker beschikbaar
+    SiteAnalytics.trackPage("home"); // Bezoek registreren in Supabase page_visits tabel
+
     // ======================= Demo knop =======================
     document.addEventListener('DOMContentLoaded', function() {
         var btn = document.getElementById('btnDemo'); // Demo knop ophalen
-        if (!btn) return;                             // Knop niet gevonden â stoppen
-
+        if (!btn) return;                             // Knop niet gevonden — stoppen
         btn.addEventListener('click', async function() {          // Klik op demo knop
             if (!window.DemoModule) {                             // DemoModule niet geladen
                 alert('Demo niet beschikbaar. Probeer opnieuw.'); // Foutmelding tonen
@@ -311,14 +310,10 @@
             }
             btn.textContent = '⏳ Laden...';                      // Knop tekst aanpassen tijdens laden
             btn.disabled = true;                                  // Knop uitschakelen tijdens laden
-
             await window.DemoModule.loadDemo(true);               // Demo stamboom laden (force = true)
-
-            // Doorsturen naar manage.html na laden van de demo
             window.location.href = '/MyFamTreeCollab/stamboom/manage.html'; // Navigeren naar stamboom
         });
     });
 </script>
-
 </body>
 </html>
