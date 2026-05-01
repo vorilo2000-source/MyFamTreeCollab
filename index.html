@@ -1,8 +1,9 @@
 <!-- ======================= home/index.html v2.2.0 =======================
-     v2.2.0: Demo knop toegevoegd naast "Start je stamboom"
+     v2.2.1: Demo knop toegevoegd naast "Start je stamboom"
      - Knop "Bekijk demo" laadt demo stamboom via DemoModule
      - Demotekst toegevoegd in hero sectie
      - demo.js geladen na auth.js
+     - site analytics
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -265,9 +266,14 @@
 <script src="js/schema.js"></script> <!-- Schema: StamboomSchema -->
 <script src="js/storage.js"></script> <!-- Opslag: StamboomStorage -->
 <script src="js/auth.js"></script>   <!-- Auth: AuthModule -->
-<script src="js/demo.js"></script>   <!-- Demo: DemoModule â laadt fictieve stamboom -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics -->
+<script src="js/demo.js"></script>   <!-- Demo: DemoModule — laadt fictieve stamboom -->
 
 <script>
+    // Pagina tracking registreren — SiteAnalytics.trackPage() stuurt bezoek naar Supabase
+    // Moet na auth.js staan zodat tier van ingelogde gebruiker meegestuurd wordt
+    SiteAnalytics.trackPage("home"); // "home" = naam van deze pagina in de analytics data
+
     // ======================= TopBar laden =======================
     // TopBar HTML ophalen en injecteren, daarna topbar.js laden
     fetch('/MyFamTreeCollab/Layout/TopBar.html') // TopBar HTML ophalen
