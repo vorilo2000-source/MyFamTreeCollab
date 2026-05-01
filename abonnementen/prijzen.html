@@ -1,4 +1,5 @@
-<!-- ======================= abonnementen/prijzen.html v2.1.0 =======================
+<!-- ======================= abonnementen/prijzen.html v2.2.0 =======================
+     v2.2.0 : site anlytics toegevoegd
      v2.1.0 fixes:
        - Kolomhoofden (Gratis/Viewer/Editor/Owner + badges) kregen expliciete
          donkere tekstkleur zodat ze leesbaar zijn op #f4f6f9 achtergrond
@@ -636,7 +637,13 @@
         });
 </script>
 
-<!-- Geen pagina-specifieke scripts nodig voor prijzen.html -->
+<!--  pagina-specifieke scripts nodig voor prijzen.html -->
+     <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics -->
+
+<script>
+    // Pagina tracking registreren — SiteAnalytics.trackPage() stuurt bezoek naar Supabase
+    // Moet na auth.js staan zodat tier van ingelogde gebruiker meegestuurd wordt
+    SiteAnalytics.trackPage("home"); // "home" = naam van deze pagina in de analytics data
 
 </body>
 </html>
