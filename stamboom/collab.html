@@ -1,5 +1,9 @@
-<!-- ======================= stamboom/collab.html v2.2.0 =======================
+<!-- ======================= stamboom/collab.html v2.3.0 =======================
      Collaboratie-pagina: berichtenboard per stamboom + persoon-ID
+
+     Wijzigingen v2.3.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("collab") toegevoegd in fetch-scriptblok
 
      Wijzigingen v2.2.0 (sessie 19):
      - Hoofd-zoekbalk verwijderd van paginaniveau (zit nu per stamboom-sectie)
@@ -21,15 +25,16 @@
        1. supabase-js CDN
        2. utils.js
        3. auth.js
-       4. TopBar HTML + topbar.js (via fetch)
-       5. Navbar HTML (via fetch)
-       6. Footer HTML (via fetch)
-       7. schema.js
-       8. storage.js
-       9. cloudSync.js      ← nieuw in v2.2.0 (voor owner eigen bomen)
-      10. shareModule.js
-      11. accessGuard.js
-      12. collab.js (altijd LAATSTE)
+       4. siteAnalytics.js  ← bezoektracking
+       5. TopBar HTML + topbar.js (via fetch)
+       6. Navbar HTML (via fetch)
+       7. Footer HTML (via fetch)
+       8. schema.js
+       9. storage.js
+      10. cloudSync.js      ← nieuw in v2.2.0 (voor owner eigen bomen)
+      11. shareModule.js
+      12. accessGuard.js
+      13. collab.js (altijd LAATSTE)
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -580,6 +585,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <div id="navbar-placeholder"></div>
 
@@ -657,6 +663,9 @@
             var ph = document.getElementById('footer-placeholder');
             if (ph) ph.innerHTML = data;
         });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("collab"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <!-- Verplichte laadvolgorde pagina-scripts -->
