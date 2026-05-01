@@ -1,8 +1,9 @@
-<!-- ======================= abonnementen/overzicht.html v2.0.0 =======================
+<!-- ======================= abonnementen/overzicht.html v2.0.1 =======================
      Herschreven: correct toegangsmodel (Gratis / Viewer / Editor / Owner)
      Donatie-model vervangt 'abonnement'-taal volledig
      Rollen activeren via uitnodiging + donatie (eenmalig of periodiek)
      Structuur: zelfde template als standaardpagina (TopBar, Navbar, Footer via fetch)
+     added site analytics
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -529,7 +530,12 @@
         });
 </script>
 
-<!-- Geen pagina-specifieke scripts nodig voor overzicht.html -->
+<!-- pagina-specifieke scripts nodig voor overzicht.html -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics -->
 
+<script>
+    // Pagina tracking registreren — SiteAnalytics.trackPage() stuurt bezoek naar Supabase
+    // Moet na auth.js staan zodat tier van ingelogde gebruiker meegestuurd wordt
+    SiteAnalytics.trackPage("home"); // "home" = naam van deze pagina in de analytics data
 </body>
 </html>
