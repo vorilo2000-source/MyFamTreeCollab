@@ -1,5 +1,10 @@
-<!-- ======================= stamboom/stats.html v2.0.0 =======================
+<!-- ======================= stamboom/stats.html v2.1.0 =======================
      Statistiekenpagina: KPI-dashboard van de stamboom
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("stats") toegevoegd in fetch-scriptblok
+
      Wijziging v1.0.0: facelift — welkomstblok, inline stijlen naar <style>,
                        paginatitel div verwijderd, // commentaar boven DOCTYPE verwijderd
      v2.0.1 Login + Favicon / App-icoon 
@@ -150,6 +155,7 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
 fetch('/MyFamTreeCollab/Layout/TopBar.html')
@@ -172,6 +178,9 @@ fetch('/MyFamTreeCollab/Layout/Footer.html')
     .then(function(data) {
         document.getElementById('footer-placeholder').innerHTML = data;
     });
+
+// Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+SiteAnalytics.trackPage("stats"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <script src="../js/storage.js"></script>
