@@ -1,5 +1,9 @@
-<!-- ======================= stamboom/manage.html v2.3.0 =======================
+<!-- ======================= stamboom/manage.html v2.4.0 =======================
      Beheerpagina: stamboom bewerken als tabel met live search
+
+     Wijziging v2.4.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("manage") toegevoegd in fetch-scriptblok
 
      Wijziging v2.3.0 (F5-04):
      - AccessGuard toegevoegd: alleen editor en owner mogen bewerken
@@ -17,7 +21,7 @@
                import verwijderd.
 
      Scripts: utils.js → schema.js → idGenerator.js → storage.js → auth.js →
-              shareModule.js → accessGuard.js → LiveSearch.js →
+              siteAnalytics.js → shareModule.js → accessGuard.js → LiveSearch.js →
               relatieEngine.js → manage.js (verplichte volgorde)
      ======================================================================= -->
 <!DOCTYPE html>
@@ -123,6 +127,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
@@ -139,6 +144,9 @@
     fetch('/MyFamTreeCollab/Layout/Footer.html')
         .then(resp => resp.text())
         .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("manage"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <script src="../js/schema.js"></script>
