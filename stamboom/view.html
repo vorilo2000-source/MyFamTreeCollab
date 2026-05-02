@@ -1,5 +1,10 @@
-<!-- ======================= stamboom/view.html v2.0.1 =======================
+<!-- ======================= stamboom/view.html v2.1.0 =======================
      Stamboomweergave: visualiseert relaties rondom een geselecteerde persoon
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("view") toegevoegd in fetch-scriptblok
+
      v2.0.0: facelift — welkomstblok, inline stijlen naar <style>, zoekbalk in kader,
      paginatitel div verwijderd
      v2.0.1 Login + Favicon / App-icoon
@@ -12,14 +17,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stamboom</title>
         
-         <!-- ======================= Favicon ======================= -->
+     <!-- ======================= Favicon ======================= -->
      <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
      <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
      <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
      <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/Tree.css">
     <link rel="stylesheet" href="../css/RelationColors.css">
     <style>
@@ -68,22 +72,9 @@
 
 <!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/TopBar.html')
-    .then(resp => resp.text())
-    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
-</script>
 
 <!-- ======================= Navbar ======================= -->
 <div id="Navbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/Navbar.html')
-    .then(resp => resp.text())
-    .then(data => {
-        const ph = document.getElementById('Navbar-placeholder');
-        if (ph) ph.innerHTML = data;
-    });
-</script>
 
 <!-- ======================= Hoofd content ======================= -->
 <main>
@@ -128,13 +119,15 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
-     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
-     5. Navbar fetch        — onafhankelijk, mag parallel
-     6. Pagina-scripts      — altijd als laatste
+     4. siteAnalytics.js   — bezoektracking, na auth.js
+     5. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
+     6. Navbar fetch        — onafhankelijk, mag parallel
+     7. Pagina-scripts      — altijd als laatste
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
@@ -153,7 +146,8 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
         .then(resp => resp.text())
         .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;
+            var ph = document.getElementById('Navbar-placeholder');
+            if (ph) ph.innerHTML = data;
         });
 
     // Stap 3: Footer laden
@@ -162,10 +156,12 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
         .then(function(data) {
             document.getElementById('footer-placeholder').innerHTML = data;
         });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("view"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <!-- ======================= Scripts (volgorde verplicht) ======================= -->
-<script src="../js/utils.js"></script>
 <script src="../js/schema.js"></script>
 <script src="../js/storage.js"></script>
 <script src="../js/relatieEngine.js"></script>
