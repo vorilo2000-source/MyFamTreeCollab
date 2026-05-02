@@ -1,6 +1,15 @@
-<!-- ======================= bronnen/template.html v2.0.0 =======================
+<!-- ======================= bronnen/template.html v2.1.0 =======================
      CSV Template pagina: visueel voorbeeld + download van lege CSV-template
-     Wijziging v1.0.0: facelift — welkomstblok, paginatitel div verwijderd,
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("template") toegevoegd in fetch-scriptblok
+     - Versnipperde inline fetch-blokken geconsolideerd naar één script-blok
+     - topbar.js injectie hersteld (was ontbrekend in origineel)
+     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder (was Navbar-placeholder)
+     - supabase-js + utils.js + auth.js toegevoegd aan laadvolgorde (waren ontbrekend)
+
+     Wijziging v2.0.0 / v1.0.0: facelift — welkomstblok, paginatitel div verwijderd,
                        inline stijlen naar <style>, uitleg herschreven naar
                        template-context (was per abuis export-uitleg)
      Scripts: schema.js (voor dynamische kolomnamen)
@@ -19,8 +28,7 @@
      <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-     
-    <script src="../js/schema.js"></script>                               <!-- Schema eerst laden zodat veldnamen beschikbaar zijn bij DOMContentLoaded -->
+
     <style>
         /* ======================= WELKOMSTBLOK ======================= */
         .welkom-blok { margin-bottom: 24px; }
@@ -91,25 +99,9 @@
 
 <!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/TopBar.html')
-    .then(resp => resp.text())
-    .then(data => document.getElementById('topbar-placeholder').innerHTML = data)
-    .catch(err => console.error('TopBar laden mislukt:', err));
-</script>
 
 <!-- ======================= Navbar ======================= -->
-<div id="Navbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/Navbar.html')
-    .then(resp => resp.text())
-    .then(data => {
-        const placeholder = document.getElementById('Navbar-placeholder');
-        if (placeholder) placeholder.innerHTML = data;
-        else console.error('Navbar-placeholder niet gevonden');
-    })
-    .catch(err => console.error('Navbar laden mislukt:', err));
-</script>
+<div id="navbar-placeholder"></div>
 
 <!-- ======================= Hoofd content ======================= -->
 <main>
@@ -119,8 +111,8 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
         <div class="welkom-blok">
             <h1>Welkom bij CSV Template</h1>
             <p>
-                Download hier een lege CSV-template met de juiste kolomnamen voor MyFamTreeCollab.<p>
-                <p>Vul de template in met je familiegegevens en importeer hem daarna via de
+                Download hier een lege CSV-template met de juiste kolomnamen voor MyFamTreeCollab.
+                Vul de template in met je familiegegevens en importeer hem daarna via de
                 <a href="../home/import.html">import-pagina</a>.
             </p>
         </div>
@@ -157,6 +149,57 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
 
     </div>
 </main>
+
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde is verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     4. siteAnalytics.js   — bezoektracking, na auth.js
+     5. schema.js           — veldnamen voor tabel en CSV-download
+     6. TopBar/Navbar/Footer fetch + trackPage
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="../js/schema.js"></script>                       <!-- Schema eerst laden zodat veldnamen beschikbaar zijn bij DOMContentLoaded -->
+
+<script>
+    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        })
+        .catch(function(err) { console.error('TopBar laden mislukt:', err); });
+
+    // Stap 2: Navbar laden
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            var ph = document.getElementById('navbar-placeholder');
+            if (ph) ph.innerHTML = data;
+        })
+        .catch(function(err) { console.error('Navbar laden mislukt:', err); });
+
+    // Stap 3: Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        })
+        .catch(function(err) { console.error('Footer laden mislukt:', err); });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("template"); // Bezoek registreren in Supabase page_visits tabel
+</script>
 
 <!-- ======================= Pagina-specifieke JS ======================= -->
 <script>
@@ -227,15 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
-</script>
-
-<!-- ======================= Footer ======================= -->
-<div id="footer-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/Footer.html')
-    .then(resp => resp.text())
-    .then(data => document.getElementById('footer-placeholder').innerHTML = data)
-    .catch(err => console.error('Footer laden mislukt:', err));
 </script>
 
 </body>
