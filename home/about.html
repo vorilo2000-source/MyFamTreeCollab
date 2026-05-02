@@ -1,5 +1,9 @@
-<!-- ======================= home/about.html v2.1.0 =======================
+<!-- ======================= home/about.html v2.2.0 =======================
      Over-pagina: inhoud geïntegreerd en geoptimaliseerd voor leesbaarheid
+
+     Wijziging v2.2.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("about") toegevoegd in fetch-scriptblok
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -139,7 +143,7 @@
         </p>
 
         <p>
-            Foto’s koppelen aan personen, familie-events visualiseren,
+            Foto's koppelen aan personen, familie-events visualiseren,
             samenwerken in een beveiligde omgeving en communicatie
             tussen familieleden binnen de stamboom.
         </p>
@@ -166,6 +170,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
 <script src="../js/utils.js"></script> <!-- Basis utilities -->
 <script src="../js/auth.js"></script> <!-- Authenticatie -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     // ======================= TopBar laden =======================
@@ -191,6 +196,9 @@
         .then(function(data) {
             document.getElementById('footer-placeholder').innerHTML = data; // Injecteert footer
         });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("about"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 </body>
