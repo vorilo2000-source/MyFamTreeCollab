@@ -1,5 +1,9 @@
-<!-- ======================= home/export.html v2.1.3 =======================
+<!-- ======================= home/export.html v2.2.0 =======================
      Exportpagina: CSV en JSON download van de volledige stamboom
+
+     Wijziging v2.2.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("export") toegevoegd in fetch-scriptblok
 
      Wijziging v2.1.3 (F5-04):
      - AccessGuard toegevoegd: alleen owner mag exporteren
@@ -10,7 +14,7 @@
      Wijziging v2.1.1: Login + Favicon / App-icoon
      Wijziging v2.1.0: nieuwe opmaak — welkomstblok, CSV en JSON als aparte secties
 
-     Scripts: supabase → utils.js → auth.js → [TopBar] → schema.js →
+     Scripts: supabase → utils.js → auth.js → siteAnalytics.js → [TopBar] → schema.js →
               storage.js → shareModule.js → accessGuard.js → export.js
      ======================================================================= -->
 <!DOCTYPE html>
@@ -25,7 +29,6 @@
      <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
      <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
      <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
-
 
     <link rel="stylesheet" href="../css/style.css">
     <style>
@@ -101,6 +104,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
@@ -117,6 +121,9 @@
     fetch('/MyFamTreeCollab/Layout/Footer.html')
         .then(resp => resp.text())
         .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("export"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <script src="../js/schema.js"></script>
