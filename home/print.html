@@ -1,5 +1,13 @@
-<!-- ======================= home/print.html v2.0.1 =======================
+<!-- ======================= home/print.html v2.1.0 =======================
      Printpagina: tijdelijk niet beschikbaar, consistente opmaak
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("print") toegevoegd in fetch-scriptblok
+     - Dubbele Supabase/utils/auth script-blokken bovenaan opgeruimd
+     - Padverwijzing /js/ gecorrigeerd naar ../js/
+     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder (was Navbar-placeholder)
+
      Wijziging v2.0.0: facelift — Navbar + TopBar + 'komt binnenkort' blok,
                        geen aparte header meer, script.js verwijderd
      v2.0.1 Login + Favicon / App-icoon toegevoegd
@@ -11,7 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Afdrukken</title>
         
-         <!-- ======================= Favicon ======================= -->
+     <!-- ======================= Favicon ======================= -->
      <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
      <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
      <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
@@ -42,28 +50,9 @@
 
 <!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-     
-<!-- Scripts: Supabase + auth ALTIJD vóór topbar.js -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/auth.js"></script>
-     
-<script>
-fetch('/MyFamTreeCollab/Layout/TopBar.html')
-    .then(resp => resp.text())
-    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
-</script>
 
 <!-- ======================= Navbar ======================= -->
-<div id="Navbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/Navbar.html')
-    .then(resp => resp.text())
-    .then(data => {
-        const placeholder = document.getElementById('Navbar-placeholder');
-        if (placeholder) placeholder.innerHTML = data;
-    });
-</script>
+<div id="navbar-placeholder"></div>
 
 <!-- ======================= Hoofd content ======================= -->
 <main>
@@ -86,13 +75,15 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
-     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
-     5. Navbar fetch        — onafhankelijk, mag parallel
-     6. Pagina-scripts      — altijd als laatste
+     4. siteAnalytics.js   — bezoektracking, na auth.js
+     5. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
+     6. Navbar fetch        — onafhankelijk, mag parallel
+     7. Footer fetch
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
@@ -111,7 +102,8 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
         .then(resp => resp.text())
         .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;
+            var ph = document.getElementById('navbar-placeholder');
+            if (ph) ph.innerHTML = data;
         });
 
     // Stap 3: Footer laden
@@ -120,9 +112,10 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
         .then(function(data) {
             document.getElementById('footer-placeholder').innerHTML = data;
         });
-</script>
 
-<!-- Pagina-specifieke scripts: ... → ... → -->
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("print"); // Bezoek registreren in Supabase page_visits tabel
+</script>
 
 </body>
 </html>
