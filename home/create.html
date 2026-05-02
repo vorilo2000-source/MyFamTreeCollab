@@ -1,5 +1,9 @@
-<!-- ======================= home/create.html v2.0.2 =======================
+<!-- ======================= home/create.html v2.1.0 =======================
      Aanmaken eerste persoon (Hoofd-ID) van de stamboom
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("create") toegevoegd in fetch-scriptblok
 
      Wijziging v2.0.2 (F5-04):
      - AccessGuard toegevoegd: alleen owner mag nieuwe stamboom aanmaken
@@ -10,7 +14,7 @@
      Wijziging v2.0.0: facelift — welkomstblok, inline stijlen naar <style>,
                        formulier in sectiekader, consistente opmaak met export.html
 
-     Scripts laadvolgorde: supabase → utils.js → auth.js →
+     Scripts laadvolgorde: supabase → utils.js → auth.js → siteAnalytics.js →
                            [TopBar fetch → topbar.js] → schema.js →
                            idGenerator.js → storage.js → shareModule.js →
                            accessGuard.js → create.js
@@ -22,7 +26,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive gedrag -->
     <title>Nieuwe Stamboom</title>
 
-          <!-- ======================= Favicon ======================= -->
+     <!-- ======================= Favicon ======================= -->
      <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
      <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
      <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
@@ -172,6 +176,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
@@ -188,6 +193,9 @@
     fetch('/MyFamTreeCollab/Layout/Footer.html')
         .then(resp => resp.text())
         .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("create"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <script src="../js/schema.js"></script>
