@@ -1,14 +1,15 @@
-<!-- ======================= bronnen/handleiding.html v2.0.0 =======================
+<!-- ======================= bronnen/handleiding.html v2.1.0 =======================
      Gebruikershandleiding voor MyFamTreeCollab
      Beschrijft alle functies van de applicatie stap voor stap
 
-     Wijzigingen v1.9.0 (Sessie 19):
+     Wijzigingen v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("handleiding") toegevoegd in fetch-scriptblok
+
+     Wijzigingen v2.0.0 (Sessie 19):
      - Sectie 2  — gebruikersmenu bijgewerkt: 💬 Samenwerken link + notificatie-badge uitleg
      - Sectie 14 — roltabel: gedeelde stamboom laden toegevoegd voor viewer/editor
-     - Sectie 15 — berichtenboard volledig herschreven:
-                   multi-boom weergave per rol, 4 statussen met icoontjes,
-                   ledenlijst per stamboom, actief vs. lees-only bomen,
-                   notificatie-badge uitleg
+     - Sectie 15 — berichtenboard volledig herschreven
 
      Wijzigingen v1.8.0 (Sessie 16):
      - Sectie 1  — demo-melding bijgewerkt
@@ -57,12 +58,6 @@
         .terug-top { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: #2563eb; text-decoration: none; }
         .terug-top:hover { text-decoration: underline; }
         .versie-badge { display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 0.78rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
-        .diff-voorbeeld { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0; font-size: 0.88rem; }
-        .diff-voorbeeld-kolom { border-radius: 6px; padding: 10px 14px; line-height: 1.6; }
-        .diff-voorbeeld-kolom strong { display: block; margin-bottom: 4px; font-size: 0.85rem; }
-        .diff-toegevoegd-ex { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
-        .diff-gewijzigd-ex  { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
-        .diff-verwijderd-ex { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
         .rol-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
         .rol-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
         .rol-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle; }
@@ -84,7 +79,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Handleiding <span class="versie-badge">v1.9.0</span></h1>
+            <h1>Handleiding <span class="versie-badge">v2.1.0</span></h1>
             <p>
                 Welkom bij de handleiding van MyFamTreeCollab. Hier vind je stap voor stap uitleg
                 over alle functies van de applicatie, van je eerste persoon aanmaken tot je stamboom
@@ -140,13 +135,13 @@
             <h2>2. Account aanmaken en inloggen</h2>
             <p>
                 Een account geeft je toegang tot lokaal opslag en cloud-opslag en synchronisatie tussen apparaten.
-                Registreren is gratis. 
-                Er zijn 2 soorten accounts, <strong>gast</strong> en <strong>Owner</strong>, 
-                elke account kan de rol: <strong>Viewer</strong> en/of <strong>Editor</strong> krijgen. 
+                Registreren is gratis.
+                Er zijn 2 soorten accounts, <strong>gast</strong> en <strong>Owner</strong>,
+                elke account kan de rol: <strong>Viewer</strong> en/of <strong>Editor</strong> krijgen.
                 Nieuwe accounts krijgen automatisch de rol <strong>gast</strong>.
             </p>
 
-            <h3>Account aanmaken</h3
+            <h3>Account aanmaken</h3>
             <ul class="stappen">
                 <li>Klik op <strong>Login</strong> in de balk bovenaan de pagina.</li>
                 <li>Klik op het tabblad <strong>"Account aanmaken"</strong>.</li>
@@ -569,16 +564,14 @@
             <h3>Berichtenboard openen</h3>
             <ul class="stappen">
                 <li>Klik op <strong>💬 Samenwerken</strong> in de navigatie of in het gebruikersmenu.</li>
-                <li>Alle stambomen waar je toegang toe hebt worden geladen, elk in een eigen sectie.</li>, 
+                <li>Alle stambomen waar je toegang toe hebt worden geladen, elk in een eigen sectie.</li>
             </ul>
 
             <h3>Actieve vs. lees-only stambomen</h3>
-            <p>
-                De pagina toont twee soorten stambomen:
-            </p>
+            <p>De pagina toont twee soorten stambomen:</p>
             <ul>
-                <li><strong>✓ Actief</strong> (blauwe accentlijn)de stamboom die je hebt geladen via Opslag. Hier kun je discussies starten en berichten plaatsen.</li>
-                <li><strong>Alleen lezen</strong>, andere stambomen. Je kunt de berichten lezen maar niet reageren. Klik op de link in de gele banner om die stamboom te activeren.</li>
+                <li><strong>✓ Actief</strong> (blauwe accentlijn) — de stamboom die je hebt geladen via Opslag. Hier kun je discussies starten en berichten plaatsen.</li>
+                <li><strong>Alleen lezen</strong> — andere stambomen. Je kunt de berichten lezen maar niet reageren. Klik op de link in de gele banner om die stamboom te activeren.</li>
             </ul>
             <div class="tip">
                 <strong>Tip:</strong> Laad de gewenste stamboom via <strong>Opslag</strong> om hem
@@ -670,6 +663,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
@@ -690,6 +684,9 @@
         .then(function(data) {
             document.getElementById('footer-placeholder').innerHTML = data;
         });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("handleiding"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 </body>
