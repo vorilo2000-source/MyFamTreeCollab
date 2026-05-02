@@ -1,5 +1,9 @@
-<!-- ======================= home/import.html v2.0.3 =======================
+<!-- ======================= home/import.html v2.1.0 =======================
      Importpagina: CSV/TXT bestanden inladen in de stamboom
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("import") toegevoegd in fetch-scriptblok
 
      Wijziging v2.0.3 (F5-04):
      - AccessGuard toegevoegd: alleen owner mag importeren
@@ -10,7 +14,7 @@
      Wijziging v2.0.2: Login toegevoegd + Favicon / App-icoon
      Wijziging v2.0.0: facelift
 
-     Scripts: supabase → utils.js → auth.js → [TopBar] → schema.js →
+     Scripts: supabase → utils.js → auth.js → siteAnalytics.js → [TopBar] → schema.js →
               storage.js → shareModule.js → accessGuard.js → import.js
      ======================================================================= -->
 <!DOCTYPE html>
@@ -100,6 +104,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
@@ -116,6 +121,9 @@
     fetch('/MyFamTreeCollab/Layout/Footer.html')
         .then(resp => resp.text())
         .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("import"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <script src="../js/schema.js"></script>
