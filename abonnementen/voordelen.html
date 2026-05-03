@@ -1,7 +1,11 @@
-<!-- ======================= abonnementen/voordelen.html v2.0.0 =======================
+<!-- ======================= abonnementen/voordelen.html v2.1.0 =======================
      v2.0.0: Bijgewerkt naar nieuw rolmodel
      - Verwijzingen naar oude abonnementen verwijderd
      - Links bijgewerkt naar overzicht.html en vergelijk.html
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("voordelen") toegevoegd in fetch-scriptblok
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -181,7 +185,7 @@
 
         <!-- PRIVACY -->
         <div class="voordeel-kaart blauw">
-            <span class="voordeel-icoon">🔐</span>   <!-- Privacy icoon -->
+            <span class="voordeel-icoon">🔐</span>
             <h3>Volledige controle over je data</h3>
             <p>Jouw stamboom blijft standaard lokaal in je browser. Geen verplicht account, geen tracking.</p>
             <ul>
@@ -193,7 +197,7 @@
 
         <!-- EXPORT -->
         <div class="voordeel-kaart groen">
-            <span class="voordeel-icoon">📤</span>   <!-- Export icoon -->
+            <span class="voordeel-icoon">📤</span>
             <h3>Altijd exporteerbaar</h3>
             <p>Je data zit nooit vast in het systeem. Exporteren kan altijd in open formaten.</p>
             <ul>
@@ -205,7 +209,7 @@
 
         <!-- VISUALISATIE -->
         <div class="voordeel-kaart oranje">
-            <span class="voordeel-icoon">🌳</span>   <!-- Stamboom icoon -->
+            <span class="voordeel-icoon">🌳</span>
             <h3>Heldere stamboomweergave</h3>
             <p>Bouw en bekijk je familiegeschiedenis op een visuele manier.</p>
             <ul>
@@ -217,7 +221,7 @@
 
         <!-- ROLLEN -->
         <div class="voordeel-kaart paars">
-            <span class="voordeel-icoon">👥</span>   <!-- Rollen icoon -->
+            <span class="voordeel-icoon">👥</span>
             <h3>Flexibel rolmodel</h3>
             <p>Start gratis lokaal en groei naar cloud-samenwerking met het rolmodel dat bij jou past.</p>
             <ul>
@@ -229,7 +233,7 @@
 
         <!-- SAMENWERKING -->
         <div class="voordeel-kaart cyaan">
-            <span class="voordeel-icoon">🤝</span>   <!-- Samenwerking icoon -->
+            <span class="voordeel-icoon">🤝</span>
             <h3>Samen bouwen</h3>
             <p>Werk samen met familieleden aan één gedeelde stamboom via berichten en wijzigingen.</p>
             <ul>
@@ -260,13 +264,15 @@
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
-     4. TopBar HTML laden → daarna topbar.js injecteren
-     5. Navbar HTML laden   — onafhankelijk, mag parallel
-     6. Footer HTML laden   — onafhankelijk, mag parallel
+     4. siteAnalytics.js   — bezoektracking, na auth.js
+     5. TopBar HTML laden → daarna topbar.js injecteren
+     6. Navbar HTML laden   — onafhankelijk, mag parallel
+     7. Footer HTML laden   — onafhankelijk, mag parallel
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
 <script src="../js/utils.js"></script> <!-- Utilities -->
 <script src="../js/auth.js"></script>  <!-- Auth module -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     // TopBar laden → daarna topbar.js injecteren
@@ -295,6 +301,9 @@
             var ph = document.getElementById('footer-placeholder');
             if (ph) ph.innerHTML = data;                                        // Footer in DOM
         });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("voordelen"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 </body>
