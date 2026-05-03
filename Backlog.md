@@ -359,6 +359,33 @@ md — MyFamTreeCollab
 | VB-09 | `accountbeheer.html` v2.2.0 — kolom "Laatste login" verwijderd, colspan 6→5 | ✅ Gedaan |
 
 ---
+## Analytics — Sessie 20 (2026-05-03)
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| AN-01 | `stamboom/collab.html` — siteAnalytics.js + trackPage("collab") | ✅ Gedaan |
+| AN-02 | `stamboom/manage.html` — siteAnalytics.js + trackPage("manage") | ✅ Gedaan |
+| AN-03 | `stamboom/timeline.html` — siteAnalytics.js + trackPage("timeline") | ✅ Gedaan |
+| AN-04 | `stamboom/view.html` — siteAnalytics.js + trackPage("view") | ✅ Gedaan |
+| AN-05 | `home/about.html` — siteAnalytics.js + trackPage("about") | ✅ Gedaan |
+| AN-06 | `home/create.html` — siteAnalytics.js + trackPage("create") | ✅ Gedaan |
+| AN-07 | `home/export.html` — siteAnalytics.js + trackPage("export") | ✅ Gedaan |
+| AN-08 | `home/import.html` — siteAnalytics.js + trackPage("import") | ✅ Gedaan |
+| AN-09 | `home/print.html` — siteAnalytics.js + trackPage("print") | ✅ Gedaan |
+| AN-10 | `bronnen/artikelen.html` — siteAnalytics.js + trackPage("artikelen") | ✅ Gedaan |
+| AN-11 | `bronnen/extern.html` — siteAnalytics.js + trackPage("extern") | ✅ Gedaan |
+| AN-12 | `bronnen/handleiding.html` — siteAnalytics.js + trackPage("handleiding") | ✅ Gedaan |
+| AN-13 | `bronnen/instructies.html` — siteAnalytics.js + trackPage("instructies") | ✅ Gedaan |
+| AN-14 | `bronnen/template.html` — siteAnalytics.js + trackPage("template") | ✅ Gedaan |
+| AN-15 | `abonnementen/overzicht.html` — siteAnalytics.js + trackPage("overzicht") | ✅ Gedaan |
+| AN-16 | `abonnementen/vergelijk.html` — siteAnalytics.js + trackPage("vergelijk") | ✅ Gedaan |
+| AN-17 | `abonnementen/voordelen.html` — siteAnalytics.js + trackPage("voordelen") | ✅ Gedaan |
+| AN-18 | `gemeenschap/contact.html` — siteAnalytics.js + trackPage("contact") | ✅ Gedaan |
+| AN-19 | `gemeenschap/discussies.html` — siteAnalytics.js + trackPage("discussies") | ✅ Gedaan |
+| AN-20 | `gemeenschap/evenement.html` — siteAnalytics.js + trackPage("evenement") | ✅ Gedaan |
+| AN-21 | `stamboom/account.html` + `analytics.html` — nog te doen | 📋 Open |
+
+---
 
 ## Verbeteringen
 
