@@ -1,5 +1,5 @@
-<!-- ======================= admin/analytics.html v2.2.0 =======================
-     Wijziging v2.2.0: Tabel body lichtere grijs (#4a4a4a), header donkerder (#2a2a2a) + teal accent
+<!-- ======================= admin/analytics.html v2.4.0 =======================
+     Wijziging v2.4.0: Filter gecorrigeerd — viewer/editor weg, niet-ingelogd+admin erbij
      Analytics Dashboard — interne gebruiksstatistieken van MyFamTreeCollab
      Toont: paginabezoeken, tier-verdeling, verblijfsduur, recente sessies
      Data bron: Supabase (page_visits tabel) via analytics-dashboard.js
@@ -327,6 +327,36 @@
             color: var(--accent);
         }
 
+        /* ======================= TIER FILTER KNOPPEN ======================= */
+        .tier-filter {
+            display: flex;                                                 /* Horizontale rij knoppen */
+            flex-wrap: wrap;                                               /* Wrappen op smal scherm */
+            gap: 8px;                                                      /* Ruimte tussen knoppen */
+            margin-bottom: 14px;                                           /* Afstand tot tabel */
+        }
+
+        .tier-btn {
+            font-family: var(--font-mono);                                 /* Monospace stijl */
+            font-size: 0.75rem;                                            /* Klein */
+            padding: 5px 12px;                                             /* Compacte knop */
+            border-radius: 20px;                                           /* Pill-vorm */
+            border: 1px solid transparent;                                 /* Standaard geen zichtbare rand */
+            cursor: pointer;                                               /* Klikbaar */
+            font-weight: 600;                                              /* Halfvet */
+            transition: opacity 0.15s, transform 0.1s;                    /* Vloeiende hover */
+            opacity: 0.5;                                                  /* Inactief = gedimed */
+        }
+
+        .tier-btn:hover  { opacity: 0.8; transform: translateY(-1px); }   /* Hover: iets zichtbaarder */
+        .tier-btn.active { opacity: 1; transform: translateY(-1px); }     /* Actief: volledig zichtbaar */
+
+        /* Kleur per account type */
+        .tier-btn[data-tier="all"]      { background: #555;    color: #fff;    border-color: #777;    } /* Alles */
+        .tier-btn[data-tier="anoniem"]  { background: #2a2a2a; color: #888888; border-color: #888888; } /* Niet ingelogd */
+        .tier-btn[data-tier="guest"]    { background: #3a3a4a; color: #aaaacc; border-color: #aaaacc; } /* Guest */
+        .tier-btn[data-tier="owner"]    { background: #3a2e0a; color: #f0c040; border-color: #f0c040; } /* Owner */
+        .tier-btn[data-tier="admin"]    { background: #3a1a1a; color: #f08080; border-color: #f08080; } /* Admin */
+
         /* ======================= FADE-UP ANIMATIE ======================= */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(14px); }
@@ -393,6 +423,16 @@
         <!-- Recente bezoeken tabel -->
         <div class="sessions-panel">
             <p class="section-title">Recente bezoeken</p>
+
+            <!-- Tier filter knoppen — JS zet active class + filtert tabel -->
+            <div class="tier-filter">
+                <button class="tier-btn active" data-tier="all">Alle</button>
+                <button class="tier-btn" data-tier="anoniem">Niet ingelogd</button>
+                <button class="tier-btn" data-tier="guest">Guest</button>
+                <button class="tier-btn" data-tier="owner">Owner</button>
+                <button class="tier-btn" data-tier="admin">Admin</button>
+            </div>
+
             <div id="sessions-table"></div>
         </div>
 
