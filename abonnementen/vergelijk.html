@@ -1,8 +1,12 @@
-<!-- ======================= abonnementen/vergelijk.html v2.0.0 =======================
+<!-- ======================= abonnementen/vergelijk.html v2.1.0 =======================
      v2.0.0: Volledig herschreven naar nieuw rolmodel
      - Oude abonnementsstructuur (Gratis/Cloud/Samenwerken) vervangen door rollen
      - Rollen: Gratis · Viewer · Editor · Owner
      - Gebaseerd op standaardpagina.html template
+
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("vergelijk") toegevoegd in fetch-scriptblok
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -209,22 +213,22 @@
                 <tr>
                     <th></th>
                     <th class="th-gratis">
-                        <span class="th-rol-icoon">🖥️</span>       <!-- Gratis icoon -->
+                        <span class="th-rol-icoon">🖥️</span>
                         <span class="th-rol-naam">Gratis</span>
                         <span class="th-badge badge-gratis">Geen donatie</span>
                     </th>
                     <th class="th-viewer">
-                        <span class="th-rol-icoon">👁️</span>        <!-- Viewer icoon -->
+                        <span class="th-rol-icoon">👁️</span>
                         <span class="th-rol-naam">Viewer</span>
                         <span class="th-badge badge-donatie">Donatie vereist</span>
                     </th>
                     <th class="th-editor">
-                        <span class="th-rol-icoon">✏️</span>        <!-- Editor icoon -->
+                        <span class="th-rol-icoon">✏️</span>
                         <span class="th-rol-naam">Editor</span>
                         <span class="th-badge badge-donatie">Donatie vereist</span>
                     </th>
                     <th class="th-owner">
-                        <span class="th-rol-icoon">👑</span>        <!-- Owner icoon -->
+                        <span class="th-rol-icoon">👑</span>
                         <span class="th-rol-naam">Owner</span>
                         <span class="th-badge badge-donatie">Donatie vereist</span>
                     </th>
@@ -358,13 +362,15 @@
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
-     4. TopBar HTML laden → daarna topbar.js injecteren
-     5. Navbar HTML laden   — onafhankelijk, mag parallel
-     6. Footer HTML laden   — onafhankelijk, mag parallel
+     4. siteAnalytics.js   — bezoektracking, na auth.js
+     5. TopBar HTML laden → daarna topbar.js injecteren
+     6. Navbar HTML laden   — onafhankelijk, mag parallel
+     7. Footer HTML laden   — onafhankelijk, mag parallel
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
 <script src="../js/utils.js"></script> <!-- Utilities -->
 <script src="../js/auth.js"></script>  <!-- Auth module -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
 
 <script>
     // TopBar laden → daarna topbar.js injecteren
@@ -393,6 +399,9 @@
             var ph = document.getElementById('footer-placeholder');
             if (ph) ph.innerHTML = data;                                        // Footer in DOM
         });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("vergelijk"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 </body>
