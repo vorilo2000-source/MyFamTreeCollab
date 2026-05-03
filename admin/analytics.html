@@ -1,4 +1,5 @@
-<!-- ======================= admin/analytics.html v2.0.0 =======================
+<!-- ======================= admin/analytics.html v2.1.0 =======================
+     Wijziging v2.1.0: Tabel sticky header + donkere achtergrond gefixed
      Analytics Dashboard — interne gebruiksstatistieken van MyFamTreeCollab
      Toont: paginabezoeken, tier-verdeling, verblijfsduur, recente sessies
      Data bron: Supabase (page_visits tabel) via analytics-dashboard.js
@@ -278,20 +279,27 @@
             margin-bottom: 28px;
             animation: fadeUp 0.4s ease both;
             overflow-x: auto;                                              /* Horizontaal scrollen op mobiel */
+            overflow-y: auto;                                              /* Verticaal scrollen voor sticky header */
+            max-height: 480px;                                             /* Maximale hoogte — header blijft zichtbaar */
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;                                     /* Vereist voor sticky header — collapse breekt position:sticky */
+            border-spacing: 0;                                             /* Visueel zelfde als collapse — geen extra ruimte */
             font-family: var(--font-mono);
             font-size: 0.78rem;
         }
 
         thead th {
+            position: sticky;                                              /* Header blijft zichtbaar bij scrollen */
+            top: 0;                                                        /* Plakt aan bovenkant van scrollcontainer */
+            z-index: 1;                                                    /* Boven tabelrijen — voorkomt doorschijnen */
+            background: var(--bg-card);                                    /* Zelfde als paneel — geen witte achtergrond */
             text-align: left;
             color: var(--text-muted);
             padding: 0 12px 10px 0;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);                        /* Scheidingslijn onder header */
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -301,12 +309,13 @@
         tbody td {
             padding: 9px 12px 9px 0;
             color: var(--text-primary);
+            background: var(--bg-card);                                    /* Expliciete donkere achtergrond — voorkomt witte fallback */
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
         }
 
         tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover td { background: rgba(255,255,255,0.03); }
+        tbody tr:hover td { background: var(--bg-card-alt); }             /* Donkere hover — geen witte flits */
 
         .badge {
             display: inline-block;
