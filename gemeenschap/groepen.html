@@ -1,6 +1,11 @@
- <!============ gemeenschap/groepen.html v0.1.0 ===========  
-consistente opmaak — Navbar + TopBar + 'komt binnenkort' blok, geen aparte header meer, 
-    script.js verwijderd. Login + Favicon / App-icoon toegevoegd
+ <!============ gemeenschap/groepen.html v0.2.0 ===========  
+     Wijziging v0.2.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("evenement") toegevoegd in fetch-scriptblok
+     - Dubbele Supabase/utils/auth script-blokken bovenaan opgeruimd
+     - Padverwijzing /js/ gecorrigeerd naar ../js/
+     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder
+     - Favicon paden gecorrigeerd naar /MyFamTreeCollab/img/
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -44,7 +49,8 @@ consistente opmaak — Navbar + TopBar + 'komt binnenkort' blok, geen aparte hea
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/utils.js"></script>
 <script src="/js/auth.js"></script>
-     
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+ 
 <script>
 fetch('/MyFamTreeCollab/Layout/TopBar.html')
     .then(resp => resp.text())
@@ -111,12 +117,15 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
             document.getElementById('navbar-placeholder').innerHTML = data;
         });
 
-    // Stap 3: Footer laden
+// Stap 3: Footer laden
     fetch('/MyFamTreeCollab/Layout/Footer.html')
         .then(resp => resp.text())
         .then(function(data) {
             document.getElementById('footer-placeholder').innerHTML = data;
         });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("groepen"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 <!-- Pagina-specifieke scripts: ... → ... → -->
