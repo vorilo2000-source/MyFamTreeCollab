@@ -1,3 +1,13 @@
+<!-- ======================= develop/maintenance.html v0.2.0 =======================
+     Wijziging v0.2.0 (sessie 20):
+     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
+     - SiteAnalytics.trackPage("evenement") toegevoegd in fetch-scriptblok
+     - Dubbele Supabase/utils/auth script-blokken bovenaan opgeruimd
+     - Padverwijzing /js/ gecorrigeerd naar ../js/
+     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder
+     - Favicon paden gecorrigeerd naar /MyFamTreeCollab/img/
+     ============================================================ -->
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -41,6 +51,32 @@
             window.location.href = 'https://vorilo2000-source.github.io/MyFamTreeCollab/index.html';
         }
     }, 1000);
+    <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+</script>
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — volgorde is verplicht:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js
+     6. Pagina-scripts      — altijd als laatste
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+    
+<script>
+ // Stap Footer laden
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())
+        .then(function(data) {
+            document.getElementById('footer-placeholder').innerHTML = data;
+        });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("evenement"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 </body>
