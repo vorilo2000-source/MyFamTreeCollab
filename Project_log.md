@@ -5,6 +5,64 @@
 > 
 ---
 
+## Sessie 20 — Analytics uitrol alle pagina's
+
+**Datum:** 2026-05-03
+**Doel:** siteAnalytics.js + SiteAnalytics.trackPage() toevoegen aan alle pagina's conform de vaste analyticsstructuur uit de projectvisie.
+
+### Aanpak
+Vaste regel: siteAnalytics.js laden na auth.js (zodat tier beschikbaar is), trackPage() aanroepen binnen het fetch-scriptblok na de drie fetch-calls.
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | trackPage naam |
+|---------|-----|------|----------------|
+| `stamboom/collab.html` | v2.2.0 | v2.3.0 | collab |
+| `stamboom/manage.html` | v2.3.0 | v2.4.0 | manage |
+| `stamboom/timeline.html` | v2.2.0 | v2.3.0 | timeline |
+| `stamboom/view.html` | v2.0.1 | v2.1.0 | view |
+| `home/about.html` | v2.1.0 | v2.2.0 | about |
+| `home/create.html` | v2.0.2 | v2.1.0 | create |
+| `home/export.html` | v2.1.3 | v2.2.0 | export |
+| `home/import.html` | v2.0.3 | v2.1.0 | import |
+| `home/print.html` | v2.0.1 | v2.1.0 | print |
+| `bronnen/artikelen.html` | v0.1.0 | v0.2.0 | artikelen |
+| `bronnen/extern.html` | v0.1.0 | v0.2.0 | extern |
+| `bronnen/handleiding.html` | v2.0.0 | v2.1.0 | handleiding |
+| `bronnen/instructies.html` | v0.1.0 | v0.2.0 | instructies |
+| `bronnen/template.html` | v2.0.0 | v2.1.0 | template |
+| `abonnementen/overzicht.html` | v2.0.1 | v2.0.2 | overzicht |
+| `abonnementen/vergelijk.html` | v2.0.0 | v2.1.0 | vergelijk |
+| `abonnementen/voordelen.html` | v2.0.0 | v2.1.0 | voordelen |
+| `gemeenschap/contact.html` | v0.1.0 | v0.2.0 | contact |
+| `gemeenschap/discussies.html` | v0.1.0 | v0.2.0 | discussies |
+| `gemeenschap/evenement.html` | v0.1.0 | v0.2.0 | evenement |
+
+### Meegenomen bugfixes (geconstateerd tijdens sessie)
+
+| Bestand | Bugfix |
+|---------|--------|
+| `stamboom/timeline.html` | Dubbele utils.js verwijderd |
+| `stamboom/view.html` | Dubbele utils.js verwijderd |
+| `home/print.html` | Dubbele script-blokken opgeruimd, pad /js/ → ../js/ gecorrigeerd |
+| `bronnen/artikelen.html` | Dubbele script-blokken, pad /js/ → ../js/, Navbar ID-mismatch |
+| `bronnen/extern.html` | Idem + typfout "uggesties" gecorrigeerd |
+| `bronnen/template.html` | Versnipperde fetch-blokken geconsolideerd, topbar.js injectie hersteld, supabase/utils/auth ontbraken |
+| `bronnen/handleiding.html` | Kapotte `<h3>` tag (`</h3` zonder `>`) gecorrigeerd |
+| `gemeenschap/contact.html` | Dubbele script-blokken, pad /js/ → ../js/, Navbar ID-mismatch, favicon pad gecorrigeerd |
+| `gemeenschap/discussies.html` | Idem |
+| `gemeenschap/evenement.html` | Idem |
+
+### Openstaande punten volgende sessie
+
+| Punt | Actie |
+|------|-------|
+| `stamboom/account.html` | analytics toevoegen |
+| Overige gemeenschap/*.html | analytics toevoegen (forum, nieuws, etc.) |
+| F3-61 import.js herschrijven | Hoogste open backlog prioriteit |
+
+---
+
 ## Sessie 2026-04-30 — Supabase beveiligingsfixes
 
 ### Uitgevoerde acties
