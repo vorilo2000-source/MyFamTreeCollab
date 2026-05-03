@@ -1,5 +1,5 @@
-<!-- ======================= admin/analytics.html v2.1.0 =======================
-     Wijziging v2.1.0: Tabel sticky header + donkere achtergrond gefixed
+<!-- ======================= admin/analytics.html v2.2.0 =======================
+     Wijziging v2.2.0: Tabel body lichtere grijs (#4a4a4a), header donkerder (#2a2a2a) + teal accent
      Analytics Dashboard — interne gebruiksstatistieken van MyFamTreeCollab
      Toont: paginabezoeken, tier-verdeling, verblijfsduur, recente sessies
      Data bron: Supabase (page_visits tabel) via analytics-dashboard.js
@@ -295,11 +295,11 @@
             position: sticky;                                              /* Header blijft zichtbaar bij scrollen */
             top: 0;                                                        /* Plakt aan bovenkant van scrollcontainer */
             z-index: 1;                                                    /* Boven tabelrijen — voorkomt doorschijnen */
-            background: var(--bg-card);                                    /* Zelfde als paneel — geen witte achtergrond */
+            background: #1a7a4a;                                           /* Groen header achtergrond */
             text-align: left;
-            color: var(--text-muted);
-            padding: 0 12px 10px 0;
-            border-bottom: 1px solid var(--border);                        /* Scheidingslijn onder header */
+            color: #ffffff;                                                /* Witte tekst op groen */
+            padding: 10px 12px 10px 10px;
+            border-bottom: 2px solid #0f5c35;                              /* Donkerdere groene lijn */
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -307,15 +307,15 @@
         }
 
         tbody td {
-            padding: 9px 12px 9px 0;
-            color: var(--text-primary);
-            background: var(--bg-card);                                    /* Expliciete donkere achtergrond — voorkomt witte fallback */
-            border-bottom: 1px solid var(--border);
+            padding: 9px 12px 9px 10px;
+            color: #1a1a1a;                                                /* Donkere tekst op lichte achtergrond */
+            background: #c8c8c8;                                           /* Lichtgrijze rijen */
+            border-bottom: 1px solid #aaaaaa;                              /* Zichtbare rijscheiding */
             vertical-align: middle;
         }
 
         tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover td { background: var(--bg-card-alt); }             /* Donkere hover — geen witte flits */
+        tbody tr:hover td { background: #d8d8d8; }                         /* Iets lichter bij hover */
 
         .badge {
             display: inline-block;
