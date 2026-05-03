@@ -2,7 +2,8 @@
  * =============================================================================
  * admin/analytics-dashboard.js — MyFamTreeCollab Analytics (unified)
  * =============================================================================
- * Version    : 3.0.0
+ * Version    : 3.2.0
+ * Wijziging  : Filter gecorrigeerd — viewer/editor verwijderd, niet-ingelogd/admin toegevoegd.
  * Wijziging  : Samengevoegd uit siteAnalytics.js + analytics-dashboard.js v2.
  *              analytics.js (localStorage) volledig vervangen door Supabase.
  *              Één bestand, geen externe analytics-modules meer nodig.
@@ -364,12 +365,10 @@
             perTier[tier] = (perTier[tier] || 0) + 1;             // teller ophogen
         });
 
-        const tierKleuren = {                                      // kleur per tier
-            guest:  { fg: "#aaaacc" },
-            viewer: { fg: "#6ee09a" },
-            editor: { fg: "#6ab4f0" },
-            owner:  { fg: "#f0c040" },
-            admin:  { fg: "#f08080" }
+        const tierKleuren = {                                      // kleur per account type
+            guest:  { fg: "#aaaacc" },                             // guest — grijsblauw
+            owner:  { fg: "#f0c040" },                             // owner — goud
+            admin:  { fg: "#f08080" }                              // admin — rood
         };
 
         const entries = Object.entries(perTier)
@@ -422,23 +421,43 @@
     }
 
     /**
-     * renderRecenteTabel(bezoeken)
-     * Toont de 15 meest recente paginabezoeken in een tabel.
+     * renderRecenteTabel(bezoeken, tierFilter)
+     * Toont de 50 meest recente paginabezoeken in een tabel.
+     * Filtert op tier als tierFilter niet "all" is.
+     * @param {Array}  bezoeken   - alle bezoek-rijen uit Supabase
+     * @param {string} tierFilter - "all" | "guest" | "viewer" | "editor" | "owner"
      */
-    function renderRecenteTabel(bezoeken) {
+    function renderRecenteTabel(bezoeken, tierFilter) {
         const container = el("sessions-table");                    // container ophalen
-        if (!container) return;
+        if (!container) return;                                    // veiligheidscheck
 
-        const recente = bezoeken.slice(0, 15);                     // maximaal 15 rijen
+        const filter  = tierFilter || "all";                       // fallback naar "all"
+
+        // Filter op account type:
+        // "anoniem" → tier is null of leeg (niet ingelogde bezoeker)
+        // "guest" / "owner" / "admin" → exacte match op tier kolom
+        // "all" → geen filter
+        const gefilterd = filter === "all"
+            ? bezoeken                                             // geen filter — alles tonen
+            : filter === "anoniem"
+                ? bezoeken.filter(function (r) {
+                    return !r.tier || r.tier.trim() === "";        // null, undefined of lege string
+                  })
+                : bezoeken.filter(function (r) {
+                    return r.tier === filter;                      // exacte match: guest / owner / admin
+                  });
+
+        const recente = gefilterd.slice(0, 50);                   // maximaal 50 rijen tonen
 
         if (recente.length === 0) {
-            container.innerHTML = '<p class="empty-msg">Nog geen bezoeken geregistreerd.</p>';
-            return;
+            container.innerHTML = '<p class="empty-msg">Geen bezoeken gevonden voor deze filter.</p>';
+            return;                                                // vroegtijdig stoppen
         }
 
-        const tierKleuren = {
-            guest:  "#aaaacc", viewer: "#6ee09a",
-            editor: "#6ab4f0", owner:  "#f0c040", admin: "#f08080"
+        const tierKleuren = {                                      // kleur per account type
+            guest:  "#aaaacc",                                     // guest — grijsblauw
+            owner:  "#f0c040",                                     // owner — goud
+            admin:  "#f08080"                                      // admin — rood
         };
 
         let html = (
@@ -447,24 +466,25 @@
             '<th>Tier</th>'      +                                 // account tier
             '<th>Duur</th>'      +                                 // verblijfsduur
             '<th>Tijdstip</th>'  +                                 // wanneer bezocht
-            '<th>Sessie ID</th>' +                                 // anonieme sessie
+            '<th>Sessie ID</th>' +                                 // anonieme sessie (ingekort)
             '</tr></thead><tbody>'
         );
 
         recente.forEach(function (r) {
-            const tierKleur = tierKleuren[r.tier] || "#ccc";       // kleur voor tier badge
+            const tierKleur = tierKleuren[r.tier] || "#888888";   // grijs voor niet-ingelogd (null tier)
+            const tierLabel = r.tier || "niet ingelogd";           // leesbaar label voor null tier
             const tijdstip  = r.visited_at
-                ? new Date(r.visited_at).toLocaleString("nl-BE")   // Belgisch formaat
+                ? new Date(r.visited_at).toLocaleString("nl-BE")   // Belgisch datum+tijd formaat
                 : "—";
 
             html += (
                 '<tr>' +
                 '<td>' + escHtml(r.page || "—") + '</td>' +
                 '<td><span class="badge" style="color:' + tierKleur + ';background:' + tierKleur + '22;">' +
-                    escHtml(r.tier || "guest") + '</span></td>' +  // tier badge
+                    escHtml(tierLabel) + '</span></td>' +          // tier badge met correct label
                 '<td>' + escHtml(formatDuur(r.duration_sec)) + '</td>' +
                 '<td style="font-size:0.76rem;">' + escHtml(tijdstip) + '</td>' +
-                '<td style="color:var(--text-muted);font-size:0.68rem;">' +
+                '<td style="color:#888;font-size:0.68rem;">' +
                     escHtml((r.session_id || "").slice(0, 16) + "…") + '</td>' + // sessie ID ingekort
                 '</tr>'
             );
@@ -472,6 +492,30 @@
 
         html += '</tbody></table>';
         container.innerHTML = html;                                // injecteren in DOM
+    }
+
+    /**
+     * initTierFilter(bezoeken)
+     * Koppelt de tier-filterknoppen aan de tabel.
+     * Actieve knop krijgt class "active" — inactieve knoppen gedimed.
+     * @param {Array} bezoeken - alle bezoek-rijen (ongefilterd)
+     */
+    function initTierFilter(bezoeken) {
+        const knoppen = document.querySelectorAll(".tier-btn");    // alle filterknoppen ophalen
+
+        knoppen.forEach(function (knop) {
+            knop.addEventListener("click", function () {
+                // Stap 1: active class van alle knoppen verwijderen
+                knoppen.forEach(function (k) { k.classList.remove("active"); });
+
+                // Stap 2: active class op geklikte knop zetten
+                knop.classList.add("active");                      // geselecteerde knop markeren
+
+                // Stap 3: tabel herrenderen met geselecteerde tier
+                const tier = knop.dataset.tier;                    // tier waarde uit data-tier attribuut
+                renderRecenteTabel(bezoeken, tier);                // tabel filteren en renderen
+            });
+        });
     }
 
     /**
@@ -502,7 +546,8 @@
         renderPaginaStats(bezoeken);                               // pagina balkgrafiek
         renderTierVerdeling(bezoeken);                             // tier verdeling
         renderDeviceGrid(bezoeken);                                // sessie pills
-        renderRecenteTabel(bezoeken);                              // recente bezoeken tabel
+        renderRecenteTabel(bezoeken, "all");                       // tabel — standaard alle tiers
+        initTierFilter(bezoeken);                                  // filterknoppen koppelen aan nieuwe data
         renderFooter();                                            // timestamp
     }
 
