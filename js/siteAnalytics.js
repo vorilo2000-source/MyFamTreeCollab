@@ -2,9 +2,8 @@
  * =============================================================================
  * js/siteAnalytics.js — MyFamTreeCollab Pagina Tracker
  * =============================================================================
- * Version    : 2.5.0
- * Wijziging  : getCurrentTier() — viewer/editor zijn stamboom-rechten, geen account types.
- *              Fallback naar guest voor ingelogde gebruikers zonder geldig account type.
+ * Version    : 2.6.0
+ * Wijziging  : getCurrentEmail() via AuthModule.getUser() i.p.v. profiles tabel — email was undefined.
  * Doel       : Registreert paginabezoeken in Supabase (page_visits tabel).
  * Gebruik    : SiteAnalytics.trackPage("home"); — bovenaan elk pagina-script
  * Vereist    : Supabase SDK + auth.js geladen vóór dit script
@@ -103,17 +102,16 @@
 
     /**
      * getCurrentEmail()
-     * Haalt e-mailadres op van ingelogde gebruiker uit profiles tabel.
+     * Haalt e-mailadres op van ingelogde gebruiker via AuthModule.getUser().
+     * E-mail zit in het Supabase auth user object — geen aparte DB query nodig.
      * Geeft null terug voor niet-ingelogde bezoekers.
      * @returns {Promise<string|null>}
      */
     async function getCurrentEmail() {
         if (typeof window.AuthModule === "undefined") return null; // auth.js niet geladen
         try {
-            const session = await window.AuthModule.getSession();  // sessie ophalen
-            if (!session) return null;                             // niet ingelogd → geen e-mail
-            const { profile } = await window.AuthModule.getProfile(); // profiel ophalen
-            return (profile && profile.email) ? profile.email : null; // e-mail uit profiel
+            const user = await window.AuthModule.getUser();        // user object ophalen
+            return user ? user.email : null;                       // email uit auth user object
         } catch (_) {
             return null;                                           // fout → geen e-mail
         }
