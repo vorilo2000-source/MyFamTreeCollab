@@ -2,8 +2,9 @@
  * =============================================================================
  * js/siteAnalytics.js — MyFamTreeCollab Pagina Tracker
  * =============================================================================
- * Version    : 2.4.0
- * Wijziging  : E-mail tracking toegevoegd — getCurrentEmail() + email kolom in insert.
+ * Version    : 2.5.0
+ * Wijziging  : getCurrentTier() — viewer/editor zijn stamboom-rechten, geen account types.
+ *              Fallback naar guest voor ingelogde gebruikers zonder geldig account type.
  * Doel       : Registreert paginabezoeken in Supabase (page_visits tabel).
  * Gebruik    : SiteAnalytics.trackPage("home"); — bovenaan elk pagina-script
  * Vereist    : Supabase SDK + auth.js geladen vóór dit script
@@ -75,7 +76,11 @@
         try {
             const session = await window.AuthModule.getSession();  // actieve sessie ophalen
             if (!session) return null;                             // geen sessie → niet ingelogd
-            return (await window.AuthModule.getTier()) || null;    // tier ophalen, null als leeg
+            const tier = await window.AuthModule.getTier();        // tier ophalen via auth.js
+            // viewer en editor zijn stamboom-rechten, geen account types
+            // ingelogde gebruiker zonder geldig account type → guest
+            if (!tier || tier === "viewer" || tier === "editor") return "guest";
+            return tier;                                           // guest / owner / admin
         } catch (_) {
             return null;                                           // fout → behandel als niet ingelogd
         }
