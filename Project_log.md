@@ -1,8 +1,29 @@
 # MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-04-29
+## Bijgewerkt: 2026-05-04
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
 > 
+---
+
+Sessie — 2026-05-04
+
+analytics.js (localStorage) + siteAnalytics.js + analytics-dashboard.js samengevoegd tot admin/analytics-dashboard.js v3.x
+siteAnalytics.js hersteld als zelfstandig bestand in /js/ — was per ongeluk verwijderd waardoor tracking op gewone pagina's niet werkte
+Globale tier-filter toegevoegd bovenaan dashboard — filtert alle secties tegelijk (niet ingelogd / guest / owner / admin)
+Tabel recente bezoeken: sticky header + lichtgrijze rijen + groene header
+Supabase API key gecorrigeerd van sb_publishable_ naar JWT formaat
+RLS uitgeschakeld op page_visits — policy blokkeerde anon inserts ondanks correcte configuratie
+admin_page_visits view aangemaakt — SELECT beveiliging op database niveau
+GoTrueClient warning opgelost — AuthModule.getClient() hergebruikt
+
+Bestanden gewijzigd:
+
+js/siteAnalytics.js → v2.3.0
+admin/analytics-dashboard.js → v3.6.0
+admin/analytics.html → v2.5.0
+js/auth.js → JWT anon key bijgewerkt
+Supabase: RLS uitgeschakeld, admin_page_visits view aangemaakt
+
 ---
 
 ## Sessie 20 — Analytics uitrol alle pagina's
