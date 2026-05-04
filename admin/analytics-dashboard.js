@@ -24,7 +24,7 @@
 
     // Constanten alleen nodig voor updateDuration() die fetch() direct aanroept
     const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";         // Supabase project URL
-    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";  // publieke anon key
+    const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9paHp1d2xjZ3l5ZXVoZ2hqYWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI2ODcsImV4cCI6MjA5MjMzODY4N30.bL_Bo_8TaJUveMmNyFM4yVYUl6jJmNfet71-E20BM08"; // JWT anon key
 
     /**
      * getDb()
