@@ -2,9 +2,9 @@
  * =============================================================================
  * admin/analytics-dashboard.js — MyFamTreeCollab Analytics Dashboard
  * =============================================================================
- * Version    : 3.5.0
- * Wijziging  : Eigen createClient() vervangen door AuthModule.getClient() — geen GoTrueClient warning meer.
- * Wijziging  : Tracker-code verwijderd — wordt nu geladen via js/siteAnalytics.js.
+ * Version    : 3.6.0
+ * Wijziging  : haalData() leest van admin_page_visits view — SELECT beveiliging op DB niveau.
+ *              GoTrueClient fix — AuthModule.getClient() hergebruikt in siteAnalytics.js.
  *              analytics-dashboard.js bevat alleen nog dashboard render-logica.
  * Structuur  : 1. Supabase config (singleton)
  *              2. Dashboard — renderDashboard()
@@ -104,7 +104,7 @@
         dertigDagenGeleden.setDate(dertigDagenGeleden.getDate() - 30); // 30 dagen terug
 
         const { data, error } = await getDb()
-            .from("page_visits")                                   // page_visits tabel
+            .from("admin_page_visits")                             // beveiligde view — alleen admins zien data
             .select("*")                                           // alle kolommen
             .gte("visited_at", dertigDagenGeleden.toISOString())   // laatste 30 dagen
             .order("visited_at", { ascending: false });            // nieuwste eerst
