@@ -2,9 +2,9 @@
  * =============================================================================
  * js/siteAnalytics.js — MyFamTreeCollab Pagina Tracker
  * =============================================================================
- * Version    : 2.2.0
- * Wijziging  : Eigen anon client met persistSession:false — lost RLS conflict op
- *              voor niet-ingelogde bezoekers.
+ * Version    : 2.3.0
+ * Wijziging  : GoTrueClient fix — AuthModule.getClient() hergebruikt.
+ *              RLS uitgeschakeld op page_visits — inserts werken nu voor alle rollen.
  * Doel       : Registreert paginabezoeken in Supabase (page_visits tabel).
  * Gebruik    : SiteAnalytics.trackPage("home"); — bovenaan elk pagina-script
  * Vereist    : Supabase SDK + auth.js geladen vóór dit script
@@ -21,20 +21,24 @@
     // SUPABASE CLIENT
     // =========================================================================
 
-    // =========================================================================
-    // SUPABASE CLIENT
-    // =========================================================================
-
-    // Eigen anonieme client voor tracking — bewust NIET via AuthModule.getClient().
-    // AuthModule.getClient() geeft de authenticated sessie mee waardoor Supabase
-    // de anon INSERT policy niet matcht voor niet-ingelogde bezoekers.
-    // persistSession: false — slaat geen sessie op, voorkomt conflict met auth.js client.
-    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";
+    // RLS is uitgeschakeld op page_visits — inserts werken voor anon en authenticated.
+    // AuthModule.getClient() hergebruiken — voorkomt GoTrueClient warning.
+    // auth.js moet geladen zijn vóór dit script (zie laadvolgorde in HTML).
+    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";         // nodig voor updateDuration fetch
     const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9paHp1d2xjZ3l5ZXVoZ2hqYWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI2ODcsImV4cCI6MjA5MjMzODY4N30.bL_Bo_8TaJUveMmNyFM4yVYUl6jJmNfet71-E20BM08"; // JWT anon key
 
-    const db = supabase.createClient(SUPA_URL, SUPA_ANON, {
-        auth: { persistSession: false }                                    // geen sessie opslaan — voorkomt conflict
-    });
+    /**
+     * getDb()
+     * Hergebruikt de Supabase client van auth.js — voorkomt GoTrueClient warning.
+     * Valt terug op eigen client als AuthModule niet beschikbaar is.
+     * @returns {object} Supabase client
+     */
+    function getDb() {
+        if (typeof window.AuthModule !== "undefined") {
+            return window.AuthModule.getClient();                  // gedeelde client hergebruiken
+        }
+        return supabase.createClient(SUPA_URL, SUPA_ANON);        // fallback voor edge cases
+    }
 
     // =========================================================================
     // SESSIE ID
@@ -159,7 +163,7 @@
             ? new URL(document.referrer).pathname                  // alleen pad van referrer
             : null;                                                // geen referrer
 
-        const { data, error } = await db                          // anon client zonder sessie
+        const { data, error } = await getDb()                     // gedeelde client ophalen
             .from("page_visits")                                   // doeltabel
             .insert({
                 session_id:   sessionId,                           // anonieme sessie ID (altijd aanwezig)
