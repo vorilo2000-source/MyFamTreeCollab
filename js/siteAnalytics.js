@@ -2,9 +2,9 @@
  * =============================================================================
  * js/siteAnalytics.js — MyFamTreeCollab Pagina Tracker
  * =============================================================================
- * Version    : 2.1.0
- * Wijziging  : Eigen supabase.createClient() vervangen door AuthModule.getClient()
- *              — voorkomt "Multiple GoTrueClient instances" warning.
+ * Version    : 2.2.0
+ * Wijziging  : Eigen anon client met persistSession:false — lost RLS conflict op
+ *              voor niet-ingelogde bezoekers.
  * Doel       : Registreert paginabezoeken in Supabase (page_visits tabel).
  * Gebruik    : SiteAnalytics.trackPage("home"); — bovenaan elk pagina-script
  * Vereist    : Supabase SDK + auth.js geladen vóór dit script
@@ -21,23 +21,20 @@
     // SUPABASE CLIENT
     // =========================================================================
 
-    // Hergebruik de bestaande client van auth.js — voorkomt "Multiple GoTrueClient" warning.
-    // auth.js moet geladen zijn vóór dit script (zie laadvolgorde in HTML).
-    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co"; // alleen nodig voor updateDuration fetch
-    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS"; // alleen nodig voor updateDuration fetch
+    // =========================================================================
+    // SUPABASE CLIENT
+    // =========================================================================
 
-    /**
-     * getDb()
-     * Geeft de gedeelde Supabase client terug van AuthModule.
-     * Valt terug op een nieuwe client als AuthModule niet beschikbaar is.
-     * @returns {object} Supabase client
-     */
-    function getDb() {
-        if (typeof window.AuthModule !== "undefined") {
-            return window.AuthModule.getClient();                  // hergebruik bestaande client
-        }
-        return supabase.createClient(SUPA_URL, SUPA_ANON);        // fallback — geen dubbele client verwacht
-    }
+    // Eigen anonieme client voor tracking — bewust NIET via AuthModule.getClient().
+    // AuthModule.getClient() geeft de authenticated sessie mee waardoor Supabase
+    // de anon INSERT policy niet matcht voor niet-ingelogde bezoekers.
+    // persistSession: false — slaat geen sessie op, voorkomt conflict met auth.js client.
+    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";         // Supabase project URL
+    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";  // publieke anon key
+
+    const db = supabase.createClient(SUPA_URL, SUPA_ANON, {
+        auth: { persistSession: false }                                    // geen sessie opslaan — voorkomt conflict
+    });
 
     // =========================================================================
     // SESSIE ID
@@ -162,7 +159,7 @@
             ? new URL(document.referrer).pathname                  // alleen pad van referrer
             : null;                                                // geen referrer
 
-        const { data, error } = await getDb()                     // gedeelde client ophalen
+        const { data, error } = await db                          // anon client zonder sessie
             .from("page_visits")                                   // doeltabel
             .insert({
                 session_id:   sessionId,                           // anonieme sessie ID (altijd aanwezig)
