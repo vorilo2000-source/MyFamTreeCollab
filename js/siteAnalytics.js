@@ -2,9 +2,8 @@
  * =============================================================================
  * js/siteAnalytics.js — MyFamTreeCollab Pagina Tracker
  * =============================================================================
- * Version    : 2.3.0
- * Wijziging  : GoTrueClient fix — AuthModule.getClient() hergebruikt.
- *              RLS uitgeschakeld op page_visits — inserts werken nu voor alle rollen.
+ * Version    : 2.4.0
+ * Wijziging  : E-mail tracking toegevoegd — getCurrentEmail() + email kolom in insert.
  * Doel       : Registreert paginabezoeken in Supabase (page_visits tabel).
  * Gebruik    : SiteAnalytics.trackPage("home"); — bovenaan elk pagina-script
  * Vereist    : Supabase SDK + auth.js geladen vóór dit script
@@ -62,14 +61,13 @@
     }
 
     // =========================================================================
-    // TIER + USER OPHALEN
+    // TIER + USER + EMAIL OPHALEN
     // =========================================================================
 
     /**
      * getCurrentTier()
      * Haalt tier op van ingelogde gebruiker via AuthModule.
-     * Geeft null terug voor niet-ingelogde bezoekers — zodat
-     * de database null opslaat en de filter "Niet ingelogd" correct werkt.
+     * Geeft null terug voor niet-ingelogde bezoekers.
      * @returns {Promise<string|null>} null | "guest" | "owner" | "admin"
      */
     async function getCurrentTier() {
@@ -95,6 +93,24 @@
             return user ? user.id : null;                          // null als niet ingelogd
         } catch (_) {
             return null;                                           // fout → geen user ID
+        }
+    }
+
+    /**
+     * getCurrentEmail()
+     * Haalt e-mailadres op van ingelogde gebruiker uit profiles tabel.
+     * Geeft null terug voor niet-ingelogde bezoekers.
+     * @returns {Promise<string|null>}
+     */
+    async function getCurrentEmail() {
+        if (typeof window.AuthModule === "undefined") return null; // auth.js niet geladen
+        try {
+            const session = await window.AuthModule.getSession();  // sessie ophalen
+            if (!session) return null;                             // niet ingelogd → geen e-mail
+            const { profile } = await window.AuthModule.getProfile(); // profiel ophalen
+            return (profile && profile.email) ? profile.email : null; // e-mail uit profiel
+        } catch (_) {
+            return null;                                           // fout → geen e-mail
         }
     }
 
@@ -159,6 +175,7 @@
         const sessionId = getSessionId();                          // sessie ID ophalen of aanmaken
         const tier      = await getCurrentTier();                  // null voor niet-ingelogd
         const userId    = await getCurrentUserId();                // null voor niet-ingelogd
+        const email     = await getCurrentEmail();                  // null voor niet-ingelogd
         const referrer  = document.referrer
             ? new URL(document.referrer).pathname                  // alleen pad van referrer
             : null;                                                // geen referrer
@@ -169,6 +186,7 @@
                 session_id:   sessionId,                           // anonieme sessie ID (altijd aanwezig)
                 user_id:      userId,                              // null voor niet-ingelogden
                 tier:         tier,                                // null voor niet-ingelogden
+                email:        email,                               // null voor niet-ingelogden
                 page:         pageName,                            // naam van de bezochte pagina
                 referrer:     referrer,                            // pad van vorige pagina
                 duration_sec: null,                                // ingevuld bij verlaten pagina
