@@ -29,8 +29,8 @@
     // AuthModule.getClient() geeft de authenticated sessie mee waardoor Supabase
     // de anon INSERT policy niet matcht voor niet-ingelogde bezoekers.
     // persistSession: false — slaat geen sessie op, voorkomt conflict met auth.js client.
-    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";         // Supabase project URL
-    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";  // publieke anon key
+    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";
+    const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9paHp1d2xjZ3l5ZXVoZ2hqYWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NjI2ODcsImV4cCI6MjA5MjMzODY4N30.bL_Bo_8TaJUveMmNyFM4yVYUl6jJmNfet71-E20BM08"; // JWT anon key
 
     const db = supabase.createClient(SUPA_URL, SUPA_ANON, {
         auth: { persistSession: false }                                    // geen sessie opslaan — voorkomt conflict
