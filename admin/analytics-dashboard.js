@@ -1,17 +1,15 @@
 /**
  * =============================================================================
- * admin/analytics-dashboard.js — MyFamTreeCollab Analytics (unified)
+ * admin/analytics-dashboard.js — MyFamTreeCollab Analytics Dashboard
  * =============================================================================
- * Version    : 3.3.0
- * Wijziging  : Globale filter — alle secties reageren op geselecteerd account type.
- * Wijziging  : Samengevoegd uit siteAnalytics.js + analytics-dashboard.js v2.
- *              analytics.js (localStorage) volledig vervangen door Supabase.
- *              Één bestand, geen externe analytics-modules meer nodig.
+ * Version    : 3.5.0
+ * Wijziging  : Eigen createClient() vervangen door AuthModule.getClient() — geen GoTrueClient warning meer.
+ * Wijziging  : Tracker-code verwijderd — wordt nu geladen via js/siteAnalytics.js.
+ *              analytics-dashboard.js bevat alleen nog dashboard render-logica.
  * Structuur  : 1. Supabase config (singleton)
- *              2. Tracker  — SiteAnalytics.trackPage() (was siteAnalytics.js)
- *              3. Dashboard — renderDashboard()        (was analytics-dashboard.js)
- *              4. Init     — admin-check + koppeling
- * Vereist    : Supabase SDK + auth.js geladen vóór dit script
+ *              2. Dashboard — renderDashboard()
+ *              3. Init     — admin-check + koppeling
+ * Vereist    : Supabase SDK + auth.js + js/siteAnalytics.js geladen vóór dit script
  * Pagina     : admin/analytics.html
  * =============================================================================
  */
@@ -21,152 +19,21 @@
     "use strict"; // strikte modus — vangt stille fouten op
 
     // =========================================================================
-    // SECTIE 1 — SUPABASE CONFIG (singleton — één keer gedefinieerd)
+    // SECTIE 1 — SUPABASE CONFIG
     // =========================================================================
 
-    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co"; // Supabase project URL
-    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS"; // publieke anon key
-
-    /** Gedeelde Supabase client — aangemaakt één keer, hergebruikt door tracker én dashboard */
-    const db = supabase.createClient(SUPA_URL, SUPA_ANON);        // client aanmaken via Supabase SDK
-
-    // =========================================================================
-    // SECTIE 2 — TRACKER  (was: siteAnalytics.js)
-    // =========================================================================
-
-    // --- Sessie ID -----------------------------------------------------------
+    // Constanten alleen nodig voor updateDuration() die fetch() direct aanroept
+    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";         // Supabase project URL
+    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";  // publieke anon key
 
     /**
-     * getSessionId()
-     * Haalt anonieme sessie ID op uit sessionStorage.
-     * Aangemaakt bij eerste bezoek — verdwijnt bij sluiten tab.
-     * @returns {string} sessie ID
+     * getDb()
+     * Hergebruikt de Supabase client van auth.js — voorkomt GoTrueClient warning.
+     * @returns {object} Supabase client
      */
-    function getSessionId() {
-        let sid = sessionStorage.getItem("ft_sid");                // bestaande sessie ID ophalen
-        if (!sid) {                                                // nog geen sessie ID
-            sid = "s_" + Date.now().toString(36) + "_" +          // timestamp in base-36 (compact)
-                  Math.random().toString(36).slice(2, 8);          // 6 willekeurige tekens
-            sessionStorage.setItem("ft_sid", sid);                 // opslaan voor duur van de tab
-        }
-        return sid;                                                // sessie ID teruggeven
+    function getDb() {
+        return window.AuthModule.getClient();                      // gedeelde client van auth.js
     }
-
-    // --- Tier + user ophalen -------------------------------------------------
-
-    /**
-     * getCurrentTier()
-     * Haalt tier op van ingelogde gebruiker via AuthModule.
-     * @returns {Promise<string>} 'guest' | 'viewer' | 'editor' | 'owner' | 'admin'
-     */
-    async function getCurrentTier() {
-        if (typeof window.AuthModule === "undefined") return "guest"; // auth.js niet geladen
-        try {
-            return (await window.AuthModule.getTier()) || "guest"; // tier ophalen, fallback guest
-        } catch (_) {
-            return "guest";                                        // fout → gast
-        }
-    }
-
-    /**
-     * getCurrentUserId()
-     * Haalt user UUID op van ingelogde gebruiker, of null voor gasten.
-     * @returns {Promise<string|null>}
-     */
-    async function getCurrentUserId() {
-        if (typeof window.AuthModule === "undefined") return null; // auth.js niet geladen
-        try {
-            const user = await window.AuthModule.getUser();        // user object ophalen
-            return user ? user.id : null;                          // null voor gasten
-        } catch (_) {
-            return null;                                           // fout → geen user ID
-        }
-    }
-
-    // --- Duur tracking -------------------------------------------------------
-
-    let _visitId   = null; // UUID van actieve page_visits rij — nodig voor duration update
-    let _pageStart = null; // starttijd bezoek in ms
-
-    /**
-     * updateDuration()
-     * Berekent verblijfsduur en update de rij in Supabase via fetch (keepalive).
-     * Aangeroepen bij beforeunload en visibilitychange → hidden.
-     */
-    function updateDuration() {
-        if (!_visitId || !_pageStart) return;                      // geen actief bezoek — stoppen
-
-        const duurSec = Math.round((Date.now() - _pageStart) / 1000); // duur in seconden
-
-        // Directe fetch — betrouwbaarder dan Supabase client bij page unload
-        fetch(SUPA_URL + "/rest/v1/page_visits?id=eq." + _visitId, {
-            method:  "PATCH",                                      // update bestaande rij
-            headers: {
-                "Content-Type":  "application/json",               // JSON body
-                "apikey":        SUPA_ANON,                        // Supabase anon key
-                "Authorization": "Bearer " + SUPA_ANON            // auth header
-            },
-            body:      JSON.stringify({ duration_sec: duurSec }),  // duur invullen
-            keepalive: true                                        // blijft actief na page unload
-        }).catch(function () {});                                   // stille fout — bezoeker is al weg
-    }
-
-    // Duur updaten bij verlaten pagina
-    window.addEventListener("beforeunload", updateDuration);
-
-    // Duur updaten bij tab naar achtergrond (mobiel / PWA)
-    document.addEventListener("visibilitychange", function () {
-        if (document.visibilityState === "hidden") updateDuration(); // tab naar achtergrond
-    });
-
-    // --- Hoofd track functie -------------------------------------------------
-
-    /**
-     * trackPage(pageName)
-     * Registreert een paginabezoek in Supabase page_visits.
-     * Roep aan bovenaan elk pagina-script: SiteAnalytics.trackPage("home");
-     * @param {string} pageName - naam van de pagina (bv. "home", "analytics-dashboard")
-     */
-    async function trackPage(pageName) {
-        if (!pageName || typeof pageName !== "string") return;     // valideer invoer
-
-        _pageStart = Date.now();                                   // starttijd vastleggen
-
-        const sessionId = getSessionId();                          // sessie ID ophalen/aanmaken
-        const tier      = await getCurrentTier();                  // tier ophalen
-        const userId    = await getCurrentUserId();                // user ID ophalen (null voor gasten)
-        const referrer  = document.referrer
-            ? new URL(document.referrer).pathname                  // alleen het pad van referrer
-            : null;                                               // geen referrer beschikbaar
-
-        const { data, error } = await db
-            .from("page_visits")                                   // doeltabel
-            .insert({
-                session_id:   sessionId,                           // anonieme sessie ID
-                user_id:      userId,                              // null voor gasten
-                tier:         tier,                                // tier op moment van bezoek
-                page:         pageName,                            // paginanaam
-                referrer:     referrer,                            // pad van vorige pagina
-                duration_sec: null,                                // ingevuld bij verlaten
-                visited_at:   new Date().toISOString()             // tijdstip van bezoek
-            })
-            .select("id")                                          // nieuw rij-ID terugvragen
-            .single();                                             // verwacht precies één rij
-
-        if (error) {
-            console.warn("[Analytics] Bezoek registreren mislukt:", error.message); // log fout
-            return;                                                // stop — geen ID voor duur-update
-        }
-
-        _visitId = data.id;                                        // ID opslaan voor duur-update
-    }
-
-    // Publieke tracker API
-    window.SiteAnalytics = { trackPage: trackPage };              // enige publieke interface van tracker
-
-    // =========================================================================
-    // SECTIE 3 — DASHBOARD  (was: analytics-dashboard.js v2)
-    // =========================================================================
 
     // --- Helper functies -----------------------------------------------------
 
@@ -236,7 +103,7 @@
         const dertigDagenGeleden = new Date();                     // huidige datum
         dertigDagenGeleden.setDate(dertigDagenGeleden.getDate() - 30); // 30 dagen terug
 
-        const { data, error } = await db
+        const { data, error } = await getDb()
             .from("page_visits")                                   // page_visits tabel
             .select("*")                                           // alle kolommen
             .gte("visited_at", dertigDagenGeleden.toISOString())   // laatste 30 dagen
