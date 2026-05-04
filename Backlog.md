@@ -1,5 +1,5 @@
 md — MyFamTreeCollab
-## Bijgewerkt: 2026-04-30
+## Bijgewerkt: 2026-05-04
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -359,6 +359,7 @@ md — MyFamTreeCollab
 | VB-09 | `accountbeheer.html` v2.2.0 — kolom "Laatste login" verwijderd, colspan 6→5 | ✅ Gedaan |
 
 ---
+
 ## Analytics — Sessie 20 (2026-05-03)
 
 | ID | Omschrijving | Status |
@@ -387,6 +388,23 @@ md — MyFamTreeCollab
 
 ---
 
+## Analytics dashboard — Sessie 21 (2026-05-04)
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| AN-22 | `analytics.js` (localStorage) + `siteAnalytics.js` + `analytics-dashboard.js` samengevoegd tot één bestand | ✅ Gedaan |
+| AN-23 | `js/siteAnalytics.js` hersteld als zelfstandig tracker-bestand — was per ongeluk samengevoegd | ✅ Gedaan |
+| AN-24 | Globale tier-filter bovenaan dashboard — filtert alle secties tegelijk | ✅ Gedaan |
+| AN-25 | Filter account types gecorrigeerd: niet ingelogd / guest / owner / admin (viewer+editor verwijderd) | ✅ Gedaan |
+| AN-26 | Tabel recente bezoeken: sticky header + lichtgrijze rijen + groene header | ✅ Gedaan |
+| AN-27 | Supabase anon key gecorrigeerd van `sb_publishable_` naar JWT formaat | ✅ Gedaan |
+| AN-28 | RLS uitgeschakeld op `page_visits` — INSERT policy blokkeerde anon ondanks `with check (true)` | ✅ Gedaan |
+| AN-29 | `admin_page_visits` view aangemaakt — SELECT beveiliging op DB niveau voor niet-admins | ✅ Gedaan |
+| AN-30 | GoTrueClient warning opgelost — `AuthModule.getClient()` hergebruikt in `siteAnalytics.js` | ✅ Gedaan |
+| AN-31 | Tracking bevestigd werkend voor niet-ingelogde bezoekers (`tier = null`) | ✅ Gedaan |
+
+---
+
 ## Verbeteringen
 
 | ID | Omschrijving | Status |
@@ -411,6 +429,7 @@ md — MyFamTreeCollab
 | TD-07 | SMTP via Gmail App Password — niet ideaal voor productie, eigen domein nodig | 🟡 Middel |
 | TD-08 | async/await mismatch — alle call-sites van storage.add() controleren buiten create.js | 🟡 Middel |
 | TD-09 | Tier-constraint Supabase nog op oud model — blokkerende vereiste voor Fase 6 | ✅ Opgelost in Sessie 15 |
+| TD-10 | `page_visits` RLS uitgeschakeld — tijdelijke oplossing, beveiligd via `admin_page_visits` view | 🟡 Middel |
 
 ---
 
