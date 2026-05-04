@@ -2,9 +2,8 @@
  * =============================================================================
  * admin/analytics-dashboard.js — MyFamTreeCollab Analytics Dashboard
  * =============================================================================
- * Version    : 3.6.0
- * Wijziging  : haalData() leest van admin_page_visits view — SELECT beveiliging op DB niveau.
- *              GoTrueClient fix — AuthModule.getClient() hergebruikt in siteAnalytics.js.
+ * Version    : 3.7.0
+ * Wijziging  : E-mail kolom toegevoegd aan recente bezoeken tabel.
  *              analytics-dashboard.js bevat alleen nog dashboard render-logica.
  * Structuur  : 1. Supabase config (singleton)
  *              2. Dashboard — renderDashboard()
@@ -314,6 +313,7 @@
             '<table><thead><tr>' +
             '<th>Pagina</th>'    +                                 // bezochte pagina
             '<th>Tier</th>'      +                                 // account type
+            '<th>E-mail</th>'    +                                 // e-mailadres gebruiker
             '<th>Duur</th>'      +                                 // verblijfsduur
             '<th>Tijdstip</th>'  +                                 // wanneer bezocht
             '<th>Sessie ID</th>' +                                 // anonieme sessie (ingekort)
@@ -332,6 +332,8 @@
                 '<td>' + escHtml(r.page || "—") + '</td>' +
                 '<td><span class="badge" style="color:' + tierKleur + ';background:' + tierKleur + '22;">' +
                     escHtml(tierLabel) + '</span></td>' +          // tier badge met correct label
+                '<td style="font-size:0.74rem;color:var(--text-muted);">' +
+                    escHtml(r.email || "—") + '</td>' +            // e-mail of streepje voor gasten
                 '<td>' + escHtml(formatDuur(r.duration_sec)) + '</td>' +
                 '<td style="font-size:0.76rem;">' + escHtml(tijdstip) + '</td>' +
                 '<td style="color:#888;font-size:0.68rem;">' +
