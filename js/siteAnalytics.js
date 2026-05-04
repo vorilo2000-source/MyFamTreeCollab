@@ -2,10 +2,9 @@
  * =============================================================================
  * js/siteAnalytics.js — MyFamTreeCollab Pagina Tracker
  * =============================================================================
- * Version    : 2.0.0
- * Wijziging  : Hersteld als zelfstandig bestand — tracker was per ongeluk
- *              samengevoegd in admin/analytics-dashboard.js waardoor
- *              window.SiteAnalytics niet beschikbaar was op gewone pagina's.
+ * Version    : 2.1.0
+ * Wijziging  : Eigen supabase.createClient() vervangen door AuthModule.getClient()
+ *              — voorkomt "Multiple GoTrueClient instances" warning.
  * Doel       : Registreert paginabezoeken in Supabase (page_visits tabel).
  * Gebruik    : SiteAnalytics.trackPage("home"); — bovenaan elk pagina-script
  * Vereist    : Supabase SDK + auth.js geladen vóór dit script
@@ -19,13 +18,26 @@
     "use strict"; // strikte modus — vangt stille fouten op
 
     // =========================================================================
-    // SUPABASE CONFIG
+    // SUPABASE CLIENT
     // =========================================================================
 
-    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co"; // Supabase project URL
-    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS"; // publieke anon key
+    // Hergebruik de bestaande client van auth.js — voorkomt "Multiple GoTrueClient" warning.
+    // auth.js moet geladen zijn vóór dit script (zie laadvolgorde in HTML).
+    const SUPA_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co"; // alleen nodig voor updateDuration fetch
+    const SUPA_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS"; // alleen nodig voor updateDuration fetch
 
-    const db = supabase.createClient(SUPA_URL, SUPA_ANON);        // Supabase client aanmaken
+    /**
+     * getDb()
+     * Geeft de gedeelde Supabase client terug van AuthModule.
+     * Valt terug op een nieuwe client als AuthModule niet beschikbaar is.
+     * @returns {object} Supabase client
+     */
+    function getDb() {
+        if (typeof window.AuthModule !== "undefined") {
+            return window.AuthModule.getClient();                  // hergebruik bestaande client
+        }
+        return supabase.createClient(SUPA_URL, SUPA_ANON);        // fallback — geen dubbele client verwacht
+    }
 
     // =========================================================================
     // SESSIE ID
@@ -150,7 +162,7 @@
             ? new URL(document.referrer).pathname                  // alleen pad van referrer
             : null;                                                // geen referrer
 
-        const { data, error } = await db
+        const { data, error } = await getDb()                     // gedeelde client ophalen
             .from("page_visits")                                   // doeltabel
             .insert({
                 session_id:   sessionId,                           // anonieme sessie ID (altijd aanwezig)
