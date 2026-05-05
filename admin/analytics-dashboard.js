@@ -1,9 +1,11 @@
+
 /**
  * =============================================================================
  * admin/analytics-dashboard.js — MyFamTreeCollab Analytics Dashboard
  * =============================================================================
- * Version    : 3.8.0
- * Wijziging  : trackPage() vervangen door SiteAnalytics.trackPage() — ReferenceError opgelost.
+ * Version    : 3.9.0
+ * Wijziging  : renderTierVerdeling — uitklapbare e-maillijst per tier toegevoegd.
+ *              trackPage() vervangen door SiteAnalytics.trackPage() — ReferenceError opgelost.
  *              analytics-dashboard.js bevat alleen nog dashboard render-logica.
  * Structuur  : 1. Supabase config (singleton)
  *              2. Dashboard — renderDashboard()
@@ -218,18 +220,12 @@
 
     /**
      * renderTierVerdeling(bezoeken)
-     * Balkgrafiek van bezoeken per account tier.
+     * Balkgrafiek van bezoeken per account tier met uitklapbare e-maillijst.
+     * Toont unieke e-mailadressen per tier — klik op tier om lijst te tonen/verbergen.
      */
     function renderTierVerdeling(bezoeken) {
         const container = el("pages-chart");                       // container ophalen
         if (!container) return;
-
-        // Tel bezoeken per tier
-        const perTier = {};
-        bezoeken.forEach(function (r) {
-            const tier = r.tier || "guest";                        // fallback naar guest
-            perTier[tier] = (perTier[tier] || 0) + 1;             // teller ophogen
-        });
 
         const tierKleuren = {                                      // kleur per account type
             guest:  { fg: "#aaaacc" },                             // guest — grijsblauw
@@ -237,34 +233,60 @@
             admin:  { fg: "#f08080" }                              // admin — rood
         };
 
+        // Groepeer bezoeken per tier — verzamel unieke e-mails per tier
+        const perTier = {};                                        // { tier: { count, emails: Set } }
+        bezoeken.forEach(function (r) {
+            const tier = r.tier || "niet ingelogd";                // null → niet ingelogd
+            if (!perTier[tier]) {
+                perTier[tier] = { count: 0, emails: new Set() };   // initialiseer tier
+            }
+            perTier[tier].count++;                                 // bezoekteller ophogen
+            if (r.email) perTier[tier].emails.add(r.email);        // uniek e-mailadres toevoegen
+        });
+
         const entries = Object.entries(perTier)
-            .sort(function (a, b) { return b[1] - a[1]; });       // meest voorkomend eerst
+            .sort(function (a, b) { return b[1].count - a[1].count; }); // meest voorkomend eerst
 
         if (entries.length === 0) {
             container.innerHTML = '<p class="empty-msg">Geen tier-data beschikbaar.</p>';
             return;
         }
 
-        const max = entries[0][1];
+        const max = entries[0][1].count;                           // hoogste count = 100% breedte
 
-        container.innerHTML = entries.map(function (entry) {
-            const tier  = entry[0];
-            const count = entry[1];
-            const pct   = max > 0 ? (count / max) * 100 : 0;
-            const kleur = (tierKleuren[tier] || { fg: "#ccc" }).fg; // kleur ophalen, fallback grijs
+        container.innerHTML = entries.map(function (entry, idx) {
+            const tier   = entry[0];                               // tier naam
+            const stats  = entry[1];                               // { count, emails }
+            const pct    = max > 0 ? (stats.count / max) * 100 : 0;
+            const kleur  = (tierKleuren[tier] || { fg: "#888888" }).fg; // kleur ophalen
+            const listId = "tier-emails-" + idx;                   // uniek ID voor uitklaplijst
+
+            // E-maillijst opbouwen — gesorteerd alfabetisch
+            const emailLijst = Array.from(stats.emails).sort();    // unieke e-mails sorteren
+            const emailHtml  = emailLijst.length > 0
+                ? emailLijst.map(function (m) {
+                    return '<div class="tier-email">' + escHtml(m) + '</div>'; // e-mail rij
+                  }).join("")
+                : '<div class="tier-email tier-email-leeg">— geen e-mails beschikbaar —</div>'; // leeg
 
             return (
-                '<div class="event-row">' +
+                // Klikbare tier rij — toont/verbergt e-maillijst
+                '<div class="tier-row" onclick="document.getElementById(\'' + listId + '\').classList.toggle(\'open\')">' +
                 '  <span class="event-label" style="color:' + kleur + ';">' + escHtml(tier) + '</span>' +
                 '  <div class="event-bar-wrap">' +
                 '    <div class="event-bar" data-pct="' + pct + '" style="background:' + kleur + ';"></div>' +
                 '  </div>' +
-                '  <span class="event-count" style="color:' + kleur + ';">' + escHtml(String(count)) + '</span>' +
+                '  <span class="event-count" style="color:' + kleur + ';">' + escHtml(String(stats.count)) + '</span>' +
+                '  <span class="tier-toggle" style="color:' + kleur + ';">▾</span>' +  // uitklap icoon
+                '</div>' +
+                // Uitklapbare e-maillijst — standaard verborgen
+                '<div class="tier-email-list" id="' + listId + '">' +
+                emailHtml +
                 '</div>'
             );
         }).join("");
 
-        animeerBalken(container);
+        animeerBalken(container);                                  // balken animeren na DOM render
     }
 
     /**
