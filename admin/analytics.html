@@ -1,5 +1,5 @@
-<!-- ======================= admin/analytics.html v2.6.0 =======================
-     Wijziging v2.6.0: siteAnalytics.js toegevoegd aan laadvolgorde
+<!-- ======================= admin/analytics.html v2.7.0 =======================
+     Wijziging v2.7.0: CSS toegevoegd voor uitklapbare e-maillijst per tier in tier verdeling
      Analytics Dashboard — interne gebruiksstatistieken van MyFamTreeCollab
      Toont: paginabezoeken, tier-verdeling, verblijfsduur, recente sessies
      Data bron: Supabase (page_visits tabel) via analytics-dashboard.js
@@ -376,6 +376,92 @@
         .tier-btn[data-tier="guest"]    { background: #3a3a4a; color: #aaaacc; border-color: #aaaacc; } /* Guest */
         .tier-btn[data-tier="owner"]    { background: #3a2e0a; color: #f0c040; border-color: #f0c040; } /* Owner */
         .tier-btn[data-tier="admin"]    { background: #3a1a1a; color: #f08080; border-color: #f08080; } /* Admin */
+
+        /* ======================= TIER E-MAIL LIJST ======================= */
+        .tier-row {
+            display: flex;                                                 /* Flex rij */
+            align-items: center;                                           /* Verticaal uitlijnen */
+            gap: 10px;                                                     /* Ruimte tussen elementen */
+            margin-bottom: 6px;                                            /* Ruimte onder rij */
+            cursor: pointer;                                               /* Klikbaar */
+            user-select: none;                                             /* Geen tekst selectie bij klikken */
+        }
+        .tier-row:hover { opacity: 0.85; }                                /* Subtiele hover */
+
+        .tier-toggle {
+            font-size: 0.8rem;                                             /* Klein pijltje */
+            transition: transform 0.2s;                                    /* Vloeiende rotatie */
+        }
+
+        .tier-email-list {
+            display: none;                                                 /* Standaard verborgen */
+            margin: 0 0 12px 8px;                                         /* Inspringing */
+            border-left: 2px solid rgba(255,255,255,0.08);                /* Subtiele lijn links */
+            padding-left: 12px;                                            /* Ruimte na lijn */
+        }
+
+        .tier-email-list.open {
+            display: block;                                                /* Zichtbaar na klik */
+        }
+
+        .tier-email-list.open ~ .tier-row .tier-toggle {
+            transform: rotate(180deg);                                     /* Pijltje omdraaien */
+        }
+
+        .tier-email {
+            font-family: var(--font-mono);                                 /* Monospace */
+            font-size: 0.72rem;                                            /* Klein */
+            color: var(--text-muted);                                      /* Gedimde kleur */
+            padding: 3px 0;                                                /* Kleine ruimte */
+            border-bottom: 1px solid rgba(255,255,255,0.04);               /* Subtiele scheiding */
+        }
+
+        .tier-email:last-child { border-bottom: none; }                   /* Geen lijn na laatste */
+
+        .tier-email-leeg {
+            color: rgba(255,255,255,0.2);                                  /* Zeer gedimde kleur */
+            font-style: italic;                                            /* Cursief */
+        }
+
+        /* ======================= TIER E-MAIL LIJST ======================= */
+        .tier-row {
+            cursor: pointer;                                               /* Klikbaar */
+            user-select: none;                                             /* Tekst niet selecteerbaar bij klikken */
+        }
+        .tier-row:hover { opacity: 0.85; }                                 /* Subtiele hover */
+
+        .tier-toggle {
+            font-size: 0.85rem;                                            /* Klein icoon */
+            margin-left: 6px;                                              /* Afstand na count */
+            transition: transform 0.2s;                                    /* Vloeiende rotatie */
+        }
+
+        .tier-email-list {
+            display: none;                                                 /* Standaard verborgen */
+            padding: 6px 0 10px 8px;                                       /* Inspringing */
+            border-left: 2px solid rgba(255,255,255,0.08);                 /* Subtiele lijn links */
+            margin: 2px 0 8px 0;                                           /* Ruimte rondom */
+        }
+
+        .tier-email-list.open {
+            display: block;                                                /* Zichtbaar na klik */
+        }
+
+        .tier-email-list.open ~ .tier-row .tier-toggle {
+            transform: rotate(180deg);                                     /* Pijl omhoog als open */
+        }
+
+        .tier-email {
+            font-family: var(--font-mono);                                 /* Monospace */
+            font-size: 0.72rem;                                            /* Klein */
+            color: var(--text-primary);                                    /* Zelfde als pagina bezoeken labels */
+            padding: 2px 0;                                                /* Kleine ruimte */
+        }
+
+        .tier-email-leeg {
+            font-style: italic;                                            /* Cursief voor leeg bericht */
+            font-size: 0.7rem;                                             /* Iets kleiner */
+        }
 
         /* ======================= FADE-UP ANIMATIE ======================= */
         @keyframes fadeUp {
