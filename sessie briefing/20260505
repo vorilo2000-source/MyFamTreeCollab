@@ -1,0 +1,82 @@
+# Sessie-briefing — MyFamTreeCollab
+
+## Project
+| | |
+|---|---|
+| **Live** | https://vorilo2000-source.github.io/MyFamTreeCollab/index.html |
+| **Repo** | https://github.com/vorilo2000-source/MyFamTreeCollab |
+| **Stack** | Vanilla HTML + CSS + JavaScript — geen frameworks |
+| **Cloud** | Supabase (oihzuwlcgyyeuhghjahp) |
+
+---
+
+## Doel van de sessie
+Abonnementspagina's bijwerken naar het nieuwe rolmodel.
+
+**Te bewerken pagina's:**
+- `abonnementen/overzicht.html`
+- `abonnementen/prijzen.html`
+- `abonnementen/vergelijk.html`
+- `abonnementen/voordelen.html`
+
+---
+
+## Rolmodel (definitief)
+
+| Account type | Beschrijving | Tier waarde in DB |
+|---|---|---|
+| Niet ingelogd | Bezoeker zonder account | `null` |
+| Basis account | Gratis account | `guest` |
+| Owner account | Donatie (~€5/6 maanden) | `owner` |
+| Admin | Beheerder | `admin` |
+
+**Stamboom-rechten** (geen account types):
+- `viewer` — leesrecht op gedeelde stamboom van owner/admin
+- `editor` — bewerkrecht op gedeelde stamboom van owner/admin
+
+Viewer en editor worden toegewezen door owner of admin op een specifieke stamboom. Ze staan in een aparte tabel, niet in `profiles.tier`.
+
+---
+
+## Limieten per account type
+
+| Functie | Niet ingelogd | Guest | Owner | Admin |
+|---|---|---|---|---|
+| Personen lokaal | Demo only | 60 | Onbeperkt | Onbeperkt |
+| Cloud backup | ❌ | ❌ | ✅ | ✅ |
+| Stamboom delen | ❌ | ❌ | ✅ | ✅ |
+| Viewer/editor uitnodigen | ❌ | ❌ | ✅ | ✅ |
+| Versiebeheer | ❌ | ❌ | ✅ (max 5) | ✅ |
+| Samenwerken (collab) | ❌ | ❌ | ✅ | ✅ |
+
+---
+
+## Huidige bestandsversies
+
+| Bestand | Versie |
+|---|---|
+| `js/auth.js` | v2.5.0 |
+| `js/siteAnalytics.js` | v2.6.0 |
+| `admin/analytics-dashboard.js` | v3.9.0 |
+| `admin/analytics.html` | v2.7.0 |
+| `abonnementen/overzicht.html` | v2.0.2 |
+| `abonnementen/prijzen.html` | onbekend |
+| `abonnementen/vergelijk.html` | v2.1.0 |
+| `abonnementen/voordelen.html` | v2.1.0 |
+
+---
+
+## Werkwijze
+- Communicatie: **Nederlands**
+- Code & commentaar: **Engels**
+- Inline commentaar op elke coderegel
+- Versienummer verhogen in bestandsheader
+- Stijl: direct en technisch
+
+## Definition of Done
+- [ ] Code werkt zoals bedoeld
+- [ ] Inline commentaar op elke coderegel
+- [ ] Bestandsheader bijgewerkt met versienummer
+- [ ] BACKLOG.md bijgewerkt
+- [ ] PROJECT_LOG.md bijgewerkt
+- [ ] Getest in browser
