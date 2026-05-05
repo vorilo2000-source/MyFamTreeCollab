@@ -2,8 +2,8 @@
  * =============================================================================
  * admin/analytics-dashboard.js — MyFamTreeCollab Analytics Dashboard
  * =============================================================================
- * Version    : 3.7.0
- * Wijziging  : E-mail kolom toegevoegd aan recente bezoeken tabel.
+ * Version    : 3.8.0
+ * Wijziging  : trackPage() vervangen door SiteAnalytics.trackPage() — ReferenceError opgelost.
  *              analytics-dashboard.js bevat alleen nog dashboard render-logica.
  * Structuur  : 1. Supabase config (singleton)
  *              2. Dashboard — renderDashboard()
@@ -490,7 +490,7 @@
             }
 
             // Stap 5: admin bevestigd — bezoek registreren + dashboard laden
-            trackPage("analytics-dashboard");                      // paginabezoek registreren
+            SiteAnalytics.trackPage("analytics-dashboard");       // paginabezoek registreren via siteAnalytics.js
             renderDashboard();                                     // dashboard renderen
         });
     });
