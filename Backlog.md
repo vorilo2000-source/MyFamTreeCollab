@@ -393,15 +393,25 @@ md — MyFamTreeCollab
 | ID | Omschrijving | Status |
 |----|-------------|--------|
 | AN-22 | `analytics.js` (localStorage) + `siteAnalytics.js` + `analytics-dashboard.js` samengevoegd tot één bestand | ✅ Gedaan |
-| AN-23 | `js/siteAnalytics.js` hersteld als zelfstandig tracker-bestand — was per ongeluk samengevoegd | ✅ Gedaan |
+| AN-23 | `js/siteAnalytics.js` hersteld als zelfstandig tracker-bestand | ✅ Gedaan |
 | AN-24 | Globale tier-filter bovenaan dashboard — filtert alle secties tegelijk | ✅ Gedaan |
-| AN-25 | Filter account types gecorrigeerd: niet ingelogd / guest / owner / admin (viewer+editor verwijderd) | ✅ Gedaan |
+| AN-25 | Filter account types gecorrigeerd: niet ingelogd / guest / owner / admin | ✅ Gedaan |
 | AN-26 | Tabel recente bezoeken: sticky header + lichtgrijze rijen + groene header | ✅ Gedaan |
 | AN-27 | Supabase anon key gecorrigeerd van `sb_publishable_` naar JWT formaat | ✅ Gedaan |
-| AN-28 | RLS uitgeschakeld op `page_visits` — INSERT policy blokkeerde anon ondanks `with check (true)` | ✅ Gedaan |
-| AN-29 | `admin_page_visits` view aangemaakt — SELECT beveiliging op DB niveau voor niet-admins | ✅ Gedaan |
-| AN-30 | GoTrueClient warning opgelost — `AuthModule.getClient()` hergebruikt in `siteAnalytics.js` | ✅ Gedaan |
+| AN-28 | RLS uitgeschakeld op `page_visits` — INSERT policy blokkeerde anon | ✅ Gedaan |
+| AN-29 | `admin_page_visits` view aangemaakt — SELECT beveiliging op DB niveau | ✅ Gedaan |
+| AN-30 | GoTrueClient warning opgelost — `AuthModule.getClient()` hergebruikt | ✅ Gedaan |
 | AN-31 | Tracking bevestigd werkend voor niet-ingelogde bezoekers (`tier = null`) | ✅ Gedaan |
+| AN-32 | E-mail kolom toegevoegd aan `page_visits` tabel in Supabase | ✅ Gedaan |
+| AN-33 | E-mail tracking toegevoegd aan `siteAnalytics.js` via `AuthModule.getUser()` | ✅ Gedaan |
+| AN-34 | E-mail kolom zichtbaar in recente bezoeken tabel | ✅ Gedaan |
+| AN-35 | Tier verdeling uitgebreid met uitklapbare e-maillijst per tier (▾ dropdown) | ✅ Gedaan |
+| AN-36 | Tier definitie gecorrigeerd — viewer/editor zijn stamboom-rechten, geen account types | ✅ Gedaan |
+| AN-37 | `getCurrentTier()` in `siteAnalytics.js` — viewer/editor afgevangen naar guest | ✅ Gedaan |
+| AN-38 | `getTier()` in `auth.js` v2.5.0 — fallback viewer → guest, viewer/editor check | ✅ Gedaan |
+| AN-39 | Historische `page_visits` rijen met tier viewer/editor bijgewerkt naar guest | ✅ Gedaan |
+| AN-40 | `trackPage()` prefix bug opgelost in `analytics-dashboard.js` — `SiteAnalytics.trackPage()` | ✅ Gedaan |
+| AN-21 | `stamboom/account.html` — tracking toevoegen | 📋 Open |
 
 ---
 
