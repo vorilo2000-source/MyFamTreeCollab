@@ -1,267 +1,561 @@
-<!-- ======================= abonnementen/overzicht.html v2.0.2 =======================
-     Herschreven: correct toegangsmodel (Gratis / Viewer / Editor / Owner)
-     Donatie-model vervangt 'abonnement'-taal volledig
-     Rollen activeren via uitnodiging + donatie (eenmalig of periodiek)
-     Structuur: zelfde template als standaardpagina (TopBar, Navbar, Footer via fetch)
-
-     Wijziging v2.0.2 (sessie 20):
-     - siteAnalytics.js verplaatst naar correct positie na auth.js (was onderaan body)
-     - SiteAnalytics.trackPage("overzicht") gecorrigeerd (was "home")
-     - Ontbrekende </script> tag hersteld
-     - Laadvolgorde geconsolideerd conform vaste projectstructuur
-
-     Wijziging v2.0.1: eerste versie met analytics (niet conform standaard)
+<!-- ======================= abonnementen/overzicht.html v2.2.0 =======================
+     Wijziging v2.2.0 (sessie 21):
+     - Rolmodel volledig herschreven naar definitief model:
+         Niet ingelogd (null) / Basis account (guest) / Owner account (owner) / Admin (admin)
+     - Viewer en editor zijn stamboom-rechten, geen account-types
+     - Guest: max 60 personen lokaal, geen cloud, geen delen
+     - Owner: onbeperkt lokaal, cloud backup, stamboom delen, viewer/editor uitnodigen
+     - Donatiebedrag Owner bijgewerkt naar ~€5 per 6 maanden
+     - "Gratis starten" kaart gesplitst in Niet ingelogd + Basis account (guest)
+     - Viewer/Editor uitleg verplaatst naar aparte sectie (stamboom-rechten)
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"> <!-- Tekencodering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive viewport -->
     <title>Overzicht</title>
 
-   <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css"> <!-- Globale projectstijlen -->
 
     <style>
-        .overzicht-wrapper { max-width: 760px; margin: 0 auto; padding: 40px 20px 64px; }
-        .overzicht-wrapper h1 { font-size: 1.5rem; font-weight: bold; color: #1a1a1a; margin: 0 0 8px 0; }
-        .overzicht-intro { font-size: 0.95rem; color: #555; line-height: 1.7; margin: 0 0 40px 0; max-width: 640px; }
-        .sectie-titel { font-size: 1.05rem; font-weight: bold; color: #1E90FF; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #e8f4ff; }
-        .hoe-werkt-het { background: #f4f8ff; border: 1px solid #d0e4ff; border-radius: 10px; padding: 24px 24px 20px; margin-bottom: 40px; }
-        .hoe-werkt-het h2 { font-size: 1rem; font-weight: bold; color: #1E90FF; margin: 0 0 16px 0; }
-        .stappen { display: flex; flex-direction: column; gap: 14px; }
-        .stap { display: flex; gap: 12px; align-items: flex-start; }
-        .stap-nummer { background: #1E90FF; color: #fff; font-weight: bold; font-size: 0.8rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
-        .stap-tekst { font-size: 0.88rem; color: #444; line-height: 1.6; }
-        .stap-tekst strong { color: #1a1a1a; }
-        .rol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 48px; }
-        .rol-kaart { border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px 20px 18px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
-        .rol-kaart::before { content: ''; display: block; height: 4px; border-radius: 10px 10px 0 0; position: absolute; top: 0; left: 0; right: 0; }
-        .rol-kaart.gratis::before { background: #aaa; }
-        .rol-kaart.viewer::before { background: #28a745; }
-        .rol-kaart.editor::before { background: #1E90FF; }
-        .rol-kaart.owner::before  { background: #f39c12; }
-        .rol-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; margin-top: 4px; }
-        .rol-icoon { font-size: 1.5rem; line-height: 1; }
-        .rol-naam  { font-size: 1rem; font-weight: bold; color: #1a1a1a; }
-        .rol-activatie { display: inline-block; font-size: 0.72rem; padding: 2px 9px; border-radius: 10px; font-weight: bold; margin-bottom: 12px; }
-        .badge-gratis  { background: #f0f0f0; color: #666; border: 1px solid #ddd; }
-        .badge-donatie { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
-        .rol-beschrijving { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 14px; }
-        .rol-features { list-style: none; padding: 0; margin: 0; }
-        .rol-features li { font-size: 0.84rem; color: #444; padding: 3px 0; display: flex; align-items: flex-start; gap: 7px; line-height: 1.4; }
-        .vink  { color: #28a745; font-weight: bold; flex-shrink: 0; margin-top: 1px; }
-        .kruis { color: #ccc; flex-shrink: 0; margin-top: 1px; }
+        /* ── Pagina wrapper ─────────────────────────────────────────────── */
+        .overzicht-wrapper {
+            max-width: 760px;        /* Leesbare breedte */
+            margin: 0 auto;          /* Horizontaal centreren */
+            padding: 40px 20px 64px; /* Lucht boven, zijkanten en onder */
+        }
+
+        .overzicht-wrapper h1 {
+            font-size: 1.5rem;       /* Paginatitel */
+            font-weight: bold;
+            color: #1a1a1a;
+            margin: 0 0 8px 0;
+        }
+
+        .overzicht-intro {
+            font-size: 0.95rem;      /* Introductietekst */
+            color: #555;
+            line-height: 1.7;
+            margin: 0 0 40px 0;
+            max-width: 640px;
+        }
+
+        .sectie-titel {
+            font-size: 1.05rem;      /* Sectietitel */
+            font-weight: bold;
+            color: #1E90FF;          /* Blauw accent */
+            margin: 0 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8f4ff; /* Lichtblauwe lijn */
+        }
+
+        /* ── Hoe werkt het blok ─────────────────────────────────────────── */
+        .hoe-werkt-het {
+            background: #f4f8ff;
+            border: 1px solid #d0e4ff;
+            border-radius: 10px;
+            padding: 24px 24px 20px;
+            margin-bottom: 40px;
+        }
+
+        .hoe-werkt-het h2 {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #1E90FF;
+            margin: 0 0 16px 0;
+        }
+
+        .stappen { display: flex; flex-direction: column; gap: 14px; } /* Verticale stappenlijst */
+
+        .stap { display: flex; gap: 12px; align-items: flex-start; } /* Nummer + tekst naast elkaar */
+
+        .stap-nummer {
+            background: #1E90FF;     /* Blauwe nummercirkel */
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.8rem;
+            width: 24px; height: 24px; /* Vaste afmeting voor cirkel */
+            border-radius: 50%;      /* Volledig rond */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;          /* Niet krimpen bij lange tekst */
+            margin-top: 1px;         /* Kleine correctie uitlijning */
+        }
+
+        .stap-tekst { font-size: 0.88rem; color: #444; line-height: 1.6; } /* Staptekst */
+        .stap-tekst strong { color: #1a1a1a; } /* Vette termen iets donkerder */
+
+        /* ── Account-type kaarten ──────────────────────────────────────── */
+        .account-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsief grid */
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .account-kaart {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px 20px 18px;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            position: relative;      /* Voor accentbalk pseudo-element */
+            overflow: hidden;        /* Accentbalk afkappen bij border-radius */
+        }
+
+        /* Gekleurde accentbalk bovenaan elke kaart */
+        .account-kaart::before {
+            content: '';
+            display: block;
+            height: 4px;
+            border-radius: 10px 10px 0 0;
+            position: absolute;
+            top: 0; left: 0; right: 0; /* Volledige bovenbreedte */
+        }
+
+        .account-kaart.bezoeker::before { background: #999; }    /* Grijs — niet ingelogd */
+        .account-kaart.guest::before    { background: #28a745; } /* Groen — basis account */
+        .account-kaart.owner::before    { background: #f39c12; } /* Oranje — owner */
+        .account-kaart.admin::before    { background: #dc3545; } /* Rood — admin */
+
+        .account-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; margin-top: 4px; }
+        .account-icoon { font-size: 1.5rem; line-height: 1; }                  /* Emoji icoon */
+        .account-naam  { font-size: 1rem; font-weight: bold; color: #1a1a1a; } /* Account naam */
+
+        /* DB-tier badge — toont de tier-waarde zoals opgeslagen in profiles.tier */
+        .tier-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-family: monospace;  /* Code-uitstraling voor DB-waarden */
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            border: 1px solid;
+        }
+
+        .tier-null  { background: #f0f0f0; color: #888; border-color: #ddd; }          /* tier: null */
+        .tier-guest { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }    /* tier: guest */
+        .tier-owner { background: #fff3cd; color: #7a4f00; border-color: #f0ad4e; }    /* tier: owner */
+        .tier-admin { background: #fdecea; color: #c62828; border-color: #ef9a9a; }    /* tier: admin */
+
+        /* Activatiebadge — hoe wordt het account geactiveerd */
+        .activatie-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .badge-gratis  { background: #f0f0f0; color: #666; border: 1px solid #ddd; }       /* Standaard/gratis */
+        .badge-donatie { background: #fff3cd; color: #856404; border: 1px solid #ffc107; } /* Donatie vereist */
+        .badge-intern  { background: #fdecea; color: #c62828; border: 1px solid #ef9a9a; } /* Intern beheer */
+
+        .account-beschrijving { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 14px; }
+
+        .account-features { list-style: none; padding: 0; margin: 0; } /* Feature lijst */
+
+        .account-features li {
+            font-size: 0.84rem;
+            color: #444;
+            padding: 3px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            line-height: 1.4;
+        }
+
+        .vink  { color: #28a745; font-weight: bold; flex-shrink: 0; margin-top: 1px; } /* Groen vinkje */
+        .kruis { color: #ccc; flex-shrink: 0; margin-top: 1px; }                       /* Grijs kruis */
+
+        /* ── Stamboom-rechten sectie ─────────────────────────────────────── */
+        .rechten-blok {
+            background: #f8f9fb;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+
+        .rechten-blok h2 { font-size: 1rem; font-weight: bold; color: #1a1a1a; margin: 0 0 8px 0; }
+
+        .rechten-blok .intro {
+            font-size: 0.88rem;
+            color: #555;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+
+        .rechten-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* Responsief */
+            gap: 14px;
+        }
+
+        .recht-kaart {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 4px solid; /* Gekleurde linkerrand per type */
+        }
+
+        .recht-kaart.viewer { border-left-color: #28a745; } /* Groen voor viewer */
+        .recht-kaart.editor { border-left-color: #1E90FF; } /* Blauw voor editor */
+
+        .recht-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .recht-icoon  { font-size: 1.2rem; }                                          /* Emoji icoon */
+        .recht-naam   { font-size: 0.95rem; font-weight: bold; color: #1a1a1a; }     /* Naam */
+
+        .recht-beschrijving { font-size: 0.84rem; color: #555; line-height: 1.5; margin: 0 0 10px 0; }
+
+        .recht-features { list-style: none; padding: 0; margin: 0; } /* Feature lijst zonder bullets */
+
+        .recht-features li { font-size: 0.82rem; color: #444; padding: 2px 0; display: flex; gap: 6px; }
+
+        /* ── Donatie sectie ──────────────────────────────────────────────── */
         .donatie-sectie { margin-bottom: 40px; }
+
         .donatie-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-        .donatie-tabel th { text-align: left; padding: 10px 12px; background: #f4f6f9; color: #555; font-weight: bold; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #e0e0e0; }
-        .donatie-tabel td { padding: 12px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: top; line-height: 1.5; }
+
+        .donatie-tabel th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #f4f6f9;
+            color: #555;
+            font-weight: bold;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .donatie-tabel td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #444;
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
         .donatie-tabel tr:last-child td { border-bottom: none; }
         .donatie-tabel tr:hover td { background: #fafafa; }
+
         .donatie-bedrag { font-weight: bold; color: #1a1a1a; white-space: nowrap; }
-        .donatie-of { font-size: 0.74rem; color: #999; display: block; font-weight: normal; }
-        .donatie-noot { background: #fff8e1; border-left: 4px solid #f39c12; border-radius: 0 6px 6px 0; padding: 13px 16px; font-size: 0.84rem; color: #555; line-height: 1.6; margin-top: 16px; }
-        .donatie-noot strong { color: #e67e22; }
-        .cta-blok { text-align: center; padding: 32px 24px; background: #f4f8ff; border-radius: 10px; border: 1px solid #d0e4ff; }
+        .donatie-of     { font-size: 0.74rem; color: #999; display: block; font-weight: normal; }
+
+        .donatie-noot {
+            background: #fff8e1;
+            border-left: 4px solid #f39c12;
+            border-radius: 0 6px 6px 0;
+            padding: 13px 16px;
+            font-size: 0.84rem;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 16px;
+        }
+        .donatie-noot strong { color: #e67e22; } /* Oranje accenten */
+
+        /* ── CTA blok ────────────────────────────────────────────────────── */
+        .cta-blok {
+            text-align: center;
+            padding: 32px 24px;
+            background: #f4f8ff;
+            border-radius: 10px;
+            border: 1px solid #d0e4ff;
+        }
+
         .cta-blok h2 { font-size: 1.1rem; font-weight: bold; color: #1a1a1a; margin: 0 0 8px 0; }
         .cta-blok p  { font-size: 0.9rem; color: #555; margin: 0 0 20px 0; line-height: 1.6; }
-        .knop-cta { display: inline-block; padding: 10px 26px; background: #1E90FF; color: #fff; text-decoration: none; border-radius: 6px; font-size: 0.92rem; font-weight: bold; }
+
+        .knop-cta {
+            display: inline-block;
+            padding: 10px 26px;
+            background: #1E90FF;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.92rem;
+            font-weight: bold;
+        }
         .knop-cta:hover { background: #1278d4; }
-        .knop-cta.secundair { background: #fff; color: #1E90FF; border: 1px solid #1E90FF; margin-left: 8px; }
+
+        .knop-cta.secundair {
+            background: #fff;
+            color: #1E90FF;
+            border: 1px solid #1E90FF;
+            margin-left: 8px;
+        }
         .knop-cta.secundair:hover { background: #e8f4ff; }
     </style>
 </head>
 <body>
 
-<div id="topbar-placeholder"></div>
-<div id="navbar-placeholder"></div>
+<div id="topbar-placeholder"></div> <!-- TopBar wordt geladen via fetch -->
+<div id="navbar-placeholder"></div> <!-- Navbar wordt geladen via fetch -->
 
 <main>
 <div class="overzicht-wrapper">
 
+    <!-- ===== PAGINATITEL ===== -->
     <h1>Toegang &amp; Samenwerken</h1>
     <p class="overzicht-intro">
-        MyFamTreeCollab werkt op basis van rollen. Elke rol bepaalt wat je kan zien,
-        bewerken en bijdragen aan een stamboom. De basisversie is gratis en volledig
-        lokaal — geen account, geen verplichtingen. Samenwerking en cloud-opslag
-        worden mogelijk via een donatie.
+        MyFamTreeCollab werkt met account types die bepalen wat je kan doen.
+        De basisversie is gratis en volledig lokaal — geen account nodig.
+        Cloud-opslag en samenwerking zijn beschikbaar via een Owner account (donatie ~€5/6 mnd).
     </p>
 
+    <!-- ===== HOE WERKT HET ===== -->
     <div class="hoe-werkt-het">
         <h2>⚙️ Hoe werkt toegang?</h2>
         <div class="stappen">
             <div class="stap">
-                <div class="stap-nummer">1</div>
-                <div class="stap-tekst"><strong>Gratis starten</strong> — iedereen kan lokaal een stamboom aanmaken zonder account of donatie.</div>
+                <div class="stap-nummer">1</div> <!-- Stap 1: bezoeker -->
+                <div class="stap-tekst"><strong>Niet ingelogd starten</strong> — iedereen kan direct een demo-stamboom bekijken zonder account.</div>
             </div>
             <div class="stap">
-                <div class="stap-nummer">2</div>
-                <div class="stap-tekst"><strong>Owner activeert cloud-samenwerking</strong> via een donatie en nodigt anderen uit als Viewer of Editor.</div>
+                <div class="stap-nummer">2</div> <!-- Stap 2: basis account -->
+                <div class="stap-tekst"><strong>Basis account (guest) aanmaken</strong> — gratis registreren geeft toegang tot max. 60 personen lokaal.</div>
             </div>
             <div class="stap">
-                <div class="stap-nummer">3</div>
-                <div class="stap-tekst"><strong>Uitgenodigden doen een donatie</strong> om hun rol te activeren — eenmalig of periodiek, naar eigen keuze.</div>
+                <div class="stap-nummer">3</div> <!-- Stap 3: owner via donatie -->
+                <div class="stap-tekst"><strong>Owner worden via donatie</strong> — ~€5 per 6 maanden activeert cloud backup, delen en samenwerken.</div>
             </div>
             <div class="stap">
-                <div class="stap-nummer">4</div>
-                <div class="stap-tekst"><strong>Samenwerking actief</strong> — berichten per persoon-ID, wijzigingsvoorstellen, discussies volgen en modereren.</div>
+                <div class="stap-nummer">4</div> <!-- Stap 4: viewer/editor toewijzen -->
+                <div class="stap-tekst"><strong>Viewer / Editor toewijzen</strong> — een Owner nodigt anderen uit en geeft ze lees- of bewerkrecht op een specifieke stamboom.</div>
             </div>
         </div>
     </div>
 
-    <h2 class="sectie-titel">De vier rollen</h2>
-    <div class="rol-grid">
+    <!-- ===== ACCOUNT TYPES ===== -->
+    <h2 class="sectie-titel">Account types</h2>
+    <div class="account-grid">
 
-        <div class="rol-kaart gratis">
-            <div class="rol-header"><span class="rol-icoon">🖥️</span><span class="rol-naam">Gratis</span></div>
-            <span class="rol-activatie badge-gratis">Standaard — geen donatie vereist</span>
-            <p class="rol-beschrijving">Lokale stamboom in de browser. Geen account, geen cloud, geen samenwerking. Volledig privé op jouw apparaat.</p>
-            <ul class="rol-features">
-                <li><span class="vink">✓</span> Stamboom aanmaken &amp; beheren</li>
+        <!-- NIET INGELOGD — tier: null -->
+        <div class="account-kaart bezoeker">
+            <div class="account-header">
+                <span class="account-icoon">👤</span>
+                <span class="account-naam">Niet ingelogd</span>
+            </div>
+            <span class="tier-badge tier-null">tier: null</span><br> <!-- DB-waarde: null — geen account -->
+            <span class="activatie-badge badge-gratis">Geen account vereist</span>
+            <p class="account-beschrijving">Bezoeker zonder account. Kan alleen een demo-stamboom bekijken. Geen opslag, geen functies.</p>
+            <ul class="account-features">
+                <li><span class="vink">✓</span> Demo-stamboom bekijken</li>
+                <li><span class="kruis">✗</span> Geen eigen stamboom</li>
+                <li><span class="kruis">✗</span> Geen opslag</li>
+                <li><span class="kruis">✗</span> Geen functies</li>
+            </ul>
+        </div>
+
+        <!-- BASIS ACCOUNT — tier: guest -->
+        <div class="account-kaart guest">
+            <div class="account-header">
+                <span class="account-icoon">🖥️</span>
+                <span class="account-naam">Basis account</span>
+            </div>
+            <span class="tier-badge tier-guest">tier: guest</span><br> <!-- DB-waarde: guest — gratis account -->
+            <span class="activatie-badge badge-gratis">Gratis — geen donatie vereist</span>
+            <p class="account-beschrijving">Gratis account. Lokale stamboom tot max. 60 personen. Geen cloud, geen samenwerking.</p>
+            <ul class="account-features">
+                <li><span class="vink">✓</span> Lokale stamboom (max. 60 personen)</li>
                 <li><span class="vink">✓</span> Tijdlijn &amp; statistieken</li>
                 <li><span class="vink">✓</span> Export naar CSV / JSON</li>
-                <li><span class="kruis">✗</span> Geen cloud-opslag</li>
-                <li><span class="kruis">✗</span> Geen samenwerking</li>
+                <li><span class="kruis">✗</span> Geen cloud backup</li>
+                <li><span class="kruis">✗</span> Geen stamboom delen</li>
+                <li><span class="kruis">✗</span> Geen viewer/editor uitnodigen</li>
             </ul>
         </div>
 
-        <div class="rol-kaart viewer">
-            <div class="rol-header"><span class="rol-icoon">👁️</span><span class="rol-naam">Viewer</span></div>
-            <span class="rol-activatie badge-donatie">Uitnodiging Owner + donatie</span>
-            <p class="rol-beschrijving">Bekijk een gedeelde stamboom en draag bij via berichten in de collab-discussies. Geen bewerkingen.</p>
-            <ul class="rol-features">
-                <li><span class="vink">✓</span> Stamboom bekijken</li>
-                <li><span class="vink">✓</span> Tijdlijn &amp; statistieken</li>
-                <li><span class="vink">✓</span> Berichten plaatsen in discussies</li>
-                <li><span class="kruis">✗</span> Geen bewerkingen</li>
-                <li><span class="kruis">✗</span> Geen export (later: afdrukken)</li>
+        <!-- OWNER ACCOUNT — tier: owner -->
+        <div class="account-kaart owner">
+            <div class="account-header">
+                <span class="account-icoon">👑</span>
+                <span class="account-naam">Owner account</span>
+            </div>
+            <span class="tier-badge tier-owner">tier: owner</span><br> <!-- DB-waarde: owner — donateur -->
+            <span class="activatie-badge badge-donatie">Donatie ~€5 / 6 maanden</span>
+            <p class="account-beschrijving">Volledige toegang. Cloud backup, onbeperkte personen, stamboom delen en samenwerking activeren.</p>
+            <ul class="account-features">
+                <li><span class="vink">✓</span> Onbeperkt personen lokaal</li>
+                <li><span class="vink">✓</span> Cloud backup</li>
+                <li><span class="vink">✓</span> Stamboom delen</li>
+                <li><span class="vink">✓</span> Viewer / Editor uitnodigen</li>
+                <li><span class="vink">✓</span> Versiebeheer (max. 5 versies)</li>
+                <li><span class="vink">✓</span> Samenwerken (collab)</li>
             </ul>
         </div>
 
-        <div class="rol-kaart editor">
-            <div class="rol-header"><span class="rol-icoon">✏️</span><span class="rol-naam">Editor</span></div>
-            <span class="rol-activatie badge-donatie">Uitnodiging Owner + donatie</span>
-            <p class="rol-beschrijving">Voeg personen en relaties toe, bewerk gegevens en stel wijzigingen voor via de collab-pagina.</p>
-            <ul class="rol-features">
-                <li><span class="vink">✓</span> Alles van Viewer</li>
-                <li><span class="vink">✓</span> Personen toevoegen &amp; bewerken</li>
-                <li><span class="vink">✓</span> Relaties beheren</li>
-                <li><span class="vink">✓</span> Wijzigingsvoorstel (diff) plaatsen</li>
-                <li><span class="vink">✓</span> Discussiestatus aanpassen</li>
-            </ul>
-        </div>
-
-        <div class="rol-kaart owner">
-            <div class="rol-header"><span class="rol-icoon">👑</span><span class="rol-naam">Owner</span></div>
-            <span class="rol-activatie badge-donatie">Eigenaar van de boom + donatie</span>
-            <p class="rol-beschrijving">Volledige controle over de stamboom. Beheert toegang, modereert discussies en stelt privacy in.</p>
-            <ul class="rol-features">
-                <li><span class="vink">✓</span> Alles van Editor</li>
-                <li><span class="vink">✓</span> Viewers &amp; Editors uitnodigen</li>
-                <li><span class="vink">✓</span> Berichten modereren (verwijderen)</li>
-                <li><span class="vink">✓</span> Toegang intrekken</li>
-                <li><span class="vink">✓</span> Privacy &amp; zichtbaarheid instellen</li>
+        <!-- ADMIN — tier: admin -->
+        <div class="account-kaart admin">
+            <div class="account-header">
+                <span class="account-icoon">🛡️</span>
+                <span class="account-naam">Admin</span>
+            </div>
+            <span class="tier-badge tier-admin">tier: admin</span><br> <!-- DB-waarde: admin — platformbeheerder -->
+            <span class="activatie-badge badge-intern">Intern — handmatig toegewezen</span>
+            <p class="account-beschrijving">Platformbeheerder. Alle rechten van Owner plus toegang tot het admin dashboard.</p>
+            <ul class="account-features">
+                <li><span class="vink">✓</span> Alles van Owner</li>
+                <li><span class="vink">✓</span> Onbeperkt versiebeheer</li>
+                <li><span class="vink">✓</span> Admin dashboard toegang</li>
+                <li><span class="vink">✓</span> Platformbeheer</li>
             </ul>
         </div>
 
     </div>
 
+    <!-- ===== STAMBOOM-RECHTEN: VIEWER & EDITOR ===== -->
+    <div class="rechten-blok">
+        <h2>📋 Stamboom-rechten: Viewer &amp; Editor</h2>
+        <p class="intro">
+            Viewer en Editor zijn <strong>geen account types</strong> — het zijn rechten die een Owner of Admin
+            toekent aan een specifieke stamboom. Ze staan opgeslagen in een aparte tabel, niet in
+            <code>profiles.tier</code>. Een gebruiker met tier <em>guest</em> kan Viewer of Editor zijn
+            op de stamboom van een Owner.
+        </p>
+        <div class="rechten-grid">
+
+            <!-- VIEWER — leesrecht -->
+            <div class="recht-kaart viewer">
+                <div class="recht-header">
+                    <span class="recht-icoon">👁️</span>
+                    <span class="recht-naam">Viewer</span>
+                </div>
+                <p class="recht-beschrijving">Leesrecht op een gedeelde stamboom. Toegewezen door de Owner van die stamboom.</p>
+                <ul class="recht-features">
+                    <li><span class="vink">✓</span> Stamboom bekijken</li>
+                    <li><span class="vink">✓</span> Tijdlijn &amp; statistieken</li>
+                    <li><span class="vink">✓</span> Berichten in discussies</li>
+                    <li><span class="kruis">✗</span> Geen bewerkingen</li>
+                </ul>
+            </div>
+
+            <!-- EDITOR — bewerkrecht -->
+            <div class="recht-kaart editor">
+                <div class="recht-header">
+                    <span class="recht-icoon">✏️</span>
+                    <span class="recht-naam">Editor</span>
+                </div>
+                <p class="recht-beschrijving">Bewerkrecht op een gedeelde stamboom. Toegewezen door de Owner van die stamboom.</p>
+                <ul class="recht-features">
+                    <li><span class="vink">✓</span> Alles van Viewer</li>
+                    <li><span class="vink">✓</span> Personen toevoegen &amp; bewerken</li>
+                    <li><span class="vink">✓</span> Relaties beheren</li>
+                    <li><span class="vink">✓</span> Wijzigingsvoorstel plaatsen</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== DONATIE OPTIES ===== -->
     <div class="donatie-sectie">
-        <h2 class="sectie-titel">☕ Donatie-opties</h2>
+        <h2 class="sectie-titel">☕ Donatie-opties (Owner account)</h2>
         <p style="font-size:0.88rem;color:#555;margin:0 0 16px 0;line-height:1.6;">
-            MyFamTreeCollab draait volledig op donaties — geen verplichte abonnementen.
-            Elke rol (Owner, Editor, Viewer) vereist een donatie om actief te worden.
-            Jij kiest eenmalig of periodiek.
+            Een Owner account wordt geactiveerd via een donatie. Basis accounts (guest) zijn volledig gratis.
         </p>
         <table class="donatie-tabel">
             <thead>
-                <tr><th>Optie</th><th>Bedrag</th><th>Wat je krijgt</th></tr>
+                <tr>
+                    <th>Optie</th>          <!-- Donatievorm -->
+                    <th>Bedrag</th>         <!-- Bedrag -->
+                    <th>Wat je krijgt</th>  <!-- Voordelen -->
+                </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>Eenmalig</strong></td>
-                    <td class="donatie-bedrag">€10<span class="donatie-of">eenmalig</span></td>
-                    <td>Permanente rolactivatie voor één stamboom. Geen verdere verplichtingen.</td>
+                    <td><strong>Periodiek</strong></td>
+                    <td class="donatie-bedrag">~€5<span class="donatie-of">per 6 maanden</span></td> <!-- Hoofdoptie -->
+                    <td>Owner account actief zolang de donatie loopt. Opzegbaar wanneer je wilt.</td>
                 </tr>
                 <tr>
-                    <td><strong>Periodiek</strong></td>
-                    <td class="donatie-bedrag">€3 – €5<span class="donatie-of">per maand</span></td>
-                    <td>Lopende toegang, opzegbaar wanneer je wilt. Ondersteunt doorlopende ontwikkeling.</td>
+                    <td><strong>Eenmalig</strong></td>
+                    <td class="donatie-bedrag">€10<span class="donatie-of">eenmalig</span></td> <!-- Alternatief -->
+                    <td>Permanente Owner activatie voor één stamboom. Geen verdere verplichtingen.</td>
                 </tr>
                 <tr>
                     <td><strong>Stichtend lid</strong></td>
-                    <td class="donatie-bedrag">€25<span class="donatie-of">eenmalig</span></td>
-                    <td>Permanente rolactivatie + early access tot nieuwe functies + vermelding als stichtend lid.</td>
+                    <td class="donatie-bedrag">€25<span class="donatie-of">eenmalig</span></td> <!-- Premium optie -->
+                    <td>Permanente Owner activatie + early access tot nieuwe functies + vermelding als stichtend lid.</td>
                 </tr>
             </tbody>
         </table>
         <div class="donatie-noot">
             <strong>Transparantie:</strong> er is nog geen automatische betaalverificatie.
-            De Owner bevestigt handmatig toegang na ontvangst van een donatie.
+            Het Owner account wordt handmatig geactiveerd na ontvangst van een donatie.
             Dit wordt in een volgende fase geautomatiseerd.
         </div>
     </div>
 
+    <!-- ===== CTA ===== -->
     <div class="cta-blok">
         <h2>Klaar om te starten?</h2>
-        <p>Begin gratis met een lokale stamboom, of bekijk de gedetailleerde rolvergelijking op de prijzenpagina.</p>
+        <p>Begin gratis met een basis account, of bekijk de gedetailleerde vergelijking op de prijzenpagina.</p>
         <a href="/MyFamTreeCollab/home/create.html" class="knop-cta">Start gratis</a>
-        <a href="prijzen.html" class="knop-cta secundair">Rolvergelijking</a>
+        <a href="prijzen.html" class="knop-cta secundair">Vergelijk account types</a>
     </div>
 
 </div>
 </main>
 
-<div id="footer-placeholder"></div>
+<div id="footer-placeholder"></div> <!-- Footer wordt geladen via fetch -->
 
 <!-- =============================================================
-     SCRIPTS — volgorde is verplicht:
+     SCRIPTS — verplichte laadvolgorde:
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. siteAnalytics.js   — bezoektracking, na auth.js
-     5. TopBar HTML + topbar.js (via fetch)
-     6. Navbar HTML (via fetch)
-     7. Footer HTML (via fetch)
+     3. auth.js             — vereist door topbar.js en siteAnalytics.js
+     4. siteAnalytics.js   — bezoektracking, na auth.js zodat tier beschikbaar is
+     5. TopBar HTML fetch → daarna topbar.js injecteren (garandeert DOM-volgorde)
+     6. Navbar HTML fetch   — onafhankelijk van auth, mag parallel
+     7. Footer HTML fetch   — onafhankelijk, mag parallel
      ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK — vereist door auth.js -->
+<script src="../js/utils.js"></script>   <!-- Utilities — vereist door alle modules -->
+<script src="../js/auth.js"></script>    <!-- Auth module — vereist door topbar.js -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking — na auth.js zodat tier beschikbaar is -->
 
 <script>
     // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    // Garandeert dat #top-auth in DOM aanwezig is vóór topbar.js initialiseert
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen als tekst
         .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
+            document.getElementById('topbar-placeholder').innerHTML = data;    // TopBar in DOM plaatsen
+            var s = document.createElement('script');                          // Nieuw script element aanmaken
+            s.src = '../js/topbar.js';                                         // Pad naar topbar.js
+            document.body.appendChild(s);                                      // Script aan body toevoegen en laden
         });
 
     // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen
         .then(function(data) {
-            var ph = document.getElementById('navbar-placeholder');
-            if (ph) ph.innerHTML = data;
+            var ph = document.getElementById('navbar-placeholder');            // Placeholder ophalen
+            if (ph) ph.innerHTML = data;                                       // Navbar in DOM plaatsen
         });
 
-    // Stap 3: Footer laden
+    // Stap 3: Footer laden — geen afhankelijkheden, mag parallel
     fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
+        .then(resp => resp.text())                                              // HTML ophalen
         .then(function(data) {
-            var ph = document.getElementById('footer-placeholder');
-            if (ph) ph.innerHTML = data;
+            var ph = document.getElementById('footer-placeholder');            // Placeholder ophalen
+            if (ph) ph.innerHTML = data;                                       // Footer in DOM plaatsen
         });
 
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    // Stap 4: Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
     SiteAnalytics.trackPage("overzicht"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
