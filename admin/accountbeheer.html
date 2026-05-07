@@ -1,8 +1,11 @@
-<!-- ======================= admin/accountbeheer.html v2.2.0 =======================
+<!-- ======================= admin/accountbeheer.html v2.3.0 =======================
      Admin accountbeheer pagina
-     Wijziging t.o.v. v2.1.0:
-     - Kolom "Laatste login" verwijderd (last_sign_in_at kwam uit auth.users — niet meer toegestaan)
-     - colspan aangepast van 6 naar 5
+     Wijziging t.o.v. v2.2.0:
+     - Tier filter: viewer/editor vervangen door guest (account types)
+     - Stat-cards: viewer/editor vervangen door guest
+     - CSS tier-badge: guest toegevoegd, viewer/editor verwijderd
+     - Stat IDs: statViewer/statEditor vervangen door statGuest
+     - tierFilter opties aangepast: guest | owner | admin
      ======================================================================= -->
 
 <!DOCTYPE html>
@@ -38,13 +41,11 @@
             --text-muted:     #999;       /* gedimde tekst */
             --accent:         #00d4aa;    /* teal accent (zelfde als analytics) */
 
-            /* ─── Tier kleuren — aangepast voor donker thema ─── */
+            /* ─── Tier kleuren — account types: guest | owner | admin ─── */
             --tier-totaal-bg:  #4a4a5a;   /* grijsblauw — neutraal totaal */
             --tier-totaal-fg:  #c8c8ff;   /* lichtpaars op grijsblauw */
-            --tier-viewer-bg:  #1a3a2a;   /* donkergroen */
-            --tier-viewer-fg:  #6ee09a;   /* helder groen */
-            --tier-editor-bg:  #1a2a3a;   /* donkerblauw */
-            --tier-editor-fg:  #6ab4f0;   /* helder blauw */
+            --tier-guest-bg:   #2a2a2a;   /* donkergrijs — guest */
+            --tier-guest-fg:   #aaaaaa;   /* grijs — guest */
             --tier-owner-bg:   #3a2e0a;   /* donkergoud */
             --tier-owner-fg:   #f0c040;   /* helder goud */
             --tier-admin-bg:   #3a1a1a;   /* donkerrood */
@@ -91,15 +92,14 @@
             border-radius: 8px;                          /* afgeronde hoeken */
             padding: 16px;                               /* ruimte binnen de kaart */
             text-align: center;                          /* tekst centreren */
-            border-top: 3px solid var(--accent);         /* teal accent streep bovenaan */
+            border-top: 3px solid var(--accent);         /* accent streep bovenaan */
         }
 
         /* Tier-specifieke accentkleur bovenaan elke stat-kaart */
-        .stat-card:nth-child(1) { border-top-color: var(--tier-totaal-fg); }  /* totaal — paars */
-        .stat-card:nth-child(2) { border-top-color: var(--tier-viewer-fg); }  /* viewer — groen */
-        .stat-card:nth-child(3) { border-top-color: var(--tier-editor-fg); }  /* editor — blauw */
-        .stat-card:nth-child(4) { border-top-color: var(--tier-owner-fg);  }  /* owner — goud */
-        .stat-card:nth-child(5) { border-top-color: var(--tier-admin-fg);  }  /* admin — rood */
+        .stat-card:nth-child(1) { border-top-color: var(--tier-totaal-fg); } /* totaal — paars */
+        .stat-card:nth-child(2) { border-top-color: var(--tier-guest-fg);  } /* guest — grijs */
+        .stat-card:nth-child(3) { border-top-color: var(--tier-owner-fg);  } /* owner — goud */
+        .stat-card:nth-child(4) { border-top-color: var(--tier-admin-fg);  } /* admin — rood */
 
         .stat-label {
             font-size: 0.75rem;                          /* kleine label tekst */
@@ -116,11 +116,10 @@
         }
 
         /* Tier-specifieke kleur voor het getal zelf */
-        #statTotal  { color: var(--tier-totaal-fg); }   /* totaal — paars */
-        #statViewer { color: var(--tier-viewer-fg); }   /* viewer — groen */
-        #statEditor { color: var(--tier-editor-fg); }   /* editor — blauw */
-        #statOwner  { color: var(--tier-owner-fg);  }   /* owner — goud */
-        #statAdmin  { color: var(--tier-admin-fg);  }   /* admin — rood */
+        #statTotal { color: var(--tier-totaal-fg); }    /* totaal — paars */
+        #statGuest { color: var(--tier-guest-fg);  }    /* guest — grijs */
+        #statOwner { color: var(--tier-owner-fg);  }    /* owner — goud */
+        #statAdmin { color: var(--tier-admin-fg);  }    /* admin — rood */
 
         /* ─── Toolbar (zoekbalk + filter + knop) ─── */
         .toolbar {
@@ -142,7 +141,7 @@
             color: var(--text-primary);                  /* lichte tekst */
         }
 
-        .toolbar input::placeholder { color: var(--text-muted); }  /* gedimde placeholder tekst */
+        .toolbar input::placeholder { color: var(--text-muted); } /* gedimde placeholder tekst */
 
         .toolbar select, .toolbar button {
             padding: 8px 14px;                          /* ruimte binnen select en knop */
@@ -154,7 +153,7 @@
             cursor: pointer;                             /* handcursor */
         }
 
-        .toolbar button:hover { background: var(--bg-card-hover); }  /* iets lichter bij hover */
+        .toolbar button:hover { background: var(--bg-card-hover); } /* iets lichter bij hover */
 
         /* ─── Gebruikerstabel ─── */
         .table-wrap {
@@ -170,7 +169,7 @@
             font-size: 0.88rem;                          /* tekstgrootte in de tabel */
         }
 
-        thead { background: var(--bg-thead); }          /* donkere tabelkop */
+        thead { background: var(--bg-thead); }           /* donkere tabelkop */
 
         thead th {
             padding: 10px 14px;                         /* ruimte in de koptekst cellen */
@@ -183,14 +182,14 @@
             white-space: nowrap;                         /* geen afbreking */
         }
 
-        tbody tr { border-bottom: 1px solid var(--border-light); background: #6e6e6e; }  /* middelgrijs + rijscheiding */
-        tbody tr:last-child { border-bottom: none; }                 /* geen lijn na laatste rij */
-        tbody tr:hover { background: var(--bg-row-hover); }         /* donkerder bij hover */
+        tbody tr { border-bottom: 1px solid var(--border-light); background: #6e6e6e; } /* middelgrijs + rijscheiding */
+        tbody tr:last-child { border-bottom: none; }                  /* geen lijn na laatste rij */
+        tbody tr:hover { background: var(--bg-row-hover); }          /* donkerder bij hover */
         tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); } /* cel opmaak */
 
         .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* lange e-mails afkappen */
 
-        /* ─── Tier badges ─── */
+        /* ─── Tier badges — account types: guest | owner | admin ─── */
         .tier-badge {
             display: inline-block;                       /* inline blok element */
             padding: 3px 10px;                          /* ruimte binnen de badge */
@@ -200,10 +199,9 @@
             text-transform: uppercase;                   /* hoofdletters */
         }
 
-        .tier-badge.viewer { background: var(--tier-viewer-bg); color: var(--tier-viewer-fg); } /* groen */
-        .tier-badge.editor { background: var(--tier-editor-bg); color: var(--tier-editor-fg); } /* blauw */
-        .tier-badge.owner  { background: var(--tier-owner-bg);  color: var(--tier-owner-fg);  } /* goud */
-        .tier-badge.admin  { background: var(--tier-admin-bg);  color: var(--tier-admin-fg);  } /* rood */
+        .tier-badge.guest { background: var(--tier-guest-bg); color: var(--tier-guest-fg); } /* grijs */
+        .tier-badge.owner { background: var(--tier-owner-bg); color: var(--tier-owner-fg); } /* goud */
+        .tier-badge.admin { background: var(--tier-admin-bg); color: var(--tier-admin-fg); } /* rood */
 
         /* ─── Tier select dropdown ─── */
         .tier-select {
@@ -217,7 +215,7 @@
         }
 
         /* ─── Actieknoppen per rij ─── */
-        .row-actions { display: flex; gap: 6px; }       /* horizontale rij knoppen */
+        .row-actions { display: flex; gap: 6px; }        /* horizontale rij knoppen */
 
         .btn-action {
             padding: 4px 10px;                           /* ruimte binnen de knop */
@@ -336,19 +334,15 @@
     <h1>Accountbeheer</h1>
     <p id="lastRefresh" class="subtitel">Laden...</p>
 
-    <!-- Statistieken -->
+    <!-- Statistieken — account types: totaal | guest | owner | admin -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Totaal</div>
         <div class="stat-value" id="statTotal">—</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Viewer</div>
-        <div class="stat-value" id="statViewer">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Editor</div>
-        <div class="stat-value" id="statEditor">—</div>
+        <div class="stat-label">Guest</div>
+        <div class="stat-value" id="statGuest">—</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Owner</div>
@@ -365,15 +359,14 @@
       <input type="text" id="searchInput" placeholder="Zoek op e-mail of gebruikersnaam…" />
       <select id="tierFilter">
         <option value="all">Alle tiers</option>
-        <option value="viewer">Viewer</option>
-        <option value="editor">Editor</option>
+        <option value="guest">Guest</option>
         <option value="owner">Owner</option>
         <option value="admin">Admin</option>
       </select>
       <button id="btnRefresh">↻ Vernieuwen</button>
     </div>
 
-    <!-- Tabel — 5 kolommen (laatste login verwijderd) -->
+    <!-- Tabel — 5 kolommen -->
     <div class="table-wrap">
       <table>
         <thead>
