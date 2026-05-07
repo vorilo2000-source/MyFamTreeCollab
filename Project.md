@@ -1,5 +1,5 @@
 # MyFamTreeCollab — Project.md
-## Bijgewerkt: 2026-04-19
+## Bijgewerkt: 2026-05-07
 
 ---
 
@@ -21,22 +21,24 @@ de gebruiker altijd volledige controle houdt over zijn eigen data.
 
 ### Uitbreidingen (actief)
 - ☁️ Cloud opslag per gebruiker (meerdere stambomen)
-- 👤 Gebruikersaccounts met tiersysteem
+- 👤 Gebruikersaccounts met tiersysteem (guest / owner / admin)
 - 📜 Versiegeschiedenis per stamboom
+- 👥 Samenwerken met anderen (viewer / editor rechten per stamboom)
+- 🔗 Delen van stambomen met leesrechten
 
-### Toekomstige uitbreidingen (Fase 5+)
-- 👥 Samenwerken met anderen aan dezelfde stamboom (F5-05)
-- 🔗 Delen van stambomen met leesrechten (F5-04)
+### Toekomstige uitbreidingen (Fase 7+)
+- 💳 Stripe betalingen voor owner-tier
 - 🔍 Genealogisch onderzoek (bronnen, archieven)
 
 ---
 
 ## Technische informatie
 
-**Live:** https://thvd64-cyber.github.io/MyFamTreeCollab/index.html
-**Broncode:** https://github.com/thvd64-cyber/MyFamTreeCollab
-**Stack:** Vanilla HTML + CSS + JavaScript — geen frameworks, geen backend
+**Live:** https://vorilo2000-source.github.io/MyFamTreeCollab/index.html
+**Broncode:** https://github.com/vorilo2000-source/MyFamTreeCollab
+**Stack:** Vanilla HTML + CSS + JavaScript — geen frameworks
 **Backend:** Supabase (auth + cloud opslag)
+**Cloud:** https://supabase.com/dashboard/org/kvaizqetplltywdpwefz
 
 ### Verplichte laadvolgorde in HTML
 
@@ -50,6 +52,7 @@ LiveSearch.js
 relatieEngine.js  ← vóór view.js / manage.js / timeline.js
 cloudSync.js      ← na auth.js
 versionControl.js ← na cloudSync.js (optioneel, non-fatal als afwezig)
+siteAnalytics.js  ← na auth.js (tier beschikbaar)
 topbar.js         ← geïnjecteerd ná TopBar HTML (garandeert #top-auth in DOM)
 [pagina].js       ← altijd LAATSTE
 ```
@@ -61,33 +64,53 @@ topbar.js         ← geïnjecteerd ná TopBar HTML (garandeert #top-auth in DOM
 | `window.ftSafe`, `window.ftFormatDate`, `window.ftParseBirthday` | utils.js | — |
 | `window.genereerCode` | idGenerator.js | — |
 | `window.StamboomSchema` | schema.js | — |
-| `window.StamboomStorage` | storage.js | v2.1.0 |
-| `window.AuthModule` | auth.js | v2.3.0 |
-| `window.CloudSync` | cloudSync.js | v2.1.0 |
-| `window.VersionControl` | versionControl.js | v1.0.0 |
+| `window.StamboomStorage` | storage.js | v2.2.0 |
+| `window.AuthModule` | auth.js | v2.5.1 |
+| `window.CloudSync` | cloudSync.js | v2.2.1 |
+| `window.VersionControl` | versionControl.js | v1.1.0 |
 | `window.RelatieEngine.computeRelaties` | relatieEngine.js | — |
 | `window.liveSearch`, `window.initLiveSearch` | LiveSearch.js | — |
 | `window.ExportModule.exportCSV`, `window.ExportModule.exportJSON` | export.js | — |
-| `window.TopBarAuth` | topbar.js | v2.2.1 |
+| `window.TopBarAuth` | topbar.js | v2.3.0 |
+| `window.SiteAnalytics` | siteAnalytics.js | v2.6.0 |
+| `window.DemoModule` | demo.js | v1.2.1 |
 
 ---
 
-## Gewijzigde bestanden sessie 2026-04-19
+## Rolmodel
 
-| Bestand | Versie | Wijziging |
-|---|---|---|
-| `js/create.js` | v1.2.0 | async/await fix confirmBtn |
-| `js/cloudSync.js` | v2.1.0 | F5-06 versie-integratie + bugfix dubbele eq() |
-| `js/versionControl.js` | v1.0.0 | Nieuw — versiebeheersmodule |
-| `js/topbar.js` | v2.2.1 | Dropdown menu + localStorage fix + token refresh fix |
-| `account/history.html` | v1.0.0 | Nieuw — versiegeschiedenis pagina |
-| `account/history.js` | v1.1.0 | Fix CloudSync result unwrap + getPersonNaam veldnamen |
-| `stamboom/storage.html` | v2.5.0 | Wissel modal + renderTable() fix na laden |
-| `bronnen/handleiding.html` | v1.4.0 | Sectie 9 versiegeschiedenis toegevoegd |
+### Account types (opgeslagen in `profiles.tier`)
+
+| Tier | Omschrijving |
+|---|---|
+| `guest` | Standaard na registratie — basisfunctionaliteit |
+| `owner` | Betaalde gebruiker — cloud opslag, meerdere stambomen |
+| `admin` | Beheerder — volledige toegang |
+
+### Stamboom-rechten (opgeslagen in `stamboom_gedeeld.rol`)
+
+| Recht | Omschrijving |
+|---|---|
+| `viewer` | Leesrechten op een specifieke stamboom |
+| `editor` | Schrijfrechten op een specifieke stamboom |
+
+> `viewer` en `editor` zijn **geen** account types — ze staan in `stamboom_gedeeld`, niet in `profiles.tier`.
 
 ---
 
 ## Supabase tabellen
+
+### `profiles`
+| kolom | type | opmerking |
+|---|---|---|
+| id | uuid (PK) | FK → auth.users |
+| username | text | — |
+| avatar_id | text | — |
+| tier | text | guest / owner / admin |
+| is_admin | boolean | — |
+| is_premium | boolean | — |
+| tier_until | timestamptz | vervaldatum tier |
+| email | text | gespiegeld vanuit auth.users |
 
 ### `stambomen`
 | kolom | type |
@@ -98,26 +121,46 @@ topbar.js         ← geïnjecteerd ná TopBar HTML (garandeert #top-auth in DOM
 | data | jsonb |
 | updated_at | timestamptz |
 
-### `profiles`
-| kolom | type |
-|---|---|
-| id | uuid (PK) |
-| username | text |
-| avatar_id | integer |
-| tier | text |
-| is_admin | boolean |
-| is_premium | boolean |
+### `stamboom_gedeeld`
+| kolom | type | opmerking |
+|---|---|---|
+| id | uuid (PK) | — |
+| stamboom_id | uuid (FK → stambomen) | — |
+| eigenaar_id | uuid (FK → auth.users) | wie heeft gedeeld |
+| viewer_id | uuid (FK → auth.users) | wie heeft toegang |
+| rol | text | viewer / editor |
+| gedeeld_op | timestamptz | — |
 
-### `stamboom_versies`
+### `collab_messages`
 | kolom | type |
 |---|---|
 | id | uuid (PK) |
-| stamboom_id | uuid (FK → stambomen.id, cascade delete) |
-| user_id | uuid (FK → auth.users) |
-| versienummer | integer |
-| data | jsonb |
-| opgeslagen_op | timestamptz |
-| label | text (optioneel) |
+| stamboom_id | uuid |
+| persoon_id | text |
+| user_id | uuid |
+| bericht | text |
+| status | text |
+| aangemaakt_op | timestamptz |
+
+### `page_visits`
+| kolom | type | opmerking |
+|---|---|---|
+| id | uuid (PK) | — |
+| page | text | pagina naam |
+| tier | text | account type of null |
+| email | text | nullable |
+| bezocht_op | timestamptz | — |
+
+---
+
+## Gewijzigde bestanden sessie 2026-05-07
+
+| Bestand | Van | Naar | Wijziging |
+|---|---|---|---|
+| `js/auth.js` | v2.5.0 | v2.5.1 | SUPABASE_ANON → sb_publishable_ formaat |
+| `home/confirm.html` | — | v1.0.0 | Nieuw — verwerkt token_hash, succes/fout, redirect |
+| `admin/accountbeheer.html` | v2.2.0 | v2.3.0 | Stat-cards en filter: viewer/editor → guest |
+| `js/accountbeheer.js` | v1.1.0 | v1.2.0 | statGuest, dropdown guest/owner/admin |
 
 ---
 
@@ -131,25 +174,9 @@ topbar.js         ← geïnjecteerd ná TopBar HTML (garandeert #top-auth in DOM
 | TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// protocol | 🟡 Middel |
 | TD-05 | Popup-stijlen in LiveSearch.js zijn hardcoded inline CSS | 🟢 Laag |
 | TD-06 | `home/import-en.html` laadt import.js zonder schema.js en storage.js | 🔴 Hoog |
-| TD-07 | SMTP via Gmail App Password — niet ideaal voor productie | 🟡 Middel |
-| TD-08 | async/await mismatch — alle call-sites van storage.add() controleren buiten create.js | 🟡 Middel |
-
----
-
-## Huidige fase & prioriteiten
-
-### Fase 5 — Cloud & accounts
-
-| ID | Taak | Status |
-|----|------|--------|
-| F5-01 | Backend: Supabase ✅ gekozen en opgezet | ✅ Gedaan |
-| F5-02 | Gebruikersaccounts: registreren, inloggen, uitloggen | ✅ Gedaan |
-| F5-03 | Data sync tussen apparaten | ✅ Gedaan |
-| F5-04 | Stamboom delen met andere gebruikers (leesrechten / viewer tier) | 🔮 Toekomst |
-| F5-05 | Samenwerkingsmodus: meerdere gebruikers bewerken samen | 🔮 Toekomst |
-| F5-06 | Versiebeheer per persoon (wijzigingshistorie) | ✅ Gedaan |
-| F5-07 | Meerdere stambomen per gebruiker in cloud | ✅ Gedaan |
-| F5-08 | account.html — overzicht stambomen, backups, profiel | ✅ Gedaan |
+| TD-07 | Resend SMTP zonder eigen domein — ingebouwde Supabase mail actief (3/uur limiet) | 🟡 Middel |
+| TD-08 | async/await mismatch — alle call-sites van storage.add() controleren | 🟡 Middel |
+| TD-10 | `page_visits` RLS uitgeschakeld — tijdelijke oplossing, beveiligd via view | 🟡 Middel |
 
 ---
 
@@ -175,7 +202,6 @@ Een taak is klaar als:
    - Gewijzigde bestanden
    - Sessie-entry voor Project_log.md
    - Bijgewerkte: BACKLOG.md, Handleiding.html en Project.md
-   - Sessie-briefing voor volgende taak
 
 ---
 
