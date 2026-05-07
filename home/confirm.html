@@ -1,0 +1,198 @@
+<!-- ======================= home/confirm.html v1.0.0 =======================
+     v1.0.0: Nieuwe pagina — verwerkt Supabase email bevestiging
+     - Leest token_hash en type uit URL parameters
+     - Roept Supabase verifyOtp() aan om bevestiging te voltooien
+     - Toont succes of foutmelding aan gebruiker
+     - Redirect naar index.html na succesvolle bevestiging
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8"> <!-- Tekencodering instellen -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive weergave -->
+    <title>E-mail bevestigen — MyFamTreeCollab</title>
+
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico"> <!-- Standaard favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png"> <!-- 32x32 variant -->
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png"> <!-- Apple icoon -->
+
+    <link rel="stylesheet" href="css/style.css"> <!-- Globale CSS -->
+
+    <style>
+        /* ======================= CONFIRM CONTAINER ======================= */
+        .confirm-wrap {
+            max-width: 480px;         /* Beperkte breedte voor focus */
+            margin: 80px auto;        /* Gecentreerd met ruimte boven */
+            padding: 40px 32px;       /* Ruimte binnen het blok */
+            border: 1px solid #ddd;   /* Lichte rand */
+            border-radius: 8px;       /* Afgeronde hoeken */
+            background: #fafafa;      /* Lichte achtergrond */
+            text-align: center;       /* Gecentreerde tekst */
+        }
+
+        /* ======================= ICON ======================= */
+        .confirm-icon {
+            font-size: 3rem;          /* Grote emoji als visueel anker */
+            margin-bottom: 16px;      /* Ruimte onder icoon */
+            display: block;           /* Blok voor margin werking */
+        }
+
+        /* ======================= HEADING ======================= */
+        .confirm-wrap h1 {
+            font-size: 1.5rem;        /* Duidelijke maar compacte titel */
+            margin-bottom: 12px;      /* Ruimte onder titel */
+            color: #222;              /* Donkere tekst */
+        }
+
+        /* ======================= MESSAGE ======================= */
+        .confirm-msg {
+            color: #555;              /* Grijze tekst */
+            line-height: 1.6;         /* Leesbaarheid */
+            margin-bottom: 24px;      /* Ruimte onder bericht */
+        }
+
+        /* ======================= SUCCESS STATE ======================= */
+        .confirm-wrap.success {
+            border-color: #28a745;    /* Groene rand bij succes */
+        }
+
+        .confirm-wrap.success .confirm-icon::after {
+            content: "✅";            /* Succes icoon */
+        }
+
+        /* ======================= ERROR STATE ======================= */
+        .confirm-wrap.error {
+            border-color: #dc3545;    /* Rode rand bij fout */
+        }
+
+        .confirm-wrap.error .confirm-icon::after {
+            content: "❌";            /* Fout icoon */
+        }
+
+        /* ======================= LOADING STATE ======================= */
+        .confirm-wrap.loading .confirm-icon::after {
+            content: "⏳";            /* Laden icoon */
+        }
+
+        /* ======================= BUTTON ======================= */
+        .btn-primary {
+            background: #1E90FF;      /* Primaire kleur — zelfde als index.html */
+            color: #fff;              /* Witte tekst */
+            padding: 12px 26px;       /* Klikbare grootte */
+            border-radius: 6px;       /* Afgeronde hoeken */
+            text-decoration: none;    /* Geen underline */
+            font-weight: bold;        /* Sterkere CTA */
+            display: inline-block;    /* Inline-block voor padding */
+        }
+
+        .btn-primary:hover {
+            background: #1278d4;      /* Hover kleur */
+        }
+    </style>
+</head>
+<body>
+
+<!-- ======================= TopBar ======================= -->
+<div id="topbar-placeholder"></div> <!-- Wordt gevuld via fetch -->
+
+<!-- ======================= Bevestiging blok ======================= -->
+<div class="confirm-wrap loading" id="confirmBox">
+    <span class="confirm-icon" id="confirmIcon"></span> <!-- Icoon — gevuld via JS state class -->
+    <h1 id="confirmTitle">Bezig met bevestigen…</h1>   <!-- Titel — wordt bijgewerkt -->
+    <p class="confirm-msg" id="confirmMsg">
+        Even geduld, je e-mailadres wordt bevestigd.   <!-- Standaard laadtekst -->
+    </p>
+    <div id="confirmAction"></div> <!-- Actieknop — wordt ingevuld na verwerking -->
+</div>
+
+<!-- ======================= Footer ======================= -->
+<div id="footer-placeholder"></div> <!-- Wordt gevuld via fetch -->
+
+<!-- ======================= SCRIPTS ======================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
+<script src="js/utils.js"></script>   <!-- Utilities -->
+<script src="js/auth.js"></script>    <!-- Auth: AuthModule — bevat Supabase client -->
+
+<script>
+(async function () {
+    "use strict";
+
+    // ======================= DOM elementen ophalen =======================
+    const box    = document.getElementById('confirmBox');    // Hoofd container
+    const title  = document.getElementById('confirmTitle'); // Titel element
+    const msg    = document.getElementById('confirmMsg');   // Bericht element
+    const action = document.getElementById('confirmAction'); // Actieknop container
+
+    // ======================= Hulpfunctie: toon succes =======================
+    function showSuccess() {
+        box.className  = 'confirm-wrap success';             // Groene border activeren
+        title.textContent = 'E-mailadres bevestigd!';        // Succesbericht titel
+        msg.textContent   = 'Je account is actief. Je wordt doorgestuurd naar de startpagina…'; // Succesbericht
+        action.innerHTML  = '<a href="/MyFamTreeCollab/home/index.html" class="btn-primary">Ga naar startpagina</a>'; // Knop
+
+        // Na 3 seconden automatisch doorsturen
+        setTimeout(function () {
+            window.location.href = '/MyFamTreeCollab/home/index.html'; // Redirect naar home
+        }, 3000);
+    }
+
+    // ======================= Hulpfunctie: toon fout =======================
+    function showError(errMsg) {
+        box.className     = 'confirm-wrap error';            // Rode border activeren
+        title.textContent = 'Bevestiging mislukt';           // Foutbericht titel
+        msg.textContent   = errMsg || 'Er is iets misgegaan. Probeer opnieuw te registreren.'; // Foutbericht
+        action.innerHTML  = '<a href="/MyFamTreeCollab/home/register.html" class="btn-primary">Opnieuw registreren</a>'; // Knop
+    }
+
+    // ======================= URL parameters lezen =======================
+    const params     = new URLSearchParams(window.location.search); // Query string parsen
+    const tokenHash  = params.get('token_hash');                    // token_hash ophalen
+    const type       = params.get('type');                          // type ophalen (signup / email)
+
+    // ======================= Validatie =======================
+    if (!tokenHash || !type) {
+        showError('Ongeldige bevestigingslink. Controleer of je de volledige link hebt geopend.'); // Fout tonen
+        return;                                                     // Stoppen
+    }
+
+    // ======================= Supabase verifyOtp aanroepen =======================
+    const client = AuthModule.getClient();                          // Gedeelde Supabase client ophalen
+
+    const { data, error } = await client.auth.verifyOtp({
+        token_hash: tokenHash,                                      // Token uit URL
+        type: type,                                                 // Type: signup of email
+    });
+
+    // ======================= Resultaat verwerken =======================
+    if (error) {
+        showError(error.message);                                   // Foutmelding tonen
+        return;                                                     // Stoppen
+    }
+
+    showSuccess();                                                  // Succes tonen en redirecten
+
+})();
+</script>
+
+<script>
+    // ======================= TopBar laden =======================
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')  // TopBar HTML ophalen
+        .then(resp => resp.text())                // Response omzetten naar tekst
+        .then(function (data) {
+            document.getElementById('topbar-placeholder').innerHTML = data; // TopBar in DOM zetten
+            var s = document.createElement('script');  // Script element aanmaken
+            s.src = 'js/topbar.js';                    // Pad naar topbar.js
+            document.body.appendChild(s);              // Script toevoegen aan DOM
+        });
+
+    // ======================= Footer laden =======================
+    fetch('/MyFamTreeCollab/Layout/Footer.html')  // Footer HTML ophalen
+        .then(resp => resp.text())                // Response omzetten naar tekst
+        .then(function (data) {
+            document.getElementById('footer-placeholder').innerHTML = data; // Footer in DOM zetten
+        });
+</script>
+
+</body>
+</html>
