@@ -1,7 +1,10 @@
-<!-- ======================= abonnementen/overzicht.html v2.2.0 =======================
-     Wijziging v2.2.0 (sessie 21):
+<!-- ======================= abonnementen/overzicht.html v2.3.0 =======================
+     Wijziging v2.3.0 (sessie 21):
+     - Admin-kaart volledig verwijderd (account type + CSS + tier-badge)
+     - "Owner of Admin" → "Owner" in sectie stamboom-rechten
+     - CSS .account-kaart.admin en .tier-admin verwijderd
      - Rolmodel volledig herschreven naar definitief model:
-         Niet ingelogd (null) / Basis account (guest) / Owner account (owner) / Admin (admin)
+         Niet ingelogd (null) / Basis account (guest) / Owner account (owner)
      - Viewer en editor zijn stamboom-rechten, geen account-types
      - Guest: max 60 personen lokaal, geen cloud, geen delen
      - Owner: onbeperkt lokaal, cloud backup, stamboom delen, viewer/editor uitnodigen
@@ -124,7 +127,6 @@
         .account-kaart.bezoeker::before { background: #999; }    /* Grijs — niet ingelogd */
         .account-kaart.guest::before    { background: #28a745; } /* Groen — basis account */
         .account-kaart.owner::before    { background: #f39c12; } /* Oranje — owner */
-        .account-kaart.admin::before    { background: #dc3545; } /* Rood — admin */
 
         .account-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; margin-top: 4px; }
         .account-icoon { font-size: 1.5rem; line-height: 1; }                  /* Emoji icoon */
@@ -145,7 +147,6 @@
         .tier-null  { background: #f0f0f0; color: #888; border-color: #ddd; }          /* tier: null */
         .tier-guest { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }    /* tier: guest */
         .tier-owner { background: #fff3cd; color: #7a4f00; border-color: #f0ad4e; }    /* tier: owner */
-        .tier-admin { background: #fdecea; color: #c62828; border-color: #ef9a9a; }    /* tier: admin */
 
         /* Activatiebadge — hoe wordt het account geactiveerd */
         .activatie-badge {
@@ -159,7 +160,6 @@
 
         .badge-gratis  { background: #f0f0f0; color: #666; border: 1px solid #ddd; }       /* Standaard/gratis */
         .badge-donatie { background: #fff3cd; color: #856404; border: 1px solid #ffc107; } /* Donatie vereist */
-        .badge-intern  { background: #fdecea; color: #c62828; border: 1px solid #ef9a9a; } /* Intern beheer */
 
         .account-beschrijving { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 14px; }
 
@@ -397,30 +397,13 @@
             </ul>
         </div>
 
-        <!-- ADMIN — tier: admin -->
-        <div class="account-kaart admin">
-            <div class="account-header">
-                <span class="account-icoon">🛡️</span>
-                <span class="account-naam">Admin</span>
-            </div>
-            <span class="tier-badge tier-admin">tier: admin</span><br> <!-- DB-waarde: admin — platformbeheerder -->
-            <span class="activatie-badge badge-intern">Intern — handmatig toegewezen</span>
-            <p class="account-beschrijving">Platformbeheerder. Alle rechten van Owner plus toegang tot het admin dashboard.</p>
-            <ul class="account-features">
-                <li><span class="vink">✓</span> Alles van Owner</li>
-                <li><span class="vink">✓</span> Onbeperkt versiebeheer</li>
-                <li><span class="vink">✓</span> Admin dashboard toegang</li>
-                <li><span class="vink">✓</span> Platformbeheer</li>
-            </ul>
-        </div>
-
     </div>
 
     <!-- ===== STAMBOOM-RECHTEN: VIEWER & EDITOR ===== -->
     <div class="rechten-blok">
         <h2>📋 Stamboom-rechten: Viewer &amp; Editor</h2>
         <p class="intro">
-            Viewer en Editor zijn <strong>geen account types</strong> — het zijn rechten die een Owner of Admin
+            Viewer en Editor zijn <strong>geen account types</strong> — het zijn rechten die een Owner
             toekent aan een specifieke stamboom. Ze staan opgeslagen in een aparte tabel, niet in
             <code>profiles.tier</code>. Een gebruiker met tier <em>guest</em> kan Viewer of Editor zijn
             op de stamboom van een Owner.
