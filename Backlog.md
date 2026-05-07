@@ -1,5 +1,5 @@
-md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-04
+# BACKLOG.md — MyFamTreeCollab
+## Bijgewerkt: 2026-05-07
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -152,6 +152,10 @@ md — MyFamTreeCollab
 | FA-12 | 🟡 Middel | E-mail templates huisstijl (alle 5 templates) | ✅ Gedaan |
 | FA-13 | 🔴 Hoog | Admin dropdown verbergen voor niet-admins | ✅ Gedaan |
 | FA-14 | 🟡 Middel | Admin beheerpagina `admin/accountbeheer.html` — gebruikers en tiers beheren via website | ✅ Gedaan |
+| FA-15 | 🔴 Hoog | `home/confirm.html` aanmaken — verwerkt token_hash na e-mailbevestiging | ✅ Gedaan |
+| FA-16 | 🔴 Hoog | Supabase email template Confirm signup bijgewerkt met token_hash link | ✅ Gedaan |
+| FA-17 | 🔴 Hoog | Supabase anon key vervangen door sb_publishable_ formaat | ✅ Gedaan |
+| FA-18 | 🟡 Middel | Tier constraint uitgebreid met 'guest', bestaande viewer rijen gemigreerd | ✅ Gedaan |
 
 ---
 
@@ -232,8 +236,8 @@ md — MyFamTreeCollab
 ## Fase 6 — Rolmodel implementatie ✅ AFGEROND
 
 > Herziening van het tier-systeem naar een vereenvoudigd rolmodel.
-> Rollen: gast (geen account) · viewer · editor · owner · admin
-> Volledig besluitvormingsdocument in PROJECT_LOG.md Sessie 14.
+> Account types: guest · owner · admin
+> Stamboom-rechten: viewer · editor (staan in stamboom_gedeeld, niet in profiles.tier)
 
 ### 6A — Supabase & auth
 
@@ -243,25 +247,28 @@ md — MyFamTreeCollab
 | F6-02 | 🔴 Hoog | Supabase: bestaande accounts migreren naar nieuw tier-model | ✅ Gedaan |
 | F6-03 | 🔴 Hoog | `js/auth.js` v2.4.1 — `getTier()` fallback `'free'` → `'viewer'`, JSDoc bijgewerkt | ✅ Gedaan |
 | F6-04 | 🔴 Hoog | `js/cloudSync.js` v2.2.0 — `CLOUD_TIERS` → `['owner','admin']`, viewer/editor check | ✅ Gedaan |
-| F6-05 | 🔴 Hoog | `js/shareModule.js` v1.1.0 — alleen owner/admin mag uitnodigen, elke ingelogde gebruiker kan worden uitgenodigd | ✅ Gedaan |
+| F6-05 | 🔴 Hoog | `js/shareModule.js` v1.1.0 — alleen owner/admin mag uitnodigen | ✅ Gedaan |
 | F6-06 | 🔴 Hoog | `js/accessGuard.js` v1.1.0 — rolnamen correct, dubbele inhoud verwijderd | ✅ Gedaan |
 | F6-07 | 🟡 Middel | `js/storage.js` v2.2.0 — MAX_LOCAL_FREE = 60, canAdd() aangepast aan nieuw rolmodel | ✅ Gedaan |
+| F6-18 | 🔴 Hoog | Supabase: `profiles_tier_check` constraint uitgebreid met `'guest'` | ✅ Gedaan |
+| F6-19 | 🔴 Hoog | Supabase: `handle_new_user` functie — `tier = 'guest'` toegevoegd aan INSERT | ✅ Gedaan |
+| F6-20 | 🔴 Hoog | Accountbeheer: tier dropdown/filter/stats aangepast naar guest/owner/admin | ✅ Gedaan |
 
 ### 6B — Demo database
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-08 | 🔴 Hoog | `js/demo.js` v1.0.0 aangemaakt — hardcoded fictieve demo stamboom, laadt bij gast-sessie | ✅ Gedaan |
-| F6-09 | 🟡 Middel | Demo stamboom inhoud: 37 personen, 2 families (De Vries + Martens), 6 generaties, ex-partners, kinderen van beide relaties | ✅ Gedaan |
-| F6-10 | 🟡 Middel | Demo-melding in handleiding bijgewerkt: demo laadt automatisch voor gasten | ✅ Gedaan |
+| F6-08 | 🔴 Hoog | `js/demo.js` v1.0.0 aangemaakt — hardcoded fictieve demo stamboom | ✅ Gedaan |
+| F6-09 | 🟡 Middel | Demo stamboom inhoud: 37 personen, 2 families, 6 generaties | ✅ Gedaan |
+| F6-10 | 🟡 Middel | Demo-melding in handleiding bijgewerkt | ✅ Gedaan |
 
 ### 6C — Upgrade flow & UI
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-11 | 🔴 Hoog | `js/storage.js` v2.2.0 — canAdd() viewer/editor zelfde limiet als gast, owner/admin onbeperkt | ✅ Gedaan |
-| F6-12 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — upgrade-prompt voor viewer/editor op cloud-functies, Ko-fi link bijgewerkt | ✅ Gedaan |
-| F6-13 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — actieve stamboom balk op "Mijn data" tabblad, uitnodigingstekst bijgewerkt | ✅ Gedaan |
+| F6-11 | 🔴 Hoog | `js/storage.js` v2.2.0 — canAdd() viewer/editor zelfde limiet als gast | ✅ Gedaan |
+| F6-12 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — upgrade-prompt voor viewer/editor | ✅ Gedaan |
+| F6-13 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — actieve stamboom balk op "Mijn data" tabblad | ✅ Gedaan |
 
 ### 6D — Versiebeheer aanpassen
 
@@ -274,7 +281,7 @@ md — MyFamTreeCollab
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-16 | 🟡 Middel | `bronnen/handleiding.html` v1.7.0 — rolbeschrijvingen herschreven naar nieuw model | ✅ Gedaan |
+| F6-16 | 🟡 Middel | `bronnen/handleiding.html` v1.7.0 — rolbeschrijvingen herschreven | ✅ Gedaan |
 | F6-17 | 🟢 Laag | `abonnementen/vergelijk.html` + `voordelen.html` bijwerken naar nieuwe rollen | ✅ Gedaan |
 
 ---
@@ -287,7 +294,7 @@ md — MyFamTreeCollab
 | F7-02 | Supabase webhook: Stripe betaling → tier automatisch naar `owner` | 🔮 Toekomst |
 | F7-03 | Bedrijfsoprichting & belastingstructuur | 🔮 Toekomst |
 | F7-04 | Ko-fi behouden als vrijwillige steunknop (niet als toegangspoort) | 🔮 Toekomst |
-| F7-05 | Prijsstelling definitief vaststellen (owner-donatie bedrag en periode) | 🔮 Toekomst |
+| F7-05 | Prijsstelling definitief vaststellen | 🔮 Toekomst |
 | F7-06 | Owner-limiet verhogen op basis van inkomsten en Supabase kosten | 🔮 Toekomst |
 
 ---
@@ -297,7 +304,7 @@ md — MyFamTreeCollab
 | ID | Omschrijving | Status |
 |----|-------------|--------|
 | BF-01 | Supabase Site URL verkeerd — bevestigingsmail wees naar 404 | ✅ Opgelost |
-| BF-02 | create.js — confirmBtn async/await mismatch, eerste persoon niet opgeslagen | ✅ Opgelost |
+| BF-02 | create.js — confirmBtn async/await mismatch | ✅ Opgelost |
 | BF-03 | history.js — CloudSync.listStambomen() result object niet unwrapped | ✅ Opgelost |
 | BF-04 | history.html — Supabase SDK + auth.js ontbraken in laadvolgorde | ✅ Opgelost |
 | BF-05 | topbar.js — localStorage niet gewist bij uit/inloggen | ✅ Opgelost |
@@ -310,53 +317,63 @@ md — MyFamTreeCollab
 | ID | Omschrijving | Status |
 |----|-------------|--------|
 | BF-09 | cloudSync.js v2.1.2 — loadFromCloud() blokkeerde viewers/editors door user_id filter | ✅ Opgelost |
-| BF-10 | cloudSync.js v2.1.2 — saveToCloud() blokkeerde editor-opslag door user_id filter op update | ✅ Opgelost |
-| BF-11 | shareModule.js v1.0.1 — listSharedWith() toonde "Onbekend" door ontbrekende profiles fallback | ✅ Opgelost |
-| BF-12 | Supabase RLS — profiles select policy te strikt voor tier-leestoegang bij uitnodigen | ✅ Opgelost |
+| BF-10 | cloudSync.js v2.1.2 — saveToCloud() blokkeerde editor-opslag door user_id filter | ✅ Opgelost |
+| BF-11 | shareModule.js v1.0.1 — listSharedWith() toonde "Onbekend" | ✅ Opgelost |
+| BF-12 | Supabase RLS — profiles select policy te strikt voor tier-leestoegang | ✅ Opgelost |
 
 ## Bugfixes sessie 2026-04-23
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-13 | Bevestigingsmail redirect naar root GitHub Pages i.p.v. /MyFamTreeCollab/ — opgelost via `{{ .SiteURL }}/#{{ .TokenHash }}&type=signup` in Confirm signup template | ✅ Opgelost |
+| BF-13 | Bevestigingsmail redirect naar root GitHub Pages i.p.v. /MyFamTreeCollab/ | ✅ Opgelost |
 | BF-14 | topbar.js — developDropdown niet zichtbaar voor admin | ✅ Opgelost |
 
 ## Bugfixes sessie 2026-04-24
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-15 | storage.html v2.7.1 — verwijderStamboom() wiste actieve ID/naam niet uit localStorage — cloud lijst toonde nog 'actief' badge en laadknop bleef uitgeschakeld na verwijdering | ✅ Opgelost |
-| BF-16 | storage.html v2.7.1 — resetBtn wiste actieve ID/naam niet — ACTIEF-balk bleef zichtbaar na reset | ✅ Opgelost |
+| BF-15 | storage.html v2.7.1 — verwijderStamboom() wiste actieve ID/naam niet | ✅ Opgelost |
+| BF-16 | storage.html v2.7.1 — resetBtn wiste actieve ID/naam niet | ✅ Opgelost |
 
 ## Bugfixes sessie 2026-04-25
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-17 | Supabase RLS — infinite recursion in profiles SELECT policy — policy verwijderd | ✅ Opgelost |
-| BF-18 | accountbeheer.js — `window._supabase` bestaat niet — vervangen door `window.AuthModule.getClient()` | ✅ Opgelost |
-| BF-19 | accountbeheer.html — uitlogknop verwees naar `../../index.html` (buiten repo root) — gecorrigeerd naar `../index.html` | ✅ Opgelost |
+| BF-17 | Supabase RLS — infinite recursion in profiles SELECT policy | ✅ Opgelost |
+| BF-18 | accountbeheer.js — `window._supabase` bestaat niet | ✅ Opgelost |
+| BF-19 | accountbeheer.html — uitlogknop verkeerd pad | ✅ Opgelost |
 
 ## Bugfixes sessie 2026-04-27
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-21 | demo.js gebruikte lowercase veldnamen — lege cellen in storage — herschreven als hardcoded CSV via StamboomSchema.fromCSV() | ✅ Opgelost |
-| BF-22 | demo.js had 19-kolommen CSV — aangepast naar 14 kolommen conform schema.js | ✅ Opgelost |
-| VB-05 | collab.js v2.1.0 — 4 statussen (nieuw/open/inbehandeling/gesloten) met icoontjes 🆕🔓🔄✅ | ✅ Gedaan |
+| BF-21 | demo.js gebruikte lowercase veldnamen — lege cellen in storage | ✅ Opgelost |
+| BF-22 | demo.js had 19-kolommen CSV — aangepast naar 14 kolommen | ✅ Opgelost |
+| VB-05 | collab.js v2.1.0 — 4 statussen met icoontjes | ✅ Gedaan |
 | VB-06 | collab.js v2.1.0 — Stamboom-sectie header boven discussielijst | ✅ Gedaan |
-| VB-07 | collab.js v2.1.0 — Bijdrager voornaam (eerste woord) per bericht | ✅ Gedaan |
+| VB-07 | collab.js v2.1.0 — Bijdrager voornaam per bericht | ✅ Gedaan |
 
 ## Bugfixes & verbeteringen sessie 2026-04-30
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-23 | Supabase CRITICAL — `public.admin_users` view lekte `auth.users` data naar anon/authenticated | ✅ Opgelost |
-| BF-24 | Supabase CRITICAL — `public.admin_users` view had `SECURITY DEFINER` — RLS werd omzeild | ✅ Opgelost |
-| BF-25 | Supabase CRITICAL — RLS policy `Admin kan alle profielen bijwerken` gebruikte `user_metadata` (door gebruiker aanpasbaar) | ✅ Opgelost |
-| BF-26 | `public.profiles` had geen `email` kolom — admintabel toonde lege e-mailkolom | ✅ Opgelost |
-| BF-27 | `accountbeheer.js` bevroeg `last_sign_in_at` uit `admin_users` view — kolom bestaat niet meer na security fix | ✅ Opgelost |
-| VB-08 | `accountbeheer.js` v1.1.0 — email geladen uit `profiles` i.p.v. `auth.users` | ✅ Gedaan |
-| VB-09 | `accountbeheer.html` v2.2.0 — kolom "Laatste login" verwijderd, colspan 6→5 | ✅ Gedaan |
+| BF-23 | Supabase CRITICAL — `public.admin_users` view lekte `auth.users` data | ✅ Opgelost |
+| BF-24 | Supabase CRITICAL — `public.admin_users` view had `SECURITY DEFINER` | ✅ Opgelost |
+| BF-25 | Supabase CRITICAL — RLS policy gebruikte `user_metadata` (aanpasbaar) | ✅ Opgelost |
+| BF-26 | `public.profiles` had geen `email` kolom | ✅ Opgelost |
+| BF-27 | `accountbeheer.js` bevroeg `last_sign_in_at` — kolom bestaat niet meer | ✅ Opgelost |
+| VB-08 | `accountbeheer.js` v1.1.0 — email geladen uit `profiles` | ✅ Gedaan |
+| VB-09 | `accountbeheer.html` v2.2.0 — kolom "Laatste login" verwijderd | ✅ Gedaan |
+
+## Bugfixes sessie 2026-05-07
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-28 | auth.js — SUPABASE_ANON JWT key had `iat` in de toekomst — registratie mislukte stil | ✅ Opgelost |
+| BF-29 | Bevestigingsmail redirect naar 404 — confirm.html ontbrak, email template gebruikte oud formaat | ✅ Opgelost |
+| BF-30 | `profiles_tier_check` constraint stond `guest` niet toe — UPDATE bestaande users mislukte | ✅ Opgelost |
+| BF-31 | accountbeheer.js — `statViewer`/`statEditor` DOM IDs bestonden niet meer na HTML update | ✅ Opgelost |
+| BF-32 | `handle_new_user` functie had geen `tier` in INSERT — nieuwe users kregen DB default | ✅ Opgelost |
 
 ---
 
@@ -364,53 +381,14 @@ md — MyFamTreeCollab
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| AN-01 | `stamboom/collab.html` — siteAnalytics.js + trackPage("collab") | ✅ Gedaan |
-| AN-02 | `stamboom/manage.html` — siteAnalytics.js + trackPage("manage") | ✅ Gedaan |
-| AN-03 | `stamboom/timeline.html` — siteAnalytics.js + trackPage("timeline") | ✅ Gedaan |
-| AN-04 | `stamboom/view.html` — siteAnalytics.js + trackPage("view") | ✅ Gedaan |
-| AN-05 | `home/about.html` — siteAnalytics.js + trackPage("about") | ✅ Gedaan |
-| AN-06 | `home/create.html` — siteAnalytics.js + trackPage("create") | ✅ Gedaan |
-| AN-07 | `home/export.html` — siteAnalytics.js + trackPage("export") | ✅ Gedaan |
-| AN-08 | `home/import.html` — siteAnalytics.js + trackPage("import") | ✅ Gedaan |
-| AN-09 | `home/print.html` — siteAnalytics.js + trackPage("print") | ✅ Gedaan |
-| AN-10 | `bronnen/artikelen.html` — siteAnalytics.js + trackPage("artikelen") | ✅ Gedaan |
-| AN-11 | `bronnen/extern.html` — siteAnalytics.js + trackPage("extern") | ✅ Gedaan |
-| AN-12 | `bronnen/handleiding.html` — siteAnalytics.js + trackPage("handleiding") | ✅ Gedaan |
-| AN-13 | `bronnen/instructies.html` — siteAnalytics.js + trackPage("instructies") | ✅ Gedaan |
-| AN-14 | `bronnen/template.html` — siteAnalytics.js + trackPage("template") | ✅ Gedaan |
-| AN-15 | `abonnementen/overzicht.html` — siteAnalytics.js + trackPage("overzicht") | ✅ Gedaan |
-| AN-16 | `abonnementen/vergelijk.html` — siteAnalytics.js + trackPage("vergelijk") | ✅ Gedaan |
-| AN-17 | `abonnementen/voordelen.html` — siteAnalytics.js + trackPage("voordelen") | ✅ Gedaan |
-| AN-18 | `gemeenschap/contact.html` — siteAnalytics.js + trackPage("contact") | ✅ Gedaan |
-| AN-19 | `gemeenschap/discussies.html` — siteAnalytics.js + trackPage("discussies") | ✅ Gedaan |
-| AN-20 | `gemeenschap/evenement.html` — siteAnalytics.js + trackPage("evenement") | ✅ Gedaan |
-| AN-21 | `stamboom/account.html` + `analytics.html` — nog te doen | 📋 Open |
-
----
+| AN-01 t/m AN-20 | trackPage() toegevoegd aan alle pagina's | ✅ Gedaan |
+| AN-21 | `stamboom/account.html` — tracking toevoegen | 📋 Open |
 
 ## Analytics dashboard — Sessie 21 (2026-05-04)
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| AN-22 | `analytics.js` (localStorage) + `siteAnalytics.js` + `analytics-dashboard.js` samengevoegd tot één bestand | ✅ Gedaan |
-| AN-23 | `js/siteAnalytics.js` hersteld als zelfstandig tracker-bestand | ✅ Gedaan |
-| AN-24 | Globale tier-filter bovenaan dashboard — filtert alle secties tegelijk | ✅ Gedaan |
-| AN-25 | Filter account types gecorrigeerd: niet ingelogd / guest / owner / admin | ✅ Gedaan |
-| AN-26 | Tabel recente bezoeken: sticky header + lichtgrijze rijen + groene header | ✅ Gedaan |
-| AN-27 | Supabase anon key gecorrigeerd van `sb_publishable_` naar JWT formaat | ✅ Gedaan |
-| AN-28 | RLS uitgeschakeld op `page_visits` — INSERT policy blokkeerde anon | ✅ Gedaan |
-| AN-29 | `admin_page_visits` view aangemaakt — SELECT beveiliging op DB niveau | ✅ Gedaan |
-| AN-30 | GoTrueClient warning opgelost — `AuthModule.getClient()` hergebruikt | ✅ Gedaan |
-| AN-31 | Tracking bevestigd werkend voor niet-ingelogde bezoekers (`tier = null`) | ✅ Gedaan |
-| AN-32 | E-mail kolom toegevoegd aan `page_visits` tabel in Supabase | ✅ Gedaan |
-| AN-33 | E-mail tracking toegevoegd aan `siteAnalytics.js` via `AuthModule.getUser()` | ✅ Gedaan |
-| AN-34 | E-mail kolom zichtbaar in recente bezoeken tabel | ✅ Gedaan |
-| AN-35 | Tier verdeling uitgebreid met uitklapbare e-maillijst per tier (▾ dropdown) | ✅ Gedaan |
-| AN-36 | Tier definitie gecorrigeerd — viewer/editor zijn stamboom-rechten, geen account types | ✅ Gedaan |
-| AN-37 | `getCurrentTier()` in `siteAnalytics.js` — viewer/editor afgevangen naar guest | ✅ Gedaan |
-| AN-38 | `getTier()` in `auth.js` v2.5.0 — fallback viewer → guest, viewer/editor check | ✅ Gedaan |
-| AN-39 | Historische `page_visits` rijen met tier viewer/editor bijgewerkt naar guest | ✅ Gedaan |
-| AN-40 | `trackPage()` prefix bug opgelost in `analytics-dashboard.js` — `SiteAnalytics.trackPage()` | ✅ Gedaan |
+| AN-22 t/m AN-40 | Dashboard uitbreidingen, tier fixes, e-mail tracking | ✅ Gedaan |
 | AN-21 | `stamboom/account.html` — tracking toevoegen | 📋 Open |
 
 ---
@@ -419,10 +397,10 @@ md — MyFamTreeCollab
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| VB-01 | topbar.js v2.2.0 — gebruikersmenu dropdown (Account / Versiegeschiedenis / Uitloggen) | ✅ Gedaan |
-| VB-02 | storage.html v2.5.0 — wissel modal bij laden andere stamboom (3 knoppen) | ✅ Gedaan |
-| VB-03 | topbar.js v2.2.2 — developDropdown zichtbaar voor admin naast adminDropdown | ✅ Gedaan |
-| VB-04 | storage.html v2.7.0 — actieve stamboom balk op "Mijn data" tabblad (consistent met cloud tabblad) | ✅ Gedaan |
+| VB-01 | topbar.js v2.2.0 — gebruikersmenu dropdown | ✅ Gedaan |
+| VB-02 | storage.html v2.5.0 — wissel modal bij laden andere stamboom | ✅ Gedaan |
+| VB-03 | topbar.js v2.2.2 — developDropdown zichtbaar voor admin | ✅ Gedaan |
+| VB-04 | storage.html v2.7.0 — actieve stamboom balk op "Mijn data" tabblad | ✅ Gedaan |
 
 ---
 
@@ -436,10 +414,10 @@ md — MyFamTreeCollab
 | TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// protocol | 🟡 Middel |
 | TD-05 | Popup-stijlen in LiveSearch.js zijn hardcoded inline CSS | 🟢 Laag |
 | TD-06 | `home/import-en.html` laadt import.js zonder schema.js en storage.js | 🔴 Hoog |
-| TD-07 | SMTP via Gmail App Password — niet ideaal voor productie, eigen domein nodig | 🟡 Middel |
-| TD-08 | async/await mismatch — alle call-sites van storage.add() controleren buiten create.js | 🟡 Middel |
-| TD-09 | Tier-constraint Supabase nog op oud model — blokkerende vereiste voor Fase 6 | ✅ Opgelost in Sessie 15 |
-| TD-10 | `page_visits` RLS uitgeschakeld — tijdelijke oplossing, beveiligd via `admin_page_visits` view | 🟡 Middel |
+| TD-07 | Resend SMTP zonder eigen domein — ingebouwde Supabase mail actief (3/uur limiet) | 🟡 Middel |
+| TD-08 | async/await mismatch — alle call-sites van storage.add() controleren | 🟡 Middel |
+| TD-09 | Tier-constraint Supabase oud model | ✅ Opgelost sessie 22 |
+| TD-10 | `page_visits` RLS uitgeschakeld — tijdelijke oplossing | 🟡 Middel |
 
 ---
 
