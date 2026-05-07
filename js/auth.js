@@ -1,9 +1,13 @@
 // =============================================================================
 // auth.js — Supabase Authentication Module
-// MyFamTreeCollab v2.5.0
+// MyFamTreeCollab v2.5.1
 // -----------------------------------------------------------------------------
 // Handles registration, login, logout, session management, profiles
 // and password reset flow.
+//
+// Nieuw in v2.5.1:
+// - SUPABASE_ANON key bijgewerkt naar nieuw sb_publishable_ formaat
+//   (oude JWT key was ongeldig: iat lag in de toekomst)
 //
 // Nieuw in v2.5.0:
 // - getTier() fallback aangepast van 'viewer' naar 'guest'
@@ -35,27 +39,27 @@
   // ---------------------------------------------------------------------------
   // CONFIGURATION
   // ---------------------------------------------------------------------------
-  const SUPABASE_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";                          // Supabase project URL
-  const SUPABASE_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";                  // JWT anon key
+  const SUPABASE_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";          // Supabase project URL
+  const SUPABASE_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";    // Publishable key (nieuw formaat)
 
   // ---------------------------------------------------------------------------
   // Supabase client — eenmalig aangemaakt, overal hergebruikt
   // ---------------------------------------------------------------------------
-  const _client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);                        // client aanmaken
+  const _client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);         // client aanmaken
 
   // ---------------------------------------------------------------------------
   // _errMsg(error)
   // Vertaalt Supabase foutmeldingen naar leesbaar Nederlands
   // ---------------------------------------------------------------------------
   function _errMsg(error) {
-    if (!error) return null;                                                                   // geen fout
-    const msg = error.message || "Onbekende fout";                                            // foutbericht ophalen
+    if (!error) return null;                                                   // geen fout
+    const msg = error.message || "Onbekende fout";                             // foutbericht ophalen
     if (msg.includes("Invalid login credentials"))  return "E-mailadres of wachtwoord onjuist.";
     if (msg.includes("Email not confirmed"))        return "Bevestig eerst je e-mailadres via de ontvangen mail.";
     if (msg.includes("User already registered"))    return "Dit e-mailadres is al in gebruik.";
     if (msg.includes("Password should be"))         return "Wachtwoord moet minimaal 6 tekens bevatten.";
     if (msg.includes("Email rate limit exceeded"))  return "Te veel pogingen. Probeer het later opnieuw.";
-    return msg;                                                                                // onbekende fout teruggeven
+    return msg;                                                                // onbekende fout teruggeven
   }
 
   // ---------------------------------------------------------------------------
@@ -63,20 +67,20 @@
   // ---------------------------------------------------------------------------
   async function register(email, password, username) {
     if (!email || !password || !username) {
-      return { user: null, error: "Vul alle velden in." };                                    // validatie
+      return { user: null, error: "Vul alle velden in." };                     // validatie
     }
     if (username.trim().length < 2) {
-      return { user: null, error: "Gebruikersnaam moet minimaal 2 tekens bevatten." };        // validatie gebruikersnaam
+      return { user: null, error: "Gebruikersnaam moet minimaal 2 tekens bevatten." }; // validatie gebruikersnaam
     }
 
     const { data, error } = await _client.auth.signUp({
       email,
       password,
-      options: { data: { username: username.trim() } }                                        // username meesturen
+      options: { data: { username: username.trim() } }                         // username meesturen
     });
 
-    if (error) return { user: null, error: _errMsg(error) };                                  // fout teruggeven
-    return { user: data.user, error: null };                                                  // success
+    if (error) return { user: null, error: _errMsg(error) };                   // fout teruggeven
+    return { user: data.user, error: null };                                   // success
   }
 
   // ---------------------------------------------------------------------------
@@ -85,32 +89,32 @@
   async function login(email, password) {
     if (!email || !password) return { user: null, error: "Vul e-mailadres en wachtwoord in." }; // validatie
 
-    const { data, error } = await _client.auth.signInWithPassword({ email, password });       // inloggen
+    const { data, error } = await _client.auth.signInWithPassword({ email, password }); // inloggen
 
-    if (error) return { user: null, error: _errMsg(error) };                                  // fout teruggeven
-    return { user: data.user, error: null };                                                  // success
+    if (error) return { user: null, error: _errMsg(error) };                   // fout teruggeven
+    return { user: data.user, error: null };                                   // success
   }
 
   // ---------------------------------------------------------------------------
   // logout()
   // ---------------------------------------------------------------------------
   async function logout() {
-    const { error } = await _client.auth.signOut();                                           // uitloggen
-    return { error: _errMsg(error) };                                                         // fout teruggeven
+    const { error } = await _client.auth.signOut();                            // uitloggen
+    return { error: _errMsg(error) };                                          // fout teruggeven
   }
 
   // ---------------------------------------------------------------------------
   // resetPassword(email)
   // ---------------------------------------------------------------------------
   async function resetPassword(email) {
-    if (!email) return { error: "Vul je e-mailadres in." };                                   // validatie
+    if (!email) return { error: "Vul je e-mailadres in." };                    // validatie
 
     const { error } = await _client.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://vorilo2000-source.github.io/MyFamTreeCollab/home/reset.html"       // redirect na reset
+      redirectTo: "https://vorilo2000-source.github.io/MyFamTreeCollab/home/reset.html" // redirect na reset
     });
 
-    if (error) return { error: _errMsg(error) };                                              // fout teruggeven
-    return { error: null };                                                                   // success
+    if (error) return { error: _errMsg(error) };                               // fout teruggeven
+    return { error: null };                                                    // success
   }
 
   // ---------------------------------------------------------------------------
@@ -118,29 +122,29 @@
   // ---------------------------------------------------------------------------
   async function updatePassword(newPassword) {
     if (!newPassword || newPassword.length < 6) {
-      return { error: "Wachtwoord moet minimaal 6 tekens bevatten." };                        // validatie
+      return { error: "Wachtwoord moet minimaal 6 tekens bevatten." };         // validatie
     }
 
-    const { error } = await _client.auth.updateUser({ password: newPassword });               // wachtwoord bijwerken
+    const { error } = await _client.auth.updateUser({ password: newPassword }); // wachtwoord bijwerken
 
-    if (error) return { error: _errMsg(error) };                                              // fout teruggeven
-    return { error: null };                                                                   // success
+    if (error) return { error: _errMsg(error) };                               // fout teruggeven
+    return { error: null };                                                    // success
   }
 
   // ---------------------------------------------------------------------------
   // getSession()
   // ---------------------------------------------------------------------------
   async function getSession() {
-    const { data } = await _client.auth.getSession();                                         // sessie ophalen
-    return data.session || null;                                                               // sessie of null
+    const { data } = await _client.auth.getSession();                          // sessie ophalen
+    return data.session || null;                                               // sessie of null
   }
 
   // ---------------------------------------------------------------------------
   // getUser()
   // ---------------------------------------------------------------------------
   async function getUser() {
-    const session = await getSession();                                                        // sessie ophalen
-    return session ? session.user : null;                                                     // user of null
+    const session = await getSession();                                        // sessie ophalen
+    return session ? session.user : null;                                      // user of null
   }
 
   // ---------------------------------------------------------------------------
@@ -150,17 +154,17 @@
   // profile bevat: username, avatar_id, tier, is_admin, is_premium, tier_until
   // ---------------------------------------------------------------------------
   async function getProfile() {
-    const user = await getUser();                                                              // user ophalen
-    if (!user) return { profile: null, error: "Niet ingelogd." };                             // niet ingelogd
+    const user = await getUser();                                              // user ophalen
+    if (!user) return { profile: null, error: "Niet ingelogd." };              // niet ingelogd
 
     const { data, error } = await _client
       .from("profiles")
-      .select("username, avatar_id, tier, is_admin, is_premium, tier_until")                  // profiel kolommen
-      .eq("id", user.id)                                                                      // filter op user ID
-      .single();                                                                              // verwacht één rij
+      .select("username, avatar_id, tier, is_admin, is_premium, tier_until")  // profiel kolommen
+      .eq("id", user.id)                                                       // filter op user ID
+      .single();                                                               // verwacht één rij
 
-    if (error) return { profile: null, error: _errMsg(error) };                               // fout teruggeven
-    return { profile: data, error: null };                                                    // profiel teruggeven
+    if (error) return { profile: null, error: _errMsg(error) };                // fout teruggeven
+    return { profile: data, error: null };                                     // profiel teruggeven
   }
 
   // ---------------------------------------------------------------------------
@@ -172,30 +176,30 @@
   // Gebruikt door cloudSync.js en storage.js voor toegangscontrole.
   // ---------------------------------------------------------------------------
   async function getTier() {
-    const { profile, error } = await getProfile();                                            // profiel ophalen
-    if (error || !profile) return "guest";                                                    // niet ingelogd of fout → guest
-    const tier = profile.tier || "guest";                                                     // tier ophalen, fallback guest
+    const { profile, error } = await getProfile();                             // profiel ophalen
+    if (error || !profile) return "guest";                                     // niet ingelogd of fout → guest
+    const tier = profile.tier || "guest";                                      // tier ophalen, fallback guest
     // viewer en editor zijn stamboom-rechten, geen account types
-    if (tier === "viewer" || tier === "editor") return "guest";                               // rechten → behandel als guest
-    return tier;                                                                              // guest | owner | admin
+    if (tier === "viewer" || tier === "editor") return "guest";                // rechten → behandel als guest
+    return tier;                                                               // guest | owner | admin
   }
 
   // ---------------------------------------------------------------------------
   // updateUsername(username)
   // ---------------------------------------------------------------------------
   async function updateUsername(username) {
-    const user = await getUser();                                                              // user ophalen
-    if (!user) return { error: "Niet ingelogd." };                                            // niet ingelogd
+    const user = await getUser();                                              // user ophalen
+    if (!user) return { error: "Niet ingelogd." };                             // niet ingelogd
     if (!username || username.trim().length < 2) {
-      return { error: "Gebruikersnaam moet minimaal 2 tekens bevatten." };                    // validatie
+      return { error: "Gebruikersnaam moet minimaal 2 tekens bevatten." };     // validatie
     }
 
     const { error } = await _client
       .from("profiles")
-      .update({ username: username.trim() })                                                  // gebruikersnaam bijwerken
-      .eq("id", user.id);                                                                     // filter op user ID
+      .update({ username: username.trim() })                                   // gebruikersnaam bijwerken
+      .eq("id", user.id);                                                      // filter op user ID
 
-    return { error: _errMsg(error) };                                                         // fout teruggeven
+    return { error: _errMsg(error) };                                          // fout teruggeven
   }
 
   // ---------------------------------------------------------------------------
@@ -203,7 +207,7 @@
   // ---------------------------------------------------------------------------
   function onAuthChange(callback) {
     _client.auth.onAuthStateChange((event, session) => {
-      callback(event, session);                                                               // callback aanroepen
+      callback(event, session);                                                // callback aanroepen
     });
   }
 
@@ -211,7 +215,7 @@
   // getClient()
   // ---------------------------------------------------------------------------
   function getClient() {
-    return _client;                                                                           // gedeelde client teruggeven
+    return _client;                                                            // gedeelde client teruggeven
   }
 
   // ---------------------------------------------------------------------------
