@@ -1,0 +1,470 @@
+<!-- ======================= admin/handleiding-admin.html v1.0.0 =======================
+     Admin handleiding voor MyFamTreeCollab
+     Alleen voor intern gebruik — beschrijft rechten en functies van het Admin account
+
+     v1.0.0 (sessie 21):
+     - Initieel aangemaakt: admin-content losgeknipt uit bronnen/handleiding.html v2.3.0
+     - Bevat: admin account beschrijving, admin-kolom in account types tabel,
+              admin dashboard toegang, importeren als admin, onbeperkt versiebeheer
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8"> <!-- Tekencodering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive -->
+    <title>Admin handleiding</title>
+
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css"> <!-- Globale stijlen -->
+
+    <style>
+        /* ── Pagina layout ─────────────────────────────────────────────── */
+        .handleiding-wrapper { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+
+        /* Welkomblok */
+        .welkom-blok { margin-bottom: 32px; }
+        .welkom-blok h1 { font-size: 1.6rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+
+        /* Admin-badge in paginatitel */
+        .admin-badge {
+            display: inline-block;      /* Inline blok voor padding */
+            background: #fdecea;        /* Licht rood */
+            color: #c62828;             /* Donker rood */
+            border: 1px solid #ef9a9a; /* Rode rand */
+            font-size: 0.78rem;         /* Klein */
+            font-weight: bold;          /* Vetgedrukt */
+            padding: 2px 8px;           /* Interne ruimte */
+            border-radius: 4px;         /* Licht afgerond */
+            margin-left: 8px;           /* Ruimte naast h1 */
+            vertical-align: middle;     /* Uitlijnen met tekst */
+        }
+
+        /* Versie-badge */
+        .versie-badge {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            font-size: 0.78rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* Inhoudsopgave */
+        .inhoudsopgave { background: #f8f8f5; border: 1px solid #ddd; border-radius: 6px; padding: 20px 24px; margin-bottom: 40px; }
+        .inhoudsopgave h2 { font-size: 1rem; font-weight: bold; margin: 0 0 12px 0; color: #333; }
+        .inhoudsopgave ol { margin: 0; padding-left: 20px; }
+        .inhoudsopgave li { margin-bottom: 6px; font-size: 0.92rem; }
+        .inhoudsopgave a  { color: #2563eb; text-decoration: none; }
+        .inhoudsopgave a:hover { text-decoration: underline; }
+
+        /* Secties */
+        .sectie { margin-bottom: 48px; scroll-margin-top: 20px; }
+        .sectie h2 { font-size: 1.25rem; font-weight: bold; margin: 0 0 16px 0; color: #222; padding-bottom: 8px; border-bottom: 2px solid #eee; }
+        .sectie h3 { font-size: 1rem; font-weight: bold; margin: 24px 0 8px 0; color: #333; }
+        .sectie p  { font-size: 0.95rem; color: #444; line-height: 1.7; margin: 0 0 12px 0; }
+        .sectie ul, .sectie ol { margin: 0 0 12px 20px; }
+        .sectie li { font-size: 0.95rem; color: #444; line-height: 1.7; margin-bottom: 4px; }
+
+        /* Stappenlijst met nummercirkels */
+        .stappen { counter-reset: stap; list-style: none; padding: 0; margin: 0 0 16px 0; }
+        .stappen li { counter-increment: stap; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; font-size: 0.95rem; color: #444; line-height: 1.6; }
+        .stappen li::before { content: counter(stap); display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; background: #c62828; color: white; border-radius: 50%; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; margin-top: 1px; } /* Rood voor admin */
+
+        /* Tip blok (blauw) */
+        .tip { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #1e40af; line-height: 1.5; }
+        .tip strong { color: #1e3a8a; }
+
+        /* Waarschuwingsblok (oranje) */
+        .waarschuwing { background: #fff7ed; border-left: 4px solid #f97316; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #9a3412; line-height: 1.5; }
+
+        /* Admin-noot blok (rood — intern gebruik) */
+        .admin-noot { background: #fdecea; border-left: 4px solid #c62828; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #7f1d1d; line-height: 1.5; }
+        .admin-noot strong { color: #991b1b; }
+
+        /* Terugknop */
+        .terug-top { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: #2563eb; text-decoration: none; }
+        .terug-top:hover { text-decoration: underline; }
+
+        /* ── Account types tabel ─────────────────────────────────────────── */
+        .rol-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .rol-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .rol-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle; }
+        .rol-tabel tr:last-child td { border-bottom: none; }
+
+        /* Admin-rij markering in tabel */
+        .admin-rij td { background: #fef9f9; }                         /* Licht rode achtergrond */
+        .admin-rij td:first-child { font-weight: bold; color: #7f1d1d; } /* Donker rood label */
+
+        /* DB-tier badges */
+        .tier-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-family: monospace;      /* Code-uitstraling */
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 4px;
+            border: 1px solid;
+            vertical-align: middle;
+        }
+
+        .tier-null  { background: #f0f0f0; color: #888; border-color: #ddd; }          /* null */
+        .tier-guest { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }    /* guest */
+        .tier-owner { background: #fff3cd; color: #7a4f00; border-color: #f0ad4e; }    /* owner */
+        .tier-admin { background: #fdecea; color: #c62828; border-color: #ef9a9a; }    /* admin */
+
+        /* Tabelcel-klassen */
+        .check-ja     { color: #166534; font-weight: bold; }      /* Groen vinkje */
+        .check-nee    { color: #991b1b; }                         /* Rood kruis */
+        .check-limiet { color: #555; font-size: 0.82rem; }        /* Tekst limiet */
+        .check-later  { color: #999; font-style: italic; font-size: 0.82rem; } /* Binnenkort */
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div> <!-- TopBar wordt geladen via fetch -->
+<div id="navbar-placeholder"></div> <!-- Navbar wordt geladen via fetch -->
+
+<main>
+    <div class="handleiding-wrapper">
+
+        <!-- ===== WELKOMBLOK ===== -->
+        <div class="welkom-blok">
+            <h1>Admin handleiding <span class="admin-badge">🛡️ Admin</span> <span class="versie-badge">v1.0.0</span></h1>
+            <p>
+                Deze handleiding beschrijft de rechten en functies die exclusief beschikbaar zijn
+                voor het Admin account. Voor algemene functies zie de
+                <a href="/MyFamTreeCollab/bronnen/handleiding.html">gebruikershandleiding</a>.
+            </p>
+            <div class="admin-noot">
+                <strong>Intern gebruik:</strong> Deze pagina is bedoeld voor platformbeheerders.
+                Het Admin account (<code>tier: admin</code>) wordt handmatig toegewezen
+                en is niet beschikbaar via registratie of donatie.
+            </div>
+        </div>
+
+        <!-- ===== INHOUDSOPGAVE ===== -->
+        <div class="inhoudsopgave">
+            <h2>Inhoudsopgave</h2>
+            <ol>
+                <li><a href="#admin-account">Het Admin account</a></li>
+                <li><a href="#rechten-overzicht">Rechten overzicht</a></li>
+                <li><a href="#admin-dashboard">Admin dashboard</a></li>
+                <li><a href="#importeren">Importeren als Admin</a></li>
+                <li><a href="#versiebeheer">Versiebeheer (onbeperkt)</a></li>
+                <li><a href="#stamboom-beheer">Stambomen &amp; samenwerking</a></li>
+            </ol>
+        </div>
+
+        <!-- ================================================================
+             1. Het Admin account
+             ================================================================ -->
+        <div class="sectie" id="admin-account">
+            <h2>1. Het Admin account</h2>
+            <p>
+                Het Admin account (<code>tier: admin</code>) is het hoogste account type binnen
+                MyFamTreeCollab. Het geeft volledige toegang tot alle functies van de applicatie,
+                inclusief het admin dashboard.
+            </p>
+
+            <h3>Activatie</h3>
+            <p>
+                Admin accounts worden <strong>handmatig toegewezen</strong> via de Supabase database —
+                rechtstreeks in de <code>profiles</code> tabel, kolom <code>tier</code>.
+                Er is geen zelfregistratie of donatie-flow voor Admin.
+            </p>
+            <div class="admin-noot">
+                <strong>DB-waarde:</strong> <code>profiles.tier = 'admin'</code><br>
+                Toewijzing via Supabase dashboard: <code>Table Editor → profiles → tier → admin</code>
+            </div>
+
+            <h3>Verschil met Owner</h3>
+            <ul>
+                <li>Owner heeft alle gebruikersfuncties (cloud, samenwerken, versiebeheer max. 5)</li>
+                <li>Admin heeft <strong>alle Owner-functies</strong> plus toegang tot het admin dashboard</li>
+                <li>Admin heeft <strong>onbeperkt versiebeheer</strong> (Owner is beperkt tot 5 versies)</li>
+                <li>Admin kan importeren, net als Owner</li>
+            </ul>
+
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             2. Rechten overzicht
+             ================================================================ -->
+        <div class="sectie" id="rechten-overzicht">
+            <h2>2. Rechten overzicht</h2>
+            <p>
+                Volledig overzicht van alle account types inclusief Admin.
+                De Admin-kolom is gemarkeerd.
+            </p>
+            <table class="rol-tabel">
+                <thead>
+                    <tr>
+                        <th>Wat kan je doen?</th>
+                        <th>👤 Niet ingelogd <span class="tier-badge tier-null">null</span></th>
+                        <th>🖥️ Basis account <span class="tier-badge tier-guest">guest</span></th>
+                        <th>👑 Owner <span class="tier-badge tier-owner">owner</span></th>
+                        <th>🛡️ Admin <span class="tier-badge tier-admin">admin</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Demo stamboom -->
+                    <tr>
+                        <td>Demo stamboom bekijken</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>        <!-- Admin: ja -->
+                    </tr>
+                    <!-- Eigen stamboom -->
+                    <tr>
+                        <td>Eigen stamboom aanmaken</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>        <!-- Admin: ja -->
+                    </tr>
+                    <!-- Persoonslimieten -->
+                    <tr>
+                        <td>Max. personen lokaal</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-limiet">60 personen</td>
+                        <td class="check-limiet">Onbeperkt</td>
+                        <td class="check-limiet">Onbeperkt</td> <!-- Admin: onbeperkt -->
+                    </tr>
+                    <!-- Cloud -->
+                    <tr>
+                        <td>Cloud stambomen aanmaken</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>        <!-- Admin: ja -->
+                    </tr>
+                    <!-- Delen -->
+                    <tr>
+                        <td>Stamboom delen</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>        <!-- Admin: ja -->
+                    </tr>
+                    <!-- Uitnodigen -->
+                    <tr>
+                        <td>Viewer / Editor uitnodigen</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>        <!-- Admin: ja -->
+                    </tr>
+                    <!-- Versies — admin onbeperkt -->
+                    <tr>
+                        <td>Versies terugzetten</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-limiet">Max. 5 versies</td>
+                        <td class="check-limiet">Onbeperkt</td> <!-- Admin: onbeperkt -->
+                    </tr>
+                    <!-- Exporteren -->
+                    <tr>
+                        <td>Exporteren (CSV / JSON)</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>        <!-- Admin: ja -->
+                    </tr>
+                    <!-- Importeren -->
+                    <tr>
+                        <td>Importeren (CSV)</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-ja">✓</td>
+                        <td class="check-ja">✓</td>        <!-- Admin: ja -->
+                    </tr>
+                    <!-- Admin dashboard — exclusief admin -->
+                    <tr class="admin-rij">
+                        <td>Admin dashboard</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>
+                        <td class="check-nee">✗</td>       <!-- Owner: geen admin dashboard -->
+                        <td class="check-ja">✓</td>        <!-- Exclusief admin -->
+                    </tr>
+                </tbody>
+            </table>
+
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             3. Admin dashboard
+             ================================================================ -->
+        <div class="sectie" id="admin-dashboard">
+            <h2>3. Admin dashboard</h2>
+            <p>
+                Het admin dashboard is exclusief toegankelijk voor accounts met
+                <code>tier: admin</code>. Het biedt een overzicht van platformactiviteit
+                en gebruikersstatistieken.
+            </p>
+            <div class="tip">
+                <strong>Toegang:</strong> Navigeer naar <code>/MyFamTreeCollab/admin/analytics.html</code>
+                of gebruik de link in het gebruikersmenu (zichtbaar alleen voor admin-accounts).
+            </div>
+
+            <h3>Functies in het dashboard</h3>
+            <ul>
+                <li>Paginabezoeken per dag / per pagina</li>
+                <li>Actieve gebruikers (op basis van siteAnalytics)</li>
+                <li>Account type verdeling (guest / owner / admin)</li>
+                <li>Samenwerking statistieken (gedeelde stambomen, berichten)</li>
+            </ul>
+
+            <div class="admin-noot">
+                <strong>Beveiliging:</strong> Het dashboard controleert <code>profiles.tier === 'admin'</code>
+                bij laden. Niet-admin accounts zien een toegangsgeweigerd melding en worden
+                doorgestuurd naar de homepagina.
+            </div>
+
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             4. Importeren als Admin
+             ================================================================ -->
+        <div class="sectie" id="importeren">
+            <h2>4. Importeren als Admin</h2>
+            <p>
+                Net als Owner kan Admin stamboomdata importeren via een CSV-bestand.
+                Zelfde flow als de gebruikershandleiding sectie 11.
+            </p>
+            <ul class="stappen">
+                <li>Download het <a href="/MyFamTreeCollab/bronnen/template.html">CSV-sjabloon</a>.</li>
+                <li>Vul het sjabloon in met de familiegegevens.</li>
+                <li>Ga naar <strong>Importeren</strong> via de navigatie.</li>
+                <li>Klik op <strong>"Bestand kiezen"</strong> en kies de CSV.</li>
+                <li>Klik op <strong>"Importeren"</strong>.</li>
+            </ul>
+            <div class="tip">
+                Importeren is ook beschikbaar voor Owner-accounts. Zie de
+                <a href="/MyFamTreeCollab/bronnen/handleiding.html#importeren">gebruikershandleiding sectie 11</a>.
+            </div>
+
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             5. Versiebeheer (onbeperkt)
+             ================================================================ -->
+        <div class="sectie" id="versiebeheer">
+            <h2>5. Versiebeheer (onbeperkt)</h2>
+            <p>
+                Admin heeft <strong>onbeperkt versiebeheer</strong> — geen maximum van 5 versies
+                zoals bij Owner. Alle versies van alle stambomen blijven beschikbaar.
+            </p>
+            <ul class="stappen">
+                <li>Ga naar <strong>Mijn Account → 📜 Versiegeschiedenis</strong>.</li>
+                <li>Kies een stamboom uit de dropdown — alle versies worden getoond.</li>
+                <li>Klik op <strong>"👁 Preview"</strong> om een versie te bekijken.</li>
+                <li>Klik op <strong>"⏪ Terugzetten"</strong> om een versie te herstellen.</li>
+                <li>Klik twee keer op <strong>"🔍 Vergelijk"</strong> voor een zij-aan-zij vergelijking.</li>
+            </ul>
+            <div class="admin-noot">
+                <strong>Verschil met Owner:</strong> Owner is beperkt tot max. 5 versies per stamboom.
+                Oudere versies worden automatisch verwijderd bij de Owner. Bij Admin blijven alle versies bewaard.
+            </div>
+
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             6. Stambomen & samenwerking
+             ================================================================ -->
+        <div class="sectie" id="stamboom-beheer">
+            <h2>6. Stambomen &amp; samenwerking</h2>
+            <p>
+                Admin heeft dezelfde stamboom- en samenwerkingsfuncties als Owner:
+                cloud backup, stamboom delen, Viewer/Editor uitnodigen en het berichtenboard modereren.
+            </p>
+            <div class="tip">
+                Zie de <a href="/MyFamTreeCollab/bronnen/handleiding.html#cloud">gebruikershandleiding sectie 10</a>
+                (Cloud stambomen) en <a href="/MyFamTreeCollab/bronnen/handleiding.html#delen">sectie 14</a>
+                (Stamboom delen) voor de volledige instructies.
+            </div>
+
+            <h3>Aanvullende admin-bevoegdheden (toekomstig)</h3>
+            <p>De volgende functies zijn voorzien voor toekomstige admin-uitbreidingen:</p>
+            <ul>
+                <li>Alle gebruikersaccounts beheren (tier wijzigen, account verwijderen)</li>
+                <li>Alle gedeelde stambomen inzien en modereren</li>
+                <li>Platform-brede notificaties versturen</li>
+            </ul>
+            <div class="admin-noot">
+                <strong>Status:</strong> Bovenstaande functies zijn nog niet geïmplementeerd (backlog).
+                Huidig admin-voordeel ten opzichte van Owner: dashboard + onbeperkt versiebeheer + importeren.
+            </div>
+
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+    </div>
+</main>
+
+<div id="footer-placeholder"></div> <!-- Footer wordt geladen via fetch -->
+
+<!-- =============================================================
+     SCRIPTS — verplichte laadvolgorde:
+     1. Supabase SDK        — vereist door auth.js
+     2. utils.js            — vereist door alle andere modules
+     3. auth.js             — vereist door topbar.js en siteAnalytics.js
+     4. siteAnalytics.js   — bezoektracking, na auth.js zodat tier beschikbaar is
+     5. TopBar HTML fetch → daarna topbar.js injecteren (garandeert DOM-volgorde)
+     6. Navbar HTML fetch   — onafhankelijk, mag parallel
+     7. Footer HTML fetch   — onafhankelijk, mag parallel
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
+<script src="../js/utils.js"></script>   <!-- Utilities -->
+<script src="../js/auth.js"></script>    <!-- Auth module -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking — na auth.js -->
+
+<script>
+    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
+    // Garandeert dat #top-auth in DOM aanwezig is vóór topbar.js initialiseert
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(resp => resp.text())                                              // HTML ophalen
+        .then(function(data) {
+            document.getElementById('topbar-placeholder').innerHTML = data;    // TopBar in DOM
+            var s = document.createElement('script');                          // Script element
+            s.src = '../js/topbar.js';                                         // Pad naar topbar.js
+            document.body.appendChild(s);                                      // Script laden
+        });
+
+    // Stap 2: Navbar laden — onafhankelijk van auth, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(resp => resp.text())                                              // HTML ophalen
+        .then(function(data) {
+            var ph = document.getElementById('navbar-placeholder');            // Placeholder ophalen
+            if (ph) ph.innerHTML = data;                                       // Navbar in DOM
+        });
+
+    // Stap 3: Footer laden — onafhankelijk, mag parallel
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(resp => resp.text())                                              // HTML ophalen
+        .then(function(data) {
+            var ph = document.getElementById('footer-placeholder');            // Placeholder ophalen
+            if (ph) ph.innerHTML = data;                                       // Footer in DOM
+        });
+
+    // Stap 4: Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage("handleiding-admin"); // Bezoek registreren in Supabase page_visits tabel
+</script>
+
+</body>
+</html>
