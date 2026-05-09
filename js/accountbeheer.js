@@ -1,8 +1,9 @@
-// js/accountbeheer.js — v1.3.0 — Admin accountbeheer logica
+// js/accountbeheer.js — v1.3.1 — Admin accountbeheer logica
 // Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen, account bevestigen
 // Vereist: window.AuthModule (auth.js), Supabase SDK, topbar.js (sessie herstel)
 // Toegang: alleen admin — init() controleert tier via AuthModule.getTier()
 //
+// v1.3.1: debug logs toegevoegd in confirmUser() voor diagnose Edge Function aanroep
 // v1.3.0: confirm-knop toegevoegd in Acties kolom voor onbevestigde accounts
 //         confirmUser(uid, email) — roept RPC confirm_user aan + notify-admin Edge Function
 //         renderTable() toont "Bevestigen" knop wanneer email_confirmed_at null is
@@ -148,7 +149,7 @@ function bindRowEvents() {
 // confirmUser(uid, email)
 // Bevestigt een account manueel via RPC confirm_user
 // Stuurt daarna een notificatie naar vorilo2000@gmail.com via Edge Function
-// Nieuw in v1.3.0
+// v1.3.1: debug logs toegevoegd voor diagnose
 // ---------------------------------------------------------------------------
 async function confirmUser(uid, email) {
   try {
@@ -156,8 +157,10 @@ async function confirmUser(uid, email) {
     const { error } = await sb.rpc('confirm_user', { target_id: uid });       // RPC aanroepen
     if (error) throw error;
 
+    console.log('[confirm] RPC gelukt, Edge Function aanroepen...');          // DEBUG
+
     // Stap 2: notificatie-mail sturen via Edge Function
-    await fetch(`${SUPABASE_URL}/functions/v1/dynamic-responder`, {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/dynamic-responder`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -165,7 +168,10 @@ async function confirmUser(uid, email) {
       },
       body: JSON.stringify({ email }),                                         // Bevestigd account meesturen
     });
-    // Mail-fout bewust niet gooien — confirm is al gelukt
+
+    console.log('[confirm] Edge Function status:', res.status);               // DEBUG
+    const json = await res.json();                                             // Response body lezen
+    console.log('[confirm] Edge Function response:', json);                   // DEBUG
 
     // Stap 3: lokaal bijwerken zodat knop verdwijnt zonder full reload
     const user = allUsers.find(u => u.id === uid);                            // Gebruiker in lokale lijst vinden
@@ -175,7 +181,7 @@ async function confirmUser(uid, email) {
     showToast(`Account van ${email} bevestigd.`);                             // Bevestiging tonen
 
   } catch (err) {
-    console.error('[accountbeheer] confirmUser fout:', err);
+    console.error('[accountbeheer] confirmUser fout:', err);                  // DEBUG
     showToast('Bevestigen mislukt: ' + err.message, true);                    // Foutmelding tonen
   }
 }
