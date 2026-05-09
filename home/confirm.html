@@ -135,7 +135,7 @@
     // Fout hier laat de gebruikerservaring niet falen
     async function notifyAdmin(email) {
         try {
-            await fetch(`${SUPABASE_URL}/functions/v1/notify-admin`, {
+            await fetch(`${SUPABASE_URL}/functions/v1/dynamic-responder`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
