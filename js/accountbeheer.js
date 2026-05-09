@@ -1,8 +1,12 @@
-// js/accountbeheer.js — v1.2.0 — Admin accountbeheer logica
-// Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen
+// js/accountbeheer.js — v1.3.0 — Admin accountbeheer logica
+// Verantwoordelijk voor: gebruikers laden, tier wijzigen, verwijderen, stats tonen, account bevestigen
 // Vereist: window.AuthModule (auth.js), Supabase SDK, topbar.js (sessie herstel)
 // Toegang: alleen admin — init() controleert tier via AuthModule.getTier()
 //
+// v1.3.0: confirm-knop toegevoegd in Acties kolom voor onbevestigde accounts
+//         confirmUser(uid, email) — roept RPC confirm_user aan + notify-admin Edge Function
+//         renderTable() toont "Bevestigen" knop wanneer email_confirmed_at null is
+//         loadUsers() laadt nu ook email_confirmed_at via uitgebreide admin_users view
 // v1.2.0: tier model aangepast naar account types: guest | owner | admin
 //         statViewer en statEditor vervangen door statGuest
 //         tierOptions in dropdown aangepast: guest | owner | admin
@@ -18,11 +22,14 @@
 
 'use strict';
 
-const sb = window.AuthModule.getClient(); // Supabase client via AuthModule
+const sb = window.AuthModule.getClient();                                      // Supabase client via AuthModule
 
-let allUsers      = []; // Alle geladen gebruikers
-let filteredUsers = []; // Gefilterde subset voor weergave
-let deleteTarget  = null; // Gebruiker die verwijderd wordt
+const SUPABASE_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";            // Supabase project URL (voor Edge Function)
+const SUPABASE_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";      // Anon key (voor Edge Function auth header)
+
+let allUsers      = [];                                                        // Alle geladen gebruikers
+let filteredUsers = [];                                                        // Gefilterde subset voor weergave
+let deleteTarget  = null;                                                      // Gebruiker die verwijderd wordt
 
 // DOM referenties
 const tbody        = document.getElementById('usersTbody');
@@ -35,10 +42,10 @@ const modalOverlay = document.getElementById('modalOverlay');
 const modalName    = document.getElementById('modalName');
 const btnCancel    = document.getElementById('btnCancel');
 const btnConfirm   = document.getElementById('btnConfirm');
-const statTotal    = document.getElementById('statTotal'); // Totaal aantal gebruikers
-const statGuest    = document.getElementById('statGuest'); // Aantal guests (was: viewer + editor)
-const statOwner    = document.getElementById('statOwner'); // Aantal owners
-const statAdmin    = document.getElementById('statAdmin'); // Aantal admins
+const statTotal    = document.getElementById('statTotal');                     // Totaal aantal gebruikers
+const statGuest    = document.getElementById('statGuest');                     // Aantal guests
+const statOwner    = document.getElementById('statOwner');                     // Aantal owners
+const statAdmin    = document.getElementById('statAdmin');                     // Aantal admins
 
 // ---------------------------------------------------------------------------
 // showToast(msg, isError)
@@ -54,7 +61,6 @@ function showToast(msg, isError = false) {
 // ---------------------------------------------------------------------------
 // updateStats(users)
 // Berekent en toont aantallen per account type in de stat-kaarten
-// Account types: guest | owner | admin
 // ---------------------------------------------------------------------------
 function updateStats(users) {
   statTotal.textContent = users.length;                                        // Totaal aantal gebruikers
@@ -76,6 +82,7 @@ function fmtDate(iso) {
 // ---------------------------------------------------------------------------
 // renderTable(users)
 // Genereert tabelrijen voor de gegeven gebruikerslijst
+// v1.3.0: toont "Bevestigen" knop wanneer email_confirmed_at null is
 // ---------------------------------------------------------------------------
 function renderTable(users) {
   tbody.innerHTML = '';                                                         // Tabel leegmaken
@@ -85,9 +92,15 @@ function renderTable(users) {
   }
   users.forEach(u => {
     const tr = document.createElement('tr');                                   // Nieuwe rij aanmaken
-    const tierOptions = ['guest', 'owner', 'admin']                           // Account types (geen stamboom-rechten)
+    const tierOptions = ['guest', 'owner', 'admin']                           // Account types
       .map(t => `<option value="${t}" ${t === u.tier ? 'selected' : ''}>${t}</option>`) // Dropdown opties
       .join('');
+
+    // Confirm knop — alleen tonen als email_confirmed_at null is (onbevestigd account)
+    const confirmBtn = !u.email_confirmed_at
+      ? `<button class="btn-action btn-confirm-account" data-uid="${u.id}" data-email="${u.email}">Bevestigen</button>`
+      : '';                                                                    // Leeg als al bevestigd
+
     tr.innerHTML = `
       <td class="col-email">${u.email || '—'}</td>
       <td><span class="tier-badge ${u.tier}">${u.tier}</span></td>
@@ -95,6 +108,7 @@ function renderTable(users) {
       <td>${fmtDate(u.created_at)}</td>
       <td>
         <div class="row-actions">
+          ${confirmBtn}
           <button class="btn-action btn-save-tier" data-uid="${u.id}">Opslaan</button>
           <button class="btn-action danger btn-delete" data-uid="${u.id}" data-email="${u.email}">Verwijderen</button>
         </div>
@@ -106,7 +120,7 @@ function renderTable(users) {
 
 // ---------------------------------------------------------------------------
 // bindRowEvents()
-// Koppelt click-events aan opslaan- en verwijderknoppen per rij
+// Koppelt click-events aan opslaan, verwijderen en bevestigen knoppen per rij
 // ---------------------------------------------------------------------------
 function bindRowEvents() {
   document.querySelectorAll('.btn-save-tier').forEach(btn => {
@@ -123,18 +137,60 @@ function bindRowEvents() {
       modalOverlay.classList.add('open');                                     // Modal openen
     });
   });
+  document.querySelectorAll('.btn-confirm-account').forEach(btn => {
+    btn.addEventListener('click', () => {
+      confirmUser(btn.dataset.uid, btn.dataset.email);                        // Account bevestigen
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// confirmUser(uid, email)
+// Bevestigt een account manueel via RPC confirm_user
+// Stuurt daarna een notificatie naar vorilo2000@gmail.com via Edge Function
+// Nieuw in v1.3.0
+// ---------------------------------------------------------------------------
+async function confirmUser(uid, email) {
+  try {
+    // Stap 1: account bevestigen via RPC (SECURITY DEFINER — mag auth.users schrijven)
+    const { error } = await sb.rpc('confirm_user', { target_id: uid });       // RPC aanroepen
+    if (error) throw error;
+
+    // Stap 2: notificatie-mail sturen via Edge Function
+    await fetch(`${SUPABASE_URL}/functions/v1/notify-admin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON}`,                           // Anon key voor Edge Function auth
+      },
+      body: JSON.stringify({ email }),                                         // Bevestigd account meesturen
+    });
+    // Mail-fout bewust niet gooien — confirm is al gelukt
+
+    // Stap 3: lokaal bijwerken zodat knop verdwijnt zonder full reload
+    const user = allUsers.find(u => u.id === uid);                            // Gebruiker in lokale lijst vinden
+    if (user) user.email_confirmed_at = new Date().toISOString();             // Lokaal bevestigd markeren
+
+    renderTable(filteredUsers);                                                // Tabel opnieuw renderen — knop verdwijnt
+    showToast(`Account van ${email} bevestigd.`);                             // Bevestiging tonen
+
+  } catch (err) {
+    console.error('[accountbeheer] confirmUser fout:', err);
+    showToast('Bevestigen mislukt: ' + err.message, true);                    // Foutmelding tonen
+  }
 }
 
 // ---------------------------------------------------------------------------
 // loadUsers()
 // Haalt alle gebruikers op uit de admin_users view en rendert de tabel
+// v1.3.0: laadt nu ook email_confirmed_at via uitgebreide view
 // ---------------------------------------------------------------------------
 async function loadUsers() {
   tbody.innerHTML = '<tr class="loading-row"><td colspan="5">Laden...</td></tr>'; // Laad indicator
   try {
     const { data: profiles, error } = await sb
       .from('admin_users')
-      .select('id, username, email, tier, created_at')                        // Kolommen ophalen
+      .select('id, username, email, tier, created_at, email_confirmed_at')    // email_confirmed_at toegevoegd
       .order('created_at', { ascending: false });                             // Nieuwste eerst
     if (error) throw error;
     allUsers      = profiles || [];                                           // Alle gebruikers opslaan
