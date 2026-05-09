@@ -1,4 +1,6 @@
-<!-- ======================= home/confirm.html v1.0.0 =======================
+<!-- ======================= home/confirm.html v1.1.0 =======================
+     v1.1.0: notificatie-mail naar vorilo2000@gmail.com na succesvolle bevestiging
+             notifyAdmin(email) toegevoegd — roept notify-admin Edge Function aan
      v1.0.0: Nieuwe pagina — verwerkt Supabase email bevestiging
      - Leest token_hash en type uit URL parameters
      - Roept Supabase verifyOtp() aan om bevestiging te voltooien
@@ -118,11 +120,33 @@
 (async function () {
     "use strict";
 
+    // ======================= Configuratie =======================
+    const SUPABASE_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";        // Supabase project URL
+    const SUPABASE_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";  // Anon key
+
     // ======================= DOM elementen ophalen =======================
     const box    = document.getElementById('confirmBox');    // Hoofd container
     const title  = document.getElementById('confirmTitle'); // Titel element
     const msg    = document.getElementById('confirmMsg');   // Bericht element
     const action = document.getElementById('confirmAction'); // Actieknop container
+
+    // ======================= notifyAdmin(email) =======================
+    // Stuurt notificatie naar vorilo2000@gmail.com via Edge Function
+    // Fout hier laat de gebruikerservaring niet falen
+    async function notifyAdmin(email) {
+        try {
+            await fetch(`${SUPABASE_URL}/functions/v1/notify-admin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON}`,               // Anon key voor Edge Function auth
+                },
+                body: JSON.stringify({ email }),                               // Bevestigd e-mailadres meesturen
+            });
+        } catch (e) {
+            console.warn('[confirm] notifyAdmin fout (niet kritiek):', e);    // Logt maar gooit niet
+        }
+    }
 
     // ======================= Hulpfunctie: toon succes =======================
     function showSuccess() {
@@ -170,6 +194,9 @@
         return;                                                     // Stoppen
     }
 
+    // Bevestiging geslaagd — notificeer admin en toon succes
+    const email = data.user ? data.user.email : '';                 // Email uit response halen
+    await notifyAdmin(email);                                       // Notificatie sturen naar vorilo2000@gmail.com
     showSuccess();                                                  // Succes tonen en redirecten
 
 })();
