@@ -157,7 +157,7 @@ async function confirmUser(uid, email) {
     if (error) throw error;
 
     // Stap 2: notificatie-mail sturen via Edge Function
-    await fetch(`${SUPABASE_URL}/functions/v1/notify-admin`, {
+    await fetch(`${SUPABASE_URL}/functions/v1/dynamic-responder`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
