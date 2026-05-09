@@ -1,6 +1,8 @@
-<!-- ======================= home/confirm.html v1.1.0 =======================
+<!-- ======================= home/confirm.html v1.2.0 =======================
+     v1.2.0: Authorization header verwijderd uit notifyAdmin()
+             Edge Function verify_jwt=false — header veroorzaakte 401
      v1.1.0: notificatie-mail naar vorilo2000@gmail.com na succesvolle bevestiging
-             notifyAdmin(email) toegevoegd — roept notify-admin Edge Function aan
+             notifyAdmin(email) toegevoegd — roept dynamic-responder Edge Function aan
      v1.0.0: Nieuwe pagina — verwerkt Supabase email bevestiging
      - Leest token_hash en type uit URL parameters
      - Roept Supabase verifyOtp() aan om bevestiging te voltooien
@@ -121,25 +123,24 @@
     "use strict";
 
     // ======================= Configuratie =======================
-    const SUPABASE_URL  = "https://oihzuwlcgyyeuhghjahp.supabase.co";        // Supabase project URL
-    const SUPABASE_ANON = "sb_publishable_9lSmr_sW7iryYDlDXPZZtw_tlbwTyDS";  // Anon key
+    const SUPABASE_URL = "https://oihzuwlcgyyeuhghjahp.supabase.co";         // Supabase project URL
 
     // ======================= DOM elementen ophalen =======================
-    const box    = document.getElementById('confirmBox');    // Hoofd container
-    const title  = document.getElementById('confirmTitle'); // Titel element
-    const msg    = document.getElementById('confirmMsg');   // Bericht element
-    const action = document.getElementById('confirmAction'); // Actieknop container
+    const box    = document.getElementById('confirmBox');                     // Hoofd container
+    const title  = document.getElementById('confirmTitle');                   // Titel element
+    const msg    = document.getElementById('confirmMsg');                     // Bericht element
+    const action = document.getElementById('confirmAction');                  // Actieknop container
 
     // ======================= notifyAdmin(email) =======================
     // Stuurt notificatie naar vorilo2000@gmail.com via Edge Function
+    // Geen Authorization header — Edge Function heeft verify_jwt=false
     // Fout hier laat de gebruikerservaring niet falen
     async function notifyAdmin(email) {
         try {
             await fetch(`${SUPABASE_URL}/functions/v1/dynamic-responder`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${SUPABASE_ANON}`,               // Anon key voor Edge Function auth
+                    'Content-Type': 'application/json',                       // Geen Authorization header — verify_jwt=false
                 },
                 body: JSON.stringify({ email }),                               // Bevestigd e-mailadres meesturen
             });
@@ -150,74 +151,74 @@
 
     // ======================= Hulpfunctie: toon succes =======================
     function showSuccess() {
-        box.className  = 'confirm-wrap success';             // Groene border activeren
-        title.textContent = 'E-mailadres bevestigd!';        // Succesbericht titel
+        box.className     = 'confirm-wrap success';                           // Groene border activeren
+        title.textContent = 'E-mailadres bevestigd!';                         // Succesbericht titel
         msg.textContent   = 'Je account is actief. Je wordt doorgestuurd naar de startpagina…'; // Succesbericht
         action.innerHTML  = '<a href="/MyFamTreeCollab/home/index.html" class="btn-primary">Ga naar startpagina</a>'; // Knop
 
         // Na 3 seconden automatisch doorsturen
         setTimeout(function () {
-            window.location.href = '/MyFamTreeCollab/home/index.html'; // Redirect naar home
+            window.location.href = '/MyFamTreeCollab/home/index.html';        // Redirect naar home
         }, 3000);
     }
 
     // ======================= Hulpfunctie: toon fout =======================
     function showError(errMsg) {
-        box.className     = 'confirm-wrap error';            // Rode border activeren
-        title.textContent = 'Bevestiging mislukt';           // Foutbericht titel
+        box.className     = 'confirm-wrap error';                             // Rode border activeren
+        title.textContent = 'Bevestiging mislukt';                            // Foutbericht titel
         msg.textContent   = errMsg || 'Er is iets misgegaan. Probeer opnieuw te registreren.'; // Foutbericht
         action.innerHTML  = '<a href="/MyFamTreeCollab/home/register.html" class="btn-primary">Opnieuw registreren</a>'; // Knop
     }
 
     // ======================= URL parameters lezen =======================
-    const params     = new URLSearchParams(window.location.search); // Query string parsen
-    const tokenHash  = params.get('token_hash');                    // token_hash ophalen
-    const type       = params.get('type');                          // type ophalen (signup / email)
+    const params    = new URLSearchParams(window.location.search);            // Query string parsen
+    const tokenHash = params.get('token_hash');                               // token_hash ophalen
+    const type      = params.get('type');                                     // type ophalen (signup / email)
 
     // ======================= Validatie =======================
     if (!tokenHash || !type) {
         showError('Ongeldige bevestigingslink. Controleer of je de volledige link hebt geopend.'); // Fout tonen
-        return;                                                     // Stoppen
+        return;                                                               // Stoppen
     }
 
     // ======================= Supabase verifyOtp aanroepen =======================
-    const client = AuthModule.getClient();                          // Gedeelde Supabase client ophalen
+    const client = AuthModule.getClient();                                    // Gedeelde Supabase client ophalen
 
     const { data, error } = await client.auth.verifyOtp({
-        token_hash: tokenHash,                                      // Token uit URL
-        type: type,                                                 // Type: signup of email
+        token_hash: tokenHash,                                                // Token uit URL
+        type: type,                                                           // Type: signup of email
     });
 
     // ======================= Resultaat verwerken =======================
     if (error) {
-        showError(error.message);                                   // Foutmelding tonen
-        return;                                                     // Stoppen
+        showError(error.message);                                             // Foutmelding tonen
+        return;                                                               // Stoppen
     }
 
     // Bevestiging geslaagd — notificeer admin en toon succes
-    const email = data.user ? data.user.email : '';                 // Email uit response halen
-    await notifyAdmin(email);                                       // Notificatie sturen naar vorilo2000@gmail.com
-    showSuccess();                                                  // Succes tonen en redirecten
+    const email = data.user ? data.user.email : '';                           // Email uit response halen
+    await notifyAdmin(email);                                                 // Notificatie sturen naar vorilo2000@gmail.com
+    showSuccess();                                                            // Succes tonen en redirecten
 
 })();
 </script>
 
 <script>
     // ======================= TopBar laden =======================
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')  // TopBar HTML ophalen
-        .then(resp => resp.text())                // Response omzetten naar tekst
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')                              // TopBar HTML ophalen
+        .then(resp => resp.text())                                            // Response omzetten naar tekst
         .then(function (data) {
-            document.getElementById('topbar-placeholder').innerHTML = data; // TopBar in DOM zetten
-            var s = document.createElement('script');  // Script element aanmaken
-            s.src = 'js/topbar.js';                    // Pad naar topbar.js
-            document.body.appendChild(s);              // Script toevoegen aan DOM
+            document.getElementById('topbar-placeholder').innerHTML = data;   // TopBar in DOM zetten
+            var s = document.createElement('script');                         // Script element aanmaken
+            s.src = 'js/topbar.js';                                           // Pad naar topbar.js
+            document.body.appendChild(s);                                     // Script toevoegen aan DOM
         });
 
     // ======================= Footer laden =======================
-    fetch('/MyFamTreeCollab/Layout/Footer.html')  // Footer HTML ophalen
-        .then(resp => resp.text())                // Response omzetten naar tekst
+    fetch('/MyFamTreeCollab/Layout/Footer.html')                              // Footer HTML ophalen
+        .then(resp => resp.text())                                            // Response omzetten naar tekst
         .then(function (data) {
-            document.getElementById('footer-placeholder').innerHTML = data; // Footer in DOM zetten
+            document.getElementById('footer-placeholder').innerHTML = data;   // Footer in DOM zetten
         });
 </script>
 
