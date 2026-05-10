@@ -144,19 +144,6 @@
             text-align: center;
         }
 
-        /* ======================= LANGUAGE SWITCHER ======================= */
-        .lang-switcher-wrap {
-            text-align: right;      /* Rechts uitlijnen */
-            padding: 8px 24px;      /* Ruimte rondom */
-        }
-
-        #languageSwitcher {
-            padding: 4px 8px;       /* Klikbare ruimte */
-            border-radius: 4px;     /* Afgeronde hoeken */
-            border: 1px solid #ccc; /* Lichte rand */
-            font-size: 0.9rem;      /* Iets kleiner dan body */
-            cursor: pointer;        /* Handcursor */
-        }
     </style>
 </head>
 <body>
@@ -170,11 +157,6 @@
 <!-- ======================= Language switcher ======================= -->
 <!-- Staat buiten TopBar zodat hij altijd beschikbaar is,
      ook als TopBar nog niet geladen is -->
-<div class="lang-switcher-wrap">
-    <label for="languageSwitcher" data-i18n="common.language.label"></label> <!-- "Taal" / "Language" / "Idioma" -->
-    <select id="languageSwitcher"></select> <!-- Wordt gevuld door buildLanguageSwitcher() in i18n.js -->
-</div>
-
 <!-- ======================= HERO ======================= -->
 <section class="hero">
 
