@@ -162,10 +162,6 @@
 </head>
 <body>
 
-     <!-- ======================= source view enablement  ======================= -->
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-
 <!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div> <!-- Wordt gevuld via fetch -->
 
@@ -179,32 +175,32 @@
 <section class="hero">
 
     <!-- Hoofdtitel — vertaald via home.hero.title -->
-    <h1 data-i18n="home.hero.title"></h1>
+    <h1 data-i18n="home:hero.title"></h1>
 
     <!-- Subtitel — vertaald via home.hero.subtitle -->
-    <p data-i18n="home.hero.subtitle"></p>
+    <p data-i18n="home:hero.subtitle"></p>
 
     <!-- Knoppen: start, lees meer, bekijk demo -->
     <div class="hero-actions">
 
         <!-- Primaire CTA — vertaald via home.hero.ctaStart -->
         <a href="/MyFamTreeCollab/home/create.html" class="btn-primary"
-           data-i18n="home.hero.ctaStart"></a>
+           data-i18n="home:hero.ctaStart"></a>
 
         <!-- Secundaire CTA — vertaald via home.hero.ctaMore -->
         <a href="/MyFamTreeCollab/home/about.html" class="btn-secondary"
-           data-i18n="home.hero.ctaMore"></a>
+           data-i18n="home:hero.ctaMore"></a>
 
         <!-- Demo knop — vertaald via home.hero.ctaDemo -->
         <button id="btnDemo" class="btn-demo"
-                data-i18n="home.hero.ctaDemo"></button>
+                data-i18n="home:hero.ctaDemo"></button>
 
     </div>
 
     <!-- Demo uitlegblok — vertaald via home.demo.* -->
     <div class="benefit">
-        <h3 data-i18n="home.demo.title"></h3>           <!-- "🌳 Bekijk demo" -->
-        <p data-i18n="home.demo.description"></p>       <!-- Uitleg demo stamboom -->
+        <h3 data-i18n="home:demo.title"></h3>           <!-- "🌳 Bekijk demo" -->
+        <p data-i18n="home:demo.description"></p>       <!-- Uitleg demo stamboom -->
     </div>
 
 </section>
@@ -213,13 +209,13 @@
 <section>
 
     <!-- Sectietitel — vertaald via home.why.title -->
-    <h2 data-i18n="home.why.title"></h2>
+    <h2 data-i18n="home:why.title"></h2>
 
     <!-- Probleemstelling — vertaald via home.why.problem -->
-    <p data-i18n="home.why.problem"></p>
+    <p data-i18n="home:why.problem"></p>
 
     <!-- Oplossing — vertaald via home.why.solution -->
-    <p data-i18n="home.why.solution"></p>
+    <p data-i18n="home:why.solution"></p>
 
 </section>
 
@@ -228,20 +224,20 @@
 
     <!-- Benefit 1: privacy -->
     <div class="benefit">
-        <h3 data-i18n="home.why.privacy.title"></h3>   <!-- "🔐 Jij behoudt controle" -->
-        <p  data-i18n="home.why.privacy.text"></p>     <!-- Exporteer je data … -->
+        <h3 data-i18n="home:why.privacy.title"></h3>   <!-- "🔐 Jij behoudt controle" -->
+        <p  data-i18n="home:why.privacy.text"></p>     <!-- Exporteer je data … -->
     </div>
 
     <!-- Benefit 2: samenwerken -->
     <div class="benefit">
-        <h3 data-i18n="home.why.collab.title"></h3>    <!-- "🤝 Samen bouwen" -->
-        <p  data-i18n="home.why.collab.text"></p>      <!-- Werk samen met familie … -->
+        <h3 data-i18n="home:why.collab.title"></h3>    <!-- "🤝 Samen bouwen" -->
+        <p  data-i18n="home:why.collab.text"></p>      <!-- Werk samen met familie … -->
     </div>
 
     <!-- Benefit 3: eenvoudig -->
     <div class="benefit">
-        <h3 data-i18n="home.why.easy.title"></h3>      <!-- "⚡ Eenvoudig starten" -->
-        <p  data-i18n="home.why.easy.text"></p>        <!-- Geen installatie … -->
+        <h3 data-i18n="home:why.easy.title"></h3>      <!-- "⚡ Eenvoudig starten" -->
+        <p  data-i18n="home:why.easy.text"></p>        <!-- Geen installatie … -->
     </div>
 
 </section>
@@ -250,12 +246,12 @@
 <section class="steps">
 
     <!-- Sectietitel — vertaald via home.howItWorks.title -->
-    <h2 data-i18n="home.howItWorks.title"></h2>
+    <h2 data-i18n="home:howItWorks.title"></h2>
 
     <ol>
-        <li data-i18n="home.howItWorks.step1"></li>    <!-- Stap 1 -->
-        <li data-i18n="home.howItWorks.step2"></li>    <!-- Stap 2 -->
-        <li data-i18n="home.howItWorks.step3"></li>    <!-- Stap 3 -->
+        <li data-i18n="home:howItWorks.step1"></li>    <!-- Stap 1 -->
+        <li data-i18n="home:howItWorks.step2"></li>    <!-- Stap 2 -->
+        <li data-i18n="home:howItWorks.step3"></li>    <!-- Stap 3 -->
     </ol>
 
 </section>
@@ -264,10 +260,10 @@
 <section>
 
     <!-- Sectietitel — vertaald via home.story.title -->
-    <h2 data-i18n="home.story.title"></h2>
+    <h2 data-i18n="home:story.title"></h2>
 
     <!-- Verhaal — vertaald via home.story.text -->
-    <p data-i18n="home.story.text"></p>
+    <p data-i18n="home:story.text"></p>
 
 </section>
 
@@ -275,11 +271,11 @@
 <section class="cta">
 
     <!-- CTA titel — vertaald via home.cta.title -->
-    <h2 data-i18n="home.cta.title"></h2>
+    <h2 data-i18n="home:cta.title"></h2>
 
     <!-- CTA knop — vertaald via home.cta.button -->
     <a href="/MyFamTreeCollab/home/create.html" class="btn-primary"
-       data-i18n="home.cta.button"></a>
+       data-i18n="home:cta.button"></a>
 
 </section>
 
