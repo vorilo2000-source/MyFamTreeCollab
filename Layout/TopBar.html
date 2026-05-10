@@ -1,30 +1,42 @@
-<!-- ======================= Layout/TopBar.html v0.4 ======================= -->
-<!-- Wijziging v0.3: id="top-auth" slot vervangt statische Login link        -->
-<!-- Wijziging v0.4: Ko-fi knop toegevoegd rechts naast taalwisseling        -->
+<!-- ======================= Layout/TopBar.html v0.5 =======================
+     v0.5: NL|EN hardcoded links vervangen door <select id="languageSwitcher">
+           - Wordt gevuld en beheerd door i18nModule.buildLanguageSwitcher()
+           - Ondersteunt nl / en / es
+           - Ko-fi knop behouden
+     v0.4: Ko-fi knop toegevoegd rechts naast taalwisseling
+     v0.3: id="top-auth" slot vervangt statische Login link
+     ======================================================================= -->
 <div class="topbar-wrapper" style="background-color:#f8f9fa; width:100%;">
   <div class="topbar" style="color:#000000; padding:10px 20px; font-family:Arial, sans-serif; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; width:100%; box-sizing:border-box;">
 
-        <!-- Links: auth widget — gevuld door topbar.js -->
-        <div class="top-left" style="margin-left:10px;">
-            <div id="top-auth">
-                <!-- Fallback zichtbaar vóór topbar.js initialiseert -->
-                <button onclick="TopBarAuth && TopBarAuth.openModal()" style="color:#000000; background:none; border:none; cursor:pointer; font-family:Arial,sans-serif; font-size:0.9rem; padding:0;">Login</button>
-            </div>
-        </div>
+    <!-- Links: auth widget — gevuld door topbar.js -->
+    <div class="top-left" style="margin-left:10px;">
+      <div id="top-auth">
+        <!-- Fallback zichtbaar vóór topbar.js initialiseert -->
+        <button
+          onclick="TopBarAuth && TopBarAuth.openModal()"
+          style="color:#000000; background:none; border:none; cursor:pointer; font-family:Arial,sans-serif; font-size:0.9rem; padding:0;"
+          data-i18n="common.buttons.login">
+        </button>
+      </div>
+    </div>
 
-        <!-- Midden: merknaam -->
-        <div class="top-center" style="flex-wrap:wrap; left:50%; transform:translateX(-50%);">
-            <span style="color:#000000; font-weight:bold;">MyFamTreeCollab</span>
-        </div>
+    <!-- Midden: merknaam -->
+    <div class="top-center" style="position:absolute; left:50%; transform:translateX(-50%);">
+      <span style="color:#000000; font-weight:bold;" data-i18n="common.meta.appName"></span>
+    </div>
 
-            <!-- Taalwisseling -->
-            <span>
-                <a href="#" class="lang-link" data-lang="nl" style="color:#000000; text-decoration:none;">NL</a>
-                |
-                <a href="#" class="lang-link" data-lang="en" style="color:#000000; text-decoration:none;">EN</a>
-            </span>
+    <!-- Rechts: taalwisselaar -->
+    <div class="top-right" style="display:flex; align-items:center; gap:10px;">
 
-        </div>
+      <!-- Language switcher — opties worden gevuld door i18nModule.buildLanguageSwitcher() -->
+      <select
+        id="languageSwitcher"
+        style="padding:2px 6px; border-radius:4px; border:1px solid #ccc; font-size:0.85rem; cursor:pointer; background:#fff; color:#000;">
+        <!-- Opties worden dynamisch ingevoegd door i18n.js -->
+      </select>
 
     </div>
+
+  </div>
 </div>
