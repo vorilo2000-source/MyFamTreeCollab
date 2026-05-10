@@ -1,0 +1,96 @@
+# 🧭 Sessiescope: i18next uitrollen op overige pagina's
+
+## Context
+In sessie 24 is de volledige i18n architectuur opgezet en werkend gemaakt op `index.html`.
+Deze sessie rolt dezelfde aanpak uit op alle overige pagina's.
+
+---
+
+## ✅ Wat al werkt (niet opnieuw bouwen)
+
+- `js/i18n.js` v1.0.0 — volledig werkend
+- `locales/{nl,en,es}/common.json` — volledig
+- `locales/{nl,en,es}/home.json` — volledig
+- `Layout/TopBar.html` v0.5 — language switcher geïntegreerd
+- `index.html` v2.3.1 — volledig meertalig
+
+---
+
+## 🔧 Kritische regels (niet vergeten)
+
+### 1. Namespace separator = dubbele punt
+```
+✅ data-i18n="create:form.name"
+❌ data-i18n="create.form.name"
+```
+
+### 2. Laadvolgorde in `<head>` van ELKE pagina
+```html
+<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+<script src="/MyFamTreeCollab/js/i18n.js"></script>
+```
+
+### 3. Init patroon in `<body>` van ELKE pagina
+```javascript
+i18nModule.init().then(function() {
+    i18nModule.loadNamespace('PAGINANAAM'); // ← aanpassen per pagina
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(r => r.text())
+        .then(html => i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder')));
+    // idem Navbar en Footer
+});
+```
+
+### 4. Merknaam NIET vertalen
+```html
+<span>MyFamTreeCollab</span>  ✅
+<span data-i18n="common:meta.appName"></span>  ❌
+```
+
+### 5. `onComponentLoaded()` regelt alles
+Na fetch van TopBar/Navbar/Footer altijd via `i18nModule.onComponentLoaded()` — nooit direct `.innerHTML =`
+
+---
+
+## 📋 Takenlijst deze sessie (één bestand per keer leveren)
+
+### Stap 1 — Navbar en Footer meertalig
+- [ ] Plak huidige `Layout/Navbar.html` — refactor met `data-i18n="common:nav.*"`
+- [ ] Plak huidige `Layout/Footer.html` — refactor met `data-i18n="common:footer.*"`
+
+### Stap 2 — JSON namespaces aanmaken
+Per taal (nl / en / es), één bestand per keer:
+- [ ] `locales/*/auth.json` — login, registratie, wachtwoord, errors
+- [ ] `locales/*/create.json` — formulier stamboom aanmaken
+- [ ] `locales/*/manage.json` — stamboom beheer UI
+
+### Stap 3 — Pagina's refactoren
+Plak de huidige HTML, Claude refactort met `data-i18n`:
+- [ ] `home/create.html` + `loadNamespace('create')`
+- [ ] `home/about.html` + `loadNamespace('home')`
+- [ ] `stamboom/manage.html` + `loadNamespace('manage')`
+- [ ] `home/confirm.html` + `loadNamespace('auth')`
+
+### Stap 4 — Opruimen
+- [ ] `lang-link` handlers verwijderen uit `topbar.js`
+- [ ] `common.meta.appName` verwijderen uit `common.json`
+
+---
+
+## 📁 Projectinfo
+
+**Live:** https://vorilo2000-source.github.io/MyFamTreeCollab/index.html
+**Repo:** https://github.com/vorilo2000-source/MyFamTreeCollab
+**Stack:** Vanilla HTML + CSS + JS — geen frameworks
+**Locales pad:** `/MyFamTreeCollab/locales/{{lng}}/{{ns}}.json`
+
+---
+
+## 🧪 Acceptatiecriteria (einde sessie)
+- [ ] Navbar en Footer vertalen mee bij taalwissel
+- [ ] Alle nieuwe pagina's tonen geen hardcoded tekst
+- [ ] Geen console errors (missing keys / namespaces)
+- [ ] Taalwissel werkt op elke pagina
+- [ ] Taal blijft behouden na refresh
