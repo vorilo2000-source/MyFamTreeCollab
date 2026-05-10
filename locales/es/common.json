@@ -1,0 +1,59 @@
+{
+  "buttons": {
+    "start":    "Iniciar tu árbol genealógico",
+    "save":     "Guardar",
+    "cancel":   "Cancelar",
+    "delete":   "Eliminar",
+    "edit":     "Editar",
+    "add":      "Agregar",
+    "loading":  "Cargando…",
+    "demo":     "🌳 Ver demo",
+    "readMore": "Leer más",
+    "back":     "Volver",
+    "export":   "Exportar",
+    "share":    "Compartir",
+    "login":    "Iniciar sesión",
+    "logout":   "Cerrar sesión",
+    "register": "Registrarse"
+  },
+  "errors": {
+    "generic":       "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "networkError":  "Sin conexión. Verifica tu internet.",
+    "notFound":      "No encontrado.",
+    "unauthorized":  "No has iniciado sesión.",
+    "forbidden":     "No tienes acceso a esta sección.",
+    "loadFailed":    "Error al cargar.",
+    "saveFailed":    "Error al guardar.",
+    "deleteFailed":  "Error al eliminar.",
+    "missingField":  "Por favor, completa todos los campos requeridos."
+  },
+  "loading": {
+    "default":    "Cargando…",
+    "data":       "Obteniendo datos…",
+    "saving":     "Guardando…",
+    "deleting":   "Eliminando…"
+  },
+  "nav": {
+    "home":       "Inicio",
+    "create":     "Crear árbol",
+    "manage":     "Gestionar",
+    "community":  "Comunidad",
+    "sources":    "Fuentes",
+    "account":    "Cuenta",
+    "admin":      "Admin",
+    "pricing":    "Planes"
+  },
+  "footer": {
+    "tagline":    "Construye tu historia familiar. Juntos.",
+    "privacy":    "Privacidad",
+    "terms":      "Términos",
+    "contact":    "Contacto",
+    "rights":     "Todos los derechos reservados."
+  },
+  "language": {
+    "label":      "Idioma"
+  },
+  "meta": {
+    "appName":    "MyFamTreeCollab"
+  }
+}
