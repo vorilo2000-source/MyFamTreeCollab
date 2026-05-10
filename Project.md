@@ -1,5 +1,5 @@
 # MyFamTreeCollab — Project.md
-## Bijgewerkt: 2026-05-07
+## Bijgewerkt: 2026-05-09
 
 ---
 
@@ -153,6 +153,37 @@ topbar.js         ← geïnjecteerd ná TopBar HTML (garandeert #top-auth in DOM
 
 ---
 
+## Supabase Edge Functions
+
+| Naam | Versie | Doel |
+|---|---|---|
+| `dynamic-responder` | v1.2.0 | Notificatiemail naar admin + bevestigingsmail naar account bij bevestiging |
+
+### Secrets
+| Naam | Waarde |
+|---|---|
+| `RESEND_API_KEY` | Resend API key — ingesteld in Supabase dashboard |
+
+---
+
+## Gewijzigde bestanden sessie 2026-05-09
+
+| Bestand | Van | Naar | Wijziging |
+|---|---|---|---|
+| `js/accountbeheer.js` | v1.2.0 | v1.3.0 | confirmUser(), renderTable() confirm-knop, email_confirmed_at laden |
+| `home/confirm.html` | v1.0.0 | v1.2.0 | notifyAdmin() toegevoegd, Authorization header verwijderd |
+
+### Supabase wijzigingen sessie 2026-05-09
+
+| Onderdeel | Actie |
+|---|---|
+| `admin_users` view | Herbouwd met JOIN op `auth.users` — `email_confirmed_at` toegevoegd |
+| RPC `confirm_user` | Nieuw — zet `email_confirmed_at = NOW()` via SECURITY DEFINER |
+| Edge Function `dynamic-responder` | Nieuw — mail via Resend naar admin + bevestigd account |
+| `handle_new_user` trigger | Herschreven — SECURITY DEFINER fix voor RLS blokkade bij INSERT |
+
+---
+
 ## Gewijzigde bestanden sessie 2026-05-07
 
 | Bestand | Van | Naar | Wijziging |
@@ -174,7 +205,7 @@ topbar.js         ← geïnjecteerd ná TopBar HTML (garandeert #top-auth in DOM
 | TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// protocol | 🟡 Middel |
 | TD-05 | Popup-stijlen in LiveSearch.js zijn hardcoded inline CSS | 🟢 Laag |
 | TD-06 | `home/import-en.html` laadt import.js zonder schema.js en storage.js | 🔴 Hoog |
-| TD-07 | Resend SMTP zonder eigen domein — ingebouwde Supabase mail actief (3/uur limiet) | 🟡 Middel |
+| TD-07 | Resend zonder eigen domein — `onboarding@resend.dev`, mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — alle call-sites van storage.add() controleren | 🟡 Middel |
 | TD-10 | `page_visits` RLS uitgeschakeld — tijdelijke oplossing, beveiligd via view | 🟡 Middel |
 
