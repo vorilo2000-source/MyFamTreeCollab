@@ -100,9 +100,13 @@ async function initialiseI18n() {
  * sets their textContent (or specific attribute) to the translated string.
  *
  * Attribute syntax examples:
- *   data-i18n="home.hero.title"               → sets textContent
- *   data-i18n="[placeholder]auth.login.email" → sets placeholder attribute
- *   data-i18n="[title]common.nav.home"         → sets title attribute
+ *   data-i18n="home:hero.title"               → sets textContent (namespace:key)
+ *   data-i18n="[placeholder]auth:login.email" → sets placeholder attribute
+ *   data-i18n="[title]common:nav.home"        → sets title attribute
+ *
+ * CRITICAL: gebruik dubbele punt (:) als namespace separator, NIET punt (.)
+ *   ✅ home:hero.title
+ *   ❌ home.hero.title  → i18next leest dit als key in defaultNS (common)
  */
 function updateContent() {
   // Select all elements that have a translation key
