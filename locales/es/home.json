@@ -1,0 +1,44 @@
+{
+  "hero": {
+    "title":    "Build your family story. Together.",
+    "subtitle": "Create, manage and share your family tree with full control over your own data.",
+    "ctaStart": "Start your family tree",
+    "ctaMore":  "Read more",
+    "ctaDemo":  "🌳 View demo"
+  },
+  "demo": {
+    "title":       "🌳 View demo",
+    "description": "No account needed. The demo shows a fictional family tree with 37 people, 2 families and 6 generations."
+  },
+  "why": {
+    "title":    "Why MyFamTreeCollab?",
+    "problem":  "Family data is often scattered across documents, spreadsheets or memories. Collaborating on a family tree is complex and messy.",
+    "solution": "MyFamTreeCollab brings everything together in a simple structure where you stay in control.",
+    "privacy": {
+      "title": "🔐 You stay in control",
+      "text":  "Export your data as CSV, GEDCOM or JSON. No lock-in."
+    },
+    "collab": {
+      "title": "🤝 Build together",
+      "text":  "Collaborate with family members and build a shared family tree."
+    },
+    "easy": {
+      "title": "⚡ Easy to start",
+      "text":  "No installation needed. Start directly in your browser."
+    }
+  },
+  "howItWorks": {
+    "title": "How does it work?",
+    "step1": "Add people",
+    "step2": "Record relationships",
+    "step3": "Share your tree"
+  },
+  "story": {
+    "title": "Why this project?",
+    "text":  "This project started with a box of old documents I didn't want to lose. What began in Excel grew into a shared family story."
+  },
+  "cta": {
+    "title":  "Start today",
+    "button": "Start your family tree"
+  }
+}
