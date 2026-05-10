@@ -23,6 +23,20 @@
 
     <link rel="stylesheet" href="css/style.css"> <!-- Globale CSS -->
 
+    <!-- ======================= i18next CDN — VOLGORDE KRITISCH =======================
+         Regel voor elke pagina: deze 4 scripts altijd in <head>, vóór alle andere JS.
+         Reden: i18nModule.init() moet klaar zijn vóór fetch van TopBar/Navbar/Footer,
+         zodat buildLanguageSwitcher() de <select> vindt na injectie.
+         ============================================================================= -->
+    <!-- 1. i18next core -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <!-- 2. HTTP back-end plugin — laadt JSON bestanden via fetch -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <!-- 3. Language detector — leest navigator / localStorage / cookie -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <!-- 4. Onze eigen i18n module -->
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>
+
     <style>
         /* ======================= GLOBAL HEADINGS ======================= */
         h1, h2, h3 {
@@ -267,16 +281,6 @@
 
 <!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div> <!-- Wordt gevuld via fetch -->
-
-<!-- ======================= i18next CDN (volgorde belangrijk!) ======================= -->
-<!-- 1. i18next core -->
-<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
-<!-- 2. HTTP back-end plugin — laadt JSON bestanden via fetch -->
-<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
-<!-- 3. Language detector — leest navigator / localStorage / cookie -->
-<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
-<!-- 4. Onze eigen i18n module -->
-<script src="/MyFamTreeCollab/js/i18n.js"></script>
 
 <!-- ======================= Overige scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
