@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-07
+## Bijgewerkt: 2026-05-09
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -50,87 +50,60 @@
 
 ## Fase 3 — Kernfeatures verbeteren
 
-### 3A — Facelift alle pagina's ✅ AFGEROND
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F3-29 | 🟡 Middel | `home/export.html` facelift (v2.1.0) | ✅ Gedaan |
-| F3-30 | 🟡 Middel | `home/create.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-31 | 🟡 Middel | `home/import.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-32 | 🟡 Middel | `home/about.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-33 | 🟡 Middel | `home/print.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-34 | 🟡 Middel | `stamboom/stats.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-35 | 🟡 Middel | `stamboom/view.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-36 | 🟡 Middel | `stamboom/timeline.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-37 | 🟡 Middel | `stamboom/storage.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-38 | 🟡 Middel | `index.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-39 | 🟡 Middel | `bronnen/template.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-40 | 🟡 Middel | `stamboom/manage.html` facelift (v2.0.0) | ✅ Gedaan |
-| F3-41 | 🟡 Middel | `css/Tree.css` opgeschoond (v2.0.0) | ✅ Gedaan |
-| F3-42 | 🟡 Middel | Alle versienummers gestandaardiseerd naar v2.0.0 | ✅ Gedaan |
-
 ### 3B — Zoekfunctie
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F3-43 | 🔴 Hoog | Zoekresultaten highlighten (zoekterm vetgedrukt in resultaat) | ❌ Geannuleerd |
-| F3-44 | 🔴 Hoog | Zoeken op meerdere velden tegelijk (voornaam + achternaam) | ✅ Gedaan |
-| F3-45 | 🟡 Middel | Popup-stijlen verplaatsen van inline JS naar `style.css` | 📋 Open |
-| F3-46 | 🟡 Middel | Keyboard navigatie in zoekpopup (pijltoetsen + Enter) | 📋 Open |
-| F3-47 | 🟢 Laag | Zoekgeschiedenis (recent gezochte personen) | 📋 Open |
+| F3-43 | 🔴 Hoog | Zoekresultaten highlighten | ❌ Geannuleerd |
+| F3-44 | 🔴 Hoog | Zoeken op meerdere velden tegelijk | ✅ Gedaan |
+| F3-45 | 🟡 Middel | Popup-stijlen verplaatsen naar `style.css` | 📋 Open |
+| F3-46 | 🟡 Middel | Keyboard navigatie in zoekpopup | 📋 Open |
+| F3-47 | 🟢 Laag | Zoekgeschiedenis | 📋 Open |
 
 ### 3C — Relaties
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F3-48 | 🔴 Hoog | Meerdere partners ondersteunen (PartnerID als array met `\|`) | 📋 Open |
-| F3-49 | 🔴 Hoog | Relatie toevoegen vanuit `manage.html` (dropdown + zoekbalk) | 📋 Open |
+| F3-48 | 🔴 Hoog | Meerdere partners ondersteunen | 📋 Open |
+| F3-49 | 🔴 Hoog | Relatie toevoegen vanuit `manage.html` | 📋 Open |
 | F3-50 | 🟡 Middel | Grootouders en kleinkinderen tonen in view.html | 📋 Open |
 | F3-51 | 🟡 Middel | Halfbroers/halfzussen correct onderscheiden | 📋 Open |
-| F3-52 | 🟢 Laag | Relatie-labels vertalen (VHoofdID → Vader, MHoofdID → Moeder) | 📋 Open |
+| F3-52 | 🟢 Laag | Relatie-labels vertalen | 📋 Open |
 
-### 3D — Stamboomvisualisatie (view.html)
+### 3D — Stamboomvisualisatie
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F3-53 | 🔴 Hoog | Verbindingslijnen tekenen tussen nodes (SVG of CSS) | 🔮 Toekomst |
+| F3-53 | 🔴 Hoog | Verbindingslijnen tekenen (SVG of CSS) | 🔮 Toekomst |
 | F3-54 | 🔴 Hoog | Foto/avatar toevoegen aan persoon-node | 🔮 Toekomst |
 | F3-55 | 🟡 Middel | Zoom en pan op de stamboomweergave | 🔮 Toekomst |
 | F3-56 | 🟢 Laag | Uitklappen/inklappen van takken | 🔮 Toekomst |
 
-### 3E — Tijdlijn (timeline.html)
+### 3E — Tijdlijn
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
 | F3-57 | 🔴 Hoog | Overlijdensdatum tonen op tijdlijn | ✅ Gedaan |
-| F3-58 | 🟡 Middel | Levensspanne als balk weergeven (geboorte → overlijden) | 🔮 Toekomst |
-| F3-59 | 🟡 Middel | Schaalbare tijdas (zoom in op bepaalde periode) | 🔮 Toekomst |
-| F3-60 | 🟢 Laag | Historische gebeurtenissen toevoegen aan tijdlijn | 🔮 Toekomst |
+| F3-58 | 🟡 Middel | Levensspanne als balk weergeven | 🔮 Toekomst |
+| F3-59 | 🟡 Middel | Schaalbare tijdas | 🔮 Toekomst |
+| F3-60 | 🟢 Laag | Historische gebeurtenissen toevoegen | 🔮 Toekomst |
 
 ### 3F — Import / export
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F3-61 | 🔴 Hoog | `import.js` herschrijven met inline commentaar (v2.0.0) | 📋 Open |
-| F3-62 | 🔴 Hoog | Import validatie: dubbele ID's detecteren en melden | 📋 Open |
+| F3-61 | 🔴 Hoog | `import.js` herschrijven met inline commentaar | 📋 Open |
+| F3-62 | 🔴 Hoog | Import validatie: dubbele ID's detecteren | 📋 Open |
 | F3-63 | 🟡 Middel | Import preview tonen vóór opslaan | 📋 Open |
-| F3-64 | 🟡 Middel | GEDCOM-formaat importeren (standaard stamboomformaat) | 📋 Open |
-
-### 3G — Engelse versies
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F3-65 | 🔴 Hoog | `stamboom/manage-en.html` repareren en facelift | 🔮 Toekomst |
-| F3-66 | 🔴 Hoog | `home/export-en.html` synchroniseren met `export.html` | 🔮 Toekomst |
-| F3-67 | 🔴 Hoog | `home/import-en.html` repareren: mist schema.js + storage.js | 🔮 Toekomst |
+| F3-64 | 🟡 Middel | GEDCOM-formaat importeren | 📋 Open |
 
 ### 3H — Overige
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
 | F3-68 | 🟡 Middel | `stamboom/stats.html` JS verplaatsen naar apart `stats.js` | 📋 Open |
-| F3-69 | 🟡 Middel | `home/print.html` implementeren (printweergave stamboom) | 📋 Open |
-| F3-70 | 🟢 Laag | `schema.js` herschrijven met inline commentaar (v2.0.0) | 📋 Open |
+| F3-69 | 🟡 Middel | `home/print.html` implementeren | 📋 Open |
+| F3-70 | 🟢 Laag | `schema.js` herschrijven met inline commentaar | 📋 Open |
 
 ---
 
@@ -139,23 +112,27 @@
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
 | FA-01 | 🔴 Hoog | Supabase project aanmaken + API-key configureren | ✅ Gedaan |
-| FA-02 | 🔴 Hoog | `js/auth.js` aanmaken: registreren, inloggen, uitloggen (v2.3.0) | ✅ Gedaan |
-| FA-03 | 🔴 Hoog | Login modal via `js/topbar.js`: popup met tabs inloggen/registreren (v2.0.3) | ✅ Gedaan |
-| FA-04 | 🔴 Hoog | TopBar uitbreiden: gebruikersnaam + uitlogknop via `topbar.js` | ✅ Gedaan |
-| FA-05 | 🟡 Middel | Sessie bewaren na pagina-refresh (Supabase session) | ✅ Gedaan |
+| FA-02 | 🔴 Hoog | `js/auth.js` aanmaken: registreren, inloggen, uitloggen | ✅ Gedaan |
+| FA-03 | 🔴 Hoog | Login modal via `js/topbar.js` | ✅ Gedaan |
+| FA-04 | 🔴 Hoog | TopBar uitbreiden: gebruikersnaam + uitlogknop | ✅ Gedaan |
+| FA-05 | 🟡 Middel | Sessie bewaren na pagina-refresh | ✅ Gedaan |
 | FA-06 | 🟡 Middel | Ko-fi donatie knop in TopBar en Footer | ✅ Gedaan |
-| FA-07 | 🔴 Hoog | Wachtwoord vergeten flow: `home/reset.html` + `js/reset.js` (v1.0.0) | ✅ Gedaan |
+| FA-07 | 🔴 Hoog | Wachtwoord vergeten flow | ✅ Gedaan |
 | FA-08 | 🔴 Hoog | SMTP instellen via Gmail App Password | ✅ Gedaan |
-| FA-09 | 🟡 Middel | Supabase redirect URL instellen naar live GitHub Pages site | ✅ Gedaan |
-| FA-10 | 🟡 Middel | Supabase profiles tabel aanmaken met username + avatar_id + RLS | ✅ Gedaan |
-| FA-11 | 🟢 Laag | Donateurs-badge (toekomstig — na Ko-fi webhook integratie) | 🔮 Toekomst |
-| FA-12 | 🟡 Middel | E-mail templates huisstijl (alle 5 templates) | ✅ Gedaan |
+| FA-09 | 🟡 Middel | Supabase redirect URL instellen | ✅ Gedaan |
+| FA-10 | 🟡 Middel | Supabase profiles tabel aanmaken met RLS | ✅ Gedaan |
+| FA-11 | 🟢 Laag | Donateurs-badge | 🔮 Toekomst |
+| FA-12 | 🟡 Middel | E-mail templates huisstijl | ✅ Gedaan |
 | FA-13 | 🔴 Hoog | Admin dropdown verbergen voor niet-admins | ✅ Gedaan |
-| FA-14 | 🟡 Middel | Admin beheerpagina `admin/accountbeheer.html` — gebruikers en tiers beheren via website | ✅ Gedaan |
-| FA-15 | 🔴 Hoog | `home/confirm.html` aanmaken — verwerkt token_hash na e-mailbevestiging | ✅ Gedaan |
-| FA-16 | 🔴 Hoog | Supabase email template Confirm signup bijgewerkt met token_hash link | ✅ Gedaan |
+| FA-14 | 🟡 Middel | Admin beheerpagina `admin/accountbeheer.html` | ✅ Gedaan |
+| FA-15 | 🔴 Hoog | `home/confirm.html` aanmaken | ✅ Gedaan |
+| FA-16 | 🔴 Hoog | Supabase email template Confirm signup bijgewerkt | ✅ Gedaan |
 | FA-17 | 🔴 Hoog | Supabase anon key vervangen door sb_publishable_ formaat | ✅ Gedaan |
-| FA-18 | 🟡 Middel | Tier constraint uitgebreid met 'guest', bestaande viewer rijen gemigreerd | ✅ Gedaan |
+| FA-18 | 🟡 Middel | Tier constraint uitgebreid met 'guest' | ✅ Gedaan |
+| FA-19 | 🔴 Hoog | Confirm-knop in accountbeheer — manueel bevestigen onbevestigde accounts | ✅ Gedaan |
+| FA-20 | 🔴 Hoog | Admin-notificatie bij bevestiging — mail naar vorilo2000@gmail.com via Resend | ✅ Gedaan |
+| FA-21 | 🟡 Middel | Bevestigingsmail naar account zelf bij manuele bevestiging | ✅ Gedaan |
+| FA-22 | 🟡 Middel | Notificatie bij automatische bevestiging via confirm.html | ✅ Gedaan |
 
 ---
 
@@ -163,55 +140,16 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| FA+-01 | 🔴 Hoog | Supabase tabel `stambomen` aanmaken (user_id, data JSON, updated_at) | ✅ Gedaan |
-| FA+-02 | 🔴 Hoog | `js/cloudSync.js` aanmaken: `saveToCloud()`, `loadFromCloud()`, `getCloudMeta()` | ✅ Gedaan |
+| FA+-01 | 🔴 Hoog | Supabase tabel `stambomen` aanmaken | ✅ Gedaan |
+| FA+-02 | 🔴 Hoog | `js/cloudSync.js` aanmaken | ✅ Gedaan |
 | FA+-03 | 🔴 Hoog | `stamboom/storage.html` tabbladen: Mijn data + Cloud backup | ✅ Gedaan |
-| FA+-04 | 🔴 Hoog | Gratis limiet bewaken: max 100 personen lokaal voor free tier | ✅ Gedaan |
+| FA+-04 | 🔴 Hoog | Gratis limiet bewaken: max 100 personen lokaal | ✅ Gedaan |
 | FA+-05 | 🟡 Middel | "Laad vanuit cloud" knop op `storage.html` | ✅ Gedaan |
-| FA+-06 | 🟡 Middel | Conflictmelding tonen als cloud-versie nieuwer is dan lokale versie | ✅ Gedaan |
+| FA+-06 | 🟡 Middel | Conflictmelding tonen als cloud-versie nieuwer is | ✅ Gedaan |
 | FA+-07 | 🟡 Middel | `home/account.html` aanmaken | 🔮 Toekomst |
-| FA+-08 | 🟢 Laag | Timestamp tonen van laatste cloud-backup op `storage.html` | ✅ Gedaan |
-| FA+-09 | 🔴 Hoog | Tier/rollen systeem: is_admin, is_premium, tier, tier_until in profiles | ✅ Gedaan |
-| FA+-10 | 🔴 Hoog | Cloud toegang alleen voor premium/admin — gratis gebruikers zien upgrade melding | ✅ Gedaan |
-
----
-
-## Fase 4 — Nieuwe features
-
-### 4A — Persoonsbeheer
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F4-01 | 🔴 Hoog | Persoon verwijderen vanuit `manage.html` | ✅ Gedaan |
-| F4-02 | 🔴 Hoog | Persoon dupliceren als startpunt voor vergelijkbaar record | 🔮 Toekomst |
-| F4-03 | 🟡 Middel | Foto uploaden en koppelen aan persoon (base64 in localStorage) | 🔮 Toekomst |
-| F4-04 | 🟡 Middel | Notities/opmerkingen uitbreiden (rijke tekst) | 🔮 Toekomst |
-
-### 4B — Zoeken & filteren
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F4-05 | 🟡 Middel | Geavanceerd zoeken: filteren op geboortejaar, geslacht, relatie | ✅ Gedaan |
-| F4-06 | 🟡 Middel | Personen sorteren op achternaam, geboortedatum | 📋 Open |
-| F4-07 | 🟢 Laag | Zoeken over meerdere stambomen tegelijk | 📋 Open |
-
-### 4C — Statistieken
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F4-08 | 🟡 Middel | Grafiek: verdeling geboortejaren per decennium | 📋 Open |
-| F4-09 | 🟡 Middel | Grafiek: verhouding M/V/X in de stamboom | 📋 Open |
-| F4-10 | 🟢 Laag | Oudste en jongste persoon highlighten | 📋 Open |
-| F4-11 | 🟢 Laag | Gemiddelde leeftijd berekenen | 📋 Open |
-
-### 4D — UX verbeteringen
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F4-12 | 🟡 Middel | Donkere modus ondersteuning (CSS variabelen) | 📋 Open |
-| F4-13 | 🟡 Middel | Mobielvriendelijke weergave voor manage en view | 📋 Open |
-| F4-14 | 🟡 Middel | Ongedaan maken (undo) bij verwijderen of wijzigen | 📋 Open |
-| F4-15 | 🟢 Laag | Toetsenbordsnelkoppelingen voor veelgebruikte acties | 📋 Open |
+| FA+-08 | 🟢 Laag | Timestamp tonen van laatste cloud-backup | ✅ Gedaan |
+| FA+-09 | 🔴 Hoog | Tier/rollen systeem in profiles | ✅ Gedaan |
+| FA+-10 | 🔴 Hoog | Cloud toegang alleen voor premium/admin | ✅ Gedaan |
 
 ---
 
@@ -219,12 +157,12 @@
 
 | ID | Taak | Status |
 |----|------|--------|
-| F5-01 | Backend: Supabase ✅ gekozen en opgezet | ✅ Gedaan |
+| F5-01 | Backend: Supabase gekozen en opgezet | ✅ Gedaan |
 | F5-02 | Gebruikersaccounts: registreren, inloggen, uitloggen | ✅ Gedaan |
 | F5-03 | Data sync tussen apparaten | ✅ Gedaan |
-| F5-04 | Stamboom delen met andere gebruikers (viewer + editor rollen) | ✅ Gedaan |
-| F5-05 | Samenwerkingsmodus: berichtenboard per persoon (collab.html) | ✅ Gedaan (v2.1.0) |
-| F5-06 | Versiebeheer per persoon (wijzigingshistorie) | ✅ Gedaan |
+| F5-04 | Stamboom delen met andere gebruikers | ✅ Gedaan |
+| F5-05 | Samenwerkingsmodus: berichtenboard per persoon | ✅ Gedaan |
+| F5-06 | Versiebeheer per persoon | ✅ Gedaan |
 | F5-07 | Meerdere stambomen per gebruiker in cloud | ✅ Gedaan |
 | F5-08 | account.html — overzicht stambomen, backups, profiel | ✅ Gedaan |
 | F5-09 | Promotiecodes voor cloud toegang | 🔮 Toekomst |
@@ -235,54 +173,9 @@
 
 ## Fase 6 — Rolmodel implementatie ✅ AFGEROND
 
-> Herziening van het tier-systeem naar een vereenvoudigd rolmodel.
-> Account types: guest · owner · admin
-> Stamboom-rechten: viewer · editor (staan in stamboom_gedeeld, niet in profiles.tier)
-
-### 6A — Supabase & auth
-
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-01 | 🔴 Hoog | Supabase: tier constraint aanpassen naar `viewer`, `editor`, `owner`, `admin` | ✅ Gedaan |
-| F6-02 | 🔴 Hoog | Supabase: bestaande accounts migreren naar nieuw tier-model | ✅ Gedaan |
-| F6-03 | 🔴 Hoog | `js/auth.js` v2.4.1 — `getTier()` fallback `'free'` → `'viewer'`, JSDoc bijgewerkt | ✅ Gedaan |
-| F6-04 | 🔴 Hoog | `js/cloudSync.js` v2.2.0 — `CLOUD_TIERS` → `['owner','admin']`, viewer/editor check | ✅ Gedaan |
-| F6-05 | 🔴 Hoog | `js/shareModule.js` v1.1.0 — alleen owner/admin mag uitnodigen | ✅ Gedaan |
-| F6-06 | 🔴 Hoog | `js/accessGuard.js` v1.1.0 — rolnamen correct, dubbele inhoud verwijderd | ✅ Gedaan |
-| F6-07 | 🟡 Middel | `js/storage.js` v2.2.0 — MAX_LOCAL_FREE = 60, canAdd() aangepast aan nieuw rolmodel | ✅ Gedaan |
-| F6-18 | 🔴 Hoog | Supabase: `profiles_tier_check` constraint uitgebreid met `'guest'` | ✅ Gedaan |
-| F6-19 | 🔴 Hoog | Supabase: `handle_new_user` functie — `tier = 'guest'` toegevoegd aan INSERT | ✅ Gedaan |
-| F6-20 | 🔴 Hoog | Accountbeheer: tier dropdown/filter/stats aangepast naar guest/owner/admin | ✅ Gedaan |
-
-### 6B — Demo database
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F6-08 | 🔴 Hoog | `js/demo.js` v1.0.0 aangemaakt — hardcoded fictieve demo stamboom | ✅ Gedaan |
-| F6-09 | 🟡 Middel | Demo stamboom inhoud: 37 personen, 2 families, 6 generaties | ✅ Gedaan |
-| F6-10 | 🟡 Middel | Demo-melding in handleiding bijgewerkt | ✅ Gedaan |
-
-### 6C — Upgrade flow & UI
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F6-11 | 🔴 Hoog | `js/storage.js` v2.2.0 — canAdd() viewer/editor zelfde limiet als gast | ✅ Gedaan |
-| F6-12 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — upgrade-prompt voor viewer/editor | ✅ Gedaan |
-| F6-13 | 🟡 Middel | `stamboom/storage.html` v2.7.0 — actieve stamboom balk op "Mijn data" tabblad | ✅ Gedaan |
-
-### 6D — Versiebeheer aanpassen
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F6-14 | 🟡 Middel | `js/versionControl.js` v1.1.0 — MAX_VERSIONS = 5 | ✅ Gedaan |
-| F6-15 | 🟡 Middel | `js/versionControl.js` v1.1.0 — restoreVersion() alleen voor owner en admin | ✅ Gedaan |
-
-### 6E — Handleiding & UI teksten
-
-| ID | Prioriteit | Taak | Status |
-|----|-----------|------|--------|
-| F6-16 | 🟡 Middel | `bronnen/handleiding.html` v1.7.0 — rolbeschrijvingen herschreven | ✅ Gedaan |
-| F6-17 | 🟢 Laag | `abonnementen/vergelijk.html` + `voordelen.html` bijwerken naar nieuwe rollen | ✅ Gedaan |
+| F6-01 t/m F6-20 | Rolmodel implementatie, demo database, upgrade flow, versiebeheer, handleiding | ✅ Gedaan |
 
 ---
 
@@ -290,117 +183,43 @@
 
 | ID | Taak | Status |
 |----|------|--------|
-| F7-01 | Stripe integratie voor owner-donatie (~€5 per 6 maanden) | 🔮 Toekomst |
-| F7-02 | Supabase webhook: Stripe betaling → tier automatisch naar `owner` | 🔮 Toekomst |
+| F7-01 | Stripe integratie voor owner-donatie | 🔮 Toekomst |
+| F7-02 | Supabase webhook: Stripe betaling → tier owner | 🔮 Toekomst |
 | F7-03 | Bedrijfsoprichting & belastingstructuur | 🔮 Toekomst |
-| F7-04 | Ko-fi behouden als vrijwillige steunknop (niet als toegangspoort) | 🔮 Toekomst |
+| F7-04 | Ko-fi behouden als vrijwillige steunknop | 🔮 Toekomst |
 | F7-05 | Prijsstelling definitief vaststellen | 🔮 Toekomst |
-| F7-06 | Owner-limiet verhogen op basis van inkomsten en Supabase kosten | 🔮 Toekomst |
+| F7-06 | Owner-limiet verhogen op basis van inkomsten | 🔮 Toekomst |
 
 ---
 
-## Bugfixes sessie 2026-04-19
+## Bugfixes
+
+### Sessie 2026-05-09
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-01 | Supabase Site URL verkeerd — bevestigingsmail wees naar 404 | ✅ Opgelost |
-| BF-02 | create.js — confirmBtn async/await mismatch | ✅ Opgelost |
-| BF-03 | history.js — CloudSync.listStambomen() result object niet unwrapped | ✅ Opgelost |
-| BF-04 | history.html — Supabase SDK + auth.js ontbraken in laadvolgorde | ✅ Opgelost |
-| BF-05 | topbar.js — localStorage niet gewist bij uit/inloggen | ✅ Opgelost |
-| BF-06 | topbar.js — SIGNED_IN bij token refresh wiste cloud-geladen data | ✅ Opgelost |
-| BF-07 | storage.html — renderTable() niet aangeroepen na cloud laden | ✅ Opgelost |
-| BF-08 | cloudSync.js — dubbele .eq('id', userId) bug in saveToCloud() | ✅ Opgelost |
+| BF-33 | `handle_new_user` trigger — RLS blokkeerde INSERT via `auth.uid()` mismatch | ✅ Opgelost |
+| BF-34 | `admin_users` view — `email_confirmed_at` ontbrak, geen JOIN op `auth.users` | ✅ Opgelost |
+| BF-35 | Edge Function JWT 401 — `verify_jwt = false` ingesteld, Authorization header verwijderd | ✅ Opgelost |
 
-## Bugfixes sessie 2026-04-20/21
+### Sessie 2026-05-07
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-09 | cloudSync.js v2.1.2 — loadFromCloud() blokkeerde viewers/editors door user_id filter | ✅ Opgelost |
-| BF-10 | cloudSync.js v2.1.2 — saveToCloud() blokkeerde editor-opslag door user_id filter | ✅ Opgelost |
-| BF-11 | shareModule.js v1.0.1 — listSharedWith() toonde "Onbekend" | ✅ Opgelost |
-| BF-12 | Supabase RLS — profiles select policy te strikt voor tier-leestoegang | ✅ Opgelost |
-
-## Bugfixes sessie 2026-04-23
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-13 | Bevestigingsmail redirect naar root GitHub Pages i.p.v. /MyFamTreeCollab/ | ✅ Opgelost |
-| BF-14 | topbar.js — developDropdown niet zichtbaar voor admin | ✅ Opgelost |
-
-## Bugfixes sessie 2026-04-24
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-15 | storage.html v2.7.1 — verwijderStamboom() wiste actieve ID/naam niet | ✅ Opgelost |
-| BF-16 | storage.html v2.7.1 — resetBtn wiste actieve ID/naam niet | ✅ Opgelost |
-
-## Bugfixes sessie 2026-04-25
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-17 | Supabase RLS — infinite recursion in profiles SELECT policy | ✅ Opgelost |
-| BF-18 | accountbeheer.js — `window._supabase` bestaat niet | ✅ Opgelost |
-| BF-19 | accountbeheer.html — uitlogknop verkeerd pad | ✅ Opgelost |
-
-## Bugfixes sessie 2026-04-27
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-21 | demo.js gebruikte lowercase veldnamen — lege cellen in storage | ✅ Opgelost |
-| BF-22 | demo.js had 19-kolommen CSV — aangepast naar 14 kolommen | ✅ Opgelost |
-| VB-05 | collab.js v2.1.0 — 4 statussen met icoontjes | ✅ Gedaan |
-| VB-06 | collab.js v2.1.0 — Stamboom-sectie header boven discussielijst | ✅ Gedaan |
-| VB-07 | collab.js v2.1.0 — Bijdrager voornaam per bericht | ✅ Gedaan |
-
-## Bugfixes & verbeteringen sessie 2026-04-30
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-23 | Supabase CRITICAL — `public.admin_users` view lekte `auth.users` data | ✅ Opgelost |
-| BF-24 | Supabase CRITICAL — `public.admin_users` view had `SECURITY DEFINER` | ✅ Opgelost |
-| BF-25 | Supabase CRITICAL — RLS policy gebruikte `user_metadata` (aanpasbaar) | ✅ Opgelost |
-| BF-26 | `public.profiles` had geen `email` kolom | ✅ Opgelost |
-| BF-27 | `accountbeheer.js` bevroeg `last_sign_in_at` — kolom bestaat niet meer | ✅ Opgelost |
-| VB-08 | `accountbeheer.js` v1.1.0 — email geladen uit `profiles` | ✅ Gedaan |
-| VB-09 | `accountbeheer.html` v2.2.0 — kolom "Laatste login" verwijderd | ✅ Gedaan |
-
-## Bugfixes sessie 2026-05-07
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-28 | auth.js — SUPABASE_ANON JWT key had `iat` in de toekomst — registratie mislukte stil | ✅ Opgelost |
-| BF-29 | Bevestigingsmail redirect naar 404 — confirm.html ontbrak, email template gebruikte oud formaat | ✅ Opgelost |
-| BF-30 | `profiles_tier_check` constraint stond `guest` niet toe — UPDATE bestaande users mislukte | ✅ Opgelost |
-| BF-31 | accountbeheer.js — `statViewer`/`statEditor` DOM IDs bestonden niet meer na HTML update | ✅ Opgelost |
-| BF-32 | `handle_new_user` functie had geen `tier` in INSERT — nieuwe users kregen DB default | ✅ Opgelost |
+| BF-28 | auth.js — SUPABASE_ANON JWT key had `iat` in de toekomst | ✅ Opgelost |
+| BF-29 | Bevestigingsmail redirect naar 404 | ✅ Opgelost |
+| BF-30 | `profiles_tier_check` stond `guest` niet toe | ✅ Opgelost |
+| BF-31 | accountbeheer.js — `statViewer`/`statEditor` DOM IDs bestonden niet meer | ✅ Opgelost |
+| BF-32 | `handle_new_user` had geen `tier` in INSERT | ✅ Opgelost |
 
 ---
 
-## Analytics — Sessie 20 (2026-05-03)
+## Analytics
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| AN-01 t/m AN-20 | trackPage() toegevoegd aan alle pagina's | ✅ Gedaan |
+| AN-01 t/m AN-40 | trackPage() alle pagina's + dashboard uitbreidingen | ✅ Gedaan |
 | AN-21 | `stamboom/account.html` — tracking toevoegen | 📋 Open |
-
-## Analytics dashboard — Sessie 21 (2026-05-04)
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| AN-22 t/m AN-40 | Dashboard uitbreidingen, tier fixes, e-mail tracking | ✅ Gedaan |
-| AN-21 | `stamboom/account.html` — tracking toevoegen | 📋 Open |
-
----
-
-## Verbeteringen
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| VB-01 | topbar.js v2.2.0 — gebruikersmenu dropdown | ✅ Gedaan |
-| VB-02 | storage.html v2.5.0 — wissel modal bij laden andere stamboom | ✅ Gedaan |
-| VB-03 | topbar.js v2.2.2 — developDropdown zichtbaar voor admin | ✅ Gedaan |
-| VB-04 | storage.html v2.7.0 — actieve stamboom balk op "Mijn data" tabblad | ✅ Gedaan |
 
 ---
 
@@ -408,25 +227,12 @@
 
 | ID | Omschrijving | Ernst |
 |----|-------------|-------|
-| TD-01 | `js/Sandbox.js` — testbestand staat nog in de repo | 🟢 Laag |
-| TD-02 | `js/script.js` — doet alleen console.log, geladen op 9 pagina's | 🟡 Middel |
-| TD-03 | `js/LSD.js` — dubbele DOMContentLoaded event listener | 🟢 Laag |
-| TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// protocol | 🟡 Middel |
-| TD-05 | Popup-stijlen in LiveSearch.js zijn hardcoded inline CSS | 🟢 Laag |
-| TD-06 | `home/import-en.html` laadt import.js zonder schema.js en storage.js | 🔴 Hoog |
-| TD-07 | Resend SMTP zonder eigen domein — ingebouwde Supabase mail actief (3/uur limiet) | 🟡 Middel |
-| TD-08 | async/await mismatch — alle call-sites van storage.add() controleren | 🟡 Middel |
-| TD-09 | Tier-constraint Supabase oud model | ✅ Opgelost sessie 22 |
-| TD-10 | `page_visits` RLS uitgeschakeld — tijdelijke oplossing | 🟡 Middel |
-
----
-
-## Definition of Done
-
-Een taak is **klaar** als:
-- [ ] De code werkt zoals bedoeld
-- [ ] Inline commentaar aanwezig op elke coderegel
-- [ ] Bestandsheader bijgewerkt met versienummer (v2.0.0+)
-- [ ] `PROJECT_LOG.md` bijgewerkt
-- [ ] `BACKLOG.md` bijgewerkt: taak op ✅ Gedaan
-- [ ] Getest in de browser (geen console-errors)
+| TD-01 | `js/Sandbox.js` — testbestand in repo | 🟢 Laag |
+| TD-02 | `js/script.js` — doet alleen console.log | 🟡 Middel |
+| TD-03 | `js/LSD.js` — dubbele DOMContentLoaded | 🟢 Laag |
+| TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// | 🟡 Middel |
+| TD-05 | Popup-stijlen in LiveSearch.js hardcoded inline | 🟢 Laag |
+| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js | 🔴 Hoog |
+| TD-07 | Resend zonder eigen domein — `onboarding@resend.dev`, mail alleen naar Resend-account | 🟡 Middel |
+| TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
+| TD-10 | `page_visits` RLS uitgeschakeld — beveiligd via view | 🟡 Middel |
