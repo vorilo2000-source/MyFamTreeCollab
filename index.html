@@ -1,9 +1,12 @@
-<!-- ======================= home/index.html v2.2.1 =======================
+<!-- ======================= home/index.html v2.3.0 =======================
+     v2.3.0: i18next namespace setup geïmplementeerd
+     - Alle hardcoded teksten vervangen door data-i18n attributen
+     - i18next + http-backend + browser-languagedetector geladen via CDN
+     - js/i18n.js geladen als core i18n module
+     - loadNamespace('home') aangeroepen na initialisatie
+     - TopBar/Navbar/Footer vertalen via onComponentLoaded()
+     - Language switcher geïntegreerd in TopBar
      v2.2.1: Demo knop toegevoegd naast "Start je stamboom"
-     - Knop "Bekijk demo" laadt demo stamboom via DemoModule
-     - Demotekst toegevoegd in hero sectie
-     - demo.js geladen na auth.js
-     - site analytics
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -13,134 +16,146 @@
     <title>MyFamTreeCollab</title>
 
     <!-- ======================= Favicon ======================= -->
-    <link rel="icon" type="image/x-icon" href="img/favicon.ico"> <!-- Standaard favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png"> <!-- 32x32 variant -->
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png"> <!-- Apple icoon -->
-    <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png"> <!-- Android icoon -->
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png">
 
     <link rel="stylesheet" href="css/style.css"> <!-- Globale CSS -->
 
     <style>
         /* ======================= GLOBAL HEADINGS ======================= */
         h1, h2, h3 {
-            margin-top: 0;            /* Verwijdert extra ruimte boven koppen (browser default) */
-            margin-bottom: 12px;      /* Zorgt voor compacte maar leesbare afstand onder koppen */
+            margin-top: 0;
+            margin-bottom: 12px;
         }
 
         /* ======================= HERO ======================= */
         .hero {
-            max-width: 900px;         /* Beperkt breedte voor betere leesbaarheid */
-            margin: 0 auto;           /* Centreert horizontaal */
-            text-align: center;       /* Centreert tekst */
-            padding: 48px 24px;       /* Ruimte rondom de hero sectie */
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 48px 24px;
         }
 
         .hero h1 {
-            font-size: 2rem;          /* Hoofdtekst grootte â aanpasbaar */
-            margin-bottom: 12px;      /* Ruimte onder de titel */
+            font-size: 2rem;
+            margin-bottom: 12px;
         }
 
         .hero p {
-            color: #555;              /* Zachtere tekstkleur â aanpasbaar (nu: middengrijs) */
-            margin-bottom: 20px;      /* Ruimte onder de tekst */
-            line-height: 1.6;         /* Betere leesbaarheid */
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
         }
 
         .hero-actions a {
-            margin: 6px;              /* Kleine afstand tussen knoppen */
+            margin: 6px;
         }
 
         /* ======================= DEMO TEKST ======================= */
         .demo-intro {
-            font-size: 0.88rem;       /* Kleine tekst onder de knoppen */
-            color: #888;              /* Grijze tekst â aanpasbaar (nu: lichtgrijs) */
-            margin-top: 12px;         /* Ruimte boven de demotekst */
+            font-size: 0.88rem;
+            color: #888;
+            margin-top: 12px;
         }
 
         .demo-intro a {
-            color: #1E90FF;           /* Linkkleur â aanpasbaar (nu: blauw) */
-            text-decoration: underline; /* Onderstrepen voor herkenbaarheid */
+            color: #1E90FF;
+            text-decoration: underline;
         }
 
         /* ======================= BUTTONS ======================= */
         .btn-primary {
-            background: #1E90FF;      /* Primaire achtergrondkleur â aanpasbaar (nu: blauw) */
-            color: #fff;              /* Witte tekst */
-            padding: 12px 26px;       /* Klikbare grootte */
-            border-radius: 6px;       /* Afgeronde hoeken */
-            text-decoration: none;    /* Geen underline */
-            font-weight: bold;        /* Sterkere CTA */
+            background: #1E90FF;
+            color: #fff;
+            padding: 12px 26px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
         }
 
         .btn-primary:hover {
-            background: #1278d4;      /* Hover kleur â aanpasbaar (nu: donkerder blauw) */
+            background: #1278d4;
         }
 
         .btn-secondary {
-            border: 1px solid #1E90FF; /* Rand kleur â aanpasbaar (nu: blauw) */
-            color: #1E90FF;            /* Tekst kleur â aanpasbaar (nu: blauw) */
-            padding: 12px 26px;        /* Klikbare grootte */
-            border-radius: 6px;        /* Afgeronde hoeken */
-            text-decoration: none;     /* Geen underline */
+            border: 1px solid #1E90FF;
+            color: #1E90FF;
+            padding: 12px 26px;
+            border-radius: 6px;
+            text-decoration: none;
         }
 
         .btn-demo {
-            border: 1px solid #28a745; /* Rand kleur â aanpasbaar (nu: groen) */
-            color: #28a745;            /* Tekst kleur â aanpasbaar (nu: groen) */
-            padding: 12px 26px;        /* Klikbare grootte */
-            border-radius: 6px;        /* Afgeronde hoeken */
-            text-decoration: none;     /* Geen underline */
-            cursor: pointer;           /* Handcursor */
-            background: transparent;   /* Transparante achtergrond */
-            font-size: 1rem;           /* Zelfde grootte als andere knoppen */
-            font-weight: normal;       /* Normale dikte */
+            border: 1px solid #28a745;
+            color: #28a745;
+            padding: 12px 26px;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            background: transparent;
+            font-size: 1rem;
+            font-weight: normal;
         }
 
         .btn-demo:hover {
-            background: #e8f5e9;       /* Lichte groene hover â aanpasbaar (nu: lichtgroen) */
+            background: #e8f5e9;
         }
 
         /* ======================= SECTIONS ======================= */
         section {
-            max-width: 900px;         /* Consistente breedte */
-            margin: 0 auto;           /* Centreert */
-            padding: 28px 24px;       /* Verticale en horizontale ruimte */
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 28px 24px;
         }
 
-        /* ======================= SECTION HEADINGS ======================= */
         section h2 {
-            margin-bottom: 10px;      /* Ruimte onder subtitels */
+            margin-bottom: 10px;
         }
 
-        /* ======================= PARAGRAPHS ======================= */
         section p {
-            margin-bottom: 12px;      /* Compacte tekstblokken */
-            line-height: 1.6;         /* Leesbaarheid */
+            margin-bottom: 12px;
+            line-height: 1.6;
         }
 
         /* ======================= BENEFITS ======================= */
         .benefits {
-            display: grid;            /* Grid layout */
-            grid-template-columns: 1fr; /* 1 kolom (mobile first) */
-            gap: 16px;                /* Ruimte tussen de kaarten */
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
         }
 
         .benefit {
-            border: 1px solid #ddd;   /* Lichte rand â aanpasbaar (nu: lichtgrijs) */
-            padding: 16px;            /* Ruimte binnen de kaart */
-            border-radius: 6px;       /* Afgeronde hoeken */
-            background: #fafafa;      /* Lichte achtergrond â aanpasbaar (nu: gebroken wit) */
+            border: 1px solid #ddd;
+            padding: 16px;
+            border-radius: 6px;
+            background: #fafafa;
         }
 
         /* ======================= STEPS ======================= */
         .steps ol {
-            padding-left: 20px;       /* Inspringing lijst */
-            line-height: 1.6;         /* Leesbaarheid */
+            padding-left: 20px;
+            line-height: 1.6;
         }
 
         /* ======================= CTA ======================= */
         .cta {
-            text-align: center;       /* Centreert CTA blok */
+            text-align: center;
+        }
+
+        /* ======================= LANGUAGE SWITCHER ======================= */
+        .lang-switcher-wrap {
+            text-align: right;      /* Rechts uitlijnen */
+            padding: 8px 24px;      /* Ruimte rondom */
+        }
+
+        #languageSwitcher {
+            padding: 4px 8px;       /* Klikbare ruimte */
+            border-radius: 4px;     /* Afgeronde hoeken */
+            border: 1px solid #ccc; /* Lichte rand */
+            font-size: 0.9rem;      /* Iets kleiner dan body */
+            cursor: pointer;        /* Handcursor */
         }
     </style>
 </head>
@@ -152,34 +167,44 @@
 <!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div> <!-- Wordt gevuld via fetch -->
 
+<!-- ======================= Language switcher ======================= -->
+<!-- Staat buiten TopBar zodat hij altijd beschikbaar is,
+     ook als TopBar nog niet geladen is -->
+<div class="lang-switcher-wrap">
+    <label for="languageSwitcher" data-i18n="common.language.label"></label> <!-- "Taal" / "Language" / "Idioma" -->
+    <select id="languageSwitcher"></select> <!-- Wordt gevuld door buildLanguageSwitcher() in i18n.js -->
+</div>
+
 <!-- ======================= HERO ======================= -->
 <section class="hero">
 
-    <h1>Bouw jouw familieverhaal. Samen.</h1> <!-- Hoofdboodschap -->
+    <!-- Hoofdtitel — vertaald via home.hero.title -->
+    <h1 data-i18n="home.hero.title"></h1>
 
-    <p>
-        Maak, beheer en deel je stamboom met volledige controle over je eigen data.
-    </p>
+    <!-- Subtitel — vertaald via home.hero.subtitle -->
+    <p data-i18n="home.hero.subtitle"></p>
 
     <!-- Knoppen: start, lees meer, bekijk demo -->
     <div class="hero-actions">
-        <a href="/MyFamTreeCollab/home/create.html" class="btn-primary">
-            Start je stamboom <!-- Primaire actieknop -->
-        </a>
-        <a href="/MyFamTreeCollab/home/about.html" class="btn-secondary">
-            Lees meer <!-- Secundaire informatieknop -->
-        </a>
-        <button id="btnDemo" class="btn-demo">
-            🌳 Bekijk demo <!-- Demo knop 🌳laadt fictieve stamboom voor gasten -->
-        </button>
+
+        <!-- Primaire CTA — vertaald via home.hero.ctaStart -->
+        <a href="/MyFamTreeCollab/home/create.html" class="btn-primary"
+           data-i18n="home.hero.ctaStart"></a>
+
+        <!-- Secundaire CTA — vertaald via home.hero.ctaMore -->
+        <a href="/MyFamTreeCollab/home/about.html" class="btn-secondary"
+           data-i18n="home.hero.ctaMore"></a>
+
+        <!-- Demo knop — vertaald via home.hero.ctaDemo -->
+        <button id="btnDemo" class="btn-demo"
+                data-i18n="home.hero.ctaDemo"></button>
+
     </div>
 
-     
-<!-- Uitleg bij de demo knop -->
-<div class="benefit">
-        <h3>🌳 Bekijk demo</h3>
-        <p>Geen account nodig, </p>
-         <p>de demo toont een fictieve stamboom met 37 personen, 2 families en 6 generaties.</p>
+    <!-- Demo uitlegblok — vertaald via home.demo.* -->
+    <div class="benefit">
+        <h3 data-i18n="home.demo.title"></h3>           <!-- "🌳 Bekijk demo" -->
+        <p data-i18n="home.demo.description"></p>       <!-- Uitleg demo stamboom -->
     </div>
 
 </section>
@@ -187,36 +212,36 @@
 <!-- ======================= PROBLEEM / OPLOSSING ======================= -->
 <section>
 
-    <h2>Waarom MyFamTreeCollab?</h2>
+    <!-- Sectietitel — vertaald via home.why.title -->
+    <h2 data-i18n="home.why.title"></h2>
 
-    <p>
-        Veel familiegegevens zitten verspreid in documenten, Excel-bestanden of herinneringen.
-        Samenwerken aan een stamboom is vaak complex en onoverzichtelijk.
-    </p>
+    <!-- Probleemstelling — vertaald via home.why.problem -->
+    <p data-i18n="home.why.problem"></p>
 
-    <p>
-        MyFamTreeCollab brengt alles samen in een eenvoudige structuur
-        waarin jij de controle behoudt.
-    </p>
+    <!-- Oplossing — vertaald via home.why.solution -->
+    <p data-i18n="home.why.solution"></p>
 
 </section>
 
 <!-- ======================= BENEFITS ======================= -->
 <section class="benefits">
 
+    <!-- Benefit 1: privacy -->
     <div class="benefit">
-        <h3>🔐 Jij behoudt controle</h3>
-        <p>Exporteer je data als CSV, GEDCOM of JSON. Geen lock-in.</p>
+        <h3 data-i18n="home.why.privacy.title"></h3>   <!-- "🔐 Jij behoudt controle" -->
+        <p  data-i18n="home.why.privacy.text"></p>     <!-- Exporteer je data … -->
     </div>
 
+    <!-- Benefit 2: samenwerken -->
     <div class="benefit">
-        <h3>🤝 Samen bouwen</h3>
-        <p>Werk samen met familie en bouw een gedeelde stamboom.</p>
+        <h3 data-i18n="home.why.collab.title"></h3>    <!-- "🤝 Samen bouwen" -->
+        <p  data-i18n="home.why.collab.text"></p>      <!-- Werk samen met familie … -->
     </div>
 
+    <!-- Benefit 3: eenvoudig -->
     <div class="benefit">
-        <h3>⚡ Eenvoudig starten</h3>
-        <p>Geen installatie nodig. Begin direct in je browser.</p>
+        <h3 data-i18n="home.why.easy.title"></h3>      <!-- "⚡ Eenvoudig starten" -->
+        <p  data-i18n="home.why.easy.text"></p>        <!-- Geen installatie … -->
     </div>
 
 </section>
@@ -224,12 +249,13 @@
 <!-- ======================= HOW IT WORKS ======================= -->
 <section class="steps">
 
-    <h2>Hoe werkt het?</h2>
+    <!-- Sectietitel — vertaald via home.howItWorks.title -->
+    <h2 data-i18n="home.howItWorks.title"></h2>
 
     <ol>
-        <li>Voeg personen toe</li> <!-- Stap 1 -->
-        <li>Leg relaties vast</li>  <!-- Stap 2 -->
-        <li>Deel je stamboom</li>   <!-- Stap 3 -->
+        <li data-i18n="home.howItWorks.step1"></li>    <!-- Stap 1 -->
+        <li data-i18n="home.howItWorks.step2"></li>    <!-- Stap 2 -->
+        <li data-i18n="home.howItWorks.step3"></li>    <!-- Stap 3 -->
     </ol>
 
 </section>
@@ -237,81 +263,113 @@
 <!-- ======================= STORY ======================= -->
 <section>
 
-    <h2>Waarom dit project?</h2>
+    <!-- Sectietitel — vertaald via home.story.title -->
+    <h2 data-i18n="home.story.title"></h2>
 
-    <p>
-        Dit project begon met een doos oude documenten die ik niet wilde verliezen.
-        Wat begon in Excel groeide uit tot een gedeeld familieverhaal.
-    </p>
+    <!-- Verhaal — vertaald via home.story.text -->
+    <p data-i18n="home.story.text"></p>
 
 </section>
 
 <!-- ======================= CTA ======================= -->
 <section class="cta">
 
-    <h2>Begin vandaag nog</h2>
+    <!-- CTA titel — vertaald via home.cta.title -->
+    <h2 data-i18n="home.cta.title"></h2>
 
-    <a href="/MyFamTreeCollab/home/create.html" class="btn-primary">
-        Start je stamboom <!-- Onderste CTA knop -->
-    </a>
+    <!-- CTA knop — vertaald via home.cta.button -->
+    <a href="/MyFamTreeCollab/home/create.html" class="btn-primary"
+       data-i18n="home.cta.button"></a>
 
 </section>
 
 <!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div> <!-- Wordt gevuld via fetch -->
 
-<!-- ======================= SCRIPTS ======================= -->
+<!-- ======================= i18next CDN (volgorde belangrijk!) ======================= -->
+<!-- 1. i18next core -->
+<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+<!-- 2. HTTP back-end plugin — laadt JSON bestanden via fetch -->
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+<!-- 3. Language detector — leest navigator / localStorage / cookie -->
+<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+<!-- 4. Onze eigen i18n module -->
+<script src="/MyFamTreeCollab/js/i18n.js"></script>
+
+<!-- ======================= Overige scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
-<script src="js/utils.js"></script>  <!-- Utilities: ftSafe, ftFormatDate, ftParseBirthday -->
-<script src="js/schema.js"></script> <!-- Schema: StamboomSchema -->
-<script src="js/storage.js"></script> <!-- Opslag: StamboomStorage -->
-<script src="js/auth.js"></script>   <!-- Auth: AuthModule -->
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics -->
-<script src="js/demo.js"></script>   <!-- Demo: DemoModule — laadt fictieve stamboom -->
+<script src="js/utils.js"></script>    <!-- Utilities -->
+<script src="js/schema.js"></script>   <!-- Schema -->
+<script src="js/storage.js"></script>  <!-- Opslag -->
+<script src="js/auth.js"></script>     <!-- Auth -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking -->
+<script src="js/demo.js"></script>     <!-- Demo module -->
 
 <script>
-    // ======================= TopBar laden =======================
-    // TopBar HTML ophalen en injecteren, daarna topbar.js laden
-    fetch('/MyFamTreeCollab/Layout/TopBar.html') // TopBar HTML ophalen
-        .then(resp => resp.text())               // Response omzetten naar tekst
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data; // TopBar in DOM zetten
-            var s = document.createElement('script'); // Script element aanmaken
-            s.src = 'js/topbar.js';                   // Pad naar topbar.js
-            document.body.appendChild(s);             // Script toevoegen aan DOM
-        });
+    // ======================= i18n initialiseren =======================
+    // Moet als eerste — voor de fetch calls — zodat vertalingen klaar
+    // zijn op het moment dat de componenten worden geïnjecteerd
+    i18nModule.init().then(function() {
 
-    // ======================= Navbar laden =======================
-    fetch('/MyFamTreeCollab/Layout/Navbar.html') // Navbar HTML ophalen
-        .then(resp => resp.text())               // Response omzetten naar tekst
-        .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data; // Navbar in DOM zetten
-        });
+        // Laad de home namespace na initialisatie van common
+        i18nModule.loadNamespace('home');
 
-    // ======================= Footer laden =======================
-    fetch('/MyFamTreeCollab/Layout/Footer.html') // Footer HTML ophalen
-        .then(resp => resp.text())               // Response omzetten naar tekst
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data; // Footer in DOM zetten
-        });
+        // ======================= TopBar laden =======================
+        fetch('/MyFamTreeCollab/Layout/TopBar.html')       // TopBar HTML ophalen
+            .then(resp => resp.text())                     // Response naar tekst
+            .then(function(html) {
+                // Injecteren + vertalen via onComponentLoaded()
+                i18nModule.onComponentLoaded(
+                    html,
+                    document.getElementById('topbar-placeholder')
+                );
+                // TopBar.js dynamisch laden na injectie
+                var s = document.createElement('script'); // Script element aanmaken
+                s.src = 'js/topbar.js';                   // Pad naar topbar.js
+                document.body.appendChild(s);             // Aan DOM toevoegen
+            });
 
-    // ======================= Pagina tracking =======================
-    // Na fetch-calls — auth.js is geladen, tier van gebruiker beschikbaar
-    SiteAnalytics.trackPage("home"); // Bezoek registreren in Supabase page_visits tabel
+        // ======================= Navbar laden =======================
+        fetch('/MyFamTreeCollab/Layout/Navbar.html')       // Navbar HTML ophalen
+            .then(resp => resp.text())                     // Response naar tekst
+            .then(function(html) {
+                // Injecteren + vertalen via onComponentLoaded()
+                i18nModule.onComponentLoaded(
+                    html,
+                    document.getElementById('navbar-placeholder')
+                );
+            });
+
+        // ======================= Footer laden =======================
+        fetch('/MyFamTreeCollab/Layout/Footer.html')       // Footer HTML ophalen
+            .then(resp => resp.text())                     // Response naar tekst
+            .then(function(html) {
+                // Injecteren + vertalen via onComponentLoaded()
+                i18nModule.onComponentLoaded(
+                    html,
+                    document.getElementById('footer-placeholder')
+                );
+            });
+
+        // ======================= Pagina tracking =======================
+        SiteAnalytics.trackPage("home"); // Bezoek registreren in Supabase
+
+    });
 
     // ======================= Demo knop =======================
     document.addEventListener('DOMContentLoaded', function() {
         var btn = document.getElementById('btnDemo'); // Demo knop ophalen
         if (!btn) return;                             // Knop niet gevonden — stoppen
-        btn.addEventListener('click', async function() {          // Klik op demo knop
-            if (!window.DemoModule) {                             // DemoModule niet geladen
-                alert('Demo niet beschikbaar. Probeer opnieuw.'); // Foutmelding tonen
+
+        btn.addEventListener('click', async function() {
+            if (!window.DemoModule) {                                      // DemoModule niet geladen
+                alert(i18nModule.t('common.errors.loadFailed'));           // Vertaalde foutmelding
                 return;
             }
-            btn.textContent = '⏳ Laden...';                      // Knop tekst aanpassen tijdens laden
-            btn.disabled = true;                                  // Knop uitschakelen tijdens laden
-            await window.DemoModule.loadDemo(true);               // Demo stamboom laden (force = true)
-            window.location.href = '/MyFamTreeCollab/stamboom/manage.html'; // Navigeren naar stamboom
+            btn.textContent = i18nModule.t('common.loading.data');        // "Gegevens ophalen…"
+            btn.disabled = true;                                           // Knop uitschakelen
+            await window.DemoModule.loadDemo(true);                        // Demo laden (force = true)
+            window.location.href = '/MyFamTreeCollab/stamboom/manage.html'; // Navigeren
         });
     });
 </script>
