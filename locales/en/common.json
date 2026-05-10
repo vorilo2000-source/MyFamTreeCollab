@@ -1,0 +1,59 @@
+{
+  "buttons": {
+    "start":    "Start your family tree",
+    "save":     "Save",
+    "cancel":   "Cancel",
+    "delete":   "Delete",
+    "edit":     "Edit",
+    "add":      "Add",
+    "loading":  "Loading…",
+    "demo":     "🌳 View demo",
+    "readMore": "Read more",
+    "back":     "Back",
+    "export":   "Export",
+    "share":    "Share",
+    "login":    "Log in",
+    "logout":   "Log out",
+    "register": "Register"
+  },
+  "errors": {
+    "generic":       "Something went wrong. Please try again.",
+    "networkError":  "No connection. Check your internet.",
+    "notFound":      "Not found.",
+    "unauthorized":  "You are not logged in.",
+    "forbidden":     "You don't have access to this section.",
+    "loadFailed":    "Loading failed.",
+    "saveFailed":    "Save failed.",
+    "deleteFailed":  "Delete failed.",
+    "missingField":  "Please fill in all required fields."
+  },
+  "loading": {
+    "default":    "Loading…",
+    "data":       "Fetching data…",
+    "saving":     "Saving…",
+    "deleting":   "Deleting…"
+  },
+  "nav": {
+    "home":       "Home",
+    "create":     "Create tree",
+    "manage":     "Manage",
+    "community":  "Community",
+    "sources":    "Sources",
+    "account":    "Account",
+    "admin":      "Admin",
+    "pricing":    "Pricing"
+  },
+  "footer": {
+    "tagline":    "Build your family story. Together.",
+    "privacy":    "Privacy",
+    "terms":      "Terms",
+    "contact":    "Contact",
+    "rights":     "All rights reserved."
+  },
+  "language": {
+    "label":      "Language"
+  },
+  "meta": {
+    "appName":    "MyFamTreeCollab"
+  }
+}
