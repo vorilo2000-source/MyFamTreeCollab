@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-09
+## Bijgewerkt: 2026-05-10
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -107,6 +107,32 @@
 
 ---
 
+## Fase 8 — Internationalisatie (i18n) 🔄 IN UITVOERING
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F8-01 | 🔴 Hoog | `js/i18n.js` v1.0.0 — core module aanmaken | ✅ Gedaan |
+| F8-02 | 🔴 Hoog | `locales/{nl,en,es}/common.json` aanmaken | ✅ Gedaan |
+| F8-03 | 🔴 Hoog | `locales/{nl,en,es}/home.json` aanmaken | ✅ Gedaan |
+| F8-04 | 🔴 Hoog | `index.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-05 | 🔴 Hoog | `Layout/TopBar.html` — language switcher `<select>` | ✅ Gedaan |
+| F8-06 | 🔴 Hoog | `Layout/Navbar.html` — `data-i18n="common:nav.*"` | 📋 Open |
+| F8-07 | 🔴 Hoog | `Layout/Footer.html` — `data-i18n="common:footer.*"` | 📋 Open |
+| F8-08 | 🔴 Hoog | `locales/{nl,en,es}/create.json` aanmaken | 📋 Open |
+| F8-09 | 🔴 Hoog | `locales/{nl,en,es}/manage.json` aanmaken | 📋 Open |
+| F8-10 | 🔴 Hoog | `locales/{nl,en,es}/auth.json` aanmaken | 📋 Open |
+| F8-11 | 🟡 Middel | `home/create.html` refactoren met `data-i18n` | 📋 Open |
+| F8-12 | 🟡 Middel | `home/about.html` refactoren met `data-i18n` | 📋 Open |
+| F8-13 | 🟡 Middel | `stamboom/manage.html` refactoren met `data-i18n` | 📋 Open |
+| F8-14 | 🟡 Middel | `home/confirm.html` refactoren met `data-i18n` | 📋 Open |
+| F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` | 📋 Open |
+| F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | 📋 Open |
+| F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
+| F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
+| F8-19 | 🟢 Laag | `Handleiding.html` bijwerken met i18n uitleg | 📋 Open |
+
+---
+
 ## Fase A — Account & donaties ✅ AFGEROND
 
 | ID | Prioriteit | Taak | Status |
@@ -194,6 +220,14 @@
 
 ## Bugfixes
 
+### Sessie 2026-05-10
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-36 | i18n keys toonden letterlijk — oorzaak: dot i.p.v. colon als namespace separator | ✅ Opgelost |
+| BF-37 | Taalwissel resette switcher — `onComponentLoaded()` riep `buildLanguageSwitcher()` bij elke injectie | ✅ Opgelost |
+| BF-38 | Namespace niet herladen na taalwissel — `handleLanguageChange()` miste `loadNamespaces()` | ✅ Opgelost |
+
 ### Sessie 2026-05-09
 
 | ID | Omschrijving | Status |
@@ -235,4 +269,5 @@
 | TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js | 🔴 Hoog |
 | TD-07 | Resend zonder eigen domein — `onboarding@resend.dev`, mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
+| TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
 | TD-10 | `page_visits` RLS uitgeschakeld — beveiligd via view | 🟡 Middel |
