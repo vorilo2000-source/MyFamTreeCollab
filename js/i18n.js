@@ -213,11 +213,17 @@ function buildLanguageSwitcher() {
 async function handleLanguageChange(event) {
   const newLang = event.target.value; // selected language code, e.g. 'en'
 
-  // Tell i18next to switch language (this also triggers re-loading of namespaces)
+  // Switch i18next to the new language
   await i18next.changeLanguage(newLang);
 
   // Persist the user's explicit choice so the detector picks it up on reload
   localStorage.setItem('mftc_language', newLang);
+
+  // Reload ALL currently loaded namespaces for the new language.
+  // changeLanguage() does NOT auto-fetch lazily loaded namespaces (e.g. 'home')
+  // for the new language — we must request them explicitly.
+  const loadedNamespaces = i18next.options.ns || ['common']; // all registered namespaces
+  await i18next.loadNamespaces(loadedNamespaces);            // fetch for new language
 
   // Re-translate the entire visible DOM
   updateContent();
