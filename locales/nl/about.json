@@ -1,0 +1,44 @@
+{
+  "page": {
+    "title": "Over"
+  },
+  "hero": {
+    "heading":  "🌳 Over MyFamTreeCollab",
+    "intro":    "Iedere familie heeft een verhaal. Soms zit dat in herinneringen, maar vaak ook in dozen vol oude documenten."
+  },
+  "sections": {
+    "origin": {
+      "heading": "📦 Hoe het begon",
+      "p1":      "Dit project ontstond nadat ik een doos kreeg met huwelijks-, geboorte- en overlijdenskaartjes die mijn moeder jarenlang had bewaard. Weggooien was geen optie. Maar hoe bewaar je zoiets op een manier die echt waarde heeft?",
+      "p2":      "Wat begon in Excel groeide al snel uit tot een groter inzicht: een stamboom wordt pas echt waardevol als je ze kunt delen en samen opbouwen."
+    },
+    "why": {
+      "heading": "🤝 Waarom deze website",
+      "p1":      "Veel bestaande genealogieplatformen zijn complex, gesloten of nemen de controle over je data over. MyFamTreeCollab kiest bewust een andere aanpak.",
+      "p2":      "Jij blijft eigenaar van je data. Je kan je stamboom lokaal opslaan of in de cloud, en exporteren als CSV, GEDCOM of JSON bestand. Alles wat je invoert, inclusief relaties, zit volledig in jouw bestand."
+    },
+    "how": {
+      "heading": "🧠 Hoe het werkt",
+      "p1":      "Je bouwt je stamboom op via een eenvoudige structuur waarin personen en relaties centraal staan. Ouders, partners en kinderen worden visueel weergegeven, zodat je snel inzicht krijgt in je familiegeschiedenis.",
+      "p2":      "In tegenstelling tot veel andere tools is jouw bestand volledig transparant en overdraagbaar. Geen verborgen structuren, geen lock-in."
+    },
+    "local": {
+      "heading": "🔄 Lokaal of samen",
+      "p1":      "Je kan perfect lokaal werken en je bestand delen met familie. Dat is de eenvoudigste manier om te starten.",
+      "p2":      "Samenwerken brengt uitdagingen met zich mee zoals versiebeheer en wijzigingen bijhouden. Daarom wordt er gewerkt aan een cloud-oplossing die samenwerking eenvoudiger en overzichtelijker maakt."
+    },
+    "future": {
+      "heading": "🚀 Toekomst",
+      "p1":      "Dit project blijft evolueren. In de toekomst worden onder andere volgende uitbreidingen voorzien:",
+      "p2":      "Foto's koppelen aan personen, familie-events visualiseren, samenwerken in een beveiligde omgeving en communicatie tussen familieleden binnen de stamboom."
+    },
+    "why2": {
+      "heading": "❤️ Waarom beginnen",
+      "p1":      "Omdat jouw familieverhaal het waard is om bewaard te blijven. Omdat herinneringen verdwijnen, maar verhalen kunnen blijven bestaan.",
+      "p2":      "Een stamboom bouw je niet alleen, maar samen."
+    }
+  },
+  "buttons": {
+    "backHome": "Terug naar Home"
+  }
+}
