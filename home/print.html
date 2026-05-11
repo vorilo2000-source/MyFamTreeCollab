@@ -1,44 +1,47 @@
-<!-- ======================= home/print.html v2.1.0 =======================
-     Printpagina: tijdelijk niet beschikbaar, consistente opmaak
+<!-- ======================= home/print.html v2.2.0 =======================
+     Wijziging v2.2.0 (sessie 25):
+     - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
+     - i18nModule.init() + loadNamespace('print') toegevoegd
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded() geladen
+     - Alle tekst vervangen door data-i18n="print:*" attributen
 
      Wijziging v2.1.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
      - SiteAnalytics.trackPage("print") toegevoegd in fetch-scriptblok
-     - Dubbele Supabase/utils/auth script-blokken bovenaan opgeruimd
-     - Padverwijzing /js/ gecorrigeerd naar ../js/
-     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder (was Navbar-placeholder)
-
-     Wijziging v2.0.0: facelift — Navbar + TopBar + 'komt binnenkort' blok,
-                       geen aparte header meer, script.js verwijderd
-     v2.0.1 Login + Favicon / App-icoon toegevoegd
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Afdrukken</title>
-        
-     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <title>Afdrukken</title> <!-- Wordt overschreven door i18n na init -->
+
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-     
+
+    <!-- ======================= i18next laadvolgorde (verplicht) ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Centrale i18n module -->
+
     <style>
         /* ======================= BINNENKORT BLOK ======================= */
-        .binnenkort-blok {                                                 /* Centraal informatieblok */
-            max-width: 520px;                                              /* Niet te breed */
-            margin: 0 auto;                                                /* Horizontaal centreren */
-            text-align: center;                                            /* Tekst centreren */
-            padding: 48px 24px;                                            /* Ruimte rondom de inhoud */
+        .binnenkort-blok {
+            max-width: 520px;       /* Niet te breed */
+            margin: 0 auto;         /* Horizontaal centreren */
+            text-align: center;     /* Tekst centreren */
+            padding: 48px 24px;     /* Ruimte rondom de inhoud */
         }
-        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; } /* Groot icoon boven de tekst */
+        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; }
         .binnenkort-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
         .binnenkort-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 24px 0; }
-        .knop-home {                                                       /* Knop terug naar home */
+        .knop-home {
             display: inline-block; padding: 10px 24px;
             background: #1E90FF; color: #fff; text-decoration: none;
             border-radius: 5px; font-size: 0.95rem; font-weight: bold;
@@ -57,63 +60,58 @@
 <!-- ======================= Hoofd content ======================= -->
 <main>
     <div class="binnenkort-blok">
-        <div class="icoon">🖨️</div>                                        <!-- Printer icoon passend bij afdrukfunctie -->
-        <h1>Stamboom Afdrukken</h1>
-        <p>
-            De afdrukfunctie is momenteel in ontwikkeling.<br>
-            Binnenkort kun je hier je stamboom afdrukken of opslaan als PDF.
-        </p>
-        <a href="/MyFamTreeCollab/" class="knop-home">Terug naar Home</a>
+        <div class="icoon">🖨️</div> <!-- Printer icoon -->
+        <h1 data-i18n="print:content.heading"></h1>
+        <p data-i18n="print:content.body"></p>
+        <a href="/MyFamTreeCollab/" class="knop-home" data-i18n="print:buttons.backHome"></a>
     </div>
 </main>
 
 <!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
-<!-- =============================================================
-     SCRIPTS — volgorde is verplicht:
-     1. Supabase SDK        — vereist door auth.js
-     2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. siteAnalytics.js   — bezoektracking, na auth.js
-     5. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
-     6. Navbar fetch        — onafhankelijk, mag parallel
-     7. Footer fetch
-     ============================================================= -->
+<!-- ======================= SCRIPTS ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
 
 <script>
-    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
-    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            // #top-auth bestaat nu — veilig om topbar.js te laden
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
+    // ======================= i18n initialiseren =======================
+    i18nModule.init().then(function () {
 
-    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            var ph = document.getElementById('navbar-placeholder');
-            if (ph) ph.innerHTML = data;
-        });
+        // Laad de 'print' namespace voor deze pagina
+        i18nModule.loadNamespace('print');
 
-    // Stap 3: Footer laden
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
-        });
+        // Stel paginatitel in via i18n key
+        document.title = i18nModule.t('print:page.title');
 
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+        // ======================= TopBar laden =======================
+        fetch('/MyFamTreeCollab/Layout/TopBar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                var s = document.createElement('script');
+                s.src = '../js/topbar.js';
+                document.body.appendChild(s);
+            });
+
+        // ======================= Navbar laden =======================
+        fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+            });
+
+        // ======================= Footer laden =======================
+        fetch('/MyFamTreeCollab/Layout/Footer.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+            });
+    });
+
+    // Pagina tracking — buiten i18n init, blokkeert niets
     SiteAnalytics.trackPage("print"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
