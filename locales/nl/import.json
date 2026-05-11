@@ -1,0 +1,21 @@
+{
+  "page": {
+    "title": "Import"
+  },
+  "welcome": {
+    "heading": "Welkom bij Import",
+    "intro":   "Laad een bestaand CSV-bestand in om je stamboomdata te importeren. Nieuwe personen worden toegevoegd aan de bestaande stamboom."
+  },
+  "form": {
+    "heading":  "Selecteer een bestand",
+    "subtitle": "Ondersteunde formaten: .csv en .txt",
+    "button":   "Importeer CSV"
+  },
+  "info": {
+    "heading": "Wat moet je weten over de import?",
+    "line1":   "Het bestand moet de juiste kolomnamen hebben. Gebruik de CSV-template als startpunt.",
+    "line2":   "Komma, puntkomma en tab worden automatisch herkend als kolomscheider.",
+    "line3":   "Bestaande personen worden niet overschreven, nieuwe rijen worden toegevoegd.",
+    "line4":   "Je gegevens verlaten je browser nooit: alles wordt lokaal verwerkt."
+  }
+}
