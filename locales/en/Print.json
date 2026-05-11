@@ -1,0 +1,12 @@
+{
+  "page": {
+    "title": "Print"
+  },
+  "content": {
+    "heading": "Print Family Tree",
+    "body":    "The print feature is currently under development. Soon you will be able to print your family tree or save it as a PDF."
+  },
+  "buttons": {
+    "backHome": "Back to Home"
+  }
+}
