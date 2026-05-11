@@ -1,15 +1,15 @@
 {
   "buttons": {
-    "start":    "Iniciar tu árbol genealógico",
+    "start":    "Empieza tu árbol genealógico",
     "save":     "Guardar",
     "cancel":   "Cancelar",
     "delete":   "Eliminar",
     "edit":     "Editar",
-    "add":      "Agregar",
+    "add":      "Añadir",
     "loading":  "Cargando…",
     "demo":     "🌳 Ver demo",
     "readMore": "Leer más",
-    "back":     "Volver",
+    "back":     "Atrás",
     "export":   "Exportar",
     "share":    "Compartir",
     "login":    "Iniciar sesión",
@@ -17,7 +17,7 @@
     "register": "Registrarse"
   },
   "errors": {
-    "generic":       "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "generic":       "Algo salió mal. Inténtalo de nuevo.",
     "networkError":  "Sin conexión. Verifica tu internet.",
     "notFound":      "No encontrado.",
     "unauthorized":  "No has iniciado sesión.",
@@ -25,7 +25,7 @@
     "loadFailed":    "Error al cargar.",
     "saveFailed":    "Error al guardar.",
     "deleteFailed":  "Error al eliminar.",
-    "missingField":  "Por favor, completa todos los campos requeridos."
+    "missingField":  "Completa todos los campos obligatorios."
   },
   "loading": {
     "default":    "Cargando…",
@@ -35,13 +35,42 @@
   },
   "nav": {
     "home":       "Inicio",
-    "create":     "Crear árbol",
+    "create":     "Crear árbol genealógico",
     "manage":     "Gestionar",
     "community":  "Comunidad",
     "sources":    "Fuentes",
     "account":    "Cuenta",
     "admin":      "Admin",
-    "pricing":    "Planes"
+    "pricing":    "Suscripciones",
+    "start":      "Inicio",
+    "stamboom":   "Árbol genealógico",
+    "developer":  "Desarrollador",
+    "sub": {
+      "create":       "Crear",
+      "import":       "Importar",
+      "export":       "Exportar",
+      "about":        "Acerca de",
+      "print":        "Imprimir",
+      "view":         "Ver",
+      "timeline":     "Línea de tiempo",
+      "manage":       "Gestionar",
+      "storage":      "Almacenamiento",
+      "messages":     "Tablón de mensajes",
+      "stats":        "Estadísticas",
+      "handleiding":  "Manual",
+      "template":     "Plantilla",
+      "overview":     "Resumen",
+      "prices":       "Precios",
+      "compare":      "Comparar",
+      "benefits":     "Ventajas",
+      "accounts":     "Cuentas",
+      "analytics":    "Analítica",
+      "analyse":      "Análisis",
+      "blank":        "En blanco",
+      "maintenance":  "Mantenimiento",
+      "pageExample":  "Ejemplo de página",
+      "sandbox":      "Sandbox"
+    }
   },
   "footer": {
     "tagline":    "Construye tu historia familiar. Juntos.",
