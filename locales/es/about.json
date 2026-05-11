@@ -1,0 +1,44 @@
+{
+  "page": {
+    "title": "Acerca de"
+  },
+  "hero": {
+    "heading":  "🌳 Acerca de MyFamTreeCollab",
+    "intro":    "Cada familia tiene una historia. A veces vive en los recuerdos, pero a menudo en cajas llenas de viejos documentos."
+  },
+  "sections": {
+    "origin": {
+      "heading": "📦 Cómo empezó",
+      "p1":      "Este proyecto comenzó después de recibir una caja con tarjetas de boda, nacimiento y defunción que mi madre había guardado durante años. Tirarlas no era una opción. Pero ¿cómo conservas algo así de una manera que realmente tenga valor?",
+      "p2":      "Lo que comenzó en Excel pronto se convirtió en una idea más grande: un árbol genealógico solo se vuelve verdaderamente valioso cuando puedes compartirlo y construirlo juntos."
+    },
+    "why": {
+      "heading": "🤝 Por qué este sitio",
+      "p1":      "Muchas plataformas de genealogía existentes son complejas, cerradas o toman el control de tus datos. MyFamTreeCollab elige deliberadamente un enfoque diferente.",
+      "p2":      "Tú sigues siendo el propietario de tus datos. Puedes guardar tu árbol genealógico localmente o en la nube, y exportarlo como archivo CSV, GEDCOM o JSON. Todo lo que introduces, incluidas las relaciones, está completamente en tu archivo."
+    },
+    "how": {
+      "heading": "🧠 Cómo funciona",
+      "p1":      "Construyes tu árbol genealógico usando una estructura simple centrada en personas y relaciones. Padres, parejas e hijos se muestran visualmente, dándote una visión rápida de tu historia familiar.",
+      "p2":      "A diferencia de muchas otras herramientas, tu archivo es completamente transparente y portátil. Sin estructuras ocultas, sin dependencias."
+    },
+    "local": {
+      "heading": "🔄 Local o colaborativo",
+      "p1":      "Puedes trabajar perfectamente de forma local y compartir tu archivo con la familia. Esa es la forma más sencilla de empezar.",
+      "p2":      "La colaboración trae desafíos como el control de versiones y el seguimiento de cambios. Por eso se está desarrollando una solución en la nube para hacer la colaboración más fácil y manejable."
+    },
+    "future": {
+      "heading": "🚀 Futuro",
+      "p1":      "Este proyecto sigue evolucionando. Están planificadas las siguientes ampliaciones para el futuro:",
+      "p2":      "Vincular fotos a personas, visualizar eventos familiares, colaborar en un entorno seguro y comunicación entre familiares dentro del árbol genealógico."
+    },
+    "why2": {
+      "heading": "❤️ Por qué empezar",
+      "p1":      "Porque tu historia familiar merece ser preservada. Porque los recuerdos se desvanecen, pero las historias pueden perdurar.",
+      "p2":      "Un árbol genealógico no se construye solo, sino juntos."
+    }
+  },
+  "buttons": {
+    "backHome": "Volver al inicio"
+  }
+}
