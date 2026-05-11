@@ -1,5 +1,10 @@
-<!-- ======================= home/about.html v2.2.0 =======================
-     Over-pagina: inhoud geïntegreerd en geoptimaliseerd voor leesbaarheid
+<!-- ======================= home/about.html v2.3.0 =======================
+     Wijziging v2.3.0 (sessie 25):
+     - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
+     - i18nModule.init() + loadNamespace('about') toegevoegd
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded() geladen
+     - Alle tekst vervangen door data-i18n="about:*" attributen
+     - <title> dynamisch gezet via i18nModule
 
      Wijziging v2.2.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -10,15 +15,21 @@
 <head>
     <meta charset="UTF-8"> <!-- Zorgt voor correcte tekencodering -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive gedrag -->
-    <title>Over</title>
+    <title>Over</title> <!-- Wordt overschreven door i18n na init -->
 
     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css"> <!-- Globale styling -->
+
+    <!-- ======================= i18next laadvolgorde (verplicht) ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Centrale i18n module -->
 
     <style>
         /* ======================= ABOUT CONTENT ======================= */
@@ -79,86 +90,44 @@
 <main>
     <div class="about-container">
 
-        <h1>🌳 Over MyFamTreeCollab</h1>
+        <!-- Paginatitel -->
+        <h1 data-i18n="about:hero.heading"></h1>
 
-        <p>
-            Iedere familie heeft een verhaal. Soms zit dat in herinneringen,
-            maar vaak ook in dozen vol oude documenten.
-        </p>
+        <!-- Intro paragraaf -->
+        <p data-i18n="about:hero.intro"></p>
 
-        <h2>📦 Hoe het begon</h2>
-        <p>
-            Dit project ontstond nadat ik een doos kreeg met huwelijks-, geboorte-
-            en overlijdenskaartjes die mijn moeder jarenlang had bewaard.
-            Weggooien was geen optie. Maar hoe bewaar je zoiets op een manier
-            die echt waarde heeft?
-        </p>
+        <!-- Sectie: Hoe het begon -->
+        <h2 data-i18n="about:sections.origin.heading"></h2>
+        <p data-i18n="about:sections.origin.p1"></p>
+        <p><span class="highlight" data-i18n="about:sections.origin.p2"></span></p>
 
-        <p>
-            Wat begon in Excel groeide al snel uit tot een groter inzicht:
-            <span class="highlight">een stamboom wordt pas echt waardevol als je ze kunt delen en samen opbouwen.</span>
-        </p>
+        <!-- Sectie: Waarom deze website -->
+        <h2 data-i18n="about:sections.why.heading"></h2>
+        <p data-i18n="about:sections.why.p1"></p>
+        <p><span class="highlight" data-i18n="about:sections.why.p2"></span></p>
 
-        <h2>🤝 Waarom deze website</h2>
-        <p>
-            Veel bestaande genealogieplatformen zijn complex, gesloten of nemen
-            de controle over je data over.  🌳 MyFamTreeCollab kiest bewust een andere aanpak.
-        </p>
+        <!-- Sectie: Hoe het werkt -->
+        <h2 data-i18n="about:sections.how.heading"></h2>
+        <p data-i18n="about:sections.how.p1"></p>
+        <p data-i18n="about:sections.how.p2"></p>
 
-        <p>
-            <span class="highlight">Jij blijft eigenaar van je data.</span>
-            Je kan je stamboom lokaal opslaan of in de cloud, en exporteren als CSV,
-            GEDCOM of JSON bestand. Alles wat je invoert, inclusief relaties, 
-            zit volledig in jouw bestand. 
-        </p>
+        <!-- Sectie: Lokaal of samen -->
+        <h2 data-i18n="about:sections.local.heading"></h2>
+        <p data-i18n="about:sections.local.p1"></p>
+        <p data-i18n="about:sections.local.p2"></p>
 
-        <h2>🧠 Hoe het werkt</h2>
-        <p>
-            Je bouwt je stamboom op via een eenvoudige structuur waarin personen
-            en relaties centraal staan. Ouders, partners en kinderen worden visueel
-            weergegeven, zodat je snel inzicht krijgt in je familiegeschiedenis.
-        </p>
+        <!-- Sectie: Toekomst -->
+        <h2 data-i18n="about:sections.future.heading"></h2>
+        <p data-i18n="about:sections.future.p1"></p>
+        <p data-i18n="about:sections.future.p2"></p>
 
-        <p>
-            In tegenstelling tot veel andere tools is jouw bestand volledig
-            transparant en overdraagbaar. Geen verborgen structuren, geen lock-in.
-        </p>
+        <!-- Sectie: Waarom beginnen -->
+        <h2 data-i18n="about:sections.why2.heading"></h2>
+        <p data-i18n="about:sections.why2.p1"></p>
+        <p><span class="highlight" data-i18n="about:sections.why2.p2"></span></p>
 
-        <h2>🔄 Lokaal of samen</h2>
-        <p>
-            Je kan perfect lokaal werken en je bestand delen met familie.
-            Dat is de eenvoudigste manier om te starten.
-        </p>
-
-        <p>
-            Samenwerken brengt uitdagingen met zich mee zoals versiebeheer
-            en wijzigingen bijhouden. Daarom wordt er gewerkt aan een
-            cloud-oplossing die samenwerking eenvoudiger en overzichtelijker maakt.
-        </p>
-
-        <h2>🚀 Toekomst</h2>
-        <p>
-            Dit project blijft evolueren. In de toekomst worden onder andere
-            volgende uitbreidingen voorzien:
-        </p>
-
-        <p>
-            Foto's koppelen aan personen, familie-events visualiseren,
-            samenwerken in een beveiligde omgeving en communicatie
-            tussen familieleden binnen de stamboom.
-        </p>
-
-        <h2>❤️ Waarom beginnen</h2>
-        <p>
-            Omdat jouw familieverhaal het waard is om bewaard te blijven.
-            Omdat herinneringen verdwijnen, maar verhalen kunnen blijven bestaan.
-        </p>
-
-        <p>
-            <span class="highlight">Een stamboom bouw je niet alleen, maar samen.</span>
-        </p>
-
-        <a href="/MyFamTreeCollab/" class="knop-home">Terug naar Home</a>
+        <!-- Knop terug naar home -->
+        <a href="/MyFamTreeCollab/" class="knop-home" data-i18n="about:buttons.backHome"></a>
 
     </div>
 </main>
@@ -170,34 +139,46 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
 <script src="../js/utils.js"></script> <!-- Basis utilities -->
 <script src="../js/auth.js"></script> <!-- Authenticatie -->
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
 
 <script>
-    // ======================= TopBar laden =======================
-    fetch('/MyFamTreeCollab/Layout/TopBar.html') // Haalt HTML op
-        .then(resp => resp.text()) // Zet response om naar tekst
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data; // Injecteert HTML
-            var s = document.createElement('script'); // Maakt script element
-            s.src = '../js/topbar.js'; // Koppelt script
-            document.body.appendChild(s); // Voegt toe aan DOM
-        });
+    // ======================= i18n initialiseren =======================
+    i18nModule.init().then(function () {
 
-    // ======================= Navbar laden =======================
-    fetch('/MyFamTreeCollab/Layout/Navbar.html') // Haalt navbar op
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data; // Injecteert navbar
-        });
+        // Laad de 'about' namespace voor deze pagina
+        i18nModule.loadNamespace('about');
 
-    // ======================= Footer laden =======================
-    fetch('/MyFamTreeCollab/Layout/Footer.html') // Haalt footer op
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data; // Injecteert footer
-        });
+        // Stel paginatitel in via i18n key
+        document.title = i18nModule.t('about:page.title');
 
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+        // ======================= TopBar laden =======================
+        fetch('/MyFamTreeCollab/Layout/TopBar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                // onComponentLoaded injecteert HTML én vertaalt data-i18n attributen erin
+                i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                // Laad topbar.js nadat TopBar HTML in DOM zit
+                var s = document.createElement('script');
+                s.src = '../js/topbar.js';
+                document.body.appendChild(s);
+            });
+
+        // ======================= Navbar laden =======================
+        fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+            });
+
+        // ======================= Footer laden =======================
+        fetch('/MyFamTreeCollab/Layout/Footer.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+            });
+    });
+
+    // Pagina tracking — buiten i18n init, blokkeert niets
     SiteAnalytics.trackPage("about"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
