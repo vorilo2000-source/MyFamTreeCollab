@@ -1,5 +1,10 @@
-<!-- ======================= home/import.html v2.1.0 =======================
-     Importpagina: CSV/TXT bestanden inladen in de stamboom
+<!-- ======================= home/import.html v2.2.0 =======================
+     Wijziging v2.2.0 (sessie 25):
+     - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
+     - i18nModule.init() + loadNamespace('import') toegevoegd
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded() geladen
+     - Alle tekst vervangen door data-i18n="import:*" attributen
+     - <title> dynamisch gezet via i18nModule
 
      Wijziging v2.1.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -8,30 +13,32 @@
      Wijziging v2.0.3 (F5-04):
      - AccessGuard toegevoegd: alleen owner mag importeren
      - shareModule.js + accessGuard.js toegevoegd aan laadvolgorde
-     - Dubbele Supabase/utils/auth script-blokken opgeruimd (waren aanwezig in v2.0.2)
-     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder (was Navbar-placeholder)
 
-     Wijziging v2.0.2: Login toegevoegd + Favicon / App-icoon
-     Wijziging v2.0.0: facelift
-
-     Scripts: supabase → utils.js → auth.js → siteAnalytics.js → [TopBar] → schema.js →
+     Scripts: supabase → utils.js → auth.js → siteAnalytics.js →
+              i18n init → [TopBar fetch → topbar.js] → schema.js →
               storage.js → shareModule.js → accessGuard.js → import.js
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Import</title>
+    <meta charset="UTF-8"> <!-- Zorgt voor correcte tekencodering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive gedrag -->
+    <title>Import</title> <!-- Wordt overschreven door i18n na init -->
 
-     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
-    <link rel="stylesheet" href="../css/style.css">
-     
+    <link rel="stylesheet" href="../css/style.css"> <!-- Globale styling -->
+
+    <!-- ======================= i18next laadvolgorde (verplicht) ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Centrale i18n module -->
+
     <style>
         .welkom-blok { margin-bottom: 24px; }
         .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
@@ -66,63 +73,87 @@
 </head>
 <body>
 
+<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
+
+<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
 <main>
     <div class="container">
 
+        <!-- Welkomstblok -->
         <div class="welkom-blok">
-            <h1>Welkom bij Import</h1>
-            <p>
-                Laad een bestaand CSV-bestand in om je stamboomdata te importeren.
-                Nieuwe personen worden toegevoegd aan de bestaande stamboom.
-            </p>
+            <h1 data-i18n="import:welcome.heading"></h1>
+            <p data-i18n="import:welcome.intro"></p>
         </div>
 
+        <!-- Formulier sectie -->
         <div class="import-sectie">
-            <h2>Selecteer een bestand</h2>
-            <p class="subtitel">Ondersteunde formaten: .csv en .txt</p>
+            <h2 data-i18n="import:form.heading"></h2>
+            <p class="subtitel" data-i18n="import:form.subtitle"></p>
             <input type="file" id="importFile" accept=".csv,.txt" class="bestand-input">
-            <button id="importBtn" class="knop-import">Importeer CSV</button>
+            <button id="importBtn" class="knop-import" data-i18n="import:form.button"></button>
             <p id="importStatus"></p>
         </div>
 
+        <!-- Infoblok — elke regel apart vertaald -->
         <div class="info-blok">
-            <strong>Wat moet je weten over de import?</strong><br>
-            Het bestand moet de juiste kolomnamen hebben. Gebruik de CSV-template als startpunt.<br>
-            Komma, puntkomma en tab worden automatisch herkend als kolomscheider.<br>
-            Bestaande personen worden niet overschreven, nieuwe rijen worden toegevoegd.<br>
-            Je gegevens verlaten je browser nooit: alles wordt lokaal verwerkt.
+            <strong data-i18n="import:info.heading"></strong><br>
+            <span data-i18n="import:info.line1"></span><br>
+            <span data-i18n="import:info.line2"></span><br>
+            <span data-i18n="import:info.line3"></span><br>
+            <span data-i18n="import:info.line4"></span>
         </div>
 
     </div>
 </main>
 
+<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
+<!-- ======================= SCRIPTS ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
 
 <script>
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+    // ======================= i18n initialiseren =======================
+    i18nModule.init().then(function () {
 
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+        // Laad de 'import' namespace voor deze pagina
+        i18nModule.loadNamespace('import');
+
+        // Stel paginatitel in via i18n key
+        document.title = i18nModule.t('import:page.title');
+
+        // ======================= TopBar laden =======================
+        fetch('/MyFamTreeCollab/Layout/TopBar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                var s = document.createElement('script');
+                s.src = '../js/topbar.js';
+                document.body.appendChild(s);
+            });
+
+        // ======================= Navbar laden =======================
+        fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+            });
+
+        // ======================= Footer laden =======================
+        fetch('/MyFamTreeCollab/Layout/Footer.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+            });
+    });
+
+    // Pagina tracking — buiten i18n init, blokkeert niets
     SiteAnalytics.trackPage("import"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
@@ -136,7 +167,7 @@
     /* Rolcheck: import.html is alleen voor owner.
        Viewer en Editor krijgen een foutblok te zien. */
     document.addEventListener('DOMContentLoaded', function () {
-        window.AccessGuard.check([]);    // Lege array: alleen owner wordt doorgelaten
+        window.AccessGuard.check([]); // Lege array: alleen owner wordt doorgelaten
     });
 </script>
 
