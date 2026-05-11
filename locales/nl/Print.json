@@ -1,0 +1,12 @@
+{
+  "page": {
+    "title": "Afdrukken"
+  },
+  "content": {
+    "heading": "Stamboom Afdrukken",
+    "body":    "De afdrukfunctie is momenteel in ontwikkeling. Binnenkort kun je hier je stamboom afdrukken of opslaan als PDF."
+  },
+  "buttons": {
+    "backHome": "Terug naar Home"
+  }
+}
