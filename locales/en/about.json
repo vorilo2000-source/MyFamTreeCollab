@@ -1,0 +1,44 @@
+{
+  "page": {
+    "title": "About"
+  },
+  "hero": {
+    "heading":  "🌳 About MyFamTreeCollab",
+    "intro":    "Every family has a story. Sometimes it lives in memories, but often in boxes full of old documents."
+  },
+  "sections": {
+    "origin": {
+      "heading": "📦 How it started",
+      "p1":      "This project started after I received a box of wedding, birth and death cards that my mother had kept for years. Throwing them away was not an option. But how do you preserve something like that in a way that truly has value?",
+      "p2":      "What started in Excel quickly grew into a bigger insight: a family tree only becomes truly valuable when you can share it and build it together."
+    },
+    "why": {
+      "heading": "🤝 Why this website",
+      "p1":      "Many existing genealogy platforms are complex, closed or take control of your data. MyFamTreeCollab deliberately takes a different approach.",
+      "p2":      "You remain the owner of your data. You can save your family tree locally or in the cloud, and export it as a CSV, GEDCOM or JSON file. Everything you enter, including relationships, is fully contained in your file."
+    },
+    "how": {
+      "heading": "🧠 How it works",
+      "p1":      "You build your family tree using a simple structure centred around people and relationships. Parents, partners and children are displayed visually, giving you a quick overview of your family history.",
+      "p2":      "Unlike many other tools, your file is fully transparent and portable. No hidden structures, no lock-in."
+    },
+    "local": {
+      "heading": "🔄 Local or collaborative",
+      "p1":      "You can easily work locally and share your file with family. That is the simplest way to get started.",
+      "p2":      "Collaboration brings challenges such as version control and tracking changes. That is why a cloud solution is being developed to make collaboration easier and more manageable."
+    },
+    "future": {
+      "heading": "🚀 Future",
+      "p1":      "This project continues to evolve. The following additions are planned for the future:",
+      "p2":      "Linking photos to people, visualising family events, collaborating in a secure environment and communication between family members within the family tree."
+    },
+    "why2": {
+      "heading": "❤️ Why start",
+      "p1":      "Because your family story is worth preserving. Because memories fade, but stories can live on.",
+      "p2":      "A family tree is not built alone, but together."
+    }
+  },
+  "buttons": {
+    "backHome": "Back to Home"
+  }
+}
