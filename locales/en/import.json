@@ -1,0 +1,21 @@
+{
+  "page": {
+    "title": "Import"
+  },
+  "welcome": {
+    "heading": "Welcome to Import",
+    "intro":   "Load an existing CSV file to import your family tree data. New people will be added to the existing family tree."
+  },
+  "form": {
+    "heading":  "Select a file",
+    "subtitle": "Supported formats: .csv and .txt",
+    "button":   "Import CSV"
+  },
+  "info": {
+    "heading": "What do you need to know about the import?",
+    "line1":   "The file must have the correct column names. Use the CSV template as a starting point.",
+    "line2":   "Comma, semicolon and tab are automatically recognised as column separators.",
+    "line3":   "Existing people will not be overwritten, new rows will be added.",
+    "line4":   "Your data never leaves your browser: everything is processed locally."
+  }
+}
