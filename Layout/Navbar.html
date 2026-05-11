@@ -1,7 +1,10 @@
-<!-- ======================= Layout/Navbar v1.0.0 =======================
-     Wijzigingen v0.0.2:
-     - adminDropdown standaard verborgen (display:none)
-     - Zichtbaar via topbar.js na admin-check
+<!-- ======================= Layout/Navbar v1.1.0 =======================
+     Wijzigingen v1.1.0:
+     - data-i18n toegevoegd op alle vertaalbare tekst (common:nav.*)
+     - Menu-titels gebruiken data-i18n op de <a> tags
+     - Submenu-links gebruiken data-i18n op de <a> tags
+     - 🚧 emoji's blijven hardcoded (geen vertaalbare inhoud)
+     - Merknaam en logo-alt niet vertaald
      ======================================================================= -->
 
 <!-- ======================= HEADER ======================= -->
@@ -16,44 +19,87 @@
     <nav>
         <ul class="menu">
 
+            <!-- Home -->
             <li>
-                <a href="/MyFamTreeCollab/index.html" class="menu-title">Home</a>
+                <a href="/MyFamTreeCollab/index.html"
+                   class="menu-title"
+                   data-i18n="common:nav.home">Home</a>
             </li>
 
+            <!-- Start dropdown -->
             <li class="dropdown">
-                <a href="#" class="menu-title">Start ▼</a>
+                <a href="#"
+                   class="menu-title"
+                   data-i18n="common:nav.start">Start</a>
+                   <!-- Arrow kept outside translated element to avoid overwrite -->
+                <span> ▼</span>
                 <ul class="submenu">
-                    <li><a href="/MyFamTreeCollab/home/create.html" class="submenu-link">Create</a></li>
-                    <li><a href="/MyFamTreeCollab/home/import.html" class="submenu-link">Import</a></li>
-                    <li><a href="/MyFamTreeCollab/home/export.html" class="submenu-link">Export</a></li>
-                    <li><a href="/MyFamTreeCollab/home/about.html" class="submenu-link">About</a></li>
-                    <li><a href="/MyFamTreeCollab/home/print.html" class="submenu-link">🚧 Print</a></li>
+                    <li><a href="/MyFamTreeCollab/home/create.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.create">Create</a></li>
+                    <li><a href="/MyFamTreeCollab/home/import.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.import">Import</a></li>
+                    <li><a href="/MyFamTreeCollab/home/export.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.export">Export</a></li>
+                    <li><a href="/MyFamTreeCollab/home/about.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.about">About</a></li>
+                    <!-- 🚧 hardcoded prefix kept outside translated span -->
+                    <li><a href="/MyFamTreeCollab/home/print.html"
+                           class="submenu-link">🚧 <span data-i18n="common:nav.sub.print">Print</span></a></li>
                 </ul>
             </li>
 
+            <!-- Stamboom dropdown -->
             <li class="dropdown">
-                <a href="#" class="menu-title">Stamboom ▼</a>
+                <a href="#"
+                   class="menu-title"
+                   data-i18n="common:nav.stamboom">Stamboom</a>
+                <span> ▼</span>
                 <ul class="submenu">
-                    <li><a href="/MyFamTreeCollab/stamboom/view.html" class="submenu-link">View</a></li>
-                    <li><a href="/MyFamTreeCollab/stamboom/timeline.html" class="submenu-link">Timeline</a></li>
-                    <li><a href="/MyFamTreeCollab/stamboom/manage.html" class="submenu-link">Manage</a></li>
-                    <li><a href="/MyFamTreeCollab/stamboom/storage.html" class="submenu-link">Storage</a></li>
-                    <li><a href="/MyFamTreeCollab/stamboom/collab.html" class="submenu-link">Berichtenbord</a></li>
-                    <li><a href="/MyFamTreeCollab/stamboom/stats.html" class="submenu-link">Statistiek</a></li>
+                    <li><a href="/MyFamTreeCollab/stamboom/view.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.view">View</a></li>
+                    <li><a href="/MyFamTreeCollab/stamboom/timeline.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.timeline">Timeline</a></li>
+                    <li><a href="/MyFamTreeCollab/stamboom/manage.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.manage">Manage</a></li>
+                    <li><a href="/MyFamTreeCollab/stamboom/storage.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.storage">Storage</a></li>
+                    <li><a href="/MyFamTreeCollab/stamboom/collab.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.messages">Berichtenbord</a></li>
+                    <li><a href="/MyFamTreeCollab/stamboom/stats.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.stats">Statistiek</a></li>
                 </ul>
             </li>
 
+            <!-- Bronnen dropdown -->
             <li class="dropdown">
-                <a href="#" class="menu-title">Bronnen ▼</a>
+                <a href="#"
+                   class="menu-title"
+                   data-i18n="common:nav.sources">Bronnen</a>
+                <span> ▼</span>
                 <ul class="submenu">
-          <!--      <li><a href="/MyFamTreeCollab/bronnen/artikelen.html" class="submenu-link">🚧 Artikelen</a></li>  -->
-           <!--     <li><a href="/MyFamTreeCollab/bronnen/extern.html" class="submenu-link">🚧 Extern</a></li>  -->
-                    <li><a href="/MyFamTreeCollab/bronnen/handleiding.html" class="submenu-link">Handleiding</a></li>
-          <!--      <li><a href="/MyFamTreeCollab/bronnen/instructies.html" class="submenu-link">🚧 Instructies</a></li>  -->
-                    <li><a href="/MyFamTreeCollab/bronnen/template.html" class="submenu-link">Template</a></li>
+                <!--  <li><a href="/MyFamTreeCollab/bronnen/artikelen.html" class="submenu-link">🚧 Artikelen</a></li>  -->
+                <!--  <li><a href="/MyFamTreeCollab/bronnen/extern.html" class="submenu-link">🚧 Extern</a></li>  -->
+                    <li><a href="/MyFamTreeCollab/bronnen/handleiding.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.handleiding">Handleiding</a></li>
+                <!--  <li><a href="/MyFamTreeCollab/bronnen/instructies.html" class="submenu-link">🚧 Instructies</a></li>  -->
+                    <li><a href="/MyFamTreeCollab/bronnen/template.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.template">Template</a></li>
                 </ul>
             </li>
 
+            <!-- Gemeenschap — uitgecommentarieerd, geen data-i18n nodig zolang verborgen -->
            <!-- ======================= Gemeenschap =======================
              <li class="dropdown">
                 <a href="#" class="menu-title">Gemeenschap ▼</a>
@@ -65,37 +111,65 @@
                 </ul>
             </li>
           ======================================================================= -->
-             
-          <!-- ======================= Abonnementen ======================= -->
-             <li class="dropdown">
-                <a href="#" class="menu-title">Abonnementen ▼</a>
+
+            <!-- Abonnementen dropdown -->
+            <li class="dropdown">
+                <a href="#"
+                   class="menu-title"
+                   data-i18n="common:nav.pricing">Abonnementen</a>
+                <span> ▼</span>
                 <ul class="submenu">
-                    <li><a href="/MyFamTreeCollab/abonnementen/overzicht.html" class="submenu-link">🚧 Overzicht</a></li>
-                    <li><a href="/MyFamTreeCollab/abonnementen/prijzen.html" class="submenu-link">🚧 Prijzen</a></li>
-                    <li><a href="/MyFamTreeCollab/abonnementen/vergelijk.html" class="submenu-link">🚧 Vergelijken</a></li>
-                    <li><a href="/MyFamTreeCollab/abonnementen/voordelen.html" class="submenu-link">🚧 Voordelen</a></li>
+                    <li><a href="/MyFamTreeCollab/abonnementen/overzicht.html"
+                           class="submenu-link">🚧 <span data-i18n="common:nav.sub.overview">Overzicht</span></a></li>
+                    <li><a href="/MyFamTreeCollab/abonnementen/prijzen.html"
+                           class="submenu-link">🚧 <span data-i18n="common:nav.sub.prices">Prijzen</span></a></li>
+                    <li><a href="/MyFamTreeCollab/abonnementen/vergelijk.html"
+                           class="submenu-link">🚧 <span data-i18n="common:nav.sub.compare">Vergelijken</span></a></li>
+                    <li><a href="/MyFamTreeCollab/abonnementen/voordelen.html"
+                           class="submenu-link">🚧 <span data-i18n="common:nav.sub.benefits">Voordelen</span></a></li>
                 </ul>
             </li>
-             
-            <!-- Admin dropdown — standaard verborgen, zichtbaar via topbar.js na admin-check -->
+
+            <!-- Administrator dropdown — standaard verborgen, zichtbaar via topbar.js na admin-check -->
             <li class="dropdown" id="adminDropdown" style="display:none;">
-                <a href="#" class="menu-title">Administrator ▼</a>
+                <a href="#"
+                   class="menu-title"
+                   data-i18n="common:nav.admin">Administrator</a>
+                <span> ▼</span>
                 <ul class="submenu">
-                    <li><a href="/MyFamTreeCollab/admin/accountbeheer.html" class="submenu-link">Accounts</a></li>
-                    <li><a href="/MyFamTreeCollab/admin/analytics.html" class="submenu-link"> Analytics</a></li>
-                    <li><a href="/MyFamTreeCollab/admin/analyse.html" class="submenu-link">🚧 Analyse</a></li>
-                     
+                    <li><a href="/MyFamTreeCollab/admin/accountbeheer.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.accounts">Accounts</a></li>
+                    <li><a href="/MyFamTreeCollab/admin/analytics.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.analytics">Analytics</a></li>
+                    <li><a href="/MyFamTreeCollab/admin/analyse.html"
+                           class="submenu-link">🚧 <span data-i18n="common:nav.sub.analyse">Analyse</span></a></li>
                 </ul>
             </li>
-          <!-- develop dropdown — standaard verborgen, zichtbaar via topbar.js na admin-check  -->
+
+            <!-- Developer dropdown — standaard verborgen, zichtbaar via topbar.js na admin-check -->
             <li class="dropdown" id="developDropdown" style="display:none;">
-                <a href="#" class="menu-title">Developer ▼</a>
+                <a href="#"
+                   class="menu-title"
+                   data-i18n="common:nav.developer">Developer</a>
+                <span> ▼</span>
                 <ul class="submenu">
-                    <li><a href="/MyFamTreeCollab/develop/blank.html" class="submenu-link">Leeg</a></li>
-                    <li><a href="/MyFamTreeCollab/develop/maintenance.html" class="submenu-link">Maintenance</a></li>
-                    <li><a href="/MyFamTreeCollab/develop/standaardpagina.html" class="submenu-link">Pagina-voorbeeld</a></li>
-                    <li><a href="/MyFamTreeCollab/develop/sandbox.html" class="submenu-link">Sandbox</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/blank.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.blank">Leeg</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/maintenance.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.maintenance">Maintenance</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/standaardpagina.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.pageExample">Pagina-voorbeeld</a></li>
+                    <li><a href="/MyFamTreeCollab/develop/sandbox.html"
+                           class="submenu-link"
+                           data-i18n="common:nav.sub.sandbox">Sandbox</a></li>
                 </ul>
+            </li>
+
         </ul>
     </nav>
 </header>
