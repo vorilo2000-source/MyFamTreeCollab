@@ -1,0 +1,12 @@
+{
+  "page": {
+    "title": "Imprimir"
+  },
+  "content": {
+    "heading": "Imprimir árbol genealógico",
+    "body":    "La función de impresión está actualmente en desarrollo. Pronto podrás imprimir tu árbol genealógico o guardarlo como PDF."
+  },
+  "buttons": {
+    "backHome": "Volver al inicio"
+  }
+}
