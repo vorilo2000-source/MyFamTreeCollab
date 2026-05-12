@@ -1,7 +1,8 @@
-<!-- ======================= docs/terms.html v1.1.0 =======================
-     Wijziging v1.1.0 (sessie 25):
-     - Vertaald naar het Engels
-     - lang="nl" gewijzigd naar lang="en"
+<!-- ======================= docs/terms.html v1.2.0 =======================
+     Wijziging v1.2.0 (sessie 25):
+     - Alle drie talen (EN, NL, ES) samengevoegd in één bestand
+     - Taalnavigatie bovenaan met ankerlinks
+     - Elke sectie heeft eigen ← Back link
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,25 +11,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Terms of Use | MyFamTreeCollab</title>
 <style>
-body{ font-family:Arial,sans-serif; max-width:900px; margin:40px auto; padding:0 20px; line-height:1.6; }
-h1{ border-bottom:2px solid #ccc; padding-bottom:10px; }
-h2{ margin-top:30px; }
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+h1 { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+h2 { margin-top: 30px; }
+
+.lang-nav {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 12px;
+}
+.lang-nav a {
+    padding: 6px 16px;
+    border: 1px solid #343a40;
+    border-radius: 4px;
+    color: #343a40;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+.lang-nav a:hover { background: #343a40; color: #fff; }
+
+.lang-section { padding-top: 20px; border-top: 2px solid #eee; margin-top: 48px; }
+.lang-section:first-of-type { border-top: none; margin-top: 0; }
+
+.back-link { margin-bottom: 24px; }
+.back-link a { color: #343a40; text-decoration: underline; font-weight: bold; }
+
+.last-updated { margin-top: 40px; font-size: 0.9rem; color: #666; }
 </style>
 </head>
 <body>
-<p><a href="javascript:history.back()" style="color:#343a40;text-decoration:underline;">← Back</a></p>
-<h1>Terms of Use</h1>
-<p>By using this website you agree to the terms set out below.</p>
-<h2>Use of the website</h2>
-<p>The MyFamTreeCollab website is intended for genealogical research and informational use.</p>
-<h2>Acceptable use</h2>
-<p>Users may not misuse the information for illegal activities or violations of privacy.</p>
-<h2>Copyright</h2>
-<p>All content on this website, including text, images and genealogical data, remains the property of the original author or source.</p>
-<h2>Changes</h2>
-<p>The administrator reserves the right to amend these terms at any time.</p>
-<h2>Liability</h2>
-<p>Use of the website is entirely at your own risk.</p>
-<p style="margin-top:40px;font-size:0.9rem;color:#666;">Last updated: 2026</p>
+
+<!-- ======================= TAALNAVIGATIE ======================= -->
+<nav class="lang-nav">
+    <a href="#en">English</a>
+    <a href="#nl">Nederlands</a>
+    <a href="#es">Español</a>
+</nav>
+
+<!-- ======================= ENGLISH ======================= -->
+<section class="lang-section" id="en">
+    <p class="back-link"><a href="javascript:history.back()">← Back</a></p>
+    <h1>Terms of Use</h1>
+    <p>By using this website you agree to the terms set out below.</p>
+    <h2>Use of the website</h2>
+    <p>The MyFamTreeCollab website is intended for genealogical research and informational use.</p>
+    <h2>Acceptable use</h2>
+    <p>Users may not misuse the information for illegal activities or violations of privacy.</p>
+    <h2>Copyright</h2>
+    <p>All content on this website, including text, images and genealogical data, remains the property of the original author or source.</p>
+    <h2>Changes</h2>
+    <p>The administrator reserves the right to amend these terms at any time.</p>
+    <h2>Liability</h2>
+    <p>Use of the website is entirely at your own risk.</p>
+    <p class="last-updated">Last updated: 2026</p>
+</section>
+
+<!-- ======================= NEDERLANDS ======================= -->
+<section class="lang-section" id="nl">
+    <p class="back-link"><a href="javascript:history.back()">← Terug</a></p>
+    <h1>Gebruiksvoorwaarden</h1>
+    <p>Door deze website te gebruiken gaat u akkoord met de onderstaande voorwaarden.</p>
+    <h2>Gebruik van de website</h2>
+    <p>De website MyFamTreeCollab is bedoeld voor genealogisch onderzoek en informatief gebruik.</p>
+    <h2>Correct gebruik</h2>
+    <p>Gebruikers mogen de informatie niet misbruiken voor illegale activiteiten of schending van privacy.</p>
+    <h2>Auteursrechten</h2>
+    <p>Alle inhoud op deze website, inclusief tekst, afbeeldingen en genealogische gegevens, blijft eigendom van de oorspronkelijke auteur of bron.</p>
+    <h2>Wijzigingen</h2>
+    <p>De beheerder behoudt zich het recht voor om deze voorwaarden op elk moment aan te passen.</p>
+    <h2>Aansprakelijkheid</h2>
+    <p>Gebruik van de website is volledig op eigen risico.</p>
+    <p class="last-updated">Laatste update: 2026</p>
+</section>
+
+<!-- ======================= ESPAÑOL ======================= -->
+<section class="lang-section" id="es">
+    <p class="back-link"><a href="javascript:history.back()">← Volver</a></p>
+    <h1>Condiciones de uso</h1>
+    <p>Al utilizar este sitio web, usted acepta las condiciones que se indican a continuación.</p>
+    <h2>Uso del sitio web</h2>
+    <p>El sitio web MyFamTreeCollab está destinado a la investigación genealógica y al uso informativo.</p>
+    <h2>Uso aceptable</h2>
+    <p>Los usuarios no pueden hacer un uso indebido de la información para actividades ilegales o vulneraciones de la privacidad.</p>
+    <h2>Derechos de autor</h2>
+    <p>Todo el contenido de este sitio web, incluidos textos, imágenes y datos genealógicos, sigue siendo propiedad del autor o fuente original.</p>
+    <h2>Cambios</h2>
+    <p>El administrador se reserva el derecho de modificar estas condiciones en cualquier momento.</p>
+    <h2>Responsabilidad</h2>
+    <p>El uso del sitio web es enteramente bajo su propia responsabilidad.</p>
+    <p class="last-updated">Última actualización: 2026</p>
+</section>
+
 </body>
 </html>
