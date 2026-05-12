@@ -1,7 +1,8 @@
-<!-- ======================= docs/disclaimer.html v1.1.0 =======================
-     Wijziging v1.1.0 (sessie 25):
-     - Vertaald naar het Engels
-     - lang="nl" gewijzigd naar lang="en"
+<!-- ======================= docs/disclaimer.html v1.2.0 =======================
+     Wijziging v1.2.0 (sessie 25):
+     - Alle drie talen (EN, NL, ES) samengevoegd in één bestand
+     - Taalnavigatie bovenaan met ankerlinks
+     - Elke sectie heeft eigen ← Back link
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,27 +11,110 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Disclaimer | MyFamTreeCollab</title>
 <style>
-body{ font-family:Arial,sans-serif; max-width:900px; margin:40px auto; padding:0 20px; line-height:1.6; }
-h1{ border-bottom:2px solid #ccc; padding-bottom:10px; }
-h2{ margin-top:30px; }
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+h1 { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+h2 { margin-top: 30px; }
+
+/* Taalnavigatie balk bovenaan */
+.lang-nav {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 12px;
+}
+.lang-nav a {
+    padding: 6px 16px;
+    border: 1px solid #343a40;
+    border-radius: 4px;
+    color: #343a40;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+.lang-nav a:hover { background: #343a40; color: #fff; }
+
+/* Scheiding tussen taalsecties */
+.lang-section { padding-top: 20px; border-top: 2px solid #eee; margin-top: 48px; }
+.lang-section:first-of-type { border-top: none; margin-top: 0; }
+
+.back-link { margin-bottom: 24px; }
+.back-link a { color: #343a40; text-decoration: underline; font-weight: bold; }
+
+.last-updated { margin-top: 40px; font-size: 0.9rem; color: #666; }
 </style>
 </head>
 <body>
-<p><a href="javascript:history.back()" style="color:#343a40;text-decoration:underline;">← Back</a></p>
-<h1>Disclaimer</h1>
-<p>This website is part of the <strong>MyFamTreeCollab</strong> project. The purpose of this website is to share and visualise genealogical information.</p>
-<h2>Use of information</h2>
-<p>All information on this website is intended solely for informational and genealogical purposes. No rights may be derived from the content.</p>
-<h2>Accuracy of data</h2>
-<p>Genealogical data may be incomplete, inaccurate or based on historical sources. Although we strive for accuracy, MyFamTreeCollab cannot guarantee the correctness of all data.</p>
-<h2>User contributions</h2>
-<p>Some information may originate from user contributions or external sources. The administrator of this website is not responsible for any errors in these contributions.</p>
-<h2>Privacy of living persons</h2>
-<p>To protect privacy, data relating to living persons is displayed as limitedly as possible.</p>
-<h2>Liability</h2>
-<p>MyFamTreeCollab accepts no liability for direct or indirect damage arising from the use of this website.</p>
-<h2>Corrections</h2>
-<p>If you find incorrect information, please contact the administrator of this website so that it can be reviewed and corrected if necessary.</p>
-<p style="margin-top:40px;font-size:0.9rem;color:#666;">Last updated: 2026</p>
+
+<!-- ======================= TAALNAVIGATIE ======================= -->
+<nav class="lang-nav">
+    <a href="#en">English</a>
+    <a href="#nl">Nederlands</a>
+    <a href="#es">Español</a>
+</nav>
+
+<!-- ======================= ENGLISH ======================= -->
+<section class="lang-section" id="en">
+    <p class="back-link"><a href="javascript:history.back()">← Back</a></p>
+    <h1>Disclaimer</h1>
+    <p>This website is part of the <strong>MyFamTreeCollab</strong> project. The purpose of this website is to share and visualise genealogical information.</p>
+    <h2>Use of information</h2>
+    <p>All information on this website is intended solely for informational and genealogical purposes. No rights may be derived from the content.</p>
+    <h2>Accuracy of data</h2>
+    <p>Genealogical data may be incomplete, inaccurate or based on historical sources. Although we strive for accuracy, MyFamTreeCollab cannot guarantee the correctness of all data.</p>
+    <h2>User contributions</h2>
+    <p>Some information may originate from user contributions or external sources. The administrator of this website is not responsible for any errors in these contributions.</p>
+    <h2>Privacy of living persons</h2>
+    <p>To protect privacy, data relating to living persons is displayed as limitedly as possible.</p>
+    <h2>Liability</h2>
+    <p>MyFamTreeCollab accepts no liability for direct or indirect damage arising from the use of this website.</p>
+    <h2>Corrections</h2>
+    <p>If you find incorrect information, please contact the administrator of this website so that it can be reviewed and corrected if necessary.</p>
+    <p class="last-updated">Last updated: 2026</p>
+</section>
+
+<!-- ======================= NEDERLANDS ======================= -->
+<section class="lang-section" id="nl">
+    <p class="back-link"><a href="javascript:history.back()">← Terug</a></p>
+    <h1>Disclaimer</h1>
+    <p>Deze website maakt deel uit van het project <strong>MyFamTreeCollab</strong>. Het doel van deze website is het delen en visualiseren van genealogische informatie.</p>
+    <h2>Gebruik van informatie</h2>
+    <p>Alle informatie op deze website is uitsluitend bedoeld voor informatieve en genealogische doeleinden. Aan de inhoud kunnen geen rechten worden ontleend.</p>
+    <h2>Nauwkeurigheid van gegevens</h2>
+    <p>Genealogische gegevens kunnen onvolledig, onjuist of gebaseerd zijn op historische bronnen. Hoewel wij streven naar nauwkeurigheid, kan MyFamTreeCollab geen garantie geven voor de juistheid van alle gegevens.</p>
+    <h2>Bijdragen van gebruikers</h2>
+    <p>Een deel van de informatie kan afkomstig zijn van bijdragen van gebruikers of externe bronnen. De beheerder van deze website is niet verantwoordelijk voor eventuele fouten in deze bijdragen.</p>
+    <h2>Privacy van levende personen</h2>
+    <p>Om privacy te beschermen worden gegevens van levende personen zoveel mogelijk beperkt weergegeven.</p>
+    <h2>Aansprakelijkheid</h2>
+    <p>MyFamTreeCollab aanvaardt geen aansprakelijkheid voor directe of indirecte schade die voortvloeit uit het gebruik van deze website.</p>
+    <h2>Correcties</h2>
+    <p>Indien u onjuiste informatie aantreft, kunt u contact opnemen met de beheerder van deze website zodat deze kan worden beoordeeld en indien nodig aangepast.</p>
+    <p class="last-updated">Laatste update: 2026</p>
+</section>
+
+<!-- ======================= ESPAÑOL ======================= -->
+<section class="lang-section" id="es">
+    <p class="back-link"><a href="javascript:history.back()">← Volver</a></p>
+    <h1>Aviso legal</h1>
+    <p>Este sitio web forma parte del proyecto <strong>MyFamTreeCollab</strong>. El propósito de este sitio web es compartir y visualizar información genealógica.</p>
+    <h2>Uso de la información</h2>
+    <p>Toda la información de este sitio web está destinada únicamente a fines informativos y genealógicos. No se pueden derivar derechos del contenido.</p>
+    <h2>Exactitud de los datos</h2>
+    <p>Los datos genealógicos pueden estar incompletos, ser inexactos o estar basados en fuentes históricas. Aunque nos esforzamos por ser precisos, MyFamTreeCollab no puede garantizar la exactitud de todos los datos.</p>
+    <h2>Contribuciones de usuarios</h2>
+    <p>Parte de la información puede provenir de contribuciones de usuarios o fuentes externas. El administrador de este sitio web no es responsable de los errores en dichas contribuciones.</p>
+    <h2>Privacidad de personas vivas</h2>
+    <p>Para proteger la privacidad, los datos de personas vivas se muestran de forma lo más limitada posible.</p>
+    <h2>Responsabilidad</h2>
+    <p>MyFamTreeCollab no acepta ninguna responsabilidad por daños directos o indirectos derivados del uso de este sitio web.</p>
+    <h2>Correcciones</h2>
+    <p>Si encuentra información incorrecta, póngase en contacto con el administrador de este sitio web para que pueda ser revisada y corregida si es necesario.</p>
+    <p class="last-updated">Última actualización: 2026</p>
+</section>
+
 </body>
 </html>
