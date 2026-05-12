@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "Export"
+  },
+  "welcome": {
+    "heading": "Welcome to Export",
+    "intro": "Here you can download your complete family tree as a CSV file for use in Excel, or as a JSON file for a full backup that you can import again later."
+  },
+  "csv": {
+    "heading": "Export as CSV",
+    "body": "A CSV file can be opened in Excel, Google Sheets or any other spreadsheet application. You can view, edit and re-import the data via the import page.",
+    "chromeTip": "On Chrome or Edge (HTTPS) you will get a \"Save as\" dialog to choose your own storage location. On other browsers the file is automatically saved to your downloads folder.",
+    "button": "Export CSV"
+  },
+  "json": {
+    "heading": "🚧 Export as JSON",
+    "body": "A JSON file is a complete backup of your family tree including all fields. Store this file in a safe place so you never lose your data.",
+    "button": "Export JSON",
+    "note": "The file is automatically saved to your downloads folder with the date in the filename."
+  },
+  "status": {
+    "noData": "No people to export.",
+    "promptFilename": "Enter filename (without .csv):",
+    "csvSavedAs": "Exported as {{filename}} (location chosen)",
+    "browserWarning": "This browser does not support location selection. The file will be saved to your downloads folder.",
+    "csvDownload": "Exported as {{filename}} (downloads folder)",
+    "cancelled": "Export cancelled.",
+    "failed": "Export failed. See console for details.",
+    "jsonSaved": "Exported as {{filename}}"
+  }
+}
