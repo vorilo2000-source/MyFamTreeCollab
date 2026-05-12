@@ -1,5 +1,12 @@
-<!-- ======================= home/create.html v2.1.0 =======================
-     Aanmaken eerste persoon (Hoofd-ID) van de stamboom
+<!-- ======================= home/create.html v2.2.0 =======================
+     Wijziging v2.2.0 (sessie 25):
+     - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
+     - i18nModule.init() + loadNamespace('create') toegevoegd
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded() geladen
+     - Alle tekst vervangen door data-i18n="create:*" attributen
+     - Placeholders via data-i18n="[placeholder]create:*"
+     - Select opties vertaald via data-i18n
+     - <title> dynamisch gezet via i18nModule
 
      Wijziging v2.1.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -7,15 +14,9 @@
 
      Wijziging v2.0.2 (F5-04):
      - AccessGuard toegevoegd: alleen owner mag nieuwe stamboom aanmaken
-     - shareModule.js + accessGuard.js toegevoegd aan laadvolgorde
-     - Viewer en Editor krijgen foutblok te zien
-
-     Wijziging v2.0.1: Supabase auth + TopBar login modal
-     Wijziging v2.0.0: facelift — welkomstblok, inline stijlen naar <style>,
-                       formulier in sectiekader, consistente opmaak met export.html
 
      Scripts laadvolgorde: supabase → utils.js → auth.js → siteAnalytics.js →
-                           [TopBar fetch → topbar.js] → schema.js →
+                           i18n init → [TopBar fetch → topbar.js] → schema.js →
                            idGenerator.js → storage.js → shareModule.js →
                            accessGuard.js → create.js
      ======================================================================= -->
@@ -24,16 +25,22 @@
 <head>
     <meta charset="UTF-8"> <!-- Zorgt voor correcte tekencodering -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive gedrag -->
-    <title>Nieuwe Stamboom</title>
+    <title>Nieuwe Stamboom</title> <!-- Wordt overschreven door i18n na init -->
 
-     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
-     
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
     <link rel="stylesheet" href="../css/style.css"> <!-- Globale styling -->
-     
+
+    <!-- ======================= i18next laadvolgorde (verplicht) ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Centrale i18n module -->
+
     <style>
         .welkom-blok { margin-bottom: 24px; }
         .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
@@ -95,106 +102,154 @@
         .knop-manage:hover { background: #43a047; }
     </style>
 </head>
-
 <body>
 
+<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
+
+<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
 <main>
     <div class="container">
 
+        <!-- Welkomstblok -->
         <div class="welkom-blok">
-            <h1>Welkom bij je Nieuwe Stamboom</h1>
-            <p>
-                Hier maak je de eerste persoon aan in je stamboom, de <strong>Hoofd-ID</strong>.
-                Daarna kun je op de <strong>Manage</strong>-pagina familieleden toevoegen en relaties leggen.
-            </p>
+            <h1 data-i18n="create:welcome.heading"></h1>
+            <p data-i18n="create:welcome.intro"></p>
         </div>
 
+        <!-- Waarschuwingsblok — tekst wordt via create.js ingevuld -->
         <div id="warningMessage" class="waarschuwing"></div>
 
+        <!-- Formulier sectie -->
         <div class="formulier-sectie">
-            <h2>Vul de gegevens in</h2>
-            <p class="subtitel">Alle velden zijn optioneel behalve Roepnaam en Achternaam.</p>
+            <h2 data-i18n="create:form.heading"></h2>
+            <p class="subtitel" data-i18n="create:form.subtitle"></p>
+
             <form id="persoonForm">
+
+                <!-- Rij 1: Doopnaam + Roepnaam -->
                 <div class="veld-rij">
                     <div class="veld">
-                        <label for="doopnaam">Doopnaam</label>
-                        <input type="text" id="doopnaam" name="doopnaam" placeholder="Officiële voornaam">
+                        <label for="doopnaam" data-i18n="create:form.doopnaam"></label>
+                        <input type="text" id="doopnaam" name="doopnaam"
+                               data-i18n="[placeholder]create:form.doopnaamPH">
                     </div>
                     <div class="veld">
-                        <label for="roepnaam">Roepnaam <span style="color:#c00;">*</span></label>
-                        <input type="text" id="roepnaam" name="roepnaam" placeholder="Naam waarop geroepen">
+                        <label for="roepnaam">
+                            <span data-i18n="create:form.roepnaam"></span>
+                            <span style="color:#c00;"> *</span>
+                        </label>
+                        <input type="text" id="roepnaam" name="roepnaam"
+                               data-i18n="[placeholder]create:form.roepnaamPH">
                     </div>
                 </div>
+
+                <!-- Rij 2: Prefix + Achternaam -->
                 <div class="veld-rij">
                     <div class="veld">
-                        <label for="prefix">Prefix</label>
-                        <input type="text" id="prefix" name="prefix" placeholder="van, de, van den...">
+                        <label for="prefix" data-i18n="create:form.prefix"></label>
+                        <input type="text" id="prefix" name="prefix"
+                               data-i18n="[placeholder]create:form.prefixPH">
                     </div>
                     <div class="veld">
-                        <label for="achternaam">Achternaam <span style="color:#c00;">*</span></label>
-                        <input type="text" id="achternaam" name="achternaam" placeholder="Familienaam">
+                        <label for="achternaam">
+                            <span data-i18n="create:form.achternaam"></span>
+                            <span style="color:#c00;"> *</span>
+                        </label>
+                        <input type="text" id="achternaam" name="achternaam"
+                               data-i18n="[placeholder]create:form.achternaamPH">
                     </div>
                 </div>
+
+                <!-- Rij 3: Geboortedatum + Geslacht -->
                 <div class="veld-rij">
                     <div class="veld">
-                        <label for="geboortedatum">Geboortedatum</label>
+                        <label for="geboortedatum" data-i18n="create:form.geboortedatum"></label>
                         <input type="date" id="geboortedatum" name="geboortedatum">
                     </div>
                     <div class="veld">
-                        <label for="geslacht">Geslacht</label>
+                        <label for="geslacht" data-i18n="create:form.geslacht"></label>
                         <select id="geslacht" name="geslacht">
-                            <option value="">Selecteer...</option>
-                            <option value="M">Man</option>
-                            <option value="V">Vrouw</option>
-                            <option value="X">Anders / Non-binair</option>
+                            <!-- Opties vertaald via data-i18n -->
+                            <option value="" data-i18n="create:form.geslachtPH"></option>
+                            <option value="M" data-i18n="create:form.man"></option>
+                            <option value="V" data-i18n="create:form.vrouw"></option>
+                            <option value="X" data-i18n="create:form.anders"></option>
                         </select>
                     </div>
                 </div>
-                <button type="submit" class="knop-opslaan">Opslaan</button>
+
+                <!-- Opslaan knop -->
+                <button type="submit" class="knop-opslaan"
+                        data-i18n="create:form.opslaan"></button>
             </form>
         </div>
 
+        <!-- Preview sectie — zichtbaar na submit -->
         <div id="personPreview" class="preview-sectie">
-            <h2>Bevestig de gegevens</h2>
+            <h2 data-i18n="create:preview.heading"></h2>
             <pre id="previewContent"></pre>
-            <button id="confirmBtn" class="knop-bevestigen">Bevestigen &amp; ga naar Manage</button>
+            <button id="confirmBtn" class="knop-bevestigen"
+                    data-i18n="create:preview.confirm"></button>
         </div>
 
+        <!-- Link naar Manage voor bestaande stambomen -->
         <div class="manage-link">
-            <p>Heb je al een stamboom? Ga direct naar de beheerpagina.</p>
-            <a href="../stamboom/manage.html" class="knop-manage">Ga naar Manage</a>
+            <p data-i18n="create:manage.intro"></p>
+            <a href="../stamboom/manage.html" class="knop-manage"
+               data-i18n="create:manage.button"></a>
         </div>
 
     </div>
 </main>
 
+<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
+<!-- ======================= SCRIPTS ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
 
 <script>
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+    // ======================= i18n initialiseren =======================
+    i18nModule.init().then(function () {
 
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+        // Laad de 'create' namespace voor deze pagina
+        i18nModule.loadNamespace('create');
+
+        // Stel paginatitel in via i18n key
+        document.title = i18nModule.t('create:page.title');
+
+        // ======================= TopBar laden =======================
+        fetch('/MyFamTreeCollab/Layout/TopBar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                var s = document.createElement('script');
+                s.src = '../js/topbar.js';
+                document.body.appendChild(s);
+            });
+
+        // ======================= Navbar laden =======================
+        fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+            });
+
+        // ======================= Footer laden =======================
+        fetch('/MyFamTreeCollab/Layout/Footer.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+            });
+    });
+
+    // Pagina tracking — buiten i18n init, blokkeert niets
     SiteAnalytics.trackPage("create"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
@@ -209,7 +264,7 @@
     /* Rolcheck: create.html is alleen voor owner.
        Viewer en Editor krijgen een foutblok te zien. */
     document.addEventListener('DOMContentLoaded', function () {
-        window.AccessGuard.check([]);    // Lege array: alleen owner wordt doorgelaten
+        window.AccessGuard.check([]); // Lege array: alleen owner wordt doorgelaten
     });
 </script>
 
