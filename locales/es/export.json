@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "Exportar"
+  },
+  "welcome": {
+    "heading": "Bienvenido a Exportar",
+    "intro": "Aquí puedes descargar tu árbol genealógico completo como archivo CSV para usar en Excel, o como archivo JSON para una copia de seguridad completa que puedes importar más adelante."
+  },
+  "csv": {
+    "heading": "Exportar como CSV",
+    "body": "Un archivo CSV se puede abrir en Excel, Google Sheets o cualquier otra aplicación de hojas de cálculo. Puedes ver, editar y volver a importar los datos a través de la página de importación.",
+    "chromeTip": "En Chrome o Edge (HTTPS) obtendrás un diálogo \"Guardar como\" para elegir tu propia ubicación de almacenamiento. En otros navegadores el archivo se guarda automáticamente en tu carpeta de descargas.",
+    "button": "Exportar CSV"
+  },
+  "json": {
+    "heading": "🚧 Exportar como JSON",
+    "body": "Un archivo JSON es una copia de seguridad completa de tu árbol genealógico con todos los campos. Guarda este archivo en un lugar seguro para no perder nunca tus datos.",
+    "button": "Exportar JSON",
+    "note": "El archivo se guarda automáticamente en tu carpeta de descargas con la fecha en el nombre del archivo."
+  },
+  "status": {
+    "noData": "No hay personas para exportar.",
+    "promptFilename": "Introduce el nombre del archivo (sin .csv):",
+    "csvSavedAs": "Exportado como {{filename}} (ubicación elegida)",
+    "browserWarning": "Este navegador no admite la selección de ubicación. El archivo se guardará en tu carpeta de descargas.",
+    "csvDownload": "Exportado como {{filename}} (carpeta de descargas)",
+    "cancelled": "Exportación cancelada.",
+    "failed": "Exportación fallida. Consulta la consola para más detalles.",
+    "jsonSaved": "Exportado como {{filename}}"
+  }
+}
