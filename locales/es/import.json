@@ -22,5 +22,12 @@
     "button": "Elegir archivo",
     "noFile": "Ningún archivo seleccionado",
     "selected": "Seleccionado: "
+  },
+  "status": {
+    "storageError": "storage.js no cargado",
+    "schemaError": "schema.js no cargado",
+    "noFile": "Ningún archivo seleccionado",
+    "noData": "El CSV no contiene datos",
+    "success": "Importación completada: {{count}} personas añadidas"
   }
 }
