@@ -1,5 +1,10 @@
-<!-- ======================= home/export.html v2.2.0 =======================
-     Exportpagina: CSV en JSON download van de volledige stamboom
+<!-- ======================= home/export.html v2.3.0 =======================
+     Wijziging v2.3.0 (sessie 25):
+     - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
+     - i18nModule.init() + loadNamespace('export') toegevoegd
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded() geladen
+     - Alle tekst vervangen door data-i18n="export:*" attributen
+     - <title> dynamisch gezet via i18nModule
 
      Wijziging v2.2.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -7,30 +12,32 @@
 
      Wijziging v2.1.3 (F5-04):
      - AccessGuard toegevoegd: alleen owner mag exporteren
-     - shareModule.js + accessGuard.js toegevoegd aan laadvolgorde
 
-     Wijziging v2.1.2: bugfix — ontbrekende topbar-placeholder div,
-             navbar placeholder ID mismatch opgelost
-     Wijziging v2.1.1: Login + Favicon / App-icoon
-     Wijziging v2.1.0: nieuwe opmaak — welkomstblok, CSV en JSON als aparte secties
-
-     Scripts: supabase → utils.js → auth.js → siteAnalytics.js → [TopBar] → schema.js →
+     Scripts: supabase → utils.js → auth.js → siteAnalytics.js →
+              i18n init → [TopBar fetch → topbar.js] → schema.js →
               storage.js → shareModule.js → accessGuard.js → export.js
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export</title>
+    <meta charset="UTF-8"> <!-- Zorgt voor correcte tekencodering -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive gedrag -->
+    <title>Export</title> <!-- Wordt overschreven door i18n na init -->
 
     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css"> <!-- Globale styling -->
+
+    <!-- ======================= i18next laadvolgorde (verplicht) ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Centrale i18n module -->
+
     <style>
         .export-sectie {
             border: 1px solid #ddd; border-radius: 6px; padding: 20px 24px;
@@ -44,8 +51,8 @@
             padding: 9px 18px; cursor: pointer; border: none;
             border-radius: 4px; font-size: 0.95rem; font-weight: bold;
         }
-        #exportCSVBtn       { background: #5bc0de; color: #fff; }
-        #exportCSVBtn:hover { background: #31b0d5; }
+        #exportCSVBtn        { background: #5bc0de; color: #fff; }
+        #exportCSVBtn:hover  { background: #31b0d5; }
         #exportJSONBtn       { background: #0275d8; color: #fff; }
         #exportJSONBtn:hover { background: #025aa5; }
         #exportStatus        { font-size: 0.9rem; margin-top: 8px; }
@@ -57,72 +64,86 @@
 </head>
 <body>
 
+<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
+
+<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
 <main>
     <div class="container">
 
+        <!-- Welkomstblok -->
         <div class="welkom-blok">
-            <h1>Welkom in de Export</h1>
-            <p>
-                Hier kun je je volledige stamboom downloaden als CSV-bestand voor gebruik in
-                Excel, of als JSON-bestand voor een volledige back-up die je later weer kunt importeren.
-            </p>
+            <h1 data-i18n="export:welcome.heading"></h1>
+            <p data-i18n="export:welcome.intro"></p>
         </div>
 
+        <!-- CSV sectie -->
         <div class="export-sectie">
-            <h2>Exporteer als CSV</h2>
-            <p>
-                Een CSV-bestand kun je openen in Excel, Google Sheets of elk ander spreadsheetprogramma.
-                Je kunt de data bekijken, aanpassen en later weer importeren via de importpagina.<br><br>
-                <strong>Op Chrome of Edge (HTTPS)</strong> krijg je een "Opslaan als" dialoog om zelf
-                de opslaglocatie te kiezen. Op andere browsers wordt het bestand automatisch
-                opgeslagen in je downloadmap.
-            </p>
-            <button id="exportCSVBtn">Exporteer CSV</button>
+            <h2 data-i18n="export:csv.heading"></h2>
+            <p data-i18n="export:csv.body"></p>
+            <p><strong data-i18n="export:csv.chromeTip"></strong></p>
+            <button id="exportCSVBtn" data-i18n="export:csv.button"></button>
             <p id="exportStatus"></p>
         </div>
 
+        <!-- JSON sectie -->
         <div class="export-sectie">
-            <h2>🚧 Exporteer als JSON</h2>
-            <p>
-                Een JSON-bestand is een volledige back-up van je stamboom inclusief alle velden.
-                Bewaar dit bestand op een veilige plek zodat je je data nooit kwijt bent.
-            </p>
-            <button id="exportJSONBtn">Export JSON</button>
-            <p class="opmerking">
-                Het bestand wordt automatisch opgeslagen in je downloadmap met de datum in de bestandsnaam.
-            </p>
+            <h2 data-i18n="export:json.heading"></h2>
+            <p data-i18n="export:json.body"></p>
+            <button id="exportJSONBtn" data-i18n="export:json.button"></button>
+            <p class="opmerking" data-i18n="export:json.note"></p>
         </div>
 
     </div>
 </main>
 
+<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
+<!-- ======================= SCRIPTS ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
 
 <script>
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
+    // ======================= i18n initialiseren =======================
+    i18nModule.init().then(function () {
 
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+        // Laad de 'export' namespace voor deze pagina
+        i18nModule.loadNamespace('export');
+
+        // Stel paginatitel in via i18n key
+        document.title = i18nModule.t('export:page.title');
+
+        // ======================= TopBar laden =======================
+        fetch('/MyFamTreeCollab/Layout/TopBar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                var s = document.createElement('script');
+                s.src = '../js/topbar.js';
+                document.body.appendChild(s);
+            });
+
+        // ======================= Navbar laden =======================
+        fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+            });
+
+        // ======================= Footer laden =======================
+        fetch('/MyFamTreeCollab/Layout/Footer.html')
+            .then(r => r.text())
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+            });
+    });
+
+    // Pagina tracking — buiten i18n init, blokkeert niets
     SiteAnalytics.trackPage("export"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
@@ -133,23 +154,22 @@
 <script src="../js/export.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
 
-    /* Rolcheck: export.html is alleen voor owner.
-       Viewer en Editor krijgen een foutblok te zien. */
-    window.AccessGuard.check([]);    // Lege array: alleen owner wordt doorgelaten
+        // Rolcheck: export.html is alleen voor owner
+        window.AccessGuard.check([]); // Lege array: alleen owner wordt doorgelaten
 
-    var statusEl      = document.getElementById('exportStatus');
-    var exportCSVBtn  = document.getElementById('exportCSVBtn');
-    var exportJSONBtn = document.getElementById('exportJSONBtn');
+        var statusEl      = document.getElementById('exportStatus');   // Statusmelding element
+        var exportCSVBtn  = document.getElementById('exportCSVBtn');   // CSV export knop
+        var exportJSONBtn = document.getElementById('exportJSONBtn');  // JSON export knop
 
-    exportCSVBtn.addEventListener('click', function () {
-        window.ExportModule.exportCSV(statusEl);
+        exportCSVBtn.addEventListener('click', function () {
+            window.ExportModule.exportCSV(statusEl); // Roept exportCSV aan in export.js
+        });
+        exportJSONBtn.addEventListener('click', function () {
+            window.ExportModule.exportJSON(statusEl); // Roept exportJSON aan in export.js
+        });
     });
-    exportJSONBtn.addEventListener('click', function () {
-        window.ExportModule.exportJSON(statusEl);
-    });
-});
 </script>
 
 </body>
