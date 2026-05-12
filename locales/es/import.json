@@ -4,18 +4,23 @@
   },
   "welcome": {
     "heading": "Bienvenido a Importar",
-    "intro":   "Carga un archivo CSV existente para importar los datos de tu árbol genealógico. Las nuevas personas se añadirán al árbol genealógico existente."
+    "intro": "Carga un archivo CSV existente para importar los datos de tu árbol genealógico. Las nuevas personas se añadirán al árbol genealógico existente."
   },
   "form": {
-    "heading":  "Selecciona un archivo",
+    "heading": "Selecciona un archivo",
     "subtitle": "Formatos admitidos: .csv y .txt",
-    "button":   "Importar CSV"
+    "button": "Importar CSV"
   },
   "info": {
     "heading": "¿Qué debes saber sobre la importación?",
-    "line1":   "El archivo debe tener los nombres de columna correctos. Usa la plantilla CSV como punto de partida.",
-    "line2":   "La coma, el punto y coma y el tabulador se reconocen automáticamente como separadores de columna.",
-    "line3":   "Las personas existentes no se sobreescribirán, se añadirán nuevas filas.",
-    "line4":   "Tus datos nunca salen de tu navegador: todo se procesa localmente."
+    "line1": "El archivo debe tener los nombres de columna correctos. Usa la plantilla CSV como punto de partida.",
+    "line2": "La coma, el punto y coma y el tabulador se reconocen automáticamente como separadores de columna.",
+    "line3": "Las personas existentes no se sobreescribirán, se añadirán nuevas filas.",
+    "line4": "Tus datos nunca salen de tu navegador: todo se procesa localmente."
+  },
+  "file": {
+    "button": "Elegir archivo",
+    "noFile": "Ningún archivo seleccionado",
+    "selected": "Seleccionado: "
   }
 }
