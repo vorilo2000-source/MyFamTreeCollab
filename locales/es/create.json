@@ -1,0 +1,43 @@
+{
+  "page": {
+    "title": "Nuevo árbol genealógico"
+  },
+  "welcome": {
+    "heading": "Bienvenido a tu nuevo árbol genealógico",
+    "intro": "Aquí creas la primera persona en tu árbol genealógico, el ID principal. Después puedes añadir familiares y definir relaciones en la página de gestión."
+  },
+  "form": {
+    "heading": "Rellena los datos",
+    "subtitle": "Todos los campos son opcionales excepto Nombre y Apellido.",
+    "doopnaam": "Nombre de pila",
+    "doopnaamPH": "Nombre oficial",
+    "roepnaam": "Nombre",
+    "roepnaamPH": "Nombre de uso diario",
+    "prefix": "Prefijo",
+    "prefixPH": "van, de, van den...",
+    "achternaam": "Apellido",
+    "achternaamPH": "Nombre de familia",
+    "geboortedatum": "Fecha de nacimiento",
+    "geslacht": "Género",
+    "geslachtPH": "Seleccionar...",
+    "man": "Hombre",
+    "vrouw": "Mujer",
+    "anders": "Otro / No binario",
+    "opslaan": "Guardar"
+  },
+  "preview": {
+    "heading": "Confirma los datos",
+    "confirm": "Confirmar e ir a Gestión"
+  },
+  "manage": {
+    "intro": "¿Ya tienes un árbol genealógico? Ve directamente a la página de gestión.",
+    "button": "Ir a Gestión"
+  },
+  "status": {
+    "alreadyExists": "Ya existe una persona en el árbol genealógico. Usa Gestión para añadir personas.",
+    "busy": "Procesando…",
+    "limitReached": "Límite alcanzado: tu árbol genealógico ya contiene {{count}} personas (máximo para cuentas gratuitas: {{max}}).",
+    "saveError": "Se produjo un error al guardar. Por favor, inténtalo de nuevo.",
+    "confirmBtn": "Confirmar e ir a Gestión"
+  }
+}
