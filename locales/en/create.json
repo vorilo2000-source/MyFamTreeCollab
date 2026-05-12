@@ -1,0 +1,43 @@
+{
+  "page": {
+    "title": "New Family Tree"
+  },
+  "welcome": {
+    "heading": "Welcome to your New Family Tree",
+    "intro": "Here you create the first person in your family tree, the Main ID. Afterwards you can add family members and define relationships on the Manage page."
+  },
+  "form": {
+    "heading": "Fill in the details",
+    "subtitle": "All fields are optional except First name and Last name.",
+    "doopnaam": "Given name",
+    "doopnaamPH": "Official first name",
+    "roepnaam": "First name",
+    "roepnaamPH": "Name used in daily life",
+    "prefix": "Prefix",
+    "prefixPH": "van, de, van den...",
+    "achternaam": "Last name",
+    "achternaamPH": "Family name",
+    "geboortedatum": "Date of birth",
+    "geslacht": "Gender",
+    "geslachtPH": "Select...",
+    "man": "Male",
+    "vrouw": "Female",
+    "anders": "Other / Non-binary",
+    "opslaan": "Save"
+  },
+  "preview": {
+    "heading": "Confirm the details",
+    "confirm": "Confirm & go to Manage"
+  },
+  "manage": {
+    "intro": "Already have a family tree? Go directly to the management page.",
+    "button": "Go to Manage"
+  },
+  "status": {
+    "alreadyExists": "There is already a person in the family tree. Use Manage to add people.",
+    "busy": "Processing…",
+    "limitReached": "Limit reached: your family tree already contains {{count}} people (maximum for free accounts: {{max}}).",
+    "saveError": "An error occurred while saving. Please try again.",
+    "confirmBtn": "Confirm & go to Manage"
+  }
+}
