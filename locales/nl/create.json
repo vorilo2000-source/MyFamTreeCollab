@@ -1,0 +1,43 @@
+{
+  "page": {
+    "title": "Nieuwe Stamboom"
+  },
+  "welcome": {
+    "heading": "Welkom bij je Nieuwe Stamboom",
+    "intro": "Hier maak je de eerste persoon aan in je stamboom, de Hoofd-ID. Daarna kun je op de Manage-pagina familieleden toevoegen en relaties leggen."
+  },
+  "form": {
+    "heading": "Vul de gegevens in",
+    "subtitle": "Alle velden zijn optioneel behalve Roepnaam en Achternaam.",
+    "doopnaam": "Doopnaam",
+    "doopnaamPH": "Officiële voornaam",
+    "roepnaam": "Roepnaam",
+    "roepnaamPH": "Naam waarop geroepen",
+    "prefix": "Prefix",
+    "prefixPH": "van, de, van den...",
+    "achternaam": "Achternaam",
+    "achternaamPH": "Familienaam",
+    "geboortedatum": "Geboortedatum",
+    "geslacht": "Geslacht",
+    "geslachtPH": "Selecteer...",
+    "man": "Man",
+    "vrouw": "Vrouw",
+    "anders": "Anders / Non-binair",
+    "opslaan": "Opslaan"
+  },
+  "preview": {
+    "heading": "Bevestig de gegevens",
+    "confirm": "Bevestigen & ga naar Manage"
+  },
+  "manage": {
+    "intro": "Heb je al een stamboom? Ga direct naar de beheerpagina.",
+    "button": "Ga naar Manage"
+  },
+  "status": {
+    "alreadyExists": "Er staat al een persoon in de stamboom. Gebruik Manage om personen toe te voegen.",
+    "busy": "Bezig…",
+    "limitReached": "Limiet bereikt: je stamboom bevat al {{count}} personen (maximum voor gratis accounts: {{max}}).",
+    "saveError": "Er is een fout opgetreden bij het opslaan. Probeer opnieuw.",
+    "confirmBtn": "Bevestigen & ga naar Manage"
+  }
+}
