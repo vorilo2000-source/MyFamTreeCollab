@@ -1,6 +1,8 @@
-// ======================= js/create.js v1.2.0 =======================
-// Verwerkt het formulier voor het aanmaken van de eerste persoon (Hoofd-ID)
-// Vereist: schema.js, idGenerator.js, storage.js (in die volgorde geladen)
+// ======================= js/create.js v1.3.0 =======================
+// Wijziging v1.3.0 (sessie 25):
+// - Alle hardcoded statusmeldingen vervangen door i18nModule.t('create:status.*')
+// - confirmBtn tekst via i18n hersteld na fout
+// - limitReached melding gebruikt i18next interpolatie voor count/max
 //
 // Wijziging v1.2.0:
 // - confirmBtn handler async gemaakt zodat await StamboomStorage.add() werkt
@@ -8,92 +10,89 @@
 // - Geblokkeerde add() (limiet bereikt) toont foutmelding i.p.v. stil te falen
 // ===================================================================
 
-document.addEventListener('DOMContentLoaded', () => {               // Wacht tot de volledige HTML geladen is voordat we DOM-elementen opzoeken
+document.addEventListener('DOMContentLoaded', () => {               // Wacht tot de volledige HTML geladen is
 
     // ======================= DOM ELEMENTEN =======================
-    const form           = document.getElementById('persoonForm');   // Het invulformulier met alle persoonsgegevens
-    const previewDiv     = document.getElementById('personPreview'); // De sectie die de JSON-preview toont vóór opslaan
-    const previewContent = document.getElementById('previewContent');// Het <pre> element binnenin previewDiv met de JSON-tekst
-    const confirmBtn     = document.getElementById('confirmBtn');    // De knop waarmee de gebruiker de invoer bevestigt en opslaat
-    const warningMessage = document.getElementById('warningMessage');// De div voor fout- of waarschuwingsberichten aan de gebruiker
+    const form           = document.getElementById('persoonForm');   // Het invulformulier
+    const previewDiv     = document.getElementById('personPreview'); // Preview sectie
+    const previewContent = document.getElementById('previewContent');// <pre> element met JSON-tekst
+    const confirmBtn     = document.getElementById('confirmBtn');    // Bevestigingsknop
+    const warningMessage = document.getElementById('warningMessage');// Waarschuwingsblok
 
     // ======================= FORM SUBMIT HANDLER =======================
-    form.addEventListener('submit', function(e) {                    // Luister naar het moment dat de gebruiker op Opslaan klikt
-        e.preventDefault();                                          // Voorkom dat de browser de pagina herlaadt bij formulier-submit
+    form.addEventListener('submit', function(e) {                    // Luister naar formulier-submit
+        e.preventDefault();                                          // Voorkom pagina-herlaad
 
-        const dataset = StamboomStorage.get();                       // Haal de huidige lijst van personen op uit localStorage via storage.js
+        const dataset = StamboomStorage.get();                       // Haal huidige personen op
 
-        if (dataset.length > 0) {                                    // Controleer of er al minstens één persoon in de stamboom staat
-            warningMessage.textContent = 'Er staat al een persoon in de stamboom. Gebruik Manage om personen toe te voegen.'; // Toon uitleg aan de gebruiker
-            warningMessage.style.display = 'block';                  // Maak het waarschuwingsblok zichtbaar (was verborgen via CSS)
-            previewDiv.style.display = 'none';                       // Verberg de preview sectie want er is niets te bevestigen
-            return;                                                  // Stop de functie hier, sla niets op
+        if (dataset.length > 0) {                                    // Al een persoon aanwezig?
+            warningMessage.textContent = i18nModule.t('create:status.alreadyExists'); // Vertaalde waarschuwing
+            warningMessage.style.display = 'block';                  // Toon waarschuwingsblok
+            previewDiv.style.display = 'none';                       // Verberg preview
+            return;                                                  // Stop functie
         }
 
         // ======================= FORMULIER WAARDEN OPHALEN =======================
-        const doopnaam   = document.getElementById('doopnaam').value.trim();    // Officiële voornaam, trim verwijdert spaties voor/achter
-        const roepnaam   = document.getElementById('roepnaam').value.trim();    // Naam waarop persoon aangesproken wordt
-        const prefix     = document.getElementById('prefix').value.trim();      // Tussenvoegsel zoals 'van', 'de', 'van den'
-        const achternaam = document.getElementById('achternaam').value.trim();  // Familienaam
-        const geboorte   = document.getElementById('geboortedatum').value;      // Geboortedatum in formaat yyyy-mm-dd (HTML date input)
-        const geslacht   = document.getElementById('geslacht').value;           // Geslacht: M, V of X
+        const doopnaam   = document.getElementById('doopnaam').value.trim();
+        const roepnaam   = document.getElementById('roepnaam').value.trim();
+        const prefix     = document.getElementById('prefix').value.trim();
+        const achternaam = document.getElementById('achternaam').value.trim();
+        const geboorte   = document.getElementById('geboortedatum').value;
+        const geslacht   = document.getElementById('geslacht').value;
 
         // ======================= NIEUWE PERSOON OBJECT =======================
         const person = {
-            ID: window.genereerCode(                                 // Roep centrale ID-generator aan uit idGenerator.js
-                { Doopnaam: doopnaam, Roepnaam: roepnaam,           // Geef naamvelden mee zodat ID-letters kloppen
-                  Achternaam: achternaam, Geslacht: geslacht },      // Geslacht bepaalt de 4e letter in het ID
-                StamboomStorage.get()                                // Geef huidige dataset mee zodat ID uniek is
+            ID: window.genereerCode(                                 // Uniek ID via idGenerator.js
+                { Doopnaam: doopnaam, Roepnaam: roepnaam,
+                  Achternaam: achternaam, Geslacht: geslacht },
+                StamboomStorage.get()
             ),
-            Doopnaam:      doopnaam,                                 // Sla officiële voornaam op in het persoon-object
-            Roepnaam:      roepnaam,                                 // Sla roepnaam op
-            Prefix:        prefix,                                   // Sla tussenvoegsel op (mag leeg zijn)
-            Achternaam:    achternaam,                               // Sla familienaam op
-            Geslacht:      geslacht,                                 // Sla geslacht op (M / V / X)
-            Geboortedatum: geboorte,                                 // Sla geboortedatum op
-            Relatie:       'Hoofd-ID',                               // Eerste persoon is altijd de Hoofd-ID van de stamboom
-            PartnerID:     []                                        // Lege array: nog geen partner(s) gekoppeld bij aanmaken
+            Doopnaam:      doopnaam,
+            Roepnaam:      roepnaam,
+            Prefix:        prefix,
+            Achternaam:    achternaam,
+            Geslacht:      geslacht,
+            Geboortedatum: geboorte,
+            Relatie:       'Hoofd-ID',                               // Eerste persoon is altijd Hoofd-ID
+            PartnerID:     []                                        // Nog geen partners
         };
 
         // ======================= PREVIEW TONEN =======================
-        previewContent.textContent = JSON.stringify(person, null, 2); // Zet het persoon-object om naar leesbare JSON-tekst (2 spaties inspringing)
-        previewDiv.style.display = 'block';                          // Maak de preview sectie zichtbaar zodat gebruiker kan controleren
+        previewContent.textContent = JSON.stringify(person, null, 2); // Leesbare JSON in preview
+        previewDiv.style.display = 'block';                          // Toon preview sectie
     });
 
     // ======================= CONFIRM BUTTON HANDLER =======================
-    // async zodat we kunnen wachten op StamboomStorage.add() —
-    // add() doet intern await AuthModule.getTier() en is daardoor async sinds v2.0.2.
-    // Zonder async/await navigeerde de pagina weg vóór add() de persoon had opgeslagen.
-    confirmBtn.addEventListener('click', async function() {          // async: verplicht voor await hieronder
+    confirmBtn.addEventListener('click', async function() {          // async: vereist voor await add()
 
-        confirmBtn.disabled = true;                                  // Voorkom dubbelklik tijdens verwerking
-        confirmBtn.textContent = 'Bezig…';                           // Visuele feedback aan de gebruiker
+        confirmBtn.disabled = true;                                  // Voorkom dubbelklik
+        confirmBtn.textContent = i18nModule.t('create:status.busy'); // Vertaalde "Bezig…" tekst
 
-        const person = JSON.parse(previewContent.textContent);       // Lees de JSON-tekst uit de preview terug naar een JavaScript object
+        const person = JSON.parse(previewContent.textContent);       // Herstel object uit JSON-preview
 
-        const result = await StamboomStorage.add(person);            // WACHT tot add() volledig klaar is — persoon staat nu in localStorage
+        const result = await StamboomStorage.add(person);            // Wacht tot persoon opgeslagen is
 
         if (result === true) {
-            // Persoon succesvol opgeslagen — navigeer door naar Manage
-            window.location.href = '../stamboom/manage.html';        // Stuur de gebruiker door naar de Manage pagina
+            // Succesvol opgeslagen — navigeer naar Manage
+            window.location.href = '../stamboom/manage.html';
 
         } else if (result && result.blocked) {
-            // Limiet bereikt — toon foutmelding, blijf op pagina
-            warningMessage.textContent =
-                'Limiet bereikt: je stamboom bevat al ' + result.count +
-                ' personen (maximum voor gratis accounts: ' + result.max + ').'; // Informeer de gebruiker
-            warningMessage.style.display = 'block';                  // Toon het waarschuwingsblok
+            // Limiet bereikt — toon vertaalde melding met count en max
+            warningMessage.textContent = i18nModule.t('create:status.limitReached', {
+                count: result.count,
+                max:   result.max
+            });
+            warningMessage.style.display = 'block';                  // Toon waarschuwingsblok
             confirmBtn.disabled = false;                             // Knop weer inschakelen
-            confirmBtn.textContent = 'Bevestigen & ga naar Manage';  // Knoptekst herstellen
+            confirmBtn.textContent = i18nModule.t('create:status.confirmBtn'); // Knoptekst herstellen
 
         } else {
-            // Onverwachte fout — toon generieke melding
-            warningMessage.textContent = 'Er is een fout opgetreden bij het opslaan. Probeer opnieuw.'; // Generieke foutmelding
-            warningMessage.style.display = 'block';                  // Toon het waarschuwingsblok
-            confirmBtn.disabled = false;                             // Knop weer inschakelen
-            confirmBtn.textContent = 'Bevestigen & ga naar Manage';  // Knoptekst herstellen
+            // Onverwachte fout
+            warningMessage.textContent = i18nModule.t('create:status.saveError'); // Vertaalde foutmelding
+            warningMessage.style.display = 'block';
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = i18nModule.t('create:status.confirmBtn'); // Knoptekst herstellen
         }
-
     });
 
-}); // Einde DOMContentLoaded — alles hierboven wordt pas uitgevoerd als de hele pagina klaar is
+}); // Einde DOMContentLoaded
