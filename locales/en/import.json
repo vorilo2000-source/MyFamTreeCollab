@@ -22,5 +22,12 @@
     "button": "Choose file",
     "noFile": "No file selected",
     "selected": "Selected: "
+  },
+  "status": {
+    "storageError": "storage.js not loaded",
+    "schemaError": "schema.js not loaded",
+    "noFile": "No file selected",
+    "noData": "CSV contains no data",
+    "success": "Import complete: {{count}} people added"
   }
 }
