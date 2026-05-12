@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "Export"
+  },
+  "welcome": {
+    "heading": "Welkom in de Export",
+    "intro": "Hier kun je je volledige stamboom downloaden als CSV-bestand voor gebruik in Excel, of als JSON-bestand voor een volledige back-up die je later weer kunt importeren."
+  },
+  "csv": {
+    "heading": "Exporteer als CSV",
+    "body": "Een CSV-bestand kun je openen in Excel, Google Sheets of elk ander spreadsheetprogramma. Je kunt de data bekijken, aanpassen en later weer importeren via de importpagina.",
+    "chromeTip": "Op Chrome of Edge (HTTPS) krijg je een \"Opslaan als\" dialoog om zelf de opslaglocatie te kiezen. Op andere browsers wordt het bestand automatisch opgeslagen in je downloadmap.",
+    "button": "Exporteer CSV"
+  },
+  "json": {
+    "heading": "🚧 Exporteer als JSON",
+    "body": "Een JSON-bestand is een volledige back-up van je stamboom inclusief alle velden. Bewaar dit bestand op een veilige plek zodat je je data nooit kwijt bent.",
+    "button": "Export JSON",
+    "note": "Het bestand wordt automatisch opgeslagen in je downloadmap met de datum in de bestandsnaam."
+  },
+  "status": {
+    "noData": "Geen personen om te exporteren.",
+    "promptFilename": "Voer bestandsnaam in (zonder .csv):",
+    "csvSavedAs": "Geëxporteerd als {{filename}} (locatie gekozen)",
+    "browserWarning": "Deze browser ondersteunt geen locatiekeuze. Het bestand wordt opgeslagen in je downloadmap.",
+    "csvDownload": "Geëxporteerd als {{filename}} (downloadmap)",
+    "cancelled": "Export geannuleerd.",
+    "failed": "Export mislukt. Zie console voor details.",
+    "jsonSaved": "Geëxporteerd als {{filename}}"
+  }
+}
