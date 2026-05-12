@@ -1,7 +1,8 @@
-<!-- ======================= docs/privacy.html v1.1.0 =======================
-     Wijziging v1.1.0 (sessie 25):
-     - Vertaald naar het Engels
-     - lang="nl" gewijzigd naar lang="en"
+<!-- ======================= docs/privacy.html v1.2.0 =======================
+     Wijziging v1.2.0 (sessie 25):
+     - Alle drie talen (EN, NL, ES) samengevoegd in één bestand
+     - Taalnavigatie bovenaan met ankerlinks
+     - Elke sectie heeft eigen ← Back link
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,25 +11,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy | MyFamTreeCollab</title>
 <style>
-body{ font-family:Arial,sans-serif; max-width:900px; margin:40px auto; padding:0 20px; line-height:1.6; }
-h1{ border-bottom:2px solid #ccc; padding-bottom:10px; }
-h2{ margin-top:30px; }
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+h1 { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+h2 { margin-top: 30px; }
+
+.lang-nav {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 12px;
+}
+.lang-nav a {
+    padding: 6px 16px;
+    border: 1px solid #343a40;
+    border-radius: 4px;
+    color: #343a40;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+.lang-nav a:hover { background: #343a40; color: #fff; }
+
+.lang-section { padding-top: 20px; border-top: 2px solid #eee; margin-top: 48px; }
+.lang-section:first-of-type { border-top: none; margin-top: 0; }
+
+.back-link { margin-bottom: 24px; }
+.back-link a { color: #343a40; text-decoration: underline; font-weight: bold; }
+
+.last-updated { margin-top: 40px; font-size: 0.9rem; color: #666; }
 </style>
 </head>
 <body>
-<p><a href="javascript:history.back()" style="color:#343a40;text-decoration:underline;">← Back</a></p>
-<h1>Privacy Policy</h1>
-<p>MyFamTreeCollab respects the privacy of visitors and users of this website.</p>
-<h2>What data is collected</h2>
-<p>This website may contain genealogical data such as names, dates of birth and family relationships.</p>
-<h2>Living persons</h2>
-<p>Data relating to living persons is displayed as limitedly as possible to protect their privacy.</p>
-<h2>Purpose of the data</h2>
-<p>The data is used solely for genealogical research and the visualisation of family relationships.</p>
-<h2>External services</h2>
-<p>The website may make use of external hosting services such as GitHub Pages. These services may collect technical data such as IP addresses or log files.</p>
-<h2>Correction or deletion</h2>
-<p>If you believe that certain information is incorrect or should be removed, please contact the administrator of this website.</p>
-<p style="margin-top:40px;font-size:0.9rem;color:#666;">Last updated: 2026</p>
+
+<!-- ======================= TAALNAVIGATIE ======================= -->
+<nav class="lang-nav">
+    <a href="#en">English</a>
+    <a href="#nl">Nederlands</a>
+    <a href="#es">Español</a>
+</nav>
+
+<!-- ======================= ENGLISH ======================= -->
+<section class="lang-section" id="en">
+    <p class="back-link"><a href="javascript:history.back()">← Back</a></p>
+    <h1>Privacy Policy</h1>
+    <p>MyFamTreeCollab respects the privacy of visitors and users of this website.</p>
+    <h2>What data is collected</h2>
+    <p>This website may contain genealogical data such as names, dates of birth and family relationships.</p>
+    <h2>Living persons</h2>
+    <p>Data relating to living persons is displayed as limitedly as possible to protect their privacy.</p>
+    <h2>Purpose of the data</h2>
+    <p>The data is used solely for genealogical research and the visualisation of family relationships.</p>
+    <h2>External services</h2>
+    <p>The website may make use of external hosting services such as GitHub Pages. These services may collect technical data such as IP addresses or log files.</p>
+    <h2>Correction or deletion</h2>
+    <p>If you believe that certain information is incorrect or should be removed, please contact the administrator of this website.</p>
+    <p class="last-updated">Last updated: 2026</p>
+</section>
+
+<!-- ======================= NEDERLANDS ======================= -->
+<section class="lang-section" id="nl">
+    <p class="back-link"><a href="javascript:history.back()">← Terug</a></p>
+    <h1>Privacybeleid</h1>
+    <p>MyFamTreeCollab respecteert de privacy van bezoekers en gebruikers van deze website.</p>
+    <h2>Welke gegevens worden verzameld</h2>
+    <p>Deze website kan genealogische gegevens bevatten zoals namen, geboortedata en familierelaties.</p>
+    <h2>Levende personen</h2>
+    <p>Gegevens van levende personen worden zoveel mogelijk beperkt weergegeven om de privacy te beschermen.</p>
+    <h2>Doel van de gegevens</h2>
+    <p>De gegevens worden uitsluitend gebruikt voor genealogisch onderzoek en visualisatie van familierelaties.</p>
+    <h2>Externe diensten</h2>
+    <p>De website kan gebruik maken van externe hostingdiensten zoals GitHub Pages. Deze diensten kunnen technische gegevens verzamelen zoals IP-adressen of logbestanden.</p>
+    <h2>Correctie of verwijdering</h2>
+    <p>Indien u van mening bent dat bepaalde informatie onjuist is of verwijderd moet worden, kunt u contact opnemen met de beheerder van deze website.</p>
+    <p class="last-updated">Laatste update: 2026</p>
+</section>
+
+<!-- ======================= ESPAÑOL ======================= -->
+<section class="lang-section" id="es">
+    <p class="back-link"><a href="javascript:history.back()">← Volver</a></p>
+    <h1>Política de privacidad</h1>
+    <p>MyFamTreeCollab respeta la privacidad de los visitantes y usuarios de este sitio web.</p>
+    <h2>Qué datos se recopilan</h2>
+    <p>Este sitio web puede contener datos genealógicos como nombres, fechas de nacimiento y relaciones familiares.</p>
+    <h2>Personas vivas</h2>
+    <p>Los datos de personas vivas se muestran de forma lo más limitada posible para proteger su privacidad.</p>
+    <h2>Finalidad de los datos</h2>
+    <p>Los datos se utilizan únicamente para la investigación genealógica y la visualización de relaciones familiares.</p>
+    <h2>Servicios externos</h2>
+    <p>El sitio web puede hacer uso de servicios de alojamiento externos como GitHub Pages. Estos servicios pueden recopilar datos técnicos como direcciones IP o archivos de registro.</p>
+    <h2>Corrección o eliminación</h2>
+    <p>Si cree que cierta información es incorrecta o debe eliminarse, póngase en contacto con el administrador de este sitio web.</p>
+    <p class="last-updated">Última actualización: 2026</p>
+</section>
+
 </body>
 </html>
