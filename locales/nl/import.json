@@ -22,5 +22,12 @@
     "button": "Kies bestand",
     "noFile": "Geen bestand geselecteerd",
     "selected": "Geselecteerd: "
+  },
+  "status": {
+    "storageError": "storage.js niet geladen",
+    "schemaError": "schema.js niet geladen",
+    "noFile": "Geen bestand geselecteerd",
+    "noData": "CSV bevat geen data",
+    "success": "Import voltooid: {{count}} personen toegevoegd"
   }
 }
