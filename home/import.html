@@ -1,10 +1,15 @@
-<!-- ======================= home/import.html v2.2.0 =======================
-     Wijziging v2.2.0 (sessie 25):
+<!-- ======================= home/import.html v2.3.0 =======================
+     Wijziging v2.3.0 (sessie 25):
      - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
      - i18nModule.init() + loadNamespace('import') toegevoegd
      - TopBar/Navbar/Footer via i18nModule.onComponentLoaded() geladen
      - Alle tekst vervangen door data-i18n="import:*" attributen
+     - Custom file input gebouwd: native input verborgen, eigen knop + span
+       zodat "Kies bestand" en "Geen bestand geselecteerd" vertaalbaar zijn
      - <title> dynamisch gezet via i18nModule
+
+     Wijziging v2.2.0 (sessie 25):
+     - Eerste i18n refactor
 
      Wijziging v2.1.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -52,7 +57,42 @@
         .import-sectie .subtitel { font-size: 0.88rem; color: #888; margin: 0 0 18px 0; }
         .import-sectie p  { font-size: 0.9rem; color: #555; line-height: 1.6; margin: 0 0 16px 0; }
 
-        .bestand-input { display: block; width: 100%; margin-bottom: 16px; font-size: 0.9rem; color: #444; }
+        /* ======================= CUSTOM FILE INPUT ======================= */
+        /* Verbergt de native browser file input volledig */
+        #importFile {
+            display: none;
+        }
+
+        /* Wrapper voor de custom file input rij */
+        .custom-file-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        /* Eigen "Kies bestand" knop — triggert de verborgen native input */
+        .knop-kies-bestand {
+            padding: 8px 16px;
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .knop-kies-bestand:hover { background: #5a6268; }
+
+        /* Tekst die de bestandsnaam of "Geen bestand geselecteerd" toont */
+        #bestandsnaam {
+            font-size: 0.9rem;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         .knop-import {
             padding: 10px 24px; background: #1E90FF; color: #fff;
@@ -92,7 +132,22 @@
         <div class="import-sectie">
             <h2 data-i18n="import:form.heading"></h2>
             <p class="subtitel" data-i18n="import:form.subtitle"></p>
-            <input type="file" id="importFile" accept=".csv,.txt" class="bestand-input">
+
+            <!-- Native input verborgen — wordt getriggerd via knop hieronder -->
+            <input type="file" id="importFile" accept=".csv,.txt">
+
+            <!-- Custom file input: eigen knop + bestandsnaam span -->
+            <div class="custom-file-wrapper">
+                <!-- Knop triggert click op de verborgen native input -->
+                <button type="button"
+                        class="knop-kies-bestand"
+                        id="kiesBestandBtn"
+                        data-i18n="import:file.button">Kies bestand</button>
+                <!-- Toont bestandsnaam na selectie, of "Geen bestand geselecteerd" -->
+                <span id="bestandsnaam" data-i18n="import:file.noFile">Geen bestand geselecteerd</span>
+            </div>
+
+            <!-- Import knop -->
             <button id="importBtn" class="knop-import" data-i18n="import:form.button"></button>
             <p id="importStatus"></p>
         </div>
@@ -164,9 +219,32 @@
 <script src="../js/import.js"></script>
 
 <script>
-    /* Rolcheck: import.html is alleen voor owner.
-       Viewer en Editor krijgen een foutblok te zien. */
+    // ======================= Custom file input logica =======================
     document.addEventListener('DOMContentLoaded', function () {
+
+        var kiesBtn     = document.getElementById('kiesBestandBtn'); // Eigen kies-knop
+        var nativeInput = document.getElementById('importFile');      // Verborgen native input
+        var naamSpan    = document.getElementById('bestandsnaam');    // Bestandsnaam display
+
+        // Klik op eigen knop → triggert de verborgen native file picker
+        kiesBtn.addEventListener('click', function () {
+            nativeInput.click();
+        });
+
+        // Na bestandsselectie: toon bestandsnaam of "Geen bestand geselecteerd"
+        nativeInput.addEventListener('change', function () {
+            if (nativeInput.files.length > 0) {
+                // Toon "Geselecteerd: bestandsnaam.csv"
+                naamSpan.textContent = i18nModule.t('import:file.selected') + nativeInput.files[0].name;
+                naamSpan.removeAttribute('data-i18n'); // Verwijder key zodat updateContent() dit niet overschrijft
+            } else {
+                // Reset naar "Geen bestand geselecteerd"
+                naamSpan.textContent = i18nModule.t('import:file.noFile');
+                naamSpan.setAttribute('data-i18n', 'import:file.noFile'); // Herstel key voor taalwissel
+            }
+        });
+
+        // ======================= Rolcheck =======================
         window.AccessGuard.check([]); // Lege array: alleen owner wordt doorgelaten
     });
 </script>
