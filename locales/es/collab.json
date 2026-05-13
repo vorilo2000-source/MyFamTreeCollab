@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "Colaborar"
+  },
+  "header": {
+    "title": "💬 Panel de mensajes (Colaborar)",
+    "subtitle": "El panel muestra todos los árboles genealógicos a los que tienes acceso, tus propios árboles y los compartidos contigo. Por árbol verás discusiones sobre personas específicas, ordenadas por ID de persona."
+  },
+  "access": {
+    "icon": "🔒",
+    "heading": "Sin acceso para colaborar",
+    "body": "La función de colaboración está disponible para Viewers, Editors y Owners que hayan sido invitados por el propietario del árbol genealógico.",
+    "button": "Ir a Almacenamiento"
+  },
+  "modal": {
+    "title": "➕ Iniciar nueva discusión",
+    "labelId": "ID de persona",
+    "placeholderId": "p.ej. P-0042",
+    "labelNaam": "Nombre",
+    "placeholderNaam": "p.ej. Juan de Vries",
+    "cancel": "Cancelar",
+    "confirm": "Crear discusión",
+    "fillBoth": "Por favor completa el ID de persona y el nombre.",
+    "notFound": "Árbol no encontrado. Recarga la página."
+  },
+  "status": {
+    "nieuw": "Nuevo",
+    "open": "Abierto",
+    "inbehandeling": "En trámite",
+    "gesloten": "Cerrado"
+  },
+  "subtitle": {
+    "active": "Árbol activo: {{naam}}",
+    "none": "Sin árbol activo — solo acceso de lectura."
+  },
+  "tree": {
+    "noAccess": "No se encontraron árboles accesibles. Pide a un propietario que te invite, o",
+    "noAccessLink": "carga un árbol",
+    "noDiscussions": {
+      "active": "Aún no hay discusiones. Inicia una con la barra de búsqueda.",
+      "inactive": "Aún no hay discusiones en este árbol genealógico."
+    },
+    "topics": "{{count}} tema",
+    "topicsPlural": "{{count}} temas",
+    "active": "✓ Activo",
+    "readonly": "Solo lectura",
+    "members": "👥 Miembros:",
+    "membersLoading": "Cargando miembros…",
+    "membersOnly": "Solo tú tienes acceso a este árbol genealógico.",
+    "inactiveBanner": "💡 Carga este árbol desde",
+    "inactiveBannerLink": "Almacenamiento",
+    "inactiveBannerSuffix": "para iniciar discusiones o responder."
+  },
+  "search": {
+    "label": "Añade una persona a la discusión:",
+    "placeholder": "Buscar por nombre o ID…",
+    "button": "Iniciar discusión",
+    "noData": "Sin datos locales del árbol.",
+    "noDataLink": "Carga el árbol",
+    "noDataSuffix": "primero.",
+    "noResults": "No se encontraron personas para \"{{query}}\"."
+  },
+  "message": {
+    "empty": "Aún no hay mensajes en esta discusión.",
+    "send": "Enviar",
+    "sending": "Enviando…",
+    "placeholder": "Escribe un mensaje…",
+    "deleteConfirm": "¿Eliminar este mensaje?",
+    "readonly": "🔒 Activa este árbol para responder."
+  },
+  "diff": {
+    "toggle": "📝 Sugerir cambio",
+    "cancel": "✕ Cancelar cambio",
+    "label": "Describe el cambio propuesto:",
+    "placeholder": "p.ej. La fecha de nacimiento era 1923, no 1932…"
+  },
+  "loading": "Cargando árboles y mensajes…",
+  "error": {
+    "auth": "AuthModule no cargado. Verifica el orden de carga.",
+    "share": "ShareModule no cargado. Verifica el orden de carga.",
+    "send": "Error al enviar mensaje: {{error}}",
+    "delete": "Error al eliminar: {{error}}"
+  },
+  "rol": {
+    "owner": "👑 Propietario",
+    "editor": "✏️ Editor",
+    "viewer": "👁 Lector",
+    "admin": "⚙️ Admin"
+  },
+  "unknown": "Desconocido"
+}
