@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-10
+## Bijgewerkt: 2026-05-12
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -92,7 +92,7 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F3-61 | 🔴 Hoog | `import.js` herschrijven met inline commentaar | 📋 Open |
+| F3-61 | 🔴 Hoog | `import.js` herschrijven met inline commentaar | ✅ Gedaan |
 | F3-62 | 🔴 Hoog | Import validatie: dubbele ID's detecteren | 📋 Open |
 | F3-63 | 🟡 Middel | Import preview tonen vóór opslaan | 📋 Open |
 | F3-64 | 🟡 Middel | GEDCOM-formaat importeren | 📋 Open |
@@ -116,20 +116,33 @@
 | F8-03 | 🔴 Hoog | `locales/{nl,en,es}/home.json` aanmaken | ✅ Gedaan |
 | F8-04 | 🔴 Hoog | `index.html` refactoren met `data-i18n` | ✅ Gedaan |
 | F8-05 | 🔴 Hoog | `Layout/TopBar.html` — language switcher `<select>` | ✅ Gedaan |
-| F8-06 | 🔴 Hoog | `Layout/Navbar.html` — `data-i18n="common:nav.*"` | 📋 Open |
-| F8-07 | 🔴 Hoog | `Layout/Footer.html` — `data-i18n="common:footer.*"` | 📋 Open |
-| F8-08 | 🔴 Hoog | `locales/{nl,en,es}/create.json` aanmaken | 📋 Open |
+| F8-06 | 🔴 Hoog | `Layout/Navbar.html` — `data-i18n="common:nav.*"` | ✅ Gedaan |
+| F8-07 | 🔴 Hoog | `Layout/Footer.html` — `data-i18n="common:footer.supportVia"` | ✅ Gedaan |
+| F8-08 | 🔴 Hoog | `locales/{nl,en,es}/create.json` aanmaken | ✅ Gedaan |
 | F8-09 | 🔴 Hoog | `locales/{nl,en,es}/manage.json` aanmaken | 📋 Open |
 | F8-10 | 🔴 Hoog | `locales/{nl,en,es}/auth.json` aanmaken | 📋 Open |
-| F8-11 | 🟡 Middel | `home/create.html` refactoren met `data-i18n` | 📋 Open |
-| F8-12 | 🟡 Middel | `home/about.html` refactoren met `data-i18n` | 📋 Open |
+| F8-11 | 🟡 Middel | `home/create.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-12 | 🟡 Middel | `home/about.html` refactoren met `data-i18n` | ✅ Gedaan |
 | F8-13 | 🟡 Middel | `stamboom/manage.html` refactoren met `data-i18n` | 📋 Open |
 | F8-14 | 🟡 Middel | `home/confirm.html` refactoren met `data-i18n` | 📋 Open |
 | F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` | 📋 Open |
-| F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | 📋 Open |
+| F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | ✅ Gedaan |
 | F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
 | F8-19 | 🟢 Laag | `Handleiding.html` bijwerken met i18n uitleg | 📋 Open |
+| F8-20 | 🟡 Middel | `home/import.html` refactoren met `data-i18n` + custom file input | ✅ Gedaan |
+| F8-21 | 🟡 Middel | `home/export.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-22 | 🟡 Middel | `home/print.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-23 | 🟡 Middel | `locales/{nl,en,es}/about.json` aanmaken | ✅ Gedaan |
+| F8-24 | 🟡 Middel | `locales/{nl,en,es}/print.json` aanmaken | ✅ Gedaan |
+| F8-25 | 🟡 Middel | `locales/{nl,en,es}/import.json` aanmaken | ✅ Gedaan |
+| F8-26 | 🟡 Middel | `locales/{nl,en,es}/export.json` aanmaken | ✅ Gedaan |
+| F8-27 | 🟡 Middel | `js/import.js` statusmeldingen i18n | ✅ Gedaan |
+| F8-28 | 🟡 Middel | `js/export.js` statusmeldingen i18n | ✅ Gedaan |
+| F8-29 | 🟡 Middel | `js/create.js` statusmeldingen i18n | ✅ Gedaan |
+| F8-30 | 🟡 Middel | `Docs/disclaimer.html` drietalig EN/NL/ES | ✅ Gedaan |
+| F8-31 | 🟡 Middel | `Docs/privacy.html` drietalig EN/NL/ES | ✅ Gedaan |
+| F8-32 | 🟡 Middel | `Docs/terms.html` drietalig EN/NL/ES | ✅ Gedaan |
 
 ---
 
@@ -219,6 +232,13 @@
 ---
 
 ## Bugfixes
+
+### Sessie 2026-05-12
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-39 | Navbar toonde `nav.sub.*` als tekst — oorzaak: trailing comma in `common.json` + ontbrekende keys op GitHub | ✅ Opgelost |
+| BF-40 | Taalwissel werkte niet op Navbar — zelfde oorzaak als BF-39 | ✅ Opgelost |
 
 ### Sessie 2026-05-10
 
