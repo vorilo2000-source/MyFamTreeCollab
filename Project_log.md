@@ -1,7 +1,99 @@
 MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-05-10
+## Bijgewerkt: 2026-05-12
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 25 — i18n uitrollen op Start-menu pagina's + docs vertaling
+
+**Datum:** 2026-05-12
+**Doel:** i18next namespace setup uitrollen op alle pagina's onder het Start-menu. Navbar en Footer meertalig maken. Docs vertalen naar Engels en drietalig opzetten.
+
+### Uitgevoerde acties
+
+#### Navbar & Footer
+- `Layout/Navbar.html` v1.0.0 → v1.1.0: alle menu-titels en submenu-items voorzien van `data-i18n="common:nav.*"` en `common:nav.sub.*"`, ▼ pijlen in losse `<span>`, 🚧 emoji's hardcoded
+- `Layout/Footer.html` v1.5 → v1.6.0: "Steun via" vertaalbaar via `data-i18n="common:footer.supportVia"`, "Ko-fi" merknaam hardcoded
+
+#### common.json uitgebreid (nl/en/es)
+- `nav.start`, `nav.stamboom`, `nav.developer` toegevoegd
+- Volledig `nav.sub.*` blok toegevoegd (24 keys)
+- `footer.supportVia` toegevoegd
+- `meta.appName` verwijderd (merknaam nooit vertalen)
+- Trailing comma bugfix in alle drie talen
+
+#### Pagina's gerefactord
+- `home/about.html` v2.2.0 → v2.3.0: i18n init + `loadNamespace('about')` + alle tekst via `data-i18n="about:*"`
+- `home/print.html` v2.1.0 → v2.2.0: idem met `loadNamespace('print')`
+- `home/import.html` v2.1.0 → v2.3.0: idem + custom file input (native input verborgen, eigen knop + bestandsnaam span)
+- `home/export.html` v2.2.0 → v2.3.0: idem met `loadNamespace('export')`
+- `home/create.html` v2.1.0 → v2.2.0: idem + placeholders via `data-i18n="[placeholder]..."` + select opties vertaald
+
+#### JS bestanden bijgewerkt
+- `js/import.js` v2.0.3 → v2.1.0: alle statusmeldingen via `i18nModule.t('import:status.*')`, custom file input logica
+- `js/export.js` v2.0.0 → v2.1.0: alle statusmeldingen via `i18nModule.t('export:status.*')`, bestandsnaam via `{{filename}}`
+- `js/create.js` v1.2.0 → v1.3.0: alle statusmeldingen via `i18nModule.t('create:status.*')`, limiet via `{{count}}`/`{{max}}`
+
+#### Nieuwe namespace JSON bestanden (nl/en/es)
+- `locales/*/about.json` — hero, sections (6), buttons
+- `locales/*/print.json` — page, content, buttons
+- `locales/*/import.json` — page, welcome, form, file, info, status
+- `locales/*/export.json` — page, welcome, csv, json, status
+- `locales/*/create.json` — page, welcome, form (14 keys), preview, manage, status
+
+#### Docs vertaling
+- `Docs/disclaimer.html` v1.0.0 → v1.2.0: drietalig (EN/NL/ES), sticky taalnavigatie, eigen ← Back per sectie
+- `Docs/privacy.html` v1.0.0 → v1.2.0: idem
+- `Docs/terms.html` v1.0.0 → v1.2.0: idem
+
+#### Bugfix — Navbar keys niet vertaald
+- Oorzaak: `common.json` op GitHub miste `nav.sub.*` keys + trailing comma maakte JSON ongeldig
+- Oplossing: drie nieuwe `common.json` bestanden geleverd zonder trailing comma, met volledige `nav.sub.*`
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `Layout/Navbar.html` | v1.0.0 | v1.1.0 | data-i18n op alle nav-items |
+| `Layout/Footer.html` | v1.5 | v1.6.0 | supportVia vertaalbaar |
+| `locales/nl/common.json` | v1.0.0 | v1.1.0 | nav.sub.*, footer.supportVia, trailing comma fix, meta.appName verwijderd |
+| `locales/en/common.json` | v1.0.0 | v1.1.0 | idem |
+| `locales/es/common.json` | v1.0.0 | v1.1.0 | idem |
+| `locales/nl/about.json` | — | v1.0.0 | Nieuw |
+| `locales/en/about.json` | — | v1.0.0 | Nieuw |
+| `locales/es/about.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/print.json` | — | v1.0.0 | Nieuw |
+| `locales/en/print.json` | — | v1.0.0 | Nieuw |
+| `locales/es/print.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/import.json` | — | v1.0.0 | Nieuw |
+| `locales/en/import.json` | — | v1.0.0 | Nieuw |
+| `locales/es/import.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/export.json` | — | v1.0.0 | Nieuw |
+| `locales/en/export.json` | — | v1.0.0 | Nieuw |
+| `locales/es/export.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/create.json` | — | v1.0.0 | Nieuw |
+| `locales/en/create.json` | — | v1.0.0 | Nieuw |
+| `locales/es/create.json` | — | v1.0.0 | Nieuw |
+| `home/about.html` | v2.2.0 | v2.3.0 | i18n geïntegreerd |
+| `home/print.html` | v2.1.0 | v2.2.0 | i18n geïntegreerd |
+| `home/import.html` | v2.1.0 | v2.3.0 | i18n + custom file input |
+| `home/export.html` | v2.2.0 | v2.3.0 | i18n geïntegreerd |
+| `home/create.html` | v2.1.0 | v2.2.0 | i18n geïntegreerd |
+| `js/import.js` | v2.0.3 | v2.1.0 | i18n statusmeldingen + custom file input |
+| `js/export.js` | v2.0.0 | v2.1.0 | i18n statusmeldingen |
+| `js/create.js` | v1.2.0 | v1.3.0 | i18n statusmeldingen |
+| `Docs/disclaimer.html` | v1.0.0 | v1.2.0 | Drietalig EN/NL/ES |
+| `Docs/privacy.html` | v1.0.0 | v1.2.0 | Drietalig EN/NL/ES |
+| `Docs/terms.html` | v1.0.0 | v1.2.0 | Drietalig EN/NL/ES |
+
+### Verificatie
+- Navbar vertaalt mee bij taalwissel ✅ (na upload common.json)
+- Footer "Steun via" vertaalt mee ✅
+- about/print/import/export/create laden correct in NL/EN/ES ✅
+- Custom file input toont vertaalde tekst ✅
+- Statusmeldingen in import.js/export.js/create.js vertaald ✅
+- Docs drietalig met sticky taalnavigatie en eigen Back-link per sectie ✅
 
 ---
 
@@ -32,7 +124,7 @@ MyFamTreeCollab — Project Log
 
 #### Bugfixes tijdens sessie
 - Keys toonden letterlijk → `home.hero.title` i.p.v. `home:hero.title` (dot vs colon)
-- Taal wisselde niet → JSON bestanden stonden in verkeerde taalmappen (opgelost door gebruiker)
+- Taal wisselde niet → JSON bestanden stonden in verkeerde taalmappen
 - Switcher reset na component injectie → `onComponentLoaded()` targeted check op `#languageSwitcher`
 - Namespace niet herladen na taalwissel → `handleLanguageChange()` uitgebreid met `loadNamespaces()`
 
@@ -61,136 +153,4 @@ MyFamTreeCollab — Project Log
 
 ---
 
-## Sessie 23 — Manuele bevestiging + admin-notificatie + trigger fix
-
-**Datum:** 2026-05-09
-**Doel:** Confirm-knop toevoegen in accountbeheer, notificatie-mail naar admin bij bevestiging, trigger handle_new_user gerepareerd.
-
-### Uitgevoerde acties
-
-#### Accountbeheer — confirm-knop
-- `admin_users` view herbouwd met JOIN op `auth.users` — `email_confirmed_at` toegevoegd
-- RPC `confirm_user(target_id uuid)` aangemaakt — zet `email_confirmed_at = NOW()` via SECURITY DEFINER
-- `accountbeheer.js` v1.2.0 → v1.3.0: confirm-knop in Acties-kolom voor onbevestigde accounts
-- `renderTable()` uitgebreid: toont "Bevestigen" knop wanneer `email_confirmed_at` null is
-- `confirmUser(uid, email)` toegevoegd: RPC aanroepen + Edge Function voor mail
-
-#### Edge Function — dynamic-responder
-- Edge Function `dynamic-responder` aangemaakt in Supabase dashboard
-- v1.0.0: mail via Resend naar `vorilo2000@gmail.com` bij bevestiging
-- v1.1.0: JWT verificatie uitgeschakeld (`verify_jwt = false`) — anon key gaf 401
-- v1.2.0: ook bevestigingsmail naar het bevestigde account zelf toegevoegd
-- Secret `RESEND_API_KEY` ingesteld in Supabase Edge Functions secrets
-- Afzendadres: `onboarding@resend.dev` (Resend testadres — geen eigen domein vereist)
-
-#### confirm.html — automatische flow
-- `confirm.html` v1.0.0 → v1.2.0: `notifyAdmin()` toegevoegd na succesvolle `verifyOtp()`
-- Authorization header verwijderd uit `notifyAdmin()` — veroorzaakte 401
-
-#### Trigger fix
-- `handle_new_user` herschreven — RLS blokkeerde INSERT via `auth.uid()` mismatch
-- SECURITY DEFINER + `search_path = public` zorgt nu dat nieuwe accounts altijd profiel krijgen
-- Testaccounts (Harmonica, Bike, Sax, Piano) handmatig verwijderd uit `profiles` en `auth.users`
-
-### Gewijzigde bestanden
-
-| Bestand | Van | Naar | Wijziging |
-|---------|-----|------|-----------|
-| `js/accountbeheer.js` | v1.2.0 | v1.3.0 | confirmUser(), renderTable() confirm-knop, email_confirmed_at laden |
-| `home/confirm.html` | v1.0.0 | v1.2.0 | notifyAdmin() toegevoegd, Authorization header verwijderd |
-
-### Supabase wijzigingen
-
-| Onderdeel | Actie |
-|-----------|-------|
-| `admin_users` view | Herbouwd met JOIN op `auth.users` — `email_confirmed_at` toegevoegd |
-| RPC `confirm_user` | Nieuw — zet `email_confirmed_at = NOW()` via SECURITY DEFINER |
-| Edge Function `dynamic-responder` | Nieuw — mail via Resend naar admin + bevestigd account |
-| Secret `RESEND_API_KEY` | Ingesteld in Edge Functions secrets |
-| `handle_new_user` trigger | Herschreven — SECURITY DEFINER fix voor RLS blokkade bij INSERT |
-
-### Verificatie
-- Confirm-knop zichtbaar voor onbevestigde accounts ✅
-- Bevestigen via knop werkt — `email_confirmed_at` gezet ✅
-- Knop verdwijnt na bevestiging ✅
-- Admin ontvangt mail op `vorilo2000@gmail.com` ✅
-- Bevestigd account ontvangt bevestigingsmail ✅
-- Nieuwe accounts krijgen automatisch profiel via trigger ✅
-- `confirm.html` stuurt notificatie na automatische bevestiging ✅
-
----
-
-## Sessie 22 — Authenticatie herstel + tier model fixes
-
-**Datum:** 2026-05-07
-**Doel:** Registratie en e-mailbevestiging repareren, tier model corrigeren in database en accountbeheer.
-
-### Uitgevoerde acties
-
-#### Authenticatie
-- Oorzaak gevonden: SUPABASE_ANON JWT key had `iat` in de toekomst (2026-06-20) — Supabase weigerde auth-calls
-- Key vervangen door nieuw `sb_publishable_` formaat
-- Registratie getest via console — `{ user: {...}, error: null }` bevestigd ✅
-- Supabase custom SMTP (Resend) uitgeschakeld — ingebouwde Supabase mailserver hersteld
-- `confirm.html` aangemaakt — verwerkt `token_hash` via `verifyOtp()` en redirect naar `index.html`
-- Supabase email template `Confirm signup` bijgewerkt met nieuwe `token_hash` link naar `confirm.html`
-- Supabase → Authentication → URL Configuration: Site URL en Redirect URLs ingesteld
-- E-mailbevestiging getest — mail ontvangen, bevestiging werkt ✅
-
-#### Tier model — database
-- `profiles_tier_check` constraint uitgebreid met `'guest'`
-- Bestaande gebruikers bijgewerkt: `tier = 'viewer'` → `'guest'` via UPDATE
-- `handle_new_user` database functie bijgewerkt: `tier = 'guest'` toegevoegd aan INSERT
-
-#### Accountbeheer UI
-- `accountbeheer.html` v2.2.0 → v2.3.0: stat-cards viewer/editor vervangen door guest, tier filter aangepast
-- `accountbeheer.js` v1.1.0 → v1.2.0: statViewer/statEditor → statGuest, dropdown opties guest/owner/admin, updateStats() gecorrigeerd
-
-### Gewijzigde bestanden
-
-| Bestand | Van | Naar | Wijziging |
-|---------|-----|------|-----------|
-| `js/auth.js` | v2.5.0 | v2.5.1 | SUPABASE_ANON key → sb_publishable_ formaat |
-| `home/confirm.html` | — | v1.0.0 | Nieuw — verwerkt token_hash, toont succes/fout, redirect |
-| `admin/accountbeheer.html` | v2.2.0 | v2.3.0 | Stat-cards en filter: viewer/editor → guest |
-| `js/accountbeheer.js` | v1.1.0 | v1.2.0 | statGuest, dropdown guest/owner/admin, updateStats() |
-
-### Supabase wijzigingen
-
-| Onderdeel | Actie |
-|-----------|-------|
-| SUPABASE_ANON key | Vervangen door `sb_publishable_` formaat |
-| Custom SMTP (Resend) | Uitgeschakeld — ingebouwde mailserver actief |
-| Email template Confirm signup | Bijgewerkt met `token_hash` link naar `confirm.html` |
-| URL Configuration | Site URL + Redirect URLs ingesteld |
-| `profiles_tier_check` | Constraint uitgebreid met `'guest'` |
-| `profiles.tier` | Bestaande `viewer` rijen → `guest` via UPDATE |
-| `handle_new_user` functie | `tier = 'guest'` toegevoegd aan INSERT |
-
-### Verificatie
-- Registratie werkt — user verschijnt in Supabase Authentication → Users ✅
-- Bevestigingsmail wordt ontvangen ✅
-- `confirm.html` verwerkt token en toont succesbericht ✅
-- Nieuwe gebruikers krijgen automatisch `tier = 'guest'` ✅
-- Accountbeheer toont correcte stat-cards: Totaal / Guest / Owner / Admin ✅
-- Tier dropdown in accountbeheer: guest / owner / admin ✅
-
----
-
-## Sessie 21 — Analytics dashboard uitbreidingen + bugfixes
-
-**Datum:** 2026-05-04
-**Doel:** Analytics dashboard verbeteren, tracking debuggen, e-mail tracking toevoegen, tier definitie corrigeren.
-
-### Gewijzigde bestanden
-
-| Bestand | Van | Naar | Wijziging |
-|---------|-----|------|-----------|
-| `js/siteAnalytics.js` | v2.0.0 | v2.6.0 | Hersteld als zelfstandig bestand, getCurrentTier() gecorrigeerd, getCurrentEmail() via getUser(), GoTrueClient fix |
-| `admin/analytics-dashboard.js` | v3.0.0 | v3.9.0 | Globale filter, e-mail kolom tabel, tier e-maillijst dropdown, SiteAnalytics.trackPage() prefix fix |
-| `admin/analytics.html` | v2.0.0 | v2.7.0 | Filter bar, tabel stijlen, tier e-mail lijst CSS |
-| `js/auth.js` | v2.4.2 | v2.5.0 | getTier() fallback 'viewer' → 'guest', viewer/editor check toegevoegd |
-
----
-
-## Sessies 1–21 — Zie eerdere PROJECT_LOG.md entries
+## Sessies 1–24 — Zie eerdere PROJECT_LOG.md entries
