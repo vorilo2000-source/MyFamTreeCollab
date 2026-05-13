@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "Collaborate"
+  },
+  "header": {
+    "title": "💬 Message Board (Collaborate)",
+    "subtitle": "The message board shows all family trees you have access to, your own trees and the trees shared with you. Per family tree you see discussions about specific persons, ordered by person ID."
+  },
+  "access": {
+    "icon": "🔒",
+    "heading": "No access to collaborate",
+    "body": "The collaboration feature is available for Viewers, Editors and Owners who have been invited by the family tree owner.",
+    "button": "Go to Storage"
+  },
+  "modal": {
+    "title": "➕ Start new discussion",
+    "labelId": "Person ID",
+    "placeholderId": "e.g. P-0042",
+    "labelNaam": "Name",
+    "placeholderNaam": "e.g. Jan de Vries",
+    "cancel": "Cancel",
+    "confirm": "Create discussion",
+    "fillBoth": "Please fill in both the person ID and name.",
+    "notFound": "Family tree not found. Refresh the page."
+  },
+  "status": {
+    "nieuw": "New",
+    "open": "Open",
+    "inbehandeling": "In progress",
+    "gesloten": "Closed"
+  },
+  "subtitle": {
+    "active": "Active family tree: {{naam}}",
+    "none": "No active family tree — read-only access."
+  },
+  "tree": {
+    "noAccess": "No accessible family trees found. Ask an owner to invite you, or",
+    "noAccessLink": "load a family tree",
+    "noDiscussions": {
+      "active": "No discussions yet. Start one using the search bar above.",
+      "inactive": "No discussions in this family tree yet."
+    },
+    "topics": "{{count}} topic",
+    "topicsPlural": "{{count}} topics",
+    "active": "✓ Active",
+    "readonly": "Read only",
+    "members": "👥 Members:",
+    "membersLoading": "Loading members…",
+    "membersOnly": "Only you have access to this family tree.",
+    "inactiveBanner": "💡 Load this family tree via",
+    "inactiveBannerLink": "Storage",
+    "inactiveBannerSuffix": "to start new discussions or reply."
+  },
+  "search": {
+    "label": "Add a person to the discussion:",
+    "placeholder": "Search by name or ID…",
+    "button": "Start discussion",
+    "noData": "No local family tree data.",
+    "noDataLink": "Load the family tree",
+    "noDataSuffix": "first.",
+    "noResults": "No persons found for \"{{query}}\"."
+  },
+  "message": {
+    "empty": "No messages in this discussion yet.",
+    "send": "Send",
+    "sending": "Sending…",
+    "placeholder": "Write a message…",
+    "deleteConfirm": "Delete this message?",
+    "readonly": "🔒 Activate this family tree to reply."
+  },
+  "diff": {
+    "toggle": "📝 Suggest change",
+    "cancel": "✕ Cancel change",
+    "label": "Describe the proposed change:",
+    "placeholder": "e.g. Date of birth was 1923, not 1932…"
+  },
+  "loading": "Loading family trees and messages…",
+  "error": {
+    "auth": "AuthModule not loaded. Check the load order.",
+    "share": "ShareModule not loaded. Check the load order.",
+    "send": "Failed to send message: {{error}}",
+    "delete": "Failed to delete: {{error}}"
+  },
+  "rol": {
+    "owner": "👑 Owner",
+    "editor": "✏️ Editor",
+    "viewer": "👁 Viewer",
+    "admin": "⚙️ Admin"
+  },
+  "unknown": "Unknown"
+}
