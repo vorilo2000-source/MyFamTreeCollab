@@ -1,0 +1,23 @@
+{
+  "page": {
+    "title": "Statistieken"
+  },
+  "welcome": {
+    "heading": "Welkom bij je stamboom Statistieken",
+    "intro": "Een overzicht van je stamboom in cijfers. Alle gegevens komen rechtstreeks uit je opgeslagen data en worden live berekend."
+  },
+  "families": {
+    "heading": "Overzicht families",
+    "item": "{{name}} ({{count}} leden)"
+  },
+  "kpi": {
+    "persons": "Aantal personen",
+    "lastUpdate": "Laatste update",
+    "version": "Versie",
+    "generations": "Generaties",
+    "mostCommon": "Meest voorkomende naam",
+    "gender": "Man / Vrouw",
+    "families": "Aantal families",
+    "unknown": "Onbekend"
+  }
+}
