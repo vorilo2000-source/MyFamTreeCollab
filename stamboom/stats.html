@@ -1,5 +1,12 @@
-<!-- ======================= stamboom/stats.html v2.1.0 =======================
+<!-- ======================= stamboom/stats.html v2.2.0 =======================
      Statistiekenpagina: KPI-dashboard van de stamboom
+
+     Wijziging v2.2.0 (sessie 26):
+     - i18n geïntegreerd: data-i18n attributen op alle statische teksten
+     - JS KPI-labels en familie-items via i18nModule.t()
+     - i18next scripts + i18n.js toegevoegd aan <head>
+     - Laadvolgorde geconformeerd aan sessie 26 kritische regels
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
 
      Wijziging v2.1.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -7,7 +14,7 @@
 
      Wijziging v1.0.0: facelift — welkomstblok, inline stijlen naar <style>,
                        paginatitel div verwijderd, // commentaar boven DOCTYPE verwijderd
-     v2.0.1 Login + Favicon / App-icoon 
+     v2.0.1 Login + Favicon / App-icoon
      Scripts: storage.js
      ======================================================================= -->
 <!DOCTYPE html>
@@ -15,19 +22,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistieken</title>
-     
-<!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <title data-i18n="stats:page.title">Statistieken</title>
+
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-     
+
+    <!-- ======================= i18next bibliotheken ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>
+
     <style>
         /* ======================= WELKOMSTBLOK ======================= */
-        .welkom-blok { margin-bottom: 24px; }                             /* Ruimte onder het introductieblok */
+        .welkom-blok { margin-bottom: 24px; }
         .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
         .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
 
@@ -73,56 +86,40 @@
             color: #333;
         }
 
-     /* ======================= FAMILIE LIJST (RESPONSIVE GRID) ======================= */
-#familyList {
-    display: grid;                                              /* Zet lijst om naar grid */
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Responsive kolommen */
-    gap: 10px;                                                  /* Ruimte tussen items */
-    margin-left: 0;                                             /* Reset standaard indent */
-    padding: 0;                                                 /* Geen padding */
-    list-style: none;                                           /* Geen bullets */
-    line-height: 1.8;
-    font-size: 0.95rem;
-    color: #444;
-}
-
-#familyList li {
-    background: #fff;                                           /* Kaart-achtergrond */
-    padding: 10px 12px;                                        /* Binnenruimte */
-    border-radius: 6px;                                         /* Afgeronde hoeken */
-    border: 1px solid #eee;                                     /* Subtiele rand */
-    transition: transform 0.2s, background 0.2s;                /* Vloeiende hover animatie */
-}
-
-#familyList li:hover {
-    transform: translateY(-3px);                               /* Licht omhoog bij hover */
-    background: #f0f0f0;                                       /* Subtiele kleurverandering */
-    cursor: pointer;                                           /* Geeft interactief gevoel */
-}
+        /* ======================= FAMILIE LIJST (RESPONSIVE GRID) ======================= */
+        #familyList {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Responsive kolommen */
+            gap: 10px;
+            margin-left: 0;
+            padding: 0;
+            list-style: none;
+            line-height: 1.8;
+            font-size: 0.95rem;
+            color: #444;
+        }
+        #familyList li {
+            background: #fff;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            transition: transform 0.2s, background 0.2s;
+        }
+        #familyList li:hover {
+            transform: translateY(-3px);
+            background: #f0f0f0;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
 
-<!-- ======================= TopBar ======================= -->
+<!-- ======================= TopBar placeholder ======================= -->
 <div id="topbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/TopBar.html')
-    .then(resp => resp.text())
-    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
-</script>
 
-<!-- ======================= Navbar ======================= -->
-<div id="Navbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/Navbar.html')
-    .then(resp => resp.text())
-    .then(data => {
-        const placeholder = document.getElementById('Navbar-placeholder');
-        if (placeholder) placeholder.innerHTML = data;
-        else console.error('Navbar-placeholder niet gevonden');
-    });
-</script>
+<!-- ======================= Navbar placeholder ======================= -->
+<div id="navbar-placeholder"></div>
 
 <!-- ======================= Hoofd content ======================= -->
 <main>
@@ -130,135 +127,166 @@ fetch('/MyFamTreeCollab/Layout/Navbar.html')
 
         <!-- ======================= Welkomstblok ======================= -->
         <div class="welkom-blok">
-            <h1>Welkom bij je stamboom Statistieken</h1>
-            <p>
+            <!-- Heading en intro worden vertaald via data-i18n -->
+            <h1 data-i18n="stats:welcome.heading">Welkom bij je stamboom Statistieken</h1>
+            <p data-i18n="stats:welcome.intro">
                 Een overzicht van je stamboom in cijfers. Alle gegevens komen
                 rechtstreeks uit je opgeslagen data en worden live berekend.
             </p>
         </div>
 
-        <!-- ======================= KPI blokken ======================= -->
+        <!-- ======================= KPI blokken (gevuld via JS) ======================= -->
         <div id="kpiContainer"></div>
 
         <!-- ======================= Familie overzicht ======================= -->
         <div class="families-sectie">
-            <h2>Overzicht families</h2>
+            <!-- Sectie-titel vertaald via data-i18n -->
+            <h2 data-i18n="stats:families.heading">Overzicht families</h2>
+            <!-- Lijst gevuld via JS met vertaalde strings -->
             <ul id="familyList"></ul>
         </div>
 
     </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
+<!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
+<!-- ======================= Externe scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
-
-<script>
-fetch('/MyFamTreeCollab/Layout/TopBar.html')
-    .then(resp => resp.text())
-    .then(function(data) {
-        document.getElementById('topbar-placeholder').innerHTML = data;
-        var s = document.createElement('script');
-        s.src = '../js/topbar.js';
-        document.body.appendChild(s);
-    });
-
-fetch('/MyFamTreeCollab/Layout/Navbar.html')
-    .then(resp => resp.text())
-    .then(function(data) {
-        document.getElementById('navbar-placeholder').innerHTML = data;
-    });
-
-fetch('/MyFamTreeCollab/Layout/Footer.html')
-    .then(resp => resp.text())
-    .then(function(data) {
-        document.getElementById('footer-placeholder').innerHTML = data;
-    });
-
-// Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-SiteAnalytics.trackPage("stats"); // Bezoek registreren in Supabase page_visits tabel
-</script>
-
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
 <script src="../js/storage.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+// ======================= i18n initialisatie + component fetch =======================
+i18nModule.init().then(function () {
 
+    // Load de stats namespace voor deze pagina
+    i18nModule.loadNamespace('stats');
+
+    // Vertaal de paginatitel via i18n
+    document.title = i18nModule.t('stats:page.title');
+
+    // Laad TopBar en activeer i18n + topbar.js erin
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            // onComponentLoaded vervangt innerHTML EN past data-i18n toe
+            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+            // Laad topbar.js dynamisch na injectie
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Laad Navbar en activeer i18n erin
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+        });
+
+    // Laad Footer en activeer i18n erin
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+        });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage('stats'); // Bezoek registreren in Supabase page_visits tabel
+
+    // ======================= KPI + Familie logica =======================
     if (typeof StamboomStorage === 'undefined') {
-        console.error('StamboomStorage niet geladen.');
+        console.error('StamboomStorage niet geladen.'); // Storage module ontbreekt
         return;
     }
 
-    const data         = StamboomStorage.get();
-    const lastUpdate   = localStorage.getItem('lastUpdate') || 'Onbekend';
-    const version      = StamboomStorage.version;
-    const kpiContainer = document.getElementById('kpiContainer');
-    const familyList   = document.getElementById('familyList');
+    var data         = StamboomStorage.get();                              // Haal alle personen op uit lokale opslag
+    var lastUpdate   = localStorage.getItem('lastUpdate')
+                       || i18nModule.t('stats:kpi.unknown');              // Fallback als datum ontbreekt
+    var version      = StamboomStorage.version;                           // Haal versienummer op uit storage module
+    var kpiContainer = document.getElementById('kpiContainer');           // Container voor KPI blokken
+    var familyList   = document.getElementById('familyList');             // Lijst voor familie-items
 
-    function createKPI(value, label, extraClass) {
-        const div = document.createElement('div');
+    // ======================= KPI blok aanmaken =======================
+    function createKPI(value, labelKey, extraClass) {
+        var div = document.createElement('div');                          // Maak wrapper div aan
         div.classList.add('kpi-block');
-        if (extraClass) div.classList.add(extraClass);
+        if (extraClass) div.classList.add(extraClass);                    // Kleurklasse toevoegen
 
-        const valSpan = document.createElement('div');
+        var valSpan = document.createElement('div');                      // Waardeblok
         valSpan.classList.add('kpi-value');
-        valSpan.textContent = value;
+        valSpan.textContent = value;                                      // Dynamische waarde invullen
 
-        const labelSpan = document.createElement('div');
+        var labelSpan = document.createElement('div');                    // Labelblok
         labelSpan.classList.add('kpi-label');
-        labelSpan.textContent = label;
+        labelSpan.textContent = i18nModule.t(labelKey);                   // Vertaald label ophalen
 
         div.appendChild(valSpan);
         div.appendChild(labelSpan);
         return div;
     }
 
-    const generations = new Set(data.map(p => p.Generation)).size;
+    // ======================= Generaties berekenen =======================
+    var generations = new Set(data.map(function (p) { return p.Generation; })).size;
 
-    const surnameCounts = {};
-    data.forEach(p => {
-        surnameCounts[p.Achternaam] = (surnameCounts[p.Achternaam] || 0) + 1;
+    // ======================= Meest voorkomende achternaam =======================
+    var surnameCounts = {};
+    data.forEach(function (p) {
+        surnameCounts[p.Achternaam] = (surnameCounts[p.Achternaam] || 0) + 1; // Tel per achternaam
     });
 
-    let mostCommonSurname = '—';
-    let maxCount = 0;
-
-    for (const [name, count] of Object.entries(surnameCounts)) {
-        if (count > maxCount) {
-            maxCount = count;
-            mostCommonSurname = name;
+    var mostCommonSurname = '\u2014'; // Em-dash als standaard fallback
+    var maxCount = 0;
+    Object.entries(surnameCounts).forEach(function (entry) {
+        if (entry[1] > maxCount) {
+            maxCount = entry[1];
+            mostCommonSurname = entry[0]; // Sla meest voorkomende naam op
         }
-    }
+    });
 
-    const genderCounts = data.reduce((acc, p) => {
-        if (p.Geslacht === 'M') acc.M++;
-        else if (p.Geslacht === 'V') acc.V++;
+    // ======================= Geslacht tellen =======================
+    var genderCounts = data.reduce(function (acc, p) {
+        if (p.Geslacht === 'M') acc.M++;       // Tel mannen
+        else if (p.Geslacht === 'V') acc.V++;  // Tel vrouwen
         return acc;
     }, { M: 0, V: 0 });
 
-    const families = {};
-    data.forEach(p => {
-        if (!families[p.Achternaam]) families[p.Achternaam] = [];
-        families[p.Achternaam].push(p);
+    // ======================= Families groeperen =======================
+    var families = {};
+    data.forEach(function (p) {
+        if (!families[p.Achternaam]) families[p.Achternaam] = []; // Initialiseer familiegroep
+        families[p.Achternaam].push(p);                           // Voeg persoon toe aan familie
     });
 
-    const familyCount = Object.keys(families).length;
+    var familyCount = Object.keys(families).length; // Aantal unieke families
 
-    kpiContainer.appendChild(createKPI(data.length, 'Aantal personen', 'kpi-persons'));
-    kpiContainer.appendChild(createKPI(lastUpdate, 'Laatste update', 'kpi-update'));
-    kpiContainer.appendChild(createKPI(version, 'Versie', 'kpi-version'));
-    kpiContainer.appendChild(createKPI(generations, 'Generaties', 'kpi-generations'));
-    kpiContainer.appendChild(createKPI(mostCommonSurname, 'Meest voorkomende naam', 'kpi-mostcommon'));
-    kpiContainer.appendChild(createKPI(`${genderCounts.M}M / ${genderCounts.V}V`, 'Man / Vrouw', 'kpi-gender'));
-    kpiContainer.appendChild(createKPI(familyCount, 'Aantal families', 'kpi-families'));
+    // ======================= KPI blokken toevoegen =======================
+    kpiContainer.appendChild(createKPI(data.length,    'stats:kpi.persons',    'kpi-persons'));
+    kpiContainer.appendChild(createKPI(lastUpdate,     'stats:kpi.lastUpdate', 'kpi-update'));
+    kpiContainer.appendChild(createKPI(version,        'stats:kpi.version',    'kpi-version'));
+    kpiContainer.appendChild(createKPI(generations,    'stats:kpi.generations','kpi-generations'));
+    kpiContainer.appendChild(createKPI(mostCommonSurname, 'stats:kpi.mostCommon', 'kpi-mostcommon'));
+    kpiContainer.appendChild(createKPI(
+        genderCounts.M + 'M / ' + genderCounts.V + 'V', // Waarde: bv. "5M / 3V"
+        'stats:kpi.gender',
+        'kpi-gender'
+    ));
+    kpiContainer.appendChild(createKPI(familyCount,    'stats:kpi.families',   'kpi-families'));
 
-    Object.entries(families).forEach(([familyName, members]) => {
-        const li = document.createElement('li');
-        li.textContent = `${familyName} (${members.length} leden)`;
+    // ======================= Familie-items in lijst plaatsen =======================
+    Object.entries(families).forEach(function (entry) {
+        var familyName = entry[0]; // Achternaam als familienaam
+        var members    = entry[1]; // Array van leden
+        var li = document.createElement('li');
+        // Vertaald patroon: "De Vries (4 leden)" / "De Vries (4 members)"
+        li.textContent = i18nModule.t('stats:families.item', {
+            name:  familyName,
+            count: members.length
+        });
         familyList.appendChild(li);
     });
 
