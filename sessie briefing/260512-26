@@ -1,0 +1,136 @@
+# Sessie 26 — i18n uitrollen op Stamboom-menu pagina's
+
+**Datum:** nvt
+**Sessiescope:** Meertalig maken van alle pagina's onder het Stamboom-menu
+
+---
+
+## Context
+
+Sessie 25 heeft het Start-menu volledig meertalig gemaakt. Deze sessie rolt
+dezelfde aanpak uit op het Stamboom-menu.
+
+---
+
+## ✅ Wat al werkt — niet opnieuw bouwen
+
+- `js/i18n.js` v1.0.0 — volledig werkend
+- `locales/{nl,en,es}/common.json` v1.1.0 — volledig
+- `Layout/TopBar.html` v0.5 — language switcher geïntegreerd
+- `Layout/Navbar.html` v1.1.0 — volledig meertalig
+- `Layout/Footer.html` v1.6.0 — supportVia vertaalbaar
+- `index.html` v2.3.1 — volledig meertalig
+- Alle Start-menu pagina's — volledig meertalig
+
+---
+
+## 🔧 Kritische regels (niet vergeten)
+
+**1. Namespace separator = dubbele punt**
+```
+✅ data-i18n="manage:form.name"
+❌ data-i18n="manage.form.name"
+```
+
+**2. Laadvolgorde in `<head>` van ELKE pagina**
+```html
+<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+<script src="/MyFamTreeCollab/js/i18n.js"></script>
+```
+
+**3. Init patroon in `<body>` van ELKE pagina**
+```javascript
+i18nModule.init().then(function() {
+    i18nModule.loadNamespace('PAGINANAAM');
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(r => r.text())
+        .then(html => i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder')));
+    // idem Navbar en Footer
+});
+```
+
+**4. Merknaam NIET vertalen**
+```html
+<span>MyFamTreeCollab</span>  ✅
+<span data-i18n="common:meta.appName"></span>  ❌
+```
+
+**5. `onComponentLoaded()` regelt alles**
+Na fetch van TopBar/Navbar/Footer altijd via `i18nModule.onComponentLoaded()` — nooit direct `.innerHTML =`
+
+**6. JS statusmeldingen ook vertalen**
+Alle hardcoded strings in bijbehorende `.js` bestanden vervangen door `i18nModule.t('namespace:key')`
+
+---
+
+## 📋 Pagina's onder Stamboom-menu
+
+| Pagina | Namespace | JS bestand |
+|--------|-----------|------------|
+| `stamboom/view.html` | `view` | `js/view.js` (indien aanwezig) |
+| `stamboom/timeline.html` | `timeline` | `js/timeline.js` (indien aanwezig) |
+| `stamboom/manage.html` | `manage` | `js/manage.js` |
+| `stamboom/storage.html` | `storage` | `js/storage.js` of inline |
+| `stamboom/collab.html` | `collab` | `js/collab.js` (indien aanwezig) |
+| `stamboom/stats.html` | `stats` | `js/stats.js` of inline |
+
+---
+
+## 📋 Takenlijst deze sessie
+
+### Stap 1 — Per pagina: HTML + JS aanleveren, Claude refactort
+
+Volgorde voorstel (eenvoudig → complex):
+
+- [ ] `stamboom/stats.html` + bijbehorende JS
+- [ ] `stamboom/collab.html` + bijbehorende JS
+- [ ] `stamboom/storage.html` + bijbehorende JS
+- [ ] `stamboom/view.html` + bijbehorende JS
+- [ ] `stamboom/timeline.html` + bijbehorende JS
+- [ ] `stamboom/manage.html` + bijbehorende JS ← waarschijnlijk grootste bestand
+
+### Stap 2 — Per pagina levert Claude
+
+- [ ] `locales/nl/{namespace}.json`
+- [ ] `locales/en/{namespace}.json`
+- [ ] `locales/es/{namespace}.json`
+- [ ] Gerefactorde HTML met `data-i18n` attributen
+- [ ] Bijgewerkte JS met `i18nModule.t()` calls
+
+### Stap 3 — Opruimen (einde sessie)
+
+- [ ] `lang-link` handlers verwijderen uit `topbar.js` (TD-09)
+
+---
+
+## 🧪 Acceptatiecriteria (einde sessie)
+
+- [ ] Alle Stamboom-pagina's tonen geen hardcoded tekst
+- [ ] Statusmeldingen in JS bestanden vertaald
+- [ ] Geen console errors (missing keys / namespaces)
+- [ ] Taalwissel werkt op elke pagina
+- [ ] Taal blijft behouden na refresh
+
+---
+
+## 📁 Aan te leveren bestanden per pagina
+
+Plak per pagina:
+1. De huidige HTML
+2. De bijbehorende JS bestanden (manage.js, timeline.js, etc.)
+
+Claude analyseert de teksten, stelt de JSON keys voor, en wacht op akkoord
+voordat de bestanden worden aangemaakt.
+
+---
+
+## Nog open na sessie 26 (Fase 8)
+
+| ID | Taak |
+|----|------|
+| F8-09 | `locales/{nl,en,es}/manage.json` — onderdeel van deze sessie |
+| F8-10 | `locales/{nl,en,es}/auth.json` aanmaken |
+| F8-14 | `home/confirm.html` refactoren met `data-i18n` |
+| F8-19 | `Handleiding.html` bijwerken met i18n uitleg |
