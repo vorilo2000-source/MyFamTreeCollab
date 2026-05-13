@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "Samenwerken"
+  },
+  "header": {
+    "title": "💬 Berichtenboard (Samenwerken)",
+    "subtitle": "Het berichtenboard toont alle stambomen waar je toegang toe hebt, je eigen bomen en de bomen die met je zijn gedeeld. Per stamboom zie je discussies over specifieke personen, geordend per persoon-ID."
+  },
+  "access": {
+    "icon": "🔒",
+    "heading": "Geen toegang tot samenwerken",
+    "body": "De samenwerkingsfunctie is beschikbaar voor Viewers, Editors en Owners die zijn uitgenodigd door de stamboom-eigenaar.",
+    "button": "Ga naar Opslag"
+  },
+  "modal": {
+    "title": "➕ Nieuwe discussie starten",
+    "labelId": "Persoon-ID",
+    "placeholderId": "bijv. P-0042",
+    "labelNaam": "Naam",
+    "placeholderNaam": "bijv. Jan de Vries",
+    "cancel": "Annuleren",
+    "confirm": "Discussie aanmaken",
+    "fillBoth": "Vul zowel het persoon-ID als de naam in.",
+    "notFound": "Stamboom niet gevonden. Vernieuw de pagina."
+  },
+  "status": {
+    "nieuw": "Nieuw",
+    "open": "Open",
+    "inbehandeling": "In behandeling",
+    "gesloten": "Gesloten"
+  },
+  "subtitle": {
+    "active": "Actieve stamboom: {{naam}}",
+    "none": "Geen actieve stamboom — u kunt alleen meelezen."
+  },
+  "tree": {
+    "noAccess": "Geen toegankelijke stambomen gevonden. Vraag een eigenaar om je uit te nodigen, of",
+    "noAccessLink": "laad een stamboom",
+    "noDiscussions": {
+      "active": "Nog geen discussies. Start er één via de zoekbalk hierboven.",
+      "inactive": "Nog geen discussies in deze stamboom."
+    },
+    "topics": "{{count}} onderwerp",
+    "topicsPlural": "{{count}} onderwerpen",
+    "active": "✓ Actief",
+    "readonly": "Alleen lezen",
+    "members": "👥 Leden:",
+    "membersLoading": "Leden laden…",
+    "membersOnly": "Alleen jij hebt toegang tot deze stamboom.",
+    "inactiveBanner": "💡 Laad deze stamboom via",
+    "inactiveBannerLink": "Opslag",
+    "inactiveBannerSuffix": "om nieuwe discussies te starten of te reageren."
+  },
+  "search": {
+    "label": "Voeg een persoon toe aan de discussie:",
+    "placeholder": "Zoek op naam of ID…",
+    "button": "Discussie starten",
+    "noData": "Geen lokale stamboomdata.",
+    "noDataLink": "Laad de stamboom",
+    "noDataSuffix": "eerst.",
+    "noResults": "Geen personen gevonden voor \"{{query}}\"."
+  },
+  "message": {
+    "empty": "Nog geen berichten in deze discussie.",
+    "send": "Versturen",
+    "sending": "Bezig…",
+    "placeholder": "Schrijf een bericht…",
+    "deleteConfirm": "Dit bericht verwijderen?",
+    "readonly": "🔒 Activeer deze stamboom om te reageren."
+  },
+  "diff": {
+    "toggle": "📝 Wijziging voorstellen",
+    "cancel": "✕ Wijziging annuleren",
+    "label": "Beschrijf de voorgestelde wijziging:",
+    "placeholder": "bijv. Geboortedatum was 1923, niet 1932…"
+  },
+  "loading": "Stambomen en berichten laden…",
+  "error": {
+    "auth": "AuthModule niet geladen. Controleer de laadvolgorde.",
+    "share": "ShareModule niet geladen. Controleer de laadvolgorde.",
+    "send": "Bericht verzenden mislukt: {{error}}",
+    "delete": "Verwijderen mislukt: {{error}}"
+  },
+  "rol": {
+    "owner": "👑 Owner",
+    "editor": "✏️ Editor",
+    "viewer": "👁 Viewer",
+    "admin": "⚙️ Admin"
+  },
+  "unknown": "Onbekend"
+}
