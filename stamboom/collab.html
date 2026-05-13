@@ -1,5 +1,11 @@
-<!-- ======================= stamboom/collab.html v2.3.0 =======================
+<!-- ======================= stamboom/collab.html v2.4.0 =======================
      Collaboratie-pagina: berichtenboard per stamboom + persoon-ID
+
+     Wijzigingen v2.4.0 (sessie 26):
+     - i18n geïntegreerd: data-i18n attributen op alle statische teksten
+     - i18next scripts + i18n.js toegevoegd aan <head>
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
+     - Alle hardcoded strings in HTML vervangen door data-i18n
 
      Wijzigingen v2.3.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -12,42 +18,46 @@
      - CSS voor inactief-banner en lees-only melding
      - CloudSync toegevoegd aan laadvolgorde (voor owner eigen bomen)
 
-     Wijzigingen v2.1.0 (sessie 19):
-     - Status uitgebreid naar 4 waarden: nieuw / open / inbehandeling / gesloten
-     - Statusicoontjes: 🆕 🔓 🔄 ✅
-     - Stamboom-sectie header boven discussielijst
-
      Rollen: Owner (modereren + berichten), Editor (berichten + diff + status),
              Viewer (berichten plaatsen)
      Opslag: Supabase — tabel collab_messages (boom_id: UUID)
 
      Laadvolgorde (verplicht):
-       1. supabase-js CDN
-       2. utils.js
-       3. auth.js
-       4. siteAnalytics.js  ← bezoektracking
-       5. TopBar HTML + topbar.js (via fetch)
-       6. Navbar HTML (via fetch)
-       7. Footer HTML (via fetch)
-       8. schema.js
-       9. storage.js
-      10. cloudSync.js      ← nieuw in v2.2.0 (voor owner eigen bomen)
-      11. shareModule.js
-      12. accessGuard.js
-      13. collab.js (altijd LAATSTE)
+       1. i18next CDN scripts
+       2. i18n.js
+       3. supabase-js CDN
+       4. utils.js
+       5. auth.js
+       6. siteAnalytics.js
+       7. TopBar HTML + topbar.js (via i18nModule.onComponentLoaded)
+       8. Navbar HTML (via i18nModule.onComponentLoaded)
+       9. Footer HTML (via i18nModule.onComponentLoaded)
+      10. schema.js
+      11. storage.js
+      12. cloudSync.js
+      13. shareModule.js
+      14. accessGuard.js
+      15. collab.js (altijd LAATSTE)
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samenwerken</title>
+    <!-- Paginatitel wordt via JS gezet na i18n init -->
+    <title data-i18n="collab:page.title">Samenwerken</title>
 
     <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <!-- ======================= i18next bibliotheken ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>
 
     <link rel="stylesheet" href="../css/style.css">
 
@@ -105,30 +115,25 @@
         #discussie-container {
             display: flex;
             flex-direction: column;
-            gap: 28px;              /* Ruimte tussen stamboom-secties */
+            gap: 28px;
         }
 
         /* ======================= STAMBOOM SECTIE ======================= */
-        /* Omhulsel voor één stamboom met al zijn discussies */
         .stamboom-sectie {
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid #ddd;
             box-shadow: 0 2px 8px rgba(0,0,0,0.07);
         }
-
-        /* Actieve stamboom: blauwe accentkleur aan de linkerkant */
         .stamboom-actief {
             border-color: #90caf9;
-            border-left: 4px solid #1E90FF;    /* Blauwe accentlijn links */
+            border-left: 4px solid #1E90FF;
             box-shadow: 0 2px 12px rgba(30,144,255,0.10);
         }
-
-        /* Inactieve stamboom: iets grijzer, geen accentlijn */
         .stamboom-inactief {
             border-color: #e0e0e0;
             background: #fafafa;
-            opacity: 0.92;          /* Lichte dimming voor inactieve bomen */
+            opacity: 0.92;
         }
 
         /* ======================= STAMBOOM SECTIE HEADER ======================= */
@@ -141,14 +146,11 @@
             border-bottom: 1px solid #e0e0e0;
             flex-wrap: wrap;
         }
-
         .stamboom-actief .stamboom-sectie-header {
-            background: #e8f4ff;    /* Lichtblauw voor actieve boom */
+            background: #e8f4ff;
             border-bottom-color: #b8d9f5;
         }
-
         .stamboom-sectie-icoon { font-size: 1.1rem; flex-shrink: 0; }
-
         .stamboom-sectie-naam {
             font-size: 1.0rem;
             font-weight: bold;
@@ -159,7 +161,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         .stamboom-sectie-teller {
             font-size: 0.78rem;
             color: #999;
@@ -170,7 +171,6 @@
         }
 
         /* ======================= ROL BADGES PER BOOM ======================= */
-        /* Toont de rol die de gebruiker heeft voor déze specifieke boom */
         .boom-rol-badge {
             font-size: 0.72rem;
             padding: 2px 8px;
@@ -183,7 +183,6 @@
         .boom-rol-viewer { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
         .boom-rol-admin  { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
 
-        /* Actief-badge: groene badge voor de actieve stamboom */
         .boom-actief-badge {
             font-size: 0.72rem;
             padding: 2px 8px;
@@ -194,8 +193,6 @@
             font-weight: bold;
             flex-shrink: 0;
         }
-
-        /* Inactief-hint: subtiele grijze tekst voor niet-actieve bomen */
         .boom-inactief-hint {
             font-size: 0.72rem;
             color: #aaa;
@@ -204,7 +201,6 @@
         }
 
         /* ======================= LEDENLIJST PER STAMBOOM ======================= */
-        /* Toont alle leden (owner + editors + viewers) onder de stamboom-header */
         .boom-leden-lijst {
             display: flex;
             flex-wrap: wrap;
@@ -215,15 +211,9 @@
             border-bottom: 1px solid #e8ecf2;
             font-size: 0.82rem;
         }
-        .boom-leden-label {
-            color: #888;
-            font-weight: bold;
-            margin-right: 2px;
-        }
-        .boom-leden-laden { color: #bbb; font-style: italic; font-size: 0.8rem; }
-        .boom-leden-leeg  { color: #bbb; font-style: italic; font-size: 0.8rem; }
-
-        /* Eén lid-item: naam + rol-badge naast elkaar */
+        .boom-leden-label  { color: #888; font-weight: bold; margin-right: 2px; }
+        .boom-leden-laden  { color: #bbb; font-style: italic; font-size: 0.8rem; }
+        .boom-leden-leeg   { color: #bbb; font-style: italic; font-size: 0.8rem; }
         .boom-lid-item {
             display: inline-flex;
             align-items: center;
@@ -234,16 +224,13 @@
             padding: 2px 8px 2px 6px;
         }
         .boom-lid-naam { color: #333; font-weight: 500; }
-
-        /* Rol-kleuren per lid */
-        .boom-lid-rol { font-size: 0.68rem; font-weight: bold; }
+        .boom-lid-rol  { font-size: 0.68rem; font-weight: bold; }
         .boom-lid-rol-owner  { color: #856404; }
         .boom-lid-rol-editor { color: #0d47a1; }
         .boom-lid-rol-viewer { color: #1b5e20; }
         .boom-lid-rol-admin  { color: #880e4f; }
 
         /* ======================= INACTIEF BANNER ======================= */
-        /* Uitlegbanner in inactieve stamboom-secties */
         .inactief-banner {
             background: #fffde7;
             border-bottom: 1px solid #fff176;
@@ -251,13 +238,9 @@
             font-size: 0.85rem;
             color: #795548;
         }
-        .inactief-banner a {
-            color: #1E90FF;
-            text-decoration: underline;
-        }
+        .inactief-banner a { color: #1E90FF; text-decoration: underline; }
 
-        /* ======================= LEES-ONLY MELDING IN DISCUSSIEBLOK ======================= */
-        /* Vervangt het formulier in inactieve stambomen */
+        /* ======================= LEES-ONLY MELDING ======================= */
         .lees-only-melding {
             border-top: 1px solid #eee;
             padding: 10px 12px;
@@ -272,11 +255,11 @@
             display: flex;
             gap: 8px;
             padding: 12px 16px;
-            background: #f9fbff;    /* Lichtblauwe achtergrond voor zoekbalk */
+            background: #f9fbff;
             border-bottom: 1px solid #e8ecf2;
             align-items: center;
             flex-wrap: wrap;
-            position: relative;     /* Ankerpunt voor livesearch dropdown */
+            position: relative;
         }
         .zoek-sectie input[type="text"],
         .zoek-sectie .persoon-zoek-input {
@@ -293,27 +276,14 @@
             border-color: #1E90FF;
             box-shadow: 0 0 0 2px rgba(30,144,255,0.15);
         }
-        .zoek-label {
-            font-size: 0.85rem;
-            color: #555;
-            width: 100%;
-            margin-bottom: 4px;
-        }
+        .zoek-label { font-size: 0.85rem; color: #555; width: 100%; margin-bottom: 4px; }
 
         /* ======================= DISCUSSIES INNER CONTAINER ======================= */
-        .discussie-container-inner {
-            display: flex;
-            flex-direction: column;
-            gap: 0;                 /* Discussieblokken naadloos aansluiten */
-        }
+        .discussie-container-inner { display: flex; flex-direction: column; gap: 0; }
 
         /* ======================= DISCUSSIE CLUSTERS ======================= */
-        .discussie-blok {
-            border-top: 1px solid #eee;
-            background: #fff;
-        }
+        .discussie-blok { border-top: 1px solid #eee; background: #fff; }
         .discussie-blok:first-child { border-top: none; }
-
         .discussie-header {
             display: flex;
             align-items: center;
@@ -326,11 +296,10 @@
         }
         .discussie-header:hover { background: #eaecf0; }
         .discussie-blok:first-child .discussie-header { border-top: none; }
-
         .discussie-persoon-naam { font-weight: bold; font-size: 0.95rem; color: #1a1a1a; }
         .discussie-persoon-id   { font-size: 0.75rem; color: #888; margin-left: 8px; font-family: monospace; }
 
-        /* ======================= STATUS BADGES — 4 varianten ======================= */
+        /* ======================= STATUS BADGES ======================= */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -348,12 +317,7 @@
         .status-inbehandeling { background: #fff3e0; color: #bf360c; border: 1px solid #ffb74d; }
         .status-gesloten      { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
 
-        .discussie-toggle-pijl {
-            font-size: 0.8rem;
-            color: #888;
-            margin-left: 8px;
-            transition: transform 0.2s;
-        }
+        .discussie-toggle-pijl { font-size: 0.8rem; color: #888; margin-left: 8px; transition: transform 0.2s; }
         .discussie-blok.ingeklapt .discussie-toggle-pijl { transform: rotate(-90deg); }
 
         .discussie-body { padding: 16px; }
@@ -369,7 +333,6 @@
             overflow-y: auto;
             padding-right: 4px;
         }
-
         .bericht-item {
             background: #f9f9f9;
             border: 1px solid #eee;
@@ -378,11 +341,7 @@
             font-size: 0.88rem;
             line-height: 1.5;
         }
-        .bericht-item.eigen {
-            background: #e8f4ff;
-            border-color: #b8d9f5;
-        }
-
+        .bericht-item.eigen { background: #e8f4ff; border-color: #b8d9f5; }
         .bericht-meta {
             font-size: 0.75rem;
             color: #999;
@@ -393,7 +352,6 @@
             gap: 8px;
         }
         .bericht-auteur { font-weight: bold; color: #444; font-size: 0.82rem; }
-
         .rol-label {
             font-size: 0.68rem;
             padding: 1px 6px;
@@ -404,10 +362,8 @@
         .rol-owner  { background: #ffeaa7; color: #6c4f00; }
         .rol-editor { background: #dfe6e9; color: #2d3436; }
         .rol-viewer { background: #e8f5e9; color: #1b5e20; }
-
         .bericht-status-icoon { font-size: 0.78rem; opacity: 0.75; margin-left: 2px; }
         .bericht-tekst { color: #222; word-break: break-word; }
-
         .bericht-verwijder {
             background: none;
             border: none;
@@ -419,7 +375,6 @@
             flex-shrink: 0;
         }
         .bericht-verwijder:hover { color: #e74c3c; }
-
         .diff-blok {
             margin-top: 8px;
             padding: 8px 10px;
@@ -430,19 +385,10 @@
             color: #555;
         }
         .diff-blok strong { color: #e67e22; }
-
-        .bericht-leeg {
-            text-align: center;
-            color: #bbb;
-            font-size: 0.85rem;
-            padding: 20px 0;
-        }
+        .bericht-leeg { text-align: center; color: #bbb; font-size: 0.85rem; padding: 20px 0; }
 
         /* ======================= NIEUW BERICHT FORMULIER ======================= */
-        .nieuw-bericht-form {
-            border-top: 1px solid #eee;
-            padding-top: 14px;
-        }
+        .nieuw-bericht-form { border-top: 1px solid #eee; padding-top: 14px; }
         .nieuw-bericht-form textarea {
             width: 100%;
             padding: 9px 12px;
@@ -460,7 +406,6 @@
             border-color: #1E90FF;
             box-shadow: 0 0 0 2px rgba(30,144,255,0.15);
         }
-
         .form-acties {
             display: flex;
             gap: 8px;
@@ -468,7 +413,6 @@
             align-items: center;
             flex-wrap: wrap;
         }
-
         .status-select {
             padding: 7px 10px;
             border: 1px solid #ccc;
@@ -477,14 +421,10 @@
             background: #fff;
             cursor: pointer;
         }
-
         .diff-invoer-wrapper { width: 100%; margin-top: 8px; display: none; }
         .diff-invoer-wrapper.zichtbaar { display: block; }
         .diff-invoer-wrapper textarea { min-height: 52px; background: #fff8e1; border-color: #f39c12; }
-        .diff-invoer-wrapper label {
-            font-size: 0.78rem; color: #e67e22; font-weight: bold; display: block; margin-bottom: 4px;
-        }
-
+        .diff-invoer-wrapper label { font-size: 0.78rem; color: #e67e22; font-weight: bold; display: block; margin-bottom: 4px; }
         .knop-diff-toggle {
             padding: 7px 12px;
             background: #fff8e1;
@@ -496,7 +436,6 @@
             font-weight: bold;
         }
         .knop-diff-toggle:hover { background: #ffeeba; }
-
         .knop-verzend {
             padding: 7px 18px;
             background: #1E90FF;
@@ -512,12 +451,7 @@
         .knop-verzend:disabled { background: #aaa; cursor: not-allowed; }
 
         /* ======================= LADEN / FOUT ======================= */
-        .laad-indicator {
-            text-align: center;
-            color: #aaa;
-            font-size: 0.9rem;
-            padding: 32px 0;
-        }
+        .laad-indicator { text-align: center; color: #aaa; font-size: 0.9rem; padding: 32px 0; }
         .fout-melding {
             background: #fdecea;
             border: 1px solid #f5c6cb;
@@ -580,108 +514,139 @@
 </head>
 <body>
 
+<!-- ======================= TopBar placeholder ======================= -->
 <div id="topbar-placeholder"></div>
 
+<!-- ======================= Externe scripts (vóór Navbar zodat auth.js beschikbaar is) ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
 
+<!-- ======================= Navbar placeholder ======================= -->
 <div id="navbar-placeholder"></div>
 
 <main>
     <div class="collab-wrapper">
 
-        <h1 class="collab-titel">💬 Berichtenboard (Samenwerken)</h1>
-        <p class="collab-subtitel" id="actieve-boom-label">Het berichtenboard toont alle stambomen waar je toegang toe hebt, je eigen bomen en de bomen die met je zijn gedeeld. Per stamboom zie je discussies over specifieke personen, geordend per persoon-ID.</p>
+        <!-- Paginatitel en subtitel — vertaald via data-i18n -->
+        <h1 class="collab-titel" data-i18n="collab:header.title">💬 Berichtenboard (Samenwerken)</h1>
+        <p class="collab-subtitel" id="actieve-boom-label" data-i18n="collab:header.subtitle">
+            Het berichtenboard toont alle stambomen waar je toegang toe hebt, je eigen bomen en de bomen die met je zijn gedeeld. Per stamboom zie je discussies over specifieke personen, geordend per persoon-ID.
+        </p>
 
-        <!-- Foutmelding container -->
+        <!-- Foutmelding container — gevuld via JS -->
         <div id="fout-container" style="display:none;"></div>
 
-        <!-- Geen-toegang blok -->
+        <!-- Geen-toegang blok — teksten vertaald via data-i18n -->
         <div class="geen-toegang-blok" id="geen-toegang-blok" style="display:none;">
-            <div class="icoon">🔒</div>
-            <h2>Geen toegang tot samenwerken</h2>
-            <p>
+            <div class="icoon" data-i18n="collab:access.icon">🔒</div>
+            <h2 data-i18n="collab:access.heading">Geen toegang tot samenwerken</h2>
+            <p data-i18n="collab:access.body">
                 De samenwerkingsfunctie is beschikbaar voor Viewers, Editors en Owners
                 die zijn uitgenodigd door de stamboom-eigenaar.
             </p>
-            <a href="/MyFamTreeCollab/stamboom/storage.html" class="knop-primair">
+            <a href="/MyFamTreeCollab/stamboom/storage.html" class="knop-primair"
+               data-i18n="collab:access.button">
                 Ga naar Opslag
             </a>
         </div>
 
-        <!-- Hoofd collab interface -->
+        <!-- Hoofd collab interface — gevuld door collab.js -->
         <div id="collab-interface" style="display:none;">
-
-            <!-- Discussies container — gevuld door collab.js met één sectie per boom -->
             <div id="discussie-container">
-                <div class="laad-indicator" id="laad-indicator">Stambomen en berichten laden…</div>
+                <!-- Laadtekst wordt via JS gezet na i18n init -->
+                <div class="laad-indicator" id="laad-indicator" data-i18n="collab:loading">
+                    Stambomen en berichten laden…
+                </div>
             </div>
-
         </div>
 
     </div>
 </main>
 
-<!-- Nieuwe discussie modal -->
+<!-- ======================= Nieuwe discussie modal ======================= -->
+<!-- Alle labels en placeholders vertaald via data-i18n -->
 <div class="modal-overlay" id="nieuwe-discussie-modal">
     <div class="modal-box">
-        <h3>➕ Nieuwe discussie starten</h3>
-        <label for="modal-persoon-id">Persoon-ID</label>
-        <input type="text" id="modal-persoon-id" placeholder="bijv. P-0042">
-        <label for="modal-persoon-naam">Naam</label>
-        <input type="text" id="modal-persoon-naam" placeholder="bijv. Jan de Vries">
+        <h3 data-i18n="collab:modal.title">➕ Nieuwe discussie starten</h3>
+        <label for="modal-persoon-id" data-i18n="collab:modal.labelId">Persoon-ID</label>
+        <input type="text" id="modal-persoon-id"
+               data-i18n-placeholder="collab:modal.placeholderId"
+               placeholder="bijv. P-0042">
+        <label for="modal-persoon-naam" data-i18n="collab:modal.labelNaam">Naam</label>
+        <input type="text" id="modal-persoon-naam"
+               data-i18n-placeholder="collab:modal.placeholderNaam"
+               placeholder="bijv. Jan de Vries">
         <div class="modal-acties">
-            <button class="knop-annuleer" id="modal-annuleer">Annuleren</button>
-            <button class="knop-primair"  id="modal-bevestig">Discussie aanmaken</button>
+            <button class="knop-annuleer" id="modal-annuleer"
+                    data-i18n="collab:modal.cancel">Annuleren</button>
+            <button class="knop-primair"  id="modal-bevestig"
+                    data-i18n="collab:modal.confirm">Discussie aanmaken</button>
         </div>
     </div>
 </div>
 
+<!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
-<script>
-    /* Laad TopBar, Navbar en Footer via fetch */
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            var ph = document.getElementById('navbar-placeholder');
-            if (ph) ph.innerHTML = data;
-        });
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            var ph = document.getElementById('footer-placeholder');
-            if (ph) ph.innerHTML = data;
-        });
-
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-    SiteAnalytics.trackPage("collab"); // Bezoek registreren in Supabase page_visits tabel
-</script>
-
-<!-- Verplichte laadvolgorde pagina-scripts -->
+<!-- ======================= Pagina-scripts (verplichte laadvolgorde) ======================= -->
 <script src="../js/schema.js"></script>          <!-- Veldnamen stamboom -->
 <script src="../js/storage.js"></script>         <!-- StamboomStorage — voor livesearch -->
-<script src="../js/cloudSync.js"></script>       <!-- CloudSync — eigen bomen voor owner (v2.2.0) -->
+<script src="../js/cloudSync.js"></script>       <!-- CloudSync — eigen bomen voor owner -->
 <script src="../js/shareModule.js"></script>     <!-- Rolcheck + gedeelde bomen -->
 <script src="../js/accessGuard.js"></script>     <!-- Paginabeveiliging -->
 <script src="../js/collab.js"></script>          <!-- Paginalogica — altijd LAATSTE -->
 
 <script>
-    /* Rolcheck: collab.html is toegankelijk voor viewer, editor en owner.
-       AccessGuard wordt als extra laag gebruikt naast de interne rolcheck. */
-    document.addEventListener('DOMContentLoaded', function () {
-        window.AccessGuard.check(['viewer', 'editor']);    /* Owner altijd doorgelaten */
+// ======================= i18n initialisatie + component fetch =======================
+i18nModule.init().then(function () {
+
+    // Laad de collab namespace voor deze pagina
+    i18nModule.loadNamespace('collab');
+
+    // Vertaal paginatitel
+    document.title = i18nModule.t('collab:page.title');
+
+    // Vertaal placeholder attributen in de modal (data-i18n-placeholder)
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-placeholder');
+        if (key) el.placeholder = i18nModule.t(key); // Placeholder vertalen na init
     });
+
+    // Laad TopBar en activeer i18n + topbar.js erin
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Laad Navbar en activeer i18n erin
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+        });
+
+    // Laad Footer en activeer i18n erin
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+        });
+
+    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
+    SiteAnalytics.trackPage('collab'); // Bezoek registreren in Supabase page_visits tabel
+
+    // Rolcheck: collab.html is toegankelijk voor viewer, editor en owner
+    document.addEventListener('DOMContentLoaded', function () {
+        window.AccessGuard.check(['viewer', 'editor']); // Owner altijd doorgelaten
+    });
+
+});
 </script>
 
 </body>
