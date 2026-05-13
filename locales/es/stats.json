@@ -1,0 +1,23 @@
+{
+  "page": {
+    "title": "Estadísticas"
+  },
+  "welcome": {
+    "heading": "Bienvenido a las Estadísticas de tu árbol",
+    "intro": "Un resumen de tu árbol genealógico en cifras. Todos los datos provienen directamente de tus registros guardados y se calculan en tiempo real."
+  },
+  "families": {
+    "heading": "Resumen de familias",
+    "item": "{{name}} ({{count}} miembros)"
+  },
+  "kpi": {
+    "persons": "Número de personas",
+    "lastUpdate": "Última actualización",
+    "version": "Versión",
+    "generations": "Generaciones",
+    "mostCommon": "Apellido más común",
+    "gender": "Hombre / Mujer",
+    "families": "Número de familias",
+    "unknown": "Desconocido"
+  }
+}
