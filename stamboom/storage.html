@@ -1,31 +1,20 @@
-<!-- ======================= stamboom/storage.html v2.8.0 =======================
+<!-- ======================= stamboom/storage.html v2.9.0 =======================
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
+
+     Wijziging v2.9.0 (sessie 26):
+     - i18n geïntegreerd: data-i18n attributen op alle statische teksten
+     - i18next scripts + i18n.js toegevoegd aan <head>
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
+     - Alle JS strings (confirm, status, fout, modal) via i18nModule.t()
+     - Namespace 'storage' geladen en ge-await via promise-keten
 
      Wijziging v2.8.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
      - SiteAnalytics.trackPage("storage") toegevoegd in fetch-scriptblok
 
      Bugfix v2.7.1:
-     - verwijderStamboom(): wist nu ook actieve tree ID/naam uit localStorage als de
-       verwijderde stamboom de actieve was — cloud lijst toonde anders nog 'actief' badge
-       en de laadknop bleef uitgeschakeld na verwijdering
-     - resetBtn: wist ook actieve tree ID/naam zodat balk verdwijnt na reset
-
-     - "Mijn data" tabblad: actieve stamboom balk toegevoegd (zelfde als cloud tabblad)
-     - upgradeBlok: tekst en Ko-fi link aangepast aan nieuw rolmodel
-       viewer en editor krijgen upgrade-prompt bij cloud functies
-     - uitnodiging deelpaneel: viewer mag worden uitgenodigd (toelichting bijgewerkt)
-     - _foutTekst(): 'no_cloud_access' melding aangepast aan nieuw rolmodel
-     - initCloud(): upgrade check op viewer/editor ipv 'free'
-
-     Wijzigingen v2.6.0 (F5-04):
-     - Derde tabblad "Gedeeld met mij" toegevoegd
-     - Delen knop per rij in cloud stambomenlijst
-     - Inline deelpaneel: rol-dropdown, e-mailinput, uitnodigen
-     - Deelpaneel toont huidige viewers/editors met intrekken-knop (owner)
-     - "Gedeeld met mij" tabblad: lijst van gedeelde bomen met rol + eigenaar
-     - Viewer/Editor kan zichzelf verwijderen (verlaat samenwerking)
-     - shareModule.js toegevoegd aan laadvolgorde
+     - verwijderStamboom(): wist nu ook actieve tree ID/naam uit localStorage
+     - resetBtn: wist ook actieve tree ID/naam
 
      Scripts: schema.js → storage.js → auth.js → siteAnalytics.js →
               cloudSync.js → shareModule.js
@@ -35,13 +24,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opslag</title>
+    <title data-i18n="storage:page.title">Opslag</title>
 
-<!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <!-- ======================= i18next bibliotheken ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>
 
     <link rel="stylesheet" href="../css/style.css">
 
@@ -164,119 +159,171 @@
 </head>
 <body>
 
+<!-- ======================= TopBar placeholder ======================= -->
 <div id="topbar-placeholder"></div>
+
+<!-- ======================= Navbar placeholder ======================= -->
 <div id="navbar-placeholder"></div>
 
 <main>
     <div class="container">
 
+        <!-- Welkomstblok — teksten vertaald via data-i18n -->
         <div class="welkom-blok">
-            <h1>Opslag</h1>
-            <p>Bekijk je lokale data of beheer je stambomen in de cloud.</p>
+            <h1 data-i18n="storage:welcome.heading">Opslag</h1>
+            <p data-i18n="storage:welcome.intro">Bekijk je lokale data of beheer je stambomen in de cloud.</p>
         </div>
 
+        <!-- Tab-knoppen — labels vertaald via data-i18n -->
         <div class="tabs">
-            <button class="tab-knop actief" data-tab="data">📋 Mijn data</button>
-            <button class="tab-knop" data-tab="cloud">☁️ Cloud stambomen</button>
-            <button class="tab-knop" data-tab="gedeeld">🔗 Gedeeld met mij</button>
+            <button class="tab-knop actief" data-tab="data"    data-i18n="storage:tabs.data">📋 Mijn data</button>
+            <button class="tab-knop"        data-tab="cloud"   data-i18n="storage:tabs.cloud">☁️ Cloud stambomen</button>
+            <button class="tab-knop"        data-tab="gedeeld" data-i18n="storage:tabs.shared">🔗 Gedeeld met mij</button>
         </div>
 
-        <!-- TAB: MIJN DATA -->
+        <!-- ======================= TAB: MIJN DATA ======================= -->
         <div class="tab-inhoud zichtbaar" id="tab-data">
             <div id="actieveStamboomBalkData" class="actieve-stamboom-balk">
-                <span class="actief-label">ACTIEF</span>
+                <!-- Badge en naam worden via JS gevuld -->
+                <span class="actief-label" data-i18n="storage:data.active">ACTIEF</span>
                 <span id="actieveNaamTekstData">—</span>
             </div>
             <div class="actie-balk">
-                <button id="resetBtn" class="btn-reset">Reset stamboom</button>
+                <button id="resetBtn" class="btn-reset" data-i18n="storage:data.resetBtn">Reset stamboom</button>
                 <span class="storage-info" id="storageInfo"></span>
             </div>
             <div id="storageContainer"></div>
         </div>
 
-        <!-- TAB: CLOUD STAMBOMEN -->
+        <!-- ======================= TAB: CLOUD STAMBOMEN ======================= -->
         <div class="tab-inhoud" id="tab-cloud">
-            <p class="cloud-intro">Sla meerdere stambomen op in de cloud en laad ze op elk apparaat.</p>
+            <p class="cloud-intro" data-i18n="storage:cloud.intro">Sla meerdere stambomen op in de cloud en laad ze op elk apparaat.</p>
             <div id="cloudStatus" class="cloud-banner"></div>
+
+            <!-- Niet-ingelogd waarschuwing — tekst via data-i18n -->
             <div id="cloudLoginWarn" class="cloud-login-warn">
-                <strong>Je bent niet ingelogd.</strong> Log in via de balk bovenaan om cloud stambomen te beheren.
+                <strong data-i18n="storage:cloud.loginWarn">Je bent niet ingelogd. Log in via de balk bovenaan om cloud stambomen te beheren.</strong>
             </div>
+
+            <!-- Upgrade blok — zichtbaar voor viewer/editor -->
             <div id="upgradeBlok" class="upgrade-blok">
-                <h3>☁️ Cloud stambomen</h3>
-                <p>Cloud opslag is beschikbaar voor owners en admins.<br>Upgrade je account via Ko-fi om onbeperkt stambomen op te slaan en te delen.</p>
-                <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer" class="btn-kofi">☕ Upgrade via Ko-fi</a>
+                <h3 data-i18n="storage:cloud.upgradeTitle">☁️ Cloud stambomen</h3>
+                <p data-i18n="storage:cloud.upgradeBody">Cloud opslag is beschikbaar voor owners en admins. Steun ons via Ko-fi om onbeperkt stambomen op te slaan en te delen.</p>
+                <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
+                   class="btn-kofi" data-i18n="storage:cloud.upgradeBtn">☕ Steun ons via Ko-fi</a>
             </div>
+
+            <!-- Actieve stamboom balk -->
             <div id="actieveStamboomBalk" class="actieve-stamboom-balk">
-                <span class="actief-label">ACTIEF</span>
+                <span class="actief-label" data-i18n="storage:data.active">ACTIEF</span>
                 <span id="actieveNaamTekst">—</span>
             </div>
+
+            <!-- Opslaan sectie -->
             <div id="sectionOpslaan" class="cloud-sectie">
-                <h3>☁️ Opslaan in cloud</h3>
-                <p>Sla je huidige lokale stamboom op als nieuw, of overschrijf een bestaande.</p>
+                <h3 data-i18n="storage:cloud.saveTitle">☁️ Opslaan in cloud</h3>
+                <p data-i18n="storage:cloud.saveIntro">Sla je huidige lokale stamboom op als nieuw, of overschrijf een bestaande.</p>
                 <div class="stamboom-naam-rij">
-                    <label for="inputNaamNieuw">Naam:</label>
-                    <input type="text" id="inputNaamNieuw" class="stamboom-naam-input" placeholder="bijv. Familie De Smedt" maxlength="80">
+                    <label for="inputNaamNieuw" data-i18n="storage:cloud.nameLabel">Naam:</label>
+                    <!-- Placeholder wordt via JS gezet na i18n init -->
+                    <input type="text" id="inputNaamNieuw" class="stamboom-naam-input"
+                           data-i18n-placeholder="storage:cloud.namePlaceholder"
+                           placeholder="bijv. Familie De Smedt" maxlength="80">
                 </div>
                 <div class="cloud-knoppen">
-                    <button id="btnNieuw" class="btn-primary">➕ Opslaan als nieuw</button>
-                    <button id="btnOverschrijf" class="btn-secondary" disabled>🔄 Huidige overschrijven</button>
+                    <button id="btnNieuw"       class="btn-primary"   data-i18n="storage:cloud.btnNew">➕ Opslaan als nieuw</button>
+                    <button id="btnOverschrijf" class="btn-secondary" data-i18n="storage:cloud.btnOverwrite" disabled>🔄 Huidige overschrijven</button>
                 </div>
             </div>
+
+            <!-- Cloud stambomenlijst -->
             <div id="sectionLijst" class="stambomen-lijst-sectie">
-                <h3>Jouw cloud stambomen</h3>
-                <div id="lijstContainer"><p class="lijst-laden">Stambomen laden…</p></div>
+                <h3 data-i18n="storage:cloud.listTitle">Jouw cloud stambomen</h3>
+                <div id="lijstContainer">
+                    <p class="lijst-laden" data-i18n="storage:cloud.listLoading">Stambomen laden…</p>
+                </div>
             </div>
         </div>
 
-        <!-- TAB: GEDEELD MET MIJ -->
+        <!-- ======================= TAB: GEDEELD MET MIJ ======================= -->
         <div class="tab-inhoud" id="tab-gedeeld">
-            <p class="gedeeld-intro">Stambomen die andere gebruikers met jou hebben gedeeld. Je kunt deze laden en bekijken. Editors kunnen ook wijzigingen opslaan.</p>
+            <p class="gedeeld-intro" data-i18n="storage:shared.intro">Stambomen die andere gebruikers met jou hebben gedeeld. Je kunt deze laden en bekijken. Editors kunnen ook wijzigingen opslaan.</p>
             <div id="gedeeldStatus" class="gedeeld-banner"></div>
+
+            <!-- Niet-ingelogd waarschuwing -->
             <div id="gedeeldLoginWarn" class="gedeeld-login-warn">
-                <strong>Je bent niet ingelogd.</strong> Log in via de balk bovenaan om gedeelde stambomen te bekijken.
+                <strong data-i18n="storage:shared.loginWarn">Je bent niet ingelogd. Log in via de balk bovenaan om gedeelde stambomen te bekijken.</strong>
             </div>
-            <div id="gedeeldContainer"><p class="lijst-laden">Gedeelde stambomen laden…</p></div>
+
+            <div id="gedeeldContainer">
+                <p class="lijst-laden" data-i18n="storage:shared.loading">Gedeelde stambomen laden…</p>
+            </div>
         </div>
 
     </div>
 </main>
 
+<!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
-<!-- Scripts — verplichte volgorde -->
+<!-- ======================= Externe scripts — verplichte volgorde ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
-
-<script>
-    /* Layout laden via fetch — TopBar, Navbar, Footer */
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(function(r) { return r.text(); })
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(function(r) { return r.text(); })
-        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(function(r) { return r.text(); })
-        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
-
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-    SiteAnalytics.trackPage("storage"); // Bezoek registreren in Supabase page_visits tabel
-</script>
-
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js -->
 <script src="../js/schema.js"></script>
 <script src="../js/storage.js"></script>
 <script src="../js/cloudSync.js"></script>
 <script src="../js/shareModule.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+// ======================= i18n initialisatie =======================
+// Laad namespace 'storage' volledig voordat de paginalogica start.
+// Zo zijn alle i18nModule.t() calls gegarandeerd geldig.
+i18nModule.init()
+    .then(function () { return i18nModule.loadNamespace('storage'); })
+    .then(function () {
+
+    // Paginatitel vertalen
+    document.title = i18nModule.t('storage:page.title');
+
+    // Placeholder attributen vertalen (data-i18n-placeholder)
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-placeholder');
+        if (key) el.placeholder = i18nModule.t(key); // Placeholder via i18n
+    });
+
+    // Laad TopBar en activeer i18n + topbar.js
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Laad Navbar en activeer i18n
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+        });
+
+    // Laad Footer en activeer i18n
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+        });
+
+    // Pagina tracking
+    SiteAnalytics.trackPage('storage'); // Bezoek registreren in Supabase page_visits tabel
+
+    // ======================= PAGINALOGICA (DOM klaar vereist) =======================
+    // DOMContentLoaded garandeert dat alle script-tags (schema.js, storage.js etc.)
+    // volledig zijn uitgevoerd voordat we StamboomStorage en StamboomSchema aanroepen.
+    function startPagina() {
 
     // ======================= TAB NAVIGATIE =======================
 
@@ -284,13 +331,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var tabInhouden = document.querySelectorAll('.tab-inhoud');
 
     function activeerTab(naam) {
-        tabKnoppen.forEach(function(k) { k.classList.toggle('actief', k.dataset.tab === naam); });
-        tabInhouden.forEach(function(i) { i.classList.toggle('zichtbaar', i.id === 'tab-' + naam); });
+        tabKnoppen.forEach(function (k) { k.classList.toggle('actief', k.dataset.tab === naam); });
+        tabInhouden.forEach(function (i) { i.classList.toggle('zichtbaar', i.id === 'tab-' + naam); });
         window.location.hash = naam;
         if (naam === 'gedeeld' && !_gedeeldGeladen) { _gedeeldGeladen = true; initGedeeld(); }
     }
 
-    tabKnoppen.forEach(function(k) { k.addEventListener('click', function() { activeerTab(k.dataset.tab); }); });
+    tabKnoppen.forEach(function (k) {
+        k.addEventListener('click', function () { activeerTab(k.dataset.tab); });
+    });
 
     var hash = window.location.hash.replace('#', '');
     if (hash === 'data' || hash === 'cloud' || hash === 'gedeeld') { activeerTab(hash); }
@@ -299,55 +348,70 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ======================= LOKALE DATA TABEL =======================
 
-    if (typeof StamboomStorage === 'undefined') { console.error('[storage.html] StamboomStorage niet geladen!'); return; }
+    if (typeof StamboomStorage === 'undefined') {
+        console.error('[storage.html] StamboomStorage niet geladen!');
+        return;
+    }
 
-    var container = document.getElementById('storageContainer');       // Container voor tabel
-    var info      = document.getElementById('storageInfo');            // Info tekst (versie + records)
-    var resetBtn  = document.getElementById('resetBtn');               // Reset knop
-    var columns   = window.StamboomSchema ? window.StamboomSchema.fields.slice() : []; // Kolomnamen
-
-    var actieveBalkData = document.getElementById('actieveStamboomBalkData'); // Balk element
-    var actieveNaamData = document.getElementById('actieveNaamTekstData');    // Naam element
+    var container       = document.getElementById('storageContainer');        // Container voor tabel
+    var info            = document.getElementById('storageInfo');             // Versie + records label
+    var resetBtn        = document.getElementById('resetBtn');                // Reset knop
+    var columns         = window.StamboomSchema ? window.StamboomSchema.fields.slice() : []; // Kolomnamen
+    var actieveBalkData = document.getElementById('actieveStamboomBalkData'); // Actief-balk tab 1
+    var actieveNaamData = document.getElementById('actieveNaamTekstData');    // Naam in balk tab 1
 
     function _toonActieveBalkData() {
-        var naam = StamboomStorage.getActiveTreeName();                 // Haal actieve naam op
-        var id   = StamboomStorage.getActiveTreeId();                  // Haal actieve ID op
+        var naam = StamboomStorage.getActiveTreeName(); // Haal actieve boomnaam op
+        var id   = StamboomStorage.getActiveTreeId();  // Haal actieve UUID op
         if (naam && id) {
-            actieveNaamData.textContent = naam;                        // Vul naam in
-            actieveBalkData.classList.add('zichtbaar');                // Maak balk zichtbaar
+            actieveNaamData.textContent = naam;                      // Vul naam in balk
+            actieveBalkData.classList.add('zichtbaar');              // Maak balk zichtbaar
         } else {
-            actieveBalkData.classList.remove('zichtbaar');             // Verberg als geen actieve stamboom
+            actieveBalkData.classList.remove('zichtbaar');           // Verberg balk
         }
     }
 
     function renderTable() {
-        var data = StamboomStorage.get();                              // Haal alle records op
+        var data = StamboomStorage.get();                            // Haal alle records op
         container.innerHTML = '';
-        info.innerHTML = 'Versie: ' + StamboomStorage.version + ' | ' + data.length + ' records';
+        // Vertaald versie-label via i18n interpolatie
+        info.innerHTML = i18nModule.t('storage:info.version', {
+            version: StamboomStorage.version,
+            count:   data.length
+        });
 
-        if (!data.length) { container.innerHTML = '<p class="empty">Geen data gevonden in localStorage.</p>'; return; }
+        if (!data.length) {
+            // Lege staat — vertaalde melding
+            container.innerHTML = '<p class="empty">' + i18nModule.t('storage:data.empty') + '</p>';
+            return;
+        }
 
         var wrapper = document.createElement('div');
         wrapper.className = 'storage-tabel-wrapper';
         var table = document.createElement('table');
         var thead = document.createElement('thead');
 
-        var headerRow = document.createElement('tr');                  // Headerrij aanmaken
-        columns.forEach(function(col) {
+        // Kolomnamen als header
+        var headerRow = document.createElement('tr');
+        columns.forEach(function (col) {
             var th = document.createElement('th');
             th.textContent = col;
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
 
-        var filterRow = document.createElement('tr');                  // Filterrij aanmaken
+        // Filterrij — placeholder vertaald via i18n
+        var filterRow = document.createElement('tr');
         var filters   = {};
-        columns.forEach(function(col) {
+        columns.forEach(function (col) {
             var th    = document.createElement('th');
             var input = document.createElement('input');
             input.type        = 'text';
-            input.placeholder = 'Filter...';
-            input.addEventListener('input', function() { filters[col] = this.value.toLowerCase(); applyFilters(); });
+            input.placeholder = i18nModule.t('storage:data.filterPlaceholder'); // Vertaald
+            input.addEventListener('input', function () {
+                filters[col] = this.value.toLowerCase();
+                applyFilters();
+            });
             th.appendChild(input);
             filterRow.appendChild(th);
         });
@@ -362,15 +426,15 @@ document.addEventListener('DOMContentLoaded', function () {
         function applyFilters() {
             tbody.innerHTML = '';
             var fragment  = document.createDocumentFragment();
-            var gefilterd = data.filter(function(p) {
-                return columns.every(function(col) {
+            var gefilterd = data.filter(function (p) {
+                return columns.every(function (col) {
                     if (!filters[col]) return true;
                     return (p[col] || '').toString().toLowerCase().includes(filters[col]);
                 });
             });
-            gefilterd.forEach(function(p) {
+            gefilterd.forEach(function (p) {
                 var rij = document.createElement('tr');
-                columns.forEach(function(col) {
+                columns.forEach(function (col) {
                     var td = document.createElement('td');
                     td.textContent = p[col] || '';
                     rij.appendChild(td);
@@ -382,37 +446,41 @@ document.addEventListener('DOMContentLoaded', function () {
         applyFilters();
     }
 
-    resetBtn.addEventListener('click', function() {
+    resetBtn.addEventListener('click', function () {
         if (!StamboomStorage.get().length) return;
-        if (!confirm('⚠️ WAARSCHUWING ⚠️\n\nAlle data wordt verwijderd.\nMaak eerst een export.\nKlik OK om te bevestigen.')) return;
+        // Bevestigingsdialoog — vertaald via i18n
+        if (!confirm(i18nModule.t('storage:confirm.reset'))) return;
         StamboomStorage.clear();
-        StamboomStorage.setActiveTreeId(null);                         // Bugfix v2.7.1: wis actieve UUID
-        StamboomStorage.setActiveTreeName(null);                       // Bugfix v2.7.1: wis actieve naam
+        StamboomStorage.setActiveTreeId(null);   // Bugfix v2.7.1: wis actieve UUID
+        StamboomStorage.setActiveTreeName(null); // Bugfix v2.7.1: wis actieve naam
         renderTable();
-        _toonActieveBalkData();                                        // Balk verbergen na reset
+        _toonActieveBalkData();                  // Balk verbergen na reset
     });
 
     renderTable();
-    _toonActieveBalkData();                                            // Balk direct tonen bij laden
+    _toonActieveBalkData(); // Balk tonen bij laden
 
-    // ======================= WISSEL MODAL (v2.5.0) =======================
+    // ======================= WISSEL MODAL =======================
 
     function _injectWisselModal() {
         if (document.getElementById('wissel-modal-root')) return;
         var root = document.createElement('div');
         root.id  = 'wissel-modal-root';
+        // Modal teksten worden dynamisch ingevuld via i18nModule.t() in _wisselModal.toon()
         root.innerHTML =
             '<div id="wissel-backdrop"></div>' +
             '<div id="wissel-box" role="dialog" aria-modal="true">' +
-            '<div id="wissel-icon">⚠️</div>' +
-            '<h3 id="wissel-titel">Onopgeslagen wijzigingen</h3>' +
-            '<p id="wissel-tekst"></p>' +
-            '<div id="wissel-knoppen">' +
-            '<button id="wissel-annuleer">Annuleren</button>' +
-            '<button id="wissel-toch" class="wm-toch">Toch laden</button>' +
-            '<button id="wissel-opslaan" class="wm-opslaan">Eerst opslaan</button>' +
-            '</div></div>';
+                '<div id="wissel-icon">⚠️</div>' +
+                '<h3 id="wissel-titel">' + i18nModule.t('storage:modal.title') + '</h3>' +
+                '<p id="wissel-tekst"></p>' +
+                '<div id="wissel-knoppen">' +
+                    '<button id="wissel-annuleer">' + i18nModule.t('storage:modal.cancel')     + '</button>' +
+                    '<button id="wissel-toch"    class="wm-toch">'    + i18nModule.t('storage:modal.loadAnyway') + '</button>' +
+                    '<button id="wissel-opslaan" class="wm-opslaan">' + i18nModule.t('storage:modal.saveFirst')  + '</button>' +
+                '</div>' +
+            '</div>';
         document.body.appendChild(root);
+
         var stijl = document.createElement('style');
         stijl.textContent =
             '#wissel-modal-root{display:none}#wissel-modal-root.open{display:block}' +
@@ -427,22 +495,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var _wisselModal = {
-        toon: function(stamboomNaam, onToch, onOpslaan) {
+        toon: function (stamboomNaam, onToch, onOpslaan) {
+            // Modale tekst met vertaalde interpolatie
             document.getElementById('wissel-tekst').textContent =
-                'Je lokale data bevat wijzigingen die nog niet zijn opgeslagen in de cloud. ' +
-                'Wat wil je doen voordat je "' + stamboomNaam + '" laadt?';
-            document.getElementById('wissel-annuleer').onclick = function() { _wisselModal.sluit(); };
-            document.getElementById('wissel-toch').onclick    = function() { _wisselModal.sluit(); onToch(); };
-            document.getElementById('wissel-opslaan').onclick = function() { _wisselModal.sluit(); onOpslaan(); };
+                i18nModule.t('storage:modal.body', { naam: stamboomNaam });
+            document.getElementById('wissel-annuleer').onclick = function () { _wisselModal.sluit(); };
+            document.getElementById('wissel-toch').onclick     = function () { _wisselModal.sluit(); onToch(); };
+            document.getElementById('wissel-opslaan').onclick  = function () { _wisselModal.sluit(); onOpslaan(); };
             document.getElementById('wissel-modal-root').classList.add('open');
         },
-        sluit: function() {
+        sluit: function () {
             var root = document.getElementById('wissel-modal-root');
             if (root) root.classList.remove('open');
         }
     };
 
-    document.addEventListener('click', function(e) { if (e.target && e.target.id === 'wissel-backdrop') { _wisselModal.sluit(); } });
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.id === 'wissel-backdrop') { _wisselModal.sluit(); }
+    });
     _injectWisselModal();
 
     // ======================= CLOUD STAMBOMEN =======================
@@ -459,32 +529,46 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnNieuw       = document.getElementById('btnNieuw');
     var btnOverschrijf = document.getElementById('btnOverschrijf');
 
-    function toonStatus(tekst, type) { statusEl.textContent = tekst; statusEl.className = 'cloud-banner ' + type; }
+    function toonStatus(tekst, type) {
+        statusEl.textContent = tekst;
+        statusEl.className   = 'cloud-banner ' + type;
+    }
     function verbergStatus() { statusEl.className = 'cloud-banner'; }
 
     function formateerDatum(iso) {
         if (!iso) return '?';
-        return new Date(iso).toLocaleDateString('nl-BE', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return new Date(iso).toLocaleDateString('nl-BE', {
+            day: '2-digit', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
     }
 
-    var _huidigDeelPaneel = null;                                      // Huidig open deelpaneel
+    var _huidigDeelPaneel = null; // Huidig open deelpaneel
 
     function renderLijst(stambomen) {
         lijstContainer.innerHTML = '';
         if (!stambomen || !stambomen.length) {
-            lijstContainer.innerHTML = '<p class="stambomen-leeg">Nog geen stambomen opgeslagen in de cloud.</p>';
+            // Lege staat — vertaald
+            lijstContainer.innerHTML = '<p class="stambomen-leeg">' + i18nModule.t('storage:cloud.empty') + '</p>';
             return;
         }
-        var actieveId = StamboomStorage.getActiveTreeId();             // Haal actieve ID op
+        var actieveId = StamboomStorage.getActiveTreeId(); // Haal actieve UUID op
         var tabel = document.createElement('table');
         tabel.className = 'stambomen-tabel';
         var thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th>Naam</th><th>Personen</th><th>Laatste opslag</th><th>Acties</th></tr>';
+        // Kolomkoppen vertaald via i18n
+        thead.innerHTML =
+            '<tr>' +
+                '<th>' + i18nModule.t('storage:cloud.colName')    + '</th>' +
+                '<th>' + i18nModule.t('storage:cloud.colPersons') + '</th>' +
+                '<th>' + i18nModule.t('storage:cloud.colDate')    + '</th>' +
+                '<th>' + i18nModule.t('storage:cloud.colActions') + '</th>' +
+            '</tr>';
         tabel.appendChild(thead);
         var tbody = document.createElement('tbody');
 
-        stambomen.forEach(function(stamboom) {
-            var isActief = (stamboom.id === actieveId);                // Controleer of dit de actieve boom is
+        stambomen.forEach(function (stamboom) {
+            var isActief = (stamboom.id === actieveId); // Controleer of dit de actieve boom is
             var rij = document.createElement('tr');
             if (isActief) rij.classList.add('actief-rij');
 
@@ -492,7 +576,8 @@ document.addEventListener('DOMContentLoaded', function () {
             tdNaam.textContent = stamboom.naam;
             if (isActief) {
                 var badge = document.createElement('span');
-                badge.className = 'badge-actief'; badge.textContent = 'actief';
+                badge.className   = 'badge-actief';
+                badge.textContent = i18nModule.t('storage:cloud.badgeActive'); // Vertaald badge
                 tdNaam.appendChild(badge);
             }
 
@@ -508,30 +593,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var btnLaad = document.createElement('button');
             btnLaad.className = 'btn-tabel-laden';
-            btnLaad.textContent = isActief ? '✓ Geladen' : '⬇️ Laden';
+            // Vertaald knoplabel: geladen of te laden
+            btnLaad.textContent = isActief
+                ? i18nModule.t('storage:cloud.btnLoaded')
+                : i18nModule.t('storage:cloud.btnLoad');
             btnLaad.disabled = isActief;
-            btnLaad.addEventListener('click', function() { laadStamboom(stamboom.id, stamboom.naam); });
+            btnLaad.addEventListener('click', function () { laadStamboom(stamboom.id, stamboom.naam); });
 
             var btnDelen = document.createElement('button');
-            btnDelen.className = 'btn-tabel-delen'; btnDelen.textContent = '🔗 Delen';
-            btnDelen.addEventListener('click', function() { _toggleDeelPaneel(stamboom.id, stamboom.naam, paneel); });
+            btnDelen.className   = 'btn-tabel-delen';
+            btnDelen.textContent = i18nModule.t('storage:cloud.btnShare'); // Vertaald
+            btnDelen.addEventListener('click', function () {
+                _toggleDeelPaneel(stamboom.id, stamboom.naam, paneel);
+            });
 
             var btnVerwijder = document.createElement('button');
-            btnVerwijder.className = 'btn-tabel-verwijder'; btnVerwijder.textContent = '🗑️ Verwijderen';
-            btnVerwijder.addEventListener('click', function() { verwijderStamboom(stamboom.id, stamboom.naam); });
+            btnVerwijder.className   = 'btn-tabel-verwijder';
+            btnVerwijder.textContent = i18nModule.t('storage:cloud.btnDelete'); // Vertaald
+            btnVerwijder.addEventListener('click', function () {
+                verwijderStamboom(stamboom.id, stamboom.naam);
+            });
 
-            knoppen.appendChild(btnLaad); knoppen.appendChild(btnDelen); knoppen.appendChild(btnVerwijder);
+            knoppen.appendChild(btnLaad);
+            knoppen.appendChild(btnDelen);
+            knoppen.appendChild(btnVerwijder);
             tdActies.appendChild(knoppen);
-            rij.appendChild(tdNaam); rij.appendChild(tdPersonen); rij.appendChild(tdDatum); rij.appendChild(tdActies);
+            rij.appendChild(tdNaam);
+            rij.appendChild(tdPersonen);
+            rij.appendChild(tdDatum);
+            rij.appendChild(tdActies);
             tbody.appendChild(rij);
 
-            var paneelRij = document.createElement('tr');              // Rij voor het deelpaneel
+            // Rij voor het deelpaneel (verborgen tot 🔗 Delen wordt geklikt)
+            var paneelRij = document.createElement('tr');
             var paneelTd  = document.createElement('td');
-            paneelTd.colSpan = 4; paneelTd.style.padding = '0';
+            paneelTd.colSpan = 4;
+            paneelTd.style.padding = '0';
             var paneel = document.createElement('div');
-            paneel.className = 'deel-paneel';
-            paneel.dataset.id = stamboom.id; paneel.dataset.naam = stamboom.naam;
-            paneelTd.appendChild(paneel); paneelRij.appendChild(paneelTd);
+            paneel.className    = 'deel-paneel';
+            paneel.dataset.id   = stamboom.id;
+            paneel.dataset.naam = stamboom.naam;
+            paneelTd.appendChild(paneel);
+            paneelRij.appendChild(paneelTd);
             tbody.appendChild(paneelRij);
         });
 
@@ -541,94 +644,173 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function _toggleDeelPaneel(stamboomId, stamboomNaam, paneel) {
         if (_huidigDeelPaneel && _huidigDeelPaneel === paneel) {
-            paneel.classList.remove('open'); _huidigDeelPaneel = null; return;
+            paneel.classList.remove('open');
+            _huidigDeelPaneel = null;
+            return;
         }
         if (_huidigDeelPaneel) { _huidigDeelPaneel.classList.remove('open'); }
         _bouwDeelPaneel(stamboomId, stamboomNaam, paneel);
-        paneel.classList.add('open'); _huidigDeelPaneel = paneel;
+        paneel.classList.add('open');
+        _huidigDeelPaneel = paneel;
     }
 
     function _bouwDeelPaneel(stamboomId, stamboomNaam, paneel) {
         paneel.innerHTML = '';
+
+        // Paneel-titel — vertaald met boomnaam interpolatie
         var titel = document.createElement('h4');
-        titel.textContent = '🔗 Stamboom delen: ' + stamboomNaam;
+        titel.textContent = i18nModule.t('storage:share.title', { naam: stamboomNaam });
         paneel.appendChild(titel);
 
+        // Toelichting — vertaald
         var toelichting = document.createElement('p');
-        toelichting.className = 'deel-toelichting';
-        toelichting.textContent = 'Nodig gebruikers uit als viewer (alleen lezen) of editor (lezen en bewerken). Elke gebruiker met een account kan worden uitgenodigd.';
+        toelichting.className   = 'deel-toelichting';
+        toelichting.textContent = i18nModule.t('storage:share.intro');
         paneel.appendChild(toelichting);
 
         var deelStatusEl = document.createElement('div');
         deelStatusEl.className = 'deel-status';
         paneel.appendChild(deelStatusEl);
 
-        function toonDeelStatus(tekst, type) { deelStatusEl.textContent = tekst; deelStatusEl.className = 'deel-status ' + type; }
+        function toonDeelStatus(tekst, type) {
+            deelStatusEl.textContent = tekst;
+            deelStatusEl.className   = 'deel-status ' + type;
+        }
 
+        // Uitnodigingsrij — email input + rol dropdown + knop
         var uitnodigRij = document.createElement('div');
         uitnodigRij.className = 'deel-uitnodig-rij';
 
         var emailInput = document.createElement('input');
-        emailInput.type = 'email'; emailInput.className = 'deel-email-input'; emailInput.placeholder = 'E-mailadres uitnodigen…';
+        emailInput.type        = 'email';
+        emailInput.className   = 'deel-email-input';
+        emailInput.placeholder = i18nModule.t('storage:share.emailPlaceholder'); // Vertaald
 
         var rolSelect = document.createElement('select');
         rolSelect.className = 'deel-rol-select';
-        var optViewer = document.createElement('option'); optViewer.value = 'viewer'; optViewer.textContent = '👁 Viewer';
-        var optEditor = document.createElement('option'); optEditor.value = 'editor'; optEditor.textContent = '✏️ Editor';
-        rolSelect.appendChild(optViewer); rolSelect.appendChild(optEditor);
+        var optViewer = document.createElement('option');
+        optViewer.value       = 'viewer';
+        optViewer.textContent = i18nModule.t('storage:share.rolViewer'); // Vertaald
+        var optEditor = document.createElement('option');
+        optEditor.value       = 'editor';
+        optEditor.textContent = i18nModule.t('storage:share.rolEditor'); // Vertaald
+        rolSelect.appendChild(optViewer);
+        rolSelect.appendChild(optEditor);
 
         var btnUitnodig = document.createElement('button');
-        btnUitnodig.className = 'btn-uitnodigen'; btnUitnodig.textContent = 'Uitnodigen';
-        btnUitnodig.addEventListener('click', async function() {
+        btnUitnodig.className   = 'btn-uitnodigen';
+        btnUitnodig.textContent = i18nModule.t('storage:share.btnInvite'); // Vertaald
+        btnUitnodig.addEventListener('click', async function () {
             var email = emailInput.value.trim();
             var rol   = rolSelect.value;
-            if (!email) { toonDeelStatus('Vul een e-mailadres in.', 'fout'); return; }
-            btnUitnodig.disabled = true; btnUitnodig.textContent = 'Bezig…';
+            if (!email) {
+                toonDeelStatus(i18nModule.t('storage:share.fillEmail'), 'fout'); // Vertaald
+                return;
+            }
+            btnUitnodig.disabled    = true;
+            btnUitnodig.textContent = i18nModule.t('storage:share.inviting'); // Vertaald
             var result = await window.ShareModule.shareTree(stamboomId, email, rol);
-            btnUitnodig.disabled = false; btnUitnodig.textContent = 'Uitnodigen';
+            btnUitnodig.disabled    = false;
+            btnUitnodig.textContent = i18nModule.t('storage:share.btnInvite');
             if (result.success) {
-                toonDeelStatus('✅ ' + email + ' toegevoegd als ' + (rol === 'editor' ? 'Editor' : 'Viewer') + '.', 'succes');
-                emailInput.value = ''; laadDeelLijst();
-            } else { toonDeelStatus('❌ ' + result.error, 'fout'); }
+                // Bevestiging met rol-label vertaald
+                var rolLabel = rol === 'editor'
+                    ? i18nModule.t('storage:share.rolEditor')
+                    : i18nModule.t('storage:share.rolViewer');
+                toonDeelStatus(
+                    i18nModule.t('storage:share.invited', { email: email, rol: rolLabel }),
+                    'succes'
+                );
+                emailInput.value = '';
+                laadDeelLijst();
+            } else {
+                toonDeelStatus(i18nModule.t('storage:error.unknown', { error: result.error }), 'fout');
+            }
         });
 
-        uitnodigRij.appendChild(emailInput); uitnodigRij.appendChild(rolSelect); uitnodigRij.appendChild(btnUitnodig);
+        uitnodigRij.appendChild(emailInput);
+        uitnodigRij.appendChild(rolSelect);
+        uitnodigRij.appendChild(btnUitnodig);
         paneel.appendChild(uitnodigRij);
 
+        // Sectie-titel "Huidige toegang" — vertaald
         var lijstTitel = document.createElement('p');
-        lijstTitel.className = 'deel-lijst-titel'; lijstTitel.textContent = 'Huidige toegang';
+        lijstTitel.className   = 'deel-lijst-titel';
+        lijstTitel.textContent = i18nModule.t('storage:share.currentAccess');
         paneel.appendChild(lijstTitel);
 
         var deelLijstContainer = document.createElement('div');
         deelLijstContainer.id = 'deel-lijst-' + stamboomId;
-        deelLijstContainer.innerHTML = '<p class="deel-lijst-leeg">Laden…</p>';
+        deelLijstContainer.innerHTML = '<p class="deel-lijst-leeg">' + i18nModule.t('storage:share.listLoading') + '</p>';
         paneel.appendChild(deelLijstContainer);
 
+        // Sluitknop — vertaald
         var sluitBtn = document.createElement('button');
-        sluitBtn.className = 'deel-sluit'; sluitBtn.textContent = '✕ Sluiten';
-        sluitBtn.addEventListener('click', function() { paneel.classList.remove('open'); _huidigDeelPaneel = null; });
+        sluitBtn.className   = 'deel-sluit';
+        sluitBtn.textContent = i18nModule.t('storage:share.btnClose');
+        sluitBtn.addEventListener('click', function () {
+            paneel.classList.remove('open');
+            _huidigDeelPaneel = null;
+        });
         paneel.appendChild(sluitBtn);
 
         async function laadDeelLijst() {
-            deelLijstContainer.innerHTML = '<p class="deel-lijst-leeg">Laden…</p>';
+            deelLijstContainer.innerHTML =
+                '<p class="deel-lijst-leeg">' + i18nModule.t('storage:share.listLoading') + '</p>';
             var result = await window.ShareModule.listSharedWith(stamboomId);
             deelLijstContainer.innerHTML = '';
-            if (result.error) { deelLijstContainer.innerHTML = '<p class="deel-lijst-leeg">Fout: ' + result.error + '</p>'; return; }
-            if (!result.data || !result.data.length) { deelLijstContainer.innerHTML = '<p class="deel-lijst-leeg">Nog niemand uitgenodigd.</p>'; return; }
-            result.data.forEach(function(item) {
-                var rij = document.createElement('div'); rij.className = 'deel-gebruiker-rij';
-                var naam = document.createElement('span'); naam.className = 'deel-gebruiker-naam'; naam.textContent = item.display_name;
-                var rolBadge = document.createElement('span'); rolBadge.className = 'badge-rol ' + item.rol;
-                rolBadge.textContent = item.rol === 'editor' ? '✏️ Editor' : '👁 Viewer';
-                var datum = document.createElement('span'); datum.className = 'deel-gebruiker-datum'; datum.textContent = formateerDatum(item.gedeeld_op);
-                var btnIntrek = document.createElement('button'); btnIntrek.className = 'btn-intrekken'; btnIntrek.textContent = 'Intrekken';
-                btnIntrek.addEventListener('click', async function() {
-                    if (!confirm('Toegang intrekken voor ' + item.display_name + '?')) return;
+            if (result.error) {
+                deelLijstContainer.innerHTML =
+                    '<p class="deel-lijst-leeg">' +
+                    i18nModule.t('storage:share.errorLoad', { error: result.error }) + '</p>';
+                return;
+            }
+            if (!result.data || !result.data.length) {
+                deelLijstContainer.innerHTML =
+                    '<p class="deel-lijst-leeg">' + i18nModule.t('storage:share.listEmpty') + '</p>';
+                return;
+            }
+            result.data.forEach(function (item) {
+                var rij = document.createElement('div');
+                rij.className = 'deel-gebruiker-rij';
+
+                var naam = document.createElement('span');
+                naam.className   = 'deel-gebruiker-naam';
+                naam.textContent = item.display_name;
+
+                var rolBadge = document.createElement('span');
+                rolBadge.className   = 'badge-rol ' + item.rol;
+                // Vertaald rol-label
+                rolBadge.textContent = item.rol === 'editor'
+                    ? i18nModule.t('storage:share.rolEditor')
+                    : i18nModule.t('storage:share.rolViewer');
+
+                var datum = document.createElement('span');
+                datum.className   = 'deel-gebruiker-datum';
+                datum.textContent = formateerDatum(item.gedeeld_op);
+
+                var btnIntrek = document.createElement('button');
+                btnIntrek.className   = 'btn-intrekken';
+                btnIntrek.textContent = i18nModule.t('storage:share.btnRevoke'); // Vertaald
+                btnIntrek.addEventListener('click', async function () {
+                    // Bevestigingsdialoog — vertaald
+                    if (!confirm(i18nModule.t('storage:confirm.revokeAccess', { naam: item.display_name }))) return;
                     var res = await window.ShareModule.revokeAccess(stamboomId, item.viewer_id);
-                    if (res.success) { toonDeelStatus('✅ Toegang ingetrokken voor ' + item.display_name + '.', 'succes'); laadDeelLijst(); }
-                    else { toonDeelStatus('❌ ' + res.error, 'fout'); }
+                    if (res.success) {
+                        toonDeelStatus(
+                            i18nModule.t('storage:status.accessRevoked', { naam: item.display_name }),
+                            'succes'
+                        );
+                        laadDeelLijst();
+                    } else {
+                        toonDeelStatus(i18nModule.t('storage:error.unknown', { error: res.error }), 'fout');
+                    }
                 });
-                rij.appendChild(naam); rij.appendChild(rolBadge); rij.appendChild(datum); rij.appendChild(btnIntrek);
+
+                rij.appendChild(naam);
+                rij.appendChild(rolBadge);
+                rij.appendChild(datum);
+                rij.appendChild(btnIntrek);
                 deelLijstContainer.appendChild(rij);
             });
         }
@@ -636,40 +818,83 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function initCloud() {
-        if (!window.CloudSync) { console.warn('[storage.html] CloudSync niet beschikbaar'); return; }
+        if (!window.CloudSync) {
+            console.warn('[storage.html] CloudSync niet beschikbaar');
+            return;
+        }
         var meta = await window.CloudSync.getCloudMeta();
-        if (meta.error === 'not_logged_in') { loginWarn.classList.add('zichtbaar'); return; }
-        if (!meta.hasAccess) { upgradeBlok.classList.add('zichtbaar'); return; }  // F6-12: viewer/editor → upgrade-prompt
-        sectionOpslaan.classList.add('zichtbaar'); sectionLijst.classList.add('zichtbaar');
+        if (meta.error === 'not_logged_in') {
+            loginWarn.classList.add('zichtbaar');
+            return;
+        }
+        if (!meta.hasAccess) {
+            upgradeBlok.classList.add('zichtbaar'); // viewer/editor → upgrade-prompt
+            return;
+        }
+        sectionOpslaan.classList.add('zichtbaar');
+        sectionLijst.classList.add('zichtbaar');
         var actieveNaam = StamboomStorage.getActiveTreeName();
         var actieveId   = StamboomStorage.getActiveTreeId();
-        if (actieveId && actieveNaam) { actieveNaamEl.textContent = actieveNaam; actieveBalk.classList.add('zichtbaar'); btnOverschrijf.disabled = false; }
-        else { btnOverschrijf.disabled = true; }
+        if (actieveId && actieveNaam) {
+            actieveNaamEl.textContent = actieveNaam;
+            actieveBalk.classList.add('zichtbaar');
+            btnOverschrijf.disabled = false;
+        } else {
+            btnOverschrijf.disabled = true;
+        }
         if (actieveNaam && !inputNaamNieuw.value) { inputNaamNieuw.value = actieveNaam; }
         renderLijst(meta.stambomen || []);
     }
 
-    btnNieuw.addEventListener('click', async function() {
+    btnNieuw.addEventListener('click', async function () {
         var naam = inputNaamNieuw.value.trim();
-        if (!naam) { toonStatus('⚠️ Geef de stamboom een naam.', 'waarsch'); inputNaamNieuw.focus(); return; }
-        btnNieuw.disabled = true; btnNieuw.textContent = 'Bezig…'; verbergStatus();
+        if (!naam) {
+            toonStatus(i18nModule.t('storage:status.noName'), 'waarsch'); // Vertaald
+            inputNaamNieuw.focus();
+            return;
+        }
+        btnNieuw.disabled    = true;
+        btnNieuw.textContent = i18nModule.t('storage:share.inviting'); // "Bezig…" hergebruikt
+        verbergStatus();
         var result = await window.CloudSync.saveToCloud(naam, null);
-        btnNieuw.disabled = false; btnNieuw.textContent = '➕ Opslaan als nieuw';
-        if (result.success) { toonStatus('✅ Stamboom "' + result.naam + '" opgeslagen (' + result.count + ' personen).', 'succes'); await initCloud(); }
-        else { toonStatus(_foutTekst(result), 'fout'); }
+        btnNieuw.disabled    = false;
+        btnNieuw.textContent = i18nModule.t('storage:cloud.btnNew');
+        if (result.success) {
+            toonStatus(
+                i18nModule.t('storage:status.saved', { naam: result.naam, count: result.count }),
+                'succes'
+            );
+            await initCloud();
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
     });
 
-    btnOverschrijf.addEventListener('click', async function() {
+    btnOverschrijf.addEventListener('click', async function () {
         var actieveId   = StamboomStorage.getActiveTreeId();
         var actieveNaam = StamboomStorage.getActiveTreeName() || 'deze stamboom';
-        if (!actieveId) { toonStatus('⚠️ Geen actieve stamboom geselecteerd.', 'waarsch'); return; }
+        if (!actieveId) {
+            toonStatus(i18nModule.t('storage:status.noActive'), 'waarsch'); // Vertaald
+            return;
+        }
         var naam = inputNaamNieuw.value.trim() || actieveNaam;
-        if (!confirm('Wil je "' + actieveNaam + '" overschrijven met je huidige lokale data?')) return;
-        btnOverschrijf.disabled = true; btnOverschrijf.textContent = 'Bezig…'; verbergStatus();
+        // Bevestigingsdialoog — vertaald
+        if (!confirm(i18nModule.t('storage:confirm.overwrite', { naam: actieveNaam }))) return;
+        btnOverschrijf.disabled    = true;
+        btnOverschrijf.textContent = i18nModule.t('storage:share.inviting'); // "Bezig…"
+        verbergStatus();
         var result = await window.CloudSync.saveToCloud(naam, actieveId);
-        btnOverschrijf.disabled = false; btnOverschrijf.textContent = '🔄 Huidige overschrijven';
-        if (result.success) { toonStatus('✅ "' + result.naam + '" bijgewerkt (' + result.count + ' personen).', 'succes'); await initCloud(); }
-        else { toonStatus(_foutTekst(result), 'fout'); }
+        btnOverschrijf.disabled    = false;
+        btnOverschrijf.textContent = i18nModule.t('storage:cloud.btnOverwrite');
+        if (result.success) {
+            toonStatus(
+                i18nModule.t('storage:status.overwritten', { naam: result.naam, count: result.count }),
+                'succes'
+            );
+            await initCloud();
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
     });
 
     async function laadStamboom(id, naam) {
@@ -677,19 +902,20 @@ document.addEventListener('DOMContentLoaded', function () {
         var heeftWijzigingen = (actieveId && actieveId !== id && StamboomStorage.get().length > 0);
         if (heeftWijzigingen) {
             _wisselModal.toon(naam,
-                async function() { await _voerLaadUit(id, naam); },
-                async function() {
+                async function () { await _voerLaadUit(id, naam); },
+                async function () {
                     var actieveNaam = StamboomStorage.getActiveTreeName() || 'Mijn stamboom';
-                    toonStatus('Actieve stamboom opslaan…', 'info');
+                    toonStatus(i18nModule.t('storage:status.saving'), 'info'); // Vertaald
                     var saveResult = await window.CloudSync.saveToCloud(actieveNaam, actieveId);
                     if (!saveResult.success) { toonStatus(_foutTekst(saveResult), 'fout'); return; }
-                    toonStatus('✅ Opgeslagen. Nu laden…', 'succes');
+                    toonStatus(i18nModule.t('storage:status.savedNowLoading'), 'succes'); // Vertaald
                     await _voerLaadUit(id, naam);
                 }
             );
             return;
         }
-        if (!confirm('Wil je "' + naam + '" laden?\n\nDit overschrijft je huidige lokale data.\nMaak eerst een export als je dat wilt bewaren.')) return;
+        // Bevestigingsdialoog — vertaald
+        if (!confirm(i18nModule.t('storage:confirm.load', { naam: naam }))) return;
         await _voerLaadUit(id, naam);
     }
 
@@ -697,32 +923,44 @@ document.addEventListener('DOMContentLoaded', function () {
         verbergStatus();
         var result = await window.CloudSync.loadFromCloud(id);
         if (result.success) {
-            toonStatus('✅ "' + result.naam + '" geladen (' + result.count + ' personen).', 'succes');
-            renderTable(); _toonActieveBalkData(); await initCloud();
-        } else { toonStatus(_foutTekst(result), 'fout'); }
+            toonStatus(
+                i18nModule.t('storage:status.loaded', { naam: result.naam, count: result.count }),
+                'succes'
+            );
+            renderTable();
+            _toonActieveBalkData();
+            await initCloud();
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
     }
 
     async function verwijderStamboom(id, naam) {
-        if (!confirm('Wil je "' + naam + '" definitief verwijderen uit de cloud?\n\nDit kan niet ongedaan worden gemaakt.')) return;
+        // Bevestigingsdialoog — vertaald
+        if (!confirm(i18nModule.t('storage:confirm.delete', { naam: naam }))) return;
         verbergStatus();
         var result = await window.CloudSync.deleteFromCloud(id);
         if (result.success) {
-            toonStatus('✅ "' + naam + '" verwijderd uit de cloud.', 'succes');
+            toonStatus(i18nModule.t('storage:status.deleted', { naam: naam }), 'succes'); // Vertaald
             if (StamboomStorage.getActiveTreeId() === id) {
-                StamboomStorage.setActiveTreeId(null);                 // Bugfix v2.7.1: wis actieve UUID
-                StamboomStorage.setActiveTreeName(null);               // Bugfix v2.7.1: wis actieve naam
+                StamboomStorage.setActiveTreeId(null);   // Bugfix v2.7.1: wis actieve UUID
+                StamboomStorage.setActiveTreeName(null); // Bugfix v2.7.1: wis actieve naam
             }
-            _toonActieveBalkData(); await initCloud();
-        } else { toonStatus(_foutTekst(result), 'fout'); }
+            _toonActieveBalkData();
+            await initCloud();
+        } else {
+            toonStatus(_foutTekst(result), 'fout');
+        }
     }
 
+    // Fout-teksten via i18n — alle error-codes gekoppeld aan namespace-keys
     function _foutTekst(result) {
-        if (result.error === 'not_logged_in')   return '❌ Je bent niet ingelogd.';
-        if (result.error === 'no_cloud_access') return '❌ Cloud opslag is alleen beschikbaar voor owners. Upgrade je account via Ko-fi.';
-        if (result.error === 'limit_exceeded')  return '❌ Limiet overschreden: ' + result.count + '/' + result.max + ' personen.';
-        if (result.error === 'geen_id')         return '❌ Geen stamboom geselecteerd.';
-        if (result.error === 'invalid_data')    return '❌ Ongeldige data in de cloud.';
-        return '❌ Fout: ' + (result.error || 'onbekend');
+        if (result.error === 'not_logged_in')   return i18nModule.t('storage:error.notLoggedIn');
+        if (result.error === 'no_cloud_access') return i18nModule.t('storage:error.noCloudAccess');
+        if (result.error === 'limit_exceeded')  return i18nModule.t('storage:error.limitExceeded', { count: result.count, max: result.max });
+        if (result.error === 'geen_id')         return i18nModule.t('storage:error.noId');
+        if (result.error === 'invalid_data')    return i18nModule.t('storage:error.invalidData');
+        return i18nModule.t('storage:error.unknown', { error: result.error || 'onbekend' });
     }
 
     initCloud();
@@ -733,67 +971,153 @@ document.addEventListener('DOMContentLoaded', function () {
     var gedeeldLoginWarn = document.getElementById('gedeeldLoginWarn');
     var gedeeldContainer = document.getElementById('gedeeldContainer');
 
-    function toonGedeeldStatus(tekst, type) { gedeeldStatus.textContent = tekst; gedeeldStatus.className = 'gedeeld-banner ' + type; }
+    function toonGedeeldStatus(tekst, type) {
+        gedeeldStatus.textContent = tekst;
+        gedeeldStatus.className   = 'gedeeld-banner ' + type;
+    }
 
     async function initGedeeld() {
-        if (!window.ShareModule) { gedeeldContainer.innerHTML = '<p class="stambomen-leeg">ShareModule niet geladen.</p>'; return; }
+        if (!window.ShareModule) {
+            gedeeldContainer.innerHTML =
+                '<p class="stambomen-leeg">' + i18nModule.t('storage:error.shareModule') + '</p>';
+            return;
+        }
         var user = await window.AuthModule.getUser();
-        if (!user) { gedeeldContainer.innerHTML = ''; gedeeldLoginWarn.classList.add('zichtbaar'); return; }
-        gedeeldContainer.innerHTML = '<p class="lijst-laden">Gedeelde stambomen laden…</p>';
+        if (!user) {
+            gedeeldContainer.innerHTML = '';
+            gedeeldLoginWarn.classList.add('zichtbaar');
+            return;
+        }
+        gedeeldContainer.innerHTML =
+            '<p class="lijst-laden">' + i18nModule.t('storage:shared.loading') + '</p>';
         var result = await window.ShareModule.listSharedWithMe();
         gedeeldContainer.innerHTML = '';
-        if (result.error) { gedeeldContainer.innerHTML = '<p class="stambomen-leeg">Fout bij laden: ' + result.error + '</p>'; return; }
-        if (!result.data || !result.data.length) { gedeeldContainer.innerHTML = '<p class="stambomen-leeg">Nog geen stambomen met jou gedeeld.</p>'; return; }
+        if (result.error) {
+            gedeeldContainer.innerHTML =
+                '<p class="stambomen-leeg">' +
+                i18nModule.t('storage:error.loadFailed', { error: result.error }) + '</p>';
+            return;
+        }
+        if (!result.data || !result.data.length) {
+            gedeeldContainer.innerHTML =
+                '<p class="stambomen-leeg">' + i18nModule.t('storage:shared.empty') + '</p>';
+            return;
+        }
 
-        var tabel = document.createElement('table'); tabel.className = 'stambomen-tabel';
+        var tabel = document.createElement('table');
+        tabel.className = 'stambomen-tabel';
         var thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th>Naam</th><th>Eigenaar</th><th>Jouw rol</th><th>Gedeeld op</th><th>Acties</th></tr>';
+        // Kolomkoppen vertaald
+        thead.innerHTML =
+            '<tr>' +
+                '<th>' + i18nModule.t('storage:cloud.colName')     + '</th>' +
+                '<th>' + i18nModule.t('storage:shared.colOwner')   + '</th>' +
+                '<th>' + i18nModule.t('storage:shared.colRole')    + '</th>' +
+                '<th>' + i18nModule.t('storage:shared.colSharedOn')+ '</th>' +
+                '<th>' + i18nModule.t('storage:cloud.colActions')  + '</th>' +
+            '</tr>';
         tabel.appendChild(thead);
         var tbody = document.createElement('tbody');
 
-        result.data.forEach(function(item) {
+        result.data.forEach(function (item) {
             var rij = document.createElement('tr');
-            var tdNaam = document.createElement('td'); tdNaam.textContent = item.naam;
-            var tdEigenaar = document.createElement('td'); tdEigenaar.textContent = item.eigenaar_display_name;
+
+            var tdNaam = document.createElement('td');
+            tdNaam.textContent = item.naam;
+
+            var tdEigenaar = document.createElement('td');
+            tdEigenaar.textContent = item.eigenaar_display_name;
+
             var tdRol = document.createElement('td');
-            var rolBadge = document.createElement('span'); rolBadge.className = 'badge-rol ' + item.rol;
-            rolBadge.textContent = item.rol === 'editor' ? '✏️ Editor' : '👁 Viewer';
+            var rolBadge = document.createElement('span');
+            rolBadge.className   = 'badge-rol ' + item.rol;
+            // Vertaald rol-label
+            rolBadge.textContent = item.rol === 'editor'
+                ? i18nModule.t('storage:share.rolEditor')
+                : i18nModule.t('storage:share.rolViewer');
             tdRol.appendChild(rolBadge);
-            var tdDatum = document.createElement('td'); tdDatum.textContent = formateerDatum(item.gedeeld_op);
+
+            var tdDatum = document.createElement('td');
+            tdDatum.textContent = formateerDatum(item.gedeeld_op);
+
             var tdActies = document.createElement('td');
-            var knoppen  = document.createElement('div'); knoppen.className = 'rij-knoppen';
+            var knoppen  = document.createElement('div');
+            knoppen.className = 'rij-knoppen';
 
-            var btnLaad = document.createElement('button'); btnLaad.className = 'btn-tabel-laden'; btnLaad.textContent = '⬇️ Laden';
-            btnLaad.addEventListener('click', function() { laadGedeeldeStamboom(item.stamboom_id, item.naam); });
-
-            var btnVerlaat = document.createElement('button'); btnVerlaat.className = 'btn-tabel-verlaat'; btnVerlaat.textContent = '🚪 Verlaten';
-            btnVerlaat.addEventListener('click', async function() {
-                if (!confirm('Wil je de samenwerking aan "' + item.naam + '" verlaten?\n\nJe verliest je toegang tot deze stamboom.')) return;
-                var res = await window.ShareModule.leaveCollaboration(item.stamboom_id);
-                if (res.success) { toonGedeeldStatus('✅ Je hebt de samenwerking aan "' + item.naam + '" verlaten.', 'succes'); initGedeeld(); }
-                else { toonGedeeldStatus('❌ ' + res.error, 'fout'); }
+            var btnLaad = document.createElement('button');
+            btnLaad.className   = 'btn-tabel-laden';
+            btnLaad.textContent = i18nModule.t('storage:cloud.btnLoad'); // Vertaald
+            btnLaad.addEventListener('click', function () {
+                laadGedeeldeStamboom(item.stamboom_id, item.naam);
             });
 
-            knoppen.appendChild(btnLaad); knoppen.appendChild(btnVerlaat); tdActies.appendChild(knoppen);
-            rij.appendChild(tdNaam); rij.appendChild(tdEigenaar); rij.appendChild(tdRol); rij.appendChild(tdDatum); rij.appendChild(tdActies);
+            var btnVerlaat = document.createElement('button');
+            btnVerlaat.className   = 'btn-tabel-verlaat';
+            btnVerlaat.textContent = i18nModule.t('storage:shared.btnLeave'); // Vertaald
+            btnVerlaat.addEventListener('click', async function () {
+                // Bevestigingsdialoog — vertaald
+                if (!confirm(i18nModule.t('storage:confirm.leave', { naam: item.naam }))) return;
+                var res = await window.ShareModule.leaveCollaboration(item.stamboom_id);
+                if (res.success) {
+                    toonGedeeldStatus(
+                        i18nModule.t('storage:status.left', { naam: item.naam }),
+                        'succes'
+                    );
+                    initGedeeld();
+                } else {
+                    toonGedeeldStatus(
+                        i18nModule.t('storage:error.unknown', { error: res.error }),
+                        'fout'
+                    );
+                }
+            });
+
+            knoppen.appendChild(btnLaad);
+            knoppen.appendChild(btnVerlaat);
+            tdActies.appendChild(knoppen);
+            rij.appendChild(tdNaam);
+            rij.appendChild(tdEigenaar);
+            rij.appendChild(tdRol);
+            rij.appendChild(tdDatum);
+            rij.appendChild(tdActies);
             tbody.appendChild(rij);
         });
 
-        tabel.appendChild(tbody); gedeeldContainer.appendChild(tabel);
+        tabel.appendChild(tbody);
+        gedeeldContainer.appendChild(tabel);
     }
 
     async function laadGedeeldeStamboom(stamboomId, naam) {
-        if (!confirm('Wil je "' + naam + '" laden?\n\nDit overschrijft je huidige lokale data.')) return;
-        gedeeldContainer.querySelectorAll('.btn-tabel-laden').forEach(function(b) { b.disabled = true; });
+        // Bevestigingsdialoog — vertaald
+        if (!confirm(i18nModule.t('storage:confirm.load', { naam: naam }))) return;
+        gedeeldContainer.querySelectorAll('.btn-tabel-laden').forEach(function (b) { b.disabled = true; });
         var result = await window.CloudSync.loadFromCloud(stamboomId);
-        gedeeldContainer.querySelectorAll('.btn-tabel-laden').forEach(function(b) { b.disabled = false; });
+        gedeeldContainer.querySelectorAll('.btn-tabel-laden').forEach(function (b) { b.disabled = false; });
         if (result.success) {
-            toonGedeeldStatus('✅ "' + result.naam + '" geladen (' + result.count + ' personen).', 'succes');
-            renderTable(); _toonActieveBalkData();                     // Balk op Mijn data bijwerken
-        } else { toonGedeeldStatus('❌ Fout bij laden: ' + (result.error || 'onbekend'), 'fout'); }
+            toonGedeeldStatus(
+                i18nModule.t('storage:status.loaded', { naam: result.naam, count: result.count }),
+                'succes'
+            );
+            renderTable();
+            _toonActieveBalkData(); // Balk op Mijn data bijwerken
+        } else {
+            toonGedeeldStatus(
+                i18nModule.t('storage:error.loadFailed', { error: result.error || 'onbekend' }),
+                'fout'
+            );
+        }
     }
 
-});
+    } // einde startPagina()
+
+    // DOM klaar → start pagina; anders wachten op DOMContentLoaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startPagina);
+    } else {
+        startPagina();
+    }
+
+}); // einde i18n.then()
 </script>
 
 </body>
