@@ -1,0 +1,112 @@
+{
+  "page": {
+    "title": "Storage"
+  },
+  "welcome": {
+    "heading": "Storage",
+    "intro": "View your local data or manage your family trees in the cloud."
+  },
+  "tabs": {
+    "data": "📋 My data",
+    "cloud": "☁️ Cloud family trees",
+    "shared": "🔗 Shared with me"
+  },
+  "data": {
+    "active": "ACTIVE",
+    "resetBtn": "Reset family tree",
+    "empty": "No data found in localStorage.",
+    "filterPlaceholder": "Filter..."
+  },
+  "cloud": {
+    "intro": "Save multiple family trees in the cloud and load them on any device.",
+    "loginWarn": "You are not logged in. Log in via the top bar to manage cloud family trees.",
+    "upgradeTitle": "☁️ Cloud family trees",
+    "upgradeBody": "Cloud storage is available for owners and admins. Upgrade your account via Ko-fi to save and share unlimited family trees.",
+    "upgradeBtn": "☕ Support us via Ko-fi",
+    "saveTitle": "☁️ Save to cloud",
+    "saveIntro": "Save your current local family tree as new, or overwrite an existing one.",
+    "nameLabel": "Name:",
+    "namePlaceholder": "e.g. Family De Smedt",
+    "btnNew": "➕ Save as new",
+    "btnOverwrite": "🔄 Overwrite current",
+    "listTitle": "Your cloud family trees",
+    "listLoading": "Loading family trees…",
+    "colName": "Name",
+    "colPersons": "Persons",
+    "colDate": "Last saved",
+    "colActions": "Actions",
+    "badgeActive": "active",
+    "btnLoad": "⬇️ Load",
+    "btnLoaded": "✓ Loaded",
+    "btnShare": "🔗 Share",
+    "btnDelete": "🗑️ Delete",
+    "empty": "No family trees saved in the cloud yet."
+  },
+  "shared": {
+    "intro": "Family trees shared with you by other users. You can load and view them. Editors can also save changes.",
+    "loginWarn": "You are not logged in. Log in via the top bar to view shared family trees.",
+    "loading": "Loading shared family trees…",
+    "empty": "No family trees shared with you yet.",
+    "colOwner": "Owner",
+    "colRole": "Your role",
+    "colSharedOn": "Shared on",
+    "btnLeave": "🚪 Leave"
+  },
+  "info": {
+    "version": "Version: {{version}} | {{count}} records"
+  },
+  "modal": {
+    "title": "Unsaved changes",
+    "body": "Your local data contains unsaved changes. What would you like to do before loading \"{{naam}}\"?",
+    "cancel": "Cancel",
+    "loadAnyway": "Load anyway",
+    "saveFirst": "Save first"
+  },
+  "confirm": {
+    "reset": "⚠️ WARNING ⚠️\n\nAll data will be deleted.\nMake an export first.\nClick OK to confirm.",
+    "load": "Do you want to load \"{{naam}}\"?\n\nThis will overwrite your current local data.\nMake an export first if you want to keep it.",
+    "overwrite": "Do you want to overwrite \"{{naam}}\" with your current local data?",
+    "delete": "Do you want to permanently delete \"{{naam}}\" from the cloud?\n\nThis cannot be undone.",
+    "leave": "Do you want to leave the collaboration on \"{{naam}}\"?\n\nYou will lose access to this family tree.",
+    "revokeAccess": "Revoke access for {{naam}}?"
+  },
+  "status": {
+    "saving": "Saving active family tree…",
+    "savedNowLoading": "✅ Saved. Now loading…",
+    "noName": "⚠️ Give the family tree a name.",
+    "noActive": "⚠️ No active family tree selected.",
+    "saved": "✅ Family tree \"{{naam}}\" saved ({{count}} persons).",
+    "overwritten": "✅ \"{{naam}}\" updated ({{count}} persons).",
+    "loaded": "✅ \"{{naam}}\" loaded ({{count}} persons).",
+    "deleted": "✅ \"{{naam}}\" deleted from the cloud.",
+    "left": "✅ You have left the collaboration on \"{{naam}}\".",
+    "accessRevoked": "✅ Access revoked for {{naam}}."
+  },
+  "error": {
+    "notLoggedIn": "❌ You are not logged in.",
+    "noCloudAccess": "❌ Cloud storage is only available for owners. Upgrade your account via Ko-fi.",
+    "limitExceeded": "❌ Limit exceeded: {{count}}/{{max}} persons.",
+    "noId": "❌ No family tree selected.",
+    "invalidData": "❌ Invalid data in the cloud.",
+    "unknown": "❌ Error: {{error}}",
+    "shareModule": "ShareModule not loaded.",
+    "loadFailed": "Error loading: {{error}}"
+  },
+  "share": {
+    "title": "🔗 Share family tree: {{naam}}",
+    "intro": "Invite users as viewer (read only) or editor (read and edit). Any user with an account can be invited.",
+    "currentAccess": "Current access",
+    "emailPlaceholder": "Invite email address…",
+    "btnInvite": "Invite",
+    "inviting": "Sending…",
+    "invited": "✅ {{email}} added as {{rol}}.",
+    "rolEditor": "✏️ Editor",
+    "rolViewer": "👁 Viewer",
+    "listLoading": "Loading…",
+    "listEmpty": "Nobody invited yet.",
+    "btnRevoke": "Revoke",
+    "btnClose": "✕ Close",
+    "fillEmail": "Please fill in an email address.",
+    "errorLoad": "Error: {{error}}"
+  }
+}
