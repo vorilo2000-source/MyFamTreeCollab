@@ -163,10 +163,13 @@
 // ======================= i18n initialisatie + component fetch =======================
 i18nModule.init().then(function () {
 
-    // Load de stats namespace voor deze pagina
-    i18nModule.loadNamespace('stats');
+    // Laad de stats namespace en wacht tot deze beschikbaar is
+    // loadNamespace() geeft een Promise terug — zonder await worden keys nog niet gevonden
+    return i18nModule.loadNamespace('stats');
 
-    // Vertaal de paginatitel via i18n
+}).then(function () {
+
+    // Vertaal de paginatitel via i18n — namespace is nu zeker geladen
     document.title = i18nModule.t('stats:page.title');
 
     // Laad TopBar en activeer i18n + topbar.js erin
@@ -199,96 +202,109 @@ i18nModule.init().then(function () {
     SiteAnalytics.trackPage('stats'); // Bezoek registreren in Supabase page_visits tabel
 
     // ======================= KPI + Familie logica =======================
-    if (typeof StamboomStorage === 'undefined') {
-        console.error('StamboomStorage niet geladen.'); // Storage module ontbreekt
-        return;
-    }
+    // DOMContentLoaded garandeert dat storage.js volledig is uitgevoerd
+    // én de DOM-elementen beschikbaar zijn voordat we KPI's bouwen.
+    // i18nModule is op dit punt al klaar (we zitten in de then()-callback).
+    function buildKPIs() {
 
-    var data         = StamboomStorage.get();                              // Haal alle personen op uit lokale opslag
-    var lastUpdate   = localStorage.getItem('lastUpdate')
-                       || i18nModule.t('stats:kpi.unknown');              // Fallback als datum ontbreekt
-    var version      = StamboomStorage.version;                           // Haal versienummer op uit storage module
-    var kpiContainer = document.getElementById('kpiContainer');           // Container voor KPI blokken
-    var familyList   = document.getElementById('familyList');             // Lijst voor familie-items
-
-    // ======================= KPI blok aanmaken =======================
-    function createKPI(value, labelKey, extraClass) {
-        var div = document.createElement('div');                          // Maak wrapper div aan
-        div.classList.add('kpi-block');
-        if (extraClass) div.classList.add(extraClass);                    // Kleurklasse toevoegen
-
-        var valSpan = document.createElement('div');                      // Waardeblok
-        valSpan.classList.add('kpi-value');
-        valSpan.textContent = value;                                      // Dynamische waarde invullen
-
-        var labelSpan = document.createElement('div');                    // Labelblok
-        labelSpan.classList.add('kpi-label');
-        labelSpan.textContent = i18nModule.t(labelKey);                   // Vertaald label ophalen
-
-        div.appendChild(valSpan);
-        div.appendChild(labelSpan);
-        return div;
-    }
-
-    // ======================= Generaties berekenen =======================
-    var generations = new Set(data.map(function (p) { return p.Generation; })).size;
-
-    // ======================= Meest voorkomende achternaam =======================
-    var surnameCounts = {};
-    data.forEach(function (p) {
-        surnameCounts[p.Achternaam] = (surnameCounts[p.Achternaam] || 0) + 1; // Tel per achternaam
-    });
-
-    var mostCommonSurname = '\u2014'; // Em-dash als standaard fallback
-    var maxCount = 0;
-    Object.entries(surnameCounts).forEach(function (entry) {
-        if (entry[1] > maxCount) {
-            maxCount = entry[1];
-            mostCommonSurname = entry[0]; // Sla meest voorkomende naam op
+        if (typeof StamboomStorage === 'undefined') {
+            console.error('StamboomStorage niet geladen.'); // Storage module ontbreekt
+            return;
         }
-    });
 
-    // ======================= Geslacht tellen =======================
-    var genderCounts = data.reduce(function (acc, p) {
-        if (p.Geslacht === 'M') acc.M++;       // Tel mannen
-        else if (p.Geslacht === 'V') acc.V++;  // Tel vrouwen
-        return acc;
-    }, { M: 0, V: 0 });
+        var data         = StamboomStorage.get();                              // Haal alle personen op uit lokale opslag
+        var lastUpdate   = localStorage.getItem('lastUpdate')
+                           || i18nModule.t('stats:kpi.unknown');              // Fallback als datum ontbreekt
+        var version      = StamboomStorage.version;                           // Haal versienummer op uit storage module
+        var kpiContainer = document.getElementById('kpiContainer');           // Container voor KPI blokken
+        var familyList   = document.getElementById('familyList');             // Lijst voor familie-items
 
-    // ======================= Families groeperen =======================
-    var families = {};
-    data.forEach(function (p) {
-        if (!families[p.Achternaam]) families[p.Achternaam] = []; // Initialiseer familiegroep
-        families[p.Achternaam].push(p);                           // Voeg persoon toe aan familie
-    });
+        // ======================= KPI blok aanmaken =======================
+        function createKPI(value, labelKey, extraClass) {
+            var div = document.createElement('div');                          // Maak wrapper div aan
+            div.classList.add('kpi-block');
+            if (extraClass) div.classList.add(extraClass);                    // Kleurklasse toevoegen
 
-    var familyCount = Object.keys(families).length; // Aantal unieke families
+            var valSpan = document.createElement('div');                      // Waardeblok
+            valSpan.classList.add('kpi-value');
+            valSpan.textContent = value;                                      // Dynamische waarde invullen
 
-    // ======================= KPI blokken toevoegen =======================
-    kpiContainer.appendChild(createKPI(data.length,    'stats:kpi.persons',    'kpi-persons'));
-    kpiContainer.appendChild(createKPI(lastUpdate,     'stats:kpi.lastUpdate', 'kpi-update'));
-    kpiContainer.appendChild(createKPI(version,        'stats:kpi.version',    'kpi-version'));
-    kpiContainer.appendChild(createKPI(generations,    'stats:kpi.generations','kpi-generations'));
-    kpiContainer.appendChild(createKPI(mostCommonSurname, 'stats:kpi.mostCommon', 'kpi-mostcommon'));
-    kpiContainer.appendChild(createKPI(
-        genderCounts.M + 'M / ' + genderCounts.V + 'V', // Waarde: bv. "5M / 3V"
-        'stats:kpi.gender',
-        'kpi-gender'
-    ));
-    kpiContainer.appendChild(createKPI(familyCount,    'stats:kpi.families',   'kpi-families'));
+            var labelSpan = document.createElement('div');                    // Labelblok
+            labelSpan.classList.add('kpi-label');
+            labelSpan.textContent = i18nModule.t(labelKey);                   // Vertaald label ophalen
 
-    // ======================= Familie-items in lijst plaatsen =======================
-    Object.entries(families).forEach(function (entry) {
-        var familyName = entry[0]; // Achternaam als familienaam
-        var members    = entry[1]; // Array van leden
-        var li = document.createElement('li');
-        // Vertaald patroon: "De Vries (4 leden)" / "De Vries (4 members)"
-        li.textContent = i18nModule.t('stats:families.item', {
-            name:  familyName,
-            count: members.length
+            div.appendChild(valSpan);
+            div.appendChild(labelSpan);
+            return div;
+        }
+
+        // ======================= Generaties berekenen =======================
+        var generations = new Set(data.map(function (p) { return p.Generation; })).size;
+
+        // ======================= Meest voorkomende achternaam =======================
+        var surnameCounts = {};
+        data.forEach(function (p) {
+            surnameCounts[p.Achternaam] = (surnameCounts[p.Achternaam] || 0) + 1; // Tel per achternaam
         });
-        familyList.appendChild(li);
-    });
+
+        var mostCommonSurname = '\u2014'; // Em-dash als standaard fallback
+        var maxCount = 0;
+        Object.entries(surnameCounts).forEach(function (entry) {
+            if (entry[1] > maxCount) {
+                maxCount = entry[1];
+                mostCommonSurname = entry[0]; // Sla meest voorkomende naam op
+            }
+        });
+
+        // ======================= Geslacht tellen =======================
+        var genderCounts = data.reduce(function (acc, p) {
+            if (p.Geslacht === 'M') acc.M++;       // Tel mannen
+            else if (p.Geslacht === 'V') acc.V++;  // Tel vrouwen
+            return acc;
+        }, { M: 0, V: 0 });
+
+        // ======================= Families groeperen =======================
+        var families = {};
+        data.forEach(function (p) {
+            if (!families[p.Achternaam]) families[p.Achternaam] = []; // Initialiseer familiegroep
+            families[p.Achternaam].push(p);                           // Voeg persoon toe aan familie
+        });
+
+        var familyCount = Object.keys(families).length; // Aantal unieke families
+
+        // ======================= KPI blokken toevoegen =======================
+        kpiContainer.appendChild(createKPI(data.length,       'stats:kpi.persons',    'kpi-persons'));
+        kpiContainer.appendChild(createKPI(lastUpdate,         'stats:kpi.lastUpdate', 'kpi-update'));
+        kpiContainer.appendChild(createKPI(version,            'stats:kpi.version',    'kpi-version'));
+        kpiContainer.appendChild(createKPI(generations,        'stats:kpi.generations','kpi-generations'));
+        kpiContainer.appendChild(createKPI(mostCommonSurname,  'stats:kpi.mostCommon', 'kpi-mostcommon'));
+        kpiContainer.appendChild(createKPI(
+            genderCounts.M + 'M / ' + genderCounts.V + 'V',   // Waarde: bv. "5M / 3V"
+            'stats:kpi.gender',
+            'kpi-gender'
+        ));
+        kpiContainer.appendChild(createKPI(familyCount,        'stats:kpi.families',   'kpi-families'));
+
+        // ======================= Familie-items in lijst plaatsen =======================
+        Object.entries(families).forEach(function (entry) {
+            var familyName = entry[0]; // Achternaam als familienaam
+            var members    = entry[1]; // Array van leden
+            var li = document.createElement('li');
+            // Vertaald patroon: "De Vries (4 leden)" / "De Vries (4 members)"
+            li.textContent = i18nModule.t('stats:families.item', {
+                name:  familyName,
+                count: members.length
+            });
+            familyList.appendChild(li);
+        });
+    }
+
+    // DOM klaar → bouw KPI's; anders wacht op DOMContentLoaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', buildKPIs); // DOM nog niet klaar
+    } else {
+        buildKPIs(); // DOM al klaar (scripts laden synchroon na HTML)
+    }
 
 });
 </script>
