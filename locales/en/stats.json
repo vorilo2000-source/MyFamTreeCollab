@@ -1,0 +1,23 @@
+{
+  "page": {
+    "title": "Statistics"
+  },
+  "welcome": {
+    "heading": "Welcome to your Family Tree Statistics",
+    "intro": "An overview of your family tree in numbers. All data comes directly from your stored records and is calculated live."
+  },
+  "families": {
+    "heading": "Family overview",
+    "item": "{{name}} ({{count}} members)"
+  },
+  "kpi": {
+    "persons": "Number of persons",
+    "lastUpdate": "Last update",
+    "version": "Version",
+    "generations": "Generations",
+    "mostCommon": "Most common surname",
+    "gender": "Male / Female",
+    "families": "Number of families",
+    "unknown": "Unknown"
+  }
+}
