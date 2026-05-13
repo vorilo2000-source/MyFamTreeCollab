@@ -1,0 +1,112 @@
+{
+  "page": {
+    "title": "Opslag"
+  },
+  "welcome": {
+    "heading": "Opslag",
+    "intro": "Bekijk je lokale data of beheer je stambomen in de cloud."
+  },
+  "tabs": {
+    "data": "📋 Mijn data",
+    "cloud": "☁️ Cloud stambomen",
+    "shared": "🔗 Gedeeld met mij"
+  },
+  "data": {
+    "active": "ACTIEF",
+    "resetBtn": "Reset stamboom",
+    "empty": "Geen data gevonden in localStorage.",
+    "filterPlaceholder": "Filter..."
+  },
+  "cloud": {
+    "intro": "Sla meerdere stambomen op in de cloud en laad ze op elk apparaat.",
+    "loginWarn": "Je bent niet ingelogd. Log in via de balk bovenaan om cloud stambomen te beheren.",
+    "upgradeTitle": "☁️ Cloud stambomen",
+    "upgradeBody": "Cloud opslag is beschikbaar voor owners en admins. Upgrade je account via Ko-fi om onbeperkt stambomen op te slaan en te delen.",
+    "upgradeBtn": "☕ Steun ons via Ko-fi",
+    "saveTitle": "☁️ Opslaan in cloud",
+    "saveIntro": "Sla je huidige lokale stamboom op als nieuw, of overschrijf een bestaande.",
+    "nameLabel": "Naam:",
+    "namePlaceholder": "bijv. Familie De Smedt",
+    "btnNew": "➕ Opslaan als nieuw",
+    "btnOverwrite": "🔄 Huidige overschrijven",
+    "listTitle": "Jouw cloud stambomen",
+    "listLoading": "Stambomen laden…",
+    "colName": "Naam",
+    "colPersons": "Personen",
+    "colDate": "Laatste opslag",
+    "colActions": "Acties",
+    "badgeActive": "actief",
+    "btnLoad": "⬇️ Laden",
+    "btnLoaded": "✓ Geladen",
+    "btnShare": "🔗 Delen",
+    "btnDelete": "🗑️ Verwijderen",
+    "empty": "Nog geen stambomen opgeslagen in de cloud."
+  },
+  "shared": {
+    "intro": "Stambomen die andere gebruikers met jou hebben gedeeld. Je kunt deze laden en bekijken. Editors kunnen ook wijzigingen opslaan.",
+    "loginWarn": "Je bent niet ingelogd. Log in via de balk bovenaan om gedeelde stambomen te bekijken.",
+    "loading": "Gedeelde stambomen laden…",
+    "empty": "Nog geen stambomen met jou gedeeld.",
+    "colOwner": "Eigenaar",
+    "colRole": "Jouw rol",
+    "colSharedOn": "Gedeeld op",
+    "btnLeave": "🚪 Verlaten"
+  },
+  "info": {
+    "version": "Versie: {{version}} | {{count}} records"
+  },
+  "modal": {
+    "title": "Onopgeslagen wijzigingen",
+    "body": "Je lokale data bevat wijzigingen die nog niet zijn opgeslagen in de cloud. Wat wil je doen voordat je \"{{naam}}\" laadt?",
+    "cancel": "Annuleren",
+    "loadAnyway": "Toch laden",
+    "saveFirst": "Eerst opslaan"
+  },
+  "confirm": {
+    "reset": "⚠️ WAARSCHUWING ⚠️\n\nAlle data wordt verwijderd.\nMaak eerst een export.\nKlik OK om te bevestigen.",
+    "load": "Wil je \"{{naam}}\" laden?\n\nDit overschrijft je huidige lokale data.\nMaak eerst een export als je dat wilt bewaren.",
+    "overwrite": "Wil je \"{{naam}}\" overschrijven met je huidige lokale data?",
+    "delete": "Wil je \"{{naam}}\" definitief verwijderen uit de cloud?\n\nDit kan niet ongedaan worden gemaakt.",
+    "leave": "Wil je de samenwerking aan \"{{naam}}\" verlaten?\n\nJe verliest je toegang tot deze stamboom.",
+    "revokeAccess": "Toegang intrekken voor {{naam}}?"
+  },
+  "status": {
+    "saving": "Actieve stamboom opslaan…",
+    "savedNowLoading": "✅ Opgeslagen. Nu laden…",
+    "noName": "⚠️ Geef de stamboom een naam.",
+    "noActive": "⚠️ Geen actieve stamboom geselecteerd.",
+    "saved": "✅ Stamboom \"{{naam}}\" opgeslagen ({{count}} personen).",
+    "overwritten": "✅ \"{{naam}}\" bijgewerkt ({{count}} personen).",
+    "loaded": "✅ \"{{naam}}\" geladen ({{count}} personen).",
+    "deleted": "✅ \"{{naam}}\" verwijderd uit de cloud.",
+    "left": "✅ Je hebt de samenwerking aan \"{{naam}}\" verlaten.",
+    "accessRevoked": "✅ Toegang ingetrokken voor {{naam}}."
+  },
+  "error": {
+    "notLoggedIn": "❌ Je bent niet ingelogd.",
+    "noCloudAccess": "❌ Cloud opslag is alleen beschikbaar voor owners. Upgrade je account via Ko-fi.",
+    "limitExceeded": "❌ Limiet overschreden: {{count}}/{{max}} personen.",
+    "noId": "❌ Geen stamboom geselecteerd.",
+    "invalidData": "❌ Ongeldige data in de cloud.",
+    "unknown": "❌ Fout: {{error}}",
+    "shareModule": "ShareModule niet geladen.",
+    "loadFailed": "Fout bij laden: {{error}}"
+  },
+  "share": {
+    "title": "🔗 Stamboom delen: {{naam}}",
+    "intro": "Nodig gebruikers uit als viewer (alleen lezen) of editor (lezen en bewerken). Elke gebruiker met een account kan worden uitgenodigd.",
+    "currentAccess": "Huidige toegang",
+    "emailPlaceholder": "E-mailadres uitnodigen…",
+    "btnInvite": "Uitnodigen",
+    "inviting": "Bezig…",
+    "invited": "✅ {{email}} toegevoegd als {{rol}}.",
+    "rolEditor": "✏️ Editor",
+    "rolViewer": "👁 Viewer",
+    "listLoading": "Laden…",
+    "listEmpty": "Nog niemand uitgenodigd.",
+    "btnRevoke": "Intrekken",
+    "btnClose": "✕ Sluiten",
+    "fillEmail": "Vul een e-mailadres in.",
+    "errorLoad": "Fout: {{error}}"
+  }
+}
