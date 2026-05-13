@@ -1,0 +1,112 @@
+{
+  "page": {
+    "title": "Almacenamiento"
+  },
+  "welcome": {
+    "heading": "Almacenamiento",
+    "intro": "Consulta tus datos locales o gestiona tus árboles genealógicos en la nube."
+  },
+  "tabs": {
+    "data": "📋 Mis datos",
+    "cloud": "☁️ Árboles en la nube",
+    "shared": "🔗 Compartido conmigo"
+  },
+  "data": {
+    "active": "ACTIVO",
+    "resetBtn": "Resetear árbol",
+    "empty": "No se encontraron datos en localStorage.",
+    "filterPlaceholder": "Filtrar..."
+  },
+  "cloud": {
+    "intro": "Guarda múltiples árboles genealógicos en la nube y cárgalos en cualquier dispositivo.",
+    "loginWarn": "No has iniciado sesión. Inicia sesión desde la barra superior para gestionar los árboles en la nube.",
+    "upgradeTitle": "☁️ Árboles en la nube",
+    "upgradeBody": "El almacenamiento en la nube está disponible para propietarios y admins. Actualiza tu cuenta vía Ko-fi para guardar y compartir árboles ilimitados.",
+    "upgradeBtn": "☕ Apóyanos en Ko-fi",
+    "saveTitle": "☁️ Guardar en la nube",
+    "saveIntro": "Guarda tu árbol local actual como nuevo, o sobreescribe uno existente.",
+    "nameLabel": "Nombre:",
+    "namePlaceholder": "p.ej. Familia De Smedt",
+    "btnNew": "➕ Guardar como nuevo",
+    "btnOverwrite": "🔄 Sobreescribir actual",
+    "listTitle": "Tus árboles en la nube",
+    "listLoading": "Cargando árboles…",
+    "colName": "Nombre",
+    "colPersons": "Personas",
+    "colDate": "Última guardada",
+    "colActions": "Acciones",
+    "badgeActive": "activo",
+    "btnLoad": "⬇️ Cargar",
+    "btnLoaded": "✓ Cargado",
+    "btnShare": "🔗 Compartir",
+    "btnDelete": "🗑️ Eliminar",
+    "empty": "Aún no hay árboles guardados en la nube."
+  },
+  "shared": {
+    "intro": "Árboles genealógicos compartidos contigo por otros usuarios. Puedes cargarlos y verlos. Los editores también pueden guardar cambios.",
+    "loginWarn": "No has iniciado sesión. Inicia sesión desde la barra superior para ver los árboles compartidos.",
+    "loading": "Cargando árboles compartidos…",
+    "empty": "Aún no hay árboles compartidos contigo.",
+    "colOwner": "Propietario",
+    "colRole": "Tu rol",
+    "colSharedOn": "Compartido el",
+    "btnLeave": "🚪 Abandonar"
+  },
+  "info": {
+    "version": "Versión: {{version}} | {{count}} registros"
+  },
+  "modal": {
+    "title": "Cambios sin guardar",
+    "body": "Tus datos locales contienen cambios sin guardar. ¿Qué quieres hacer antes de cargar \"{{naam}}\"?",
+    "cancel": "Cancelar",
+    "loadAnyway": "Cargar igualmente",
+    "saveFirst": "Guardar primero"
+  },
+  "confirm": {
+    "reset": "⚠️ ADVERTENCIA ⚠️\n\nSe eliminarán todos los datos.\nHaz una exportación primero.\nHaz clic en OK para confirmar.",
+    "load": "¿Quieres cargar \"{{naam}}\"?\n\nEsto sobreescribirá tus datos locales actuales.\nHaz una exportación primero si quieres conservarlos.",
+    "overwrite": "¿Quieres sobreescribir \"{{naam}}\" con tus datos locales actuales?",
+    "delete": "¿Quieres eliminar permanentemente \"{{naam}}\" de la nube?\n\nEsto no se puede deshacer.",
+    "leave": "¿Quieres abandonar la colaboración en \"{{naam}}\"?\n\nPerderás el acceso a este árbol.",
+    "revokeAccess": "¿Revocar el acceso para {{naam}}?"
+  },
+  "status": {
+    "saving": "Guardando árbol activo…",
+    "savedNowLoading": "✅ Guardado. Cargando ahora…",
+    "noName": "⚠️ Dale un nombre al árbol.",
+    "noActive": "⚠️ Ningún árbol activo seleccionado.",
+    "saved": "✅ Árbol \"{{naam}}\" guardado ({{count}} personas).",
+    "overwritten": "✅ \"{{naam}}\" actualizado ({{count}} personas).",
+    "loaded": "✅ \"{{naam}}\" cargado ({{count}} personas).",
+    "deleted": "✅ \"{{naam}}\" eliminado de la nube.",
+    "left": "✅ Has abandonado la colaboración en \"{{naam}}\".",
+    "accessRevoked": "✅ Acceso revocado para {{naam}}."
+  },
+  "error": {
+    "notLoggedIn": "❌ No has iniciado sesión.",
+    "noCloudAccess": "❌ El almacenamiento en la nube solo está disponible para propietarios. Actualiza tu cuenta vía Ko-fi.",
+    "limitExceeded": "❌ Límite superado: {{count}}/{{max}} personas.",
+    "noId": "❌ Ningún árbol seleccionado.",
+    "invalidData": "❌ Datos inválidos en la nube.",
+    "unknown": "❌ Error: {{error}}",
+    "shareModule": "ShareModule no cargado.",
+    "loadFailed": "Error al cargar: {{error}}"
+  },
+  "share": {
+    "title": "🔗 Compartir árbol: {{naam}}",
+    "intro": "Invita usuarios como viewer (solo lectura) o editor (leer y editar). Cualquier usuario con cuenta puede ser invitado.",
+    "currentAccess": "Acceso actual",
+    "emailPlaceholder": "Invitar dirección de email…",
+    "btnInvite": "Invitar",
+    "inviting": "Enviando…",
+    "invited": "✅ {{email}} añadido como {{rol}}.",
+    "rolEditor": "✏️ Editor",
+    "rolViewer": "👁 Lector",
+    "listLoading": "Cargando…",
+    "listEmpty": "Nadie invitado aún.",
+    "btnRevoke": "Revocar",
+    "btnClose": "✕ Cerrar",
+    "fillEmail": "Por favor introduce una dirección de email.",
+    "errorLoad": "Error: {{error}}"
+  }
+}
