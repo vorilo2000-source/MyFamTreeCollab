@@ -1,0 +1,19 @@
+{
+  "page": {
+    "title": "Árbol genealógico"
+  },
+  "welcome": {
+    "heading": "Bienvenido a tu Vista del árbol",
+    "intro": "Busca una persona para ver el árbol genealógico a su alrededor. Haz clic en un nodo para seleccionarlo como nuevo centro."
+  },
+  "search": {
+    "placeholder": "Buscar por ID, nombre o fecha de nacimiento..."
+  },
+  "siblings": {
+    "title": "Hermanos"
+  },
+  "tree": {
+    "selectPerson": "Selecciona una persona",
+    "notFound": "Persona no encontrada"
+  }
+}
