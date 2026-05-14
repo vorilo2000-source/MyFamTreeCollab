@@ -1,225 +1,184 @@
-<!-- ======================= home/confirm.html v1.2.0 =======================
+<!-- ======================= home/confirm.html v1.3.0 =======================
+     Wijziging v1.3.0 (sessie 26):
+     - i18n geïntegreerd: i18next scripts + i18n.js toegevoegd aan <head>
+     - Alle statische en dynamische teksten via i18nModule.t('auth:confirm.*')
+     - TopBar via i18nModule.onComponentLoaded()
+
      v1.2.0: Authorization header verwijderd uit notifyAdmin()
-             Edge Function verify_jwt=false — header veroorzaakte 401
-     v1.1.0: notificatie-mail naar vorilo2000@gmail.com na succesvolle bevestiging
-             notifyAdmin(email) toegevoegd — roept dynamic-responder Edge Function aan
+     v1.1.0: notificatie-mail naar admin na succesvolle bevestiging
      v1.0.0: Nieuwe pagina — verwerkt Supabase email bevestiging
-     - Leest token_hash en type uit URL parameters
-     - Roept Supabase verifyOtp() aan om bevestiging te voltooien
-     - Toont succes of foutmelding aan gebruiker
-     - Redirect naar index.html na succesvolle bevestiging
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8"> <!-- Tekencodering instellen -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive weergave -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Paginatitel wordt via JS gezet na i18n init -->
     <title>E-mail bevestigen — MyFamTreeCollab</title>
 
     <!-- ======================= Favicon ======================= -->
-    <link rel="icon" type="image/x-icon" href="img/favicon.ico"> <!-- Standaard favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png"> <!-- 32x32 variant -->
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png"> <!-- Apple icoon -->
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
 
-    <link rel="stylesheet" href="css/style.css"> <!-- Globale CSS -->
+    <!-- ======================= i18next bibliotheken ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="js/i18n.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
 
     <style>
-        /* ======================= CONFIRM CONTAINER ======================= */
         .confirm-wrap {
-            max-width: 480px;         /* Beperkte breedte voor focus */
-            margin: 80px auto;        /* Gecentreerd met ruimte boven */
-            padding: 40px 32px;       /* Ruimte binnen het blok */
-            border: 1px solid #ddd;   /* Lichte rand */
-            border-radius: 8px;       /* Afgeronde hoeken */
-            background: #fafafa;      /* Lichte achtergrond */
-            text-align: center;       /* Gecentreerde tekst */
+            max-width: 480px;
+            margin: 80px auto;
+            padding: 40px 32px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+            text-align: center;
         }
-
-        /* ======================= ICON ======================= */
-        .confirm-icon {
-            font-size: 3rem;          /* Grote emoji als visueel anker */
-            margin-bottom: 16px;      /* Ruimte onder icoon */
-            display: block;           /* Blok voor margin werking */
-        }
-
-        /* ======================= HEADING ======================= */
-        .confirm-wrap h1 {
-            font-size: 1.5rem;        /* Duidelijke maar compacte titel */
-            margin-bottom: 12px;      /* Ruimte onder titel */
-            color: #222;              /* Donkere tekst */
-        }
-
-        /* ======================= MESSAGE ======================= */
-        .confirm-msg {
-            color: #555;              /* Grijze tekst */
-            line-height: 1.6;         /* Leesbaarheid */
-            margin-bottom: 24px;      /* Ruimte onder bericht */
-        }
-
-        /* ======================= SUCCESS STATE ======================= */
-        .confirm-wrap.success {
-            border-color: #28a745;    /* Groene rand bij succes */
-        }
-
-        .confirm-wrap.success .confirm-icon::after {
-            content: "✅";            /* Succes icoon */
-        }
-
-        /* ======================= ERROR STATE ======================= */
-        .confirm-wrap.error {
-            border-color: #dc3545;    /* Rode rand bij fout */
-        }
-
-        .confirm-wrap.error .confirm-icon::after {
-            content: "❌";            /* Fout icoon */
-        }
-
-        /* ======================= LOADING STATE ======================= */
-        .confirm-wrap.loading .confirm-icon::after {
-            content: "⏳";            /* Laden icoon */
-        }
-
-        /* ======================= BUTTON ======================= */
+        .confirm-icon { font-size: 3rem; margin-bottom: 16px; display: block; }
+        .confirm-wrap h1 { font-size: 1.5rem; margin-bottom: 12px; color: #222; }
+        .confirm-msg { color: #555; line-height: 1.6; margin-bottom: 24px; }
+        .confirm-wrap.success { border-color: #28a745; }
+        .confirm-wrap.success .confirm-icon::after { content: "✅"; }
+        .confirm-wrap.error   { border-color: #dc3545; }
+        .confirm-wrap.error   .confirm-icon::after { content: "❌"; }
+        .confirm-wrap.loading .confirm-icon::after { content: "⏳"; }
         .btn-primary {
-            background: #1E90FF;      /* Primaire kleur — zelfde als index.html */
-            color: #fff;              /* Witte tekst */
-            padding: 12px 26px;       /* Klikbare grootte */
-            border-radius: 6px;       /* Afgeronde hoeken */
-            text-decoration: none;    /* Geen underline */
-            font-weight: bold;        /* Sterkere CTA */
-            display: inline-block;    /* Inline-block voor padding */
+            background: #1E90FF; color: #fff; padding: 12px 26px;
+            border-radius: 6px; text-decoration: none;
+            font-weight: bold; display: inline-block;
         }
-
-        .btn-primary:hover {
-            background: #1278d4;      /* Hover kleur */
-        }
+        .btn-primary:hover { background: #1278d4; }
     </style>
 </head>
 <body>
 
-<!-- ======================= TopBar ======================= -->
-<div id="topbar-placeholder"></div> <!-- Wordt gevuld via fetch -->
+<!-- ======================= TopBar placeholder ======================= -->
+<div id="topbar-placeholder"></div>
 
 <!-- ======================= Bevestiging blok ======================= -->
+<!-- Teksten worden via JS ingevuld na i18n init -->
 <div class="confirm-wrap loading" id="confirmBox">
-    <span class="confirm-icon" id="confirmIcon"></span> <!-- Icoon — gevuld via JS state class -->
-    <h1 id="confirmTitle">Bezig met bevestigen…</h1>   <!-- Titel — wordt bijgewerkt -->
-    <p class="confirm-msg" id="confirmMsg">
-        Even geduld, je e-mailadres wordt bevestigd.   <!-- Standaard laadtekst -->
-    </p>
-    <div id="confirmAction"></div> <!-- Actieknop — wordt ingevuld na verwerking -->
+    <span class="confirm-icon" id="confirmIcon"></span>
+    <h1 id="confirmTitle"></h1>
+    <p class="confirm-msg" id="confirmMsg"></p>
+    <div id="confirmAction"></div>
 </div>
 
-<!-- ======================= Footer ======================= -->
-<div id="footer-placeholder"></div> <!-- Wordt gevuld via fetch -->
+<!-- ======================= Footer placeholder ======================= -->
+<div id="footer-placeholder"></div>
 
-<!-- ======================= SCRIPTS ======================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
-<script src="js/utils.js"></script>   <!-- Utilities -->
-<script src="js/auth.js"></script>    <!-- Auth: AuthModule — bevat Supabase client -->
+<!-- ======================= Scripts ======================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
 
 <script>
-(async function () {
-    "use strict";
+// ======================= i18n initialisatie =======================
+i18nModule.init()
+    .then(function () { return i18nModule.loadNamespace('auth'); })
+    .then(function () {
 
-    // ======================= Configuratie =======================
-    const SUPABASE_URL = "https://oihzuwlcgyyeuhghjahp.supabase.co";         // Supabase project URL
+    // Paginatitel vertalen
+    document.title = i18nModule.t('auth:confirm.pageTitle');
 
-    // ======================= DOM elementen ophalen =======================
-    const box    = document.getElementById('confirmBox');                     // Hoofd container
-    const title  = document.getElementById('confirmTitle');                   // Titel element
-    const msg    = document.getElementById('confirmMsg');                     // Bericht element
-    const action = document.getElementById('confirmAction');                  // Actieknop container
+    // Laad TopBar en activeer i18n + topbar.js
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+            var s = document.createElement('script');
+            s.src = 'js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Laad Footer en activeer i18n
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+        });
+
+    // ======================= DOM elementen =======================
+    var SUPABASE_URL = "https://oihzuwlcgyyeuhghjahp.supabase.co";
+    var box    = document.getElementById('confirmBox');
+    var title  = document.getElementById('confirmTitle');
+    var msg    = document.getElementById('confirmMsg');
+    var action = document.getElementById('confirmAction');
+
+    // Laadtekst tonen via i18n
+    title.textContent = i18nModule.t('auth:confirm.loadingTitle');
+    msg.textContent   = i18nModule.t('auth:confirm.loadingMsg');
 
     // ======================= notifyAdmin(email) =======================
-    // Stuurt notificatie naar vorilo2000@gmail.com via Edge Function
-    // Geen Authorization header — Edge Function heeft verify_jwt=false
-    // Fout hier laat de gebruikerservaring niet falen
     async function notifyAdmin(email) {
         try {
-            await fetch(`${SUPABASE_URL}/functions/v1/dynamic-responder`, {
+            await fetch(SUPABASE_URL + '/functions/v1/dynamic-responder', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',                       // Geen Authorization header — verify_jwt=false
-                },
-                body: JSON.stringify({ email }),                               // Bevestigd e-mailadres meesturen
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
             });
         } catch (e) {
-            console.warn('[confirm] notifyAdmin fout (niet kritiek):', e);    // Logt maar gooit niet
+            console.warn('[confirm] notifyAdmin fout (niet kritiek):', e);
         }
     }
 
-    // ======================= Hulpfunctie: toon succes =======================
+    // ======================= Toon succes — via i18n =======================
     function showSuccess() {
-        box.className     = 'confirm-wrap success';                           // Groene border activeren
-        title.textContent = 'E-mailadres bevestigd!';                         // Succesbericht titel
-        msg.textContent   = 'Je account is actief. Je wordt doorgestuurd naar de startpagina…'; // Succesbericht
-        action.innerHTML  = '<a href="/MyFamTreeCollab/home/index.html" class="btn-primary">Ga naar startpagina</a>'; // Knop
-
-        // Na 3 seconden automatisch doorsturen
+        box.className     = 'confirm-wrap success';
+        title.textContent = i18nModule.t('auth:confirm.successTitle');
+        msg.textContent   = i18nModule.t('auth:confirm.successMsg');
+        action.innerHTML  =
+            '<a href="/MyFamTreeCollab/home/index.html" class="btn-primary">' +
+            i18nModule.t('auth:confirm.successBtn') + '</a>';
         setTimeout(function () {
-            window.location.href = '/MyFamTreeCollab/home/index.html';        // Redirect naar home
+            window.location.href = '/MyFamTreeCollab/home/index.html';
         }, 3000);
     }
 
-    // ======================= Hulpfunctie: toon fout =======================
+    // ======================= Toon fout — via i18n =======================
     function showError(errMsg) {
-        box.className     = 'confirm-wrap error';                             // Rode border activeren
-        title.textContent = 'Bevestiging mislukt';                            // Foutbericht titel
-        msg.textContent   = errMsg || 'Er is iets misgegaan. Probeer opnieuw te registreren.'; // Foutbericht
-        action.innerHTML  = '<a href="/MyFamTreeCollab/home/register.html" class="btn-primary">Opnieuw registreren</a>'; // Knop
+        box.className     = 'confirm-wrap error';
+        title.textContent = i18nModule.t('auth:confirm.errorTitle');
+        msg.textContent   = errMsg || i18nModule.t('auth:confirm.errorDefault');
+        action.innerHTML  =
+            '<a href="/MyFamTreeCollab/home/register.html" class="btn-primary">' +
+            i18nModule.t('auth:confirm.errorBtn') + '</a>';
     }
 
-    // ======================= URL parameters lezen =======================
-    const params    = new URLSearchParams(window.location.search);            // Query string parsen
-    const tokenHash = params.get('token_hash');                               // token_hash ophalen
-    const type      = params.get('type');                                     // type ophalen (signup / email)
+    // ======================= URL parameters =======================
+    var params    = new URLSearchParams(window.location.search);
+    var tokenHash = params.get('token_hash');
+    var type      = params.get('type');
 
-    // ======================= Validatie =======================
     if (!tokenHash || !type) {
-        showError('Ongeldige bevestigingslink. Controleer of je de volledige link hebt geopend.'); // Fout tonen
-        return;                                                               // Stoppen
+        showError(i18nModule.t('auth:confirm.invalidLink')); // Vertaald
+        return;
     }
 
-    // ======================= Supabase verifyOtp aanroepen =======================
-    const client = AuthModule.getClient();                                    // Gedeelde Supabase client ophalen
-
-    const { data, error } = await client.auth.verifyOtp({
-        token_hash: tokenHash,                                                // Token uit URL
-        type: type,                                                           // Type: signup of email
-    });
-
-    // ======================= Resultaat verwerken =======================
-    if (error) {
-        showError(error.message);                                             // Foutmelding tonen
-        return;                                                               // Stoppen
-    }
-
-    // Bevestiging geslaagd — notificeer admin en toon succes
-    const email = data.user ? data.user.email : '';                           // Email uit response halen
-    await notifyAdmin(email);                                                 // Notificatie sturen naar vorilo2000@gmail.com
-    showSuccess();                                                            // Succes tonen en redirecten
-
-})();
-</script>
-
-<script>
-    // ======================= TopBar laden =======================
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')                              // TopBar HTML ophalen
-        .then(resp => resp.text())                                            // Response omzetten naar tekst
-        .then(function (data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;   // TopBar in DOM zetten
-            var s = document.createElement('script');                         // Script element aanmaken
-            s.src = 'js/topbar.js';                                           // Pad naar topbar.js
-            document.body.appendChild(s);                                     // Script toevoegen aan DOM
+    // ======================= Supabase verifyOtp =======================
+    (async function () {
+        var client = AuthModule.getClient();
+        var result = await client.auth.verifyOtp({
+            token_hash: tokenHash,
+            type:       type
         });
 
-    // ======================= Footer laden =======================
-    fetch('/MyFamTreeCollab/Layout/Footer.html')                              // Footer HTML ophalen
-        .then(resp => resp.text())                                            // Response omzetten naar tekst
-        .then(function (data) {
-            document.getElementById('footer-placeholder').innerHTML = data;   // Footer in DOM zetten
-        });
+        if (result.error) {
+            showError(result.error.message);
+            return;
+        }
+
+        var email = result.data.user ? result.data.user.email : '';
+        await notifyAdmin(email);
+        showSuccess();
+    })();
+
+}); // einde i18n.then()
 </script>
 
 </body>
