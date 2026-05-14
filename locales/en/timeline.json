@@ -1,0 +1,48 @@
+{
+  "page": {
+    "title": "Timeline"
+  },
+  "welcome": {
+    "heading": "Welcome to your Family Tree Timeline",
+    "intro": "Search for a person to view the timeline of their family. Each person is shown as a horizontal bar from birth to death, grouped by generation."
+  },
+  "search": {
+    "placeholder": "Search by name, ID or date of birth..."
+  },
+  "placeholder": {
+    "default":  "Search for a person to load the timeline.",
+    "notFound": "Person not found.",
+    "noFamily": "No family members found."
+  },
+  "gen": {
+    "parents":                 "Parents  (gen −1)",
+    "grandparents":            "Grandparents  (gen −2)",
+    "greatgrandparents":       "Great-grandparents  (gen −3)",
+    "root":                    "Main person  (gen 0)",
+    "children":                "Children  (gen +1)",
+    "grandchildren":           "Grandchildren  (gen +2)",
+    "greatgrandchildren":      "Great-grandchildren  (gen +3)",
+    "greatgreatgrandchildren": "Great-great-grandchildren  (gen +4)",
+    "furtherDescendants":      "Further descendants  (gen +{{n}})"
+  },
+  "rel": {
+    "HoofdID":     "Main person",
+    "VHoofdID":    "Father",
+    "MHoofdID":    "Mother",
+    "PHoofdID":    "Partner",
+    "KindID":      "Child",
+    "HKindID":     "Child (main)",
+    "PHKindID":    "Child (partner)",
+    "BZID":        "Sibling",
+    "BZPartnerID": "Sibling's partner"
+  },
+  "tooltip": {
+    "noName":  "(no name)",
+    "born":    "Born",
+    "died":    "Died",
+    "alive":   "still alive",
+    "age":     "Age",
+    "years":   "years",
+    "approx":  "~{{age}} years"
+  }
+}
