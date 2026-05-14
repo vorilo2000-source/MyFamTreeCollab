@@ -1,0 +1,48 @@
+{
+  "page": {
+    "title": "Línea de tiempo"
+  },
+  "welcome": {
+    "heading": "Bienvenido a tu Línea de tiempo",
+    "intro": "Busca una persona para ver la línea de tiempo de su familia. Cada persona aparece como una barra horizontal del nacimiento al fallecimiento, agrupada por generación."
+  },
+  "search": {
+    "placeholder": "Buscar por nombre, ID o fecha de nacimiento..."
+  },
+  "placeholder": {
+    "default":  "Busca una persona para cargar la línea de tiempo.",
+    "notFound": "Persona no encontrada.",
+    "noFamily": "No se encontraron familiares."
+  },
+  "gen": {
+    "parents":                 "Padres  (gen −1)",
+    "grandparents":            "Abuelos  (gen −2)",
+    "greatgrandparents":       "Bisabuelos  (gen −3)",
+    "root":                    "Persona principal  (gen 0)",
+    "children":                "Hijos  (gen +1)",
+    "grandchildren":           "Nietos  (gen +2)",
+    "greatgrandchildren":      "Bisnietos  (gen +3)",
+    "greatgreatgrandchildren": "Tataranietos  (gen +4)",
+    "furtherDescendants":      "Más descendientes  (gen +{{n}})"
+  },
+  "rel": {
+    "HoofdID":     "Persona principal",
+    "VHoofdID":    "Padre",
+    "MHoofdID":    "Madre",
+    "PHoofdID":    "Pareja",
+    "KindID":      "Hijo/a",
+    "HKindID":     "Hijo/a (principal)",
+    "PHKindID":    "Hijo/a (pareja)",
+    "BZID":        "Hermano/a",
+    "BZPartnerID": "Pareja del hermano/a"
+  },
+  "tooltip": {
+    "noName":  "(sin nombre)",
+    "born":    "Nacido/a",
+    "died":    "Fallecido/a",
+    "alive":   "aún vive",
+    "age":     "Edad",
+    "years":   "años",
+    "approx":  "~{{age}} años"
+  }
+}
