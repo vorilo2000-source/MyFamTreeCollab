@@ -1,30 +1,25 @@
-/* ======================= js/timeline.js v2.3.5 =======================
+/* ======================= js/timeline.js v2.4.0 =======================
  * Canvas-based family timeline renderer
  *
- * Wijzigingen v2.3.5 t.o.v. v2.3.4:
+ * Wijzigingen v2.4.0 (sessie 26):
+ *  - Alle hardcoded strings vervangen door i18nModule.t('timeline:...')
+ *  - Generatie-labels (gen -3 t/m +n) via i18n namespace
+ *  - Tooltip-velden (rel-labels, geboren, overleden, leeftijd) via i18n
+ *  - Placeholder-meldingen via i18n
+ *  - genLabel() leest uit timeline:gen.* keys
+ *  - buildTooltipText() leest uit timeline:rel.* en timeline:tooltip.*
+ *  - showPlaceholder() leest uit timeline:placeholder.*
+ *
+ * Wijzigingen v2.3.5:
  *  - Sticky generatiekolom: #tlStickyCol blijft zichtbaar bij horizontaal scrollen
- *  - DOM-referenties gesplitst: container (#timelineContainer), stickyCol (#tlStickyCol),
- *    scrollArea (#tlScrollArea) — canvas en tooltip zitten nu in scrollArea
- *  - updateGenLabels() schrijft labels naar #tlStickyCol i.p.v. absolute overlay op canvas
- *  - Canvas-breedte berekend op basis van scrollArea.clientWidth i.p.v. container.clientWidth
- *  - stickyCol hoogte wordt na elke render gelijkgesteld aan canvas hoogte
+ *  - updateGenLabels() schrijft labels naar #tlStickyCol
  *
- * Wijzigingen v2.3.4 t.o.v. v2.3.1:
- *  - Versienummer bijgewerkt (geen functionele wijzigingen)
- *
- * Wijzigingen v2.3.1 t.o.v. v2.3.0:
- *  - Bug fix: ancestor volgorde was -1,-2,-3 (wrong) → nu -3,-2,-1,0 (correct)
- *  - Bug fix: genNum was null voor alle ancestors → linkerkolom labels overlapten
- *  - addAncestorLevel vervangen door collectAncestorLevel (buffer-aanpak)
- *
- * Wijzigingen v2.3.0 t.o.v. v2.2.0:
- *  - Jaren naast de balk op balkcenterhoogte: jjjj [ naam ] jjjj
- *  - Gen +1 en verder: alle balkjes flat op tijdlijn
- *  - Kleuren per generatieniveau
- *  - Scheidingslijn alleen tussen blokken -3 t/m 0
- *  - Linkerkolom: gen-label op Y van eerste persoon van die generatie
+ * Wijzigingen v2.3.1:
+ *  - Bug fix: ancestor volgorde gecorrigeerd
+ *  - collectAncestorLevel buffer-aanpak
  *
  * Dependencies:
+ *   i18n.js          -> window.i18nModule.t()
  *   utils.js         -> window.ftSafe, window.ftParseBirthday, window.ftFormatDate
  *   storage.js       -> window.StamboomStorage.get()
  *   LiveSearch.js    -> window.initLiveSearch(inputEl, dataset, cb)
@@ -37,36 +32,36 @@
     /* ------------------------------------------------------------------
      * SECTION 1 — DOM REFERENCES
      * ------------------------------------------------------------------ */
-    const container   = document.getElementById('timelineContainer'); // Buitenste wrapper — overflow-x:auto
-    const stickyCol   = document.getElementById('tlStickyCol');       // Sticky generatiekolom links
-    const scrollArea  = document.getElementById('tlScrollArea');      // Scrollgebied rechts — bevat canvas
-    const canvas      = document.getElementById('timelineCanvas');    // Canvas voor balkjes en tijdas
-    const placeholder = document.getElementById('timelinePlaceholder'); // Melding als geen persoon geselecteerd
-    const tooltip     = document.getElementById('timelineTooltip');   // Hover-tooltip
-    const searchInput = document.getElementById('sandboxSearch');     // Zoekveld
+    var container   = document.getElementById('timelineContainer');  // Buitenste wrapper
+    var stickyCol   = document.getElementById('tlStickyCol');        // Sticky generatiekolom links
+    var scrollArea  = document.getElementById('tlScrollArea');       // Scrollgebied rechts
+    var canvas      = document.getElementById('timelineCanvas');     // Canvas voor balkjes
+    var placeholder = document.getElementById('timelinePlaceholder'); // Melding zonder selectie
+    var tooltip     = document.getElementById('timelineTooltip');    // Hover-tooltip
+    var searchInput = document.getElementById('sandboxSearch');      // Zoekveld
 
     /* ------------------------------------------------------------------
      * SECTION 2 — LAYOUT CONSTANTS
      * ------------------------------------------------------------------ */
-    const ROW_H         = 28;  // Height of one person row in pixels
-    const ROW_GAP       = 4;   // Gap between rows within same family unit
-    const GROUP_GAP     = 12;  // Gap between family units
-    const RIGHT_PAD     = 32;  // Right margin after time axis end
-    const TICK_AREA_H   = 40;  // Height reserved for time axis at top
-    const BAR_H         = 16;  // Height of a life bar
-    const RADIUS        = 3;   // Corner radius for bars
-    const DEFAULT_SPAN  = 50;  // Assumed lifespan when death date unknown
-    const TICK_INTERVAL = 10;  // Years between tick marks
-    const UNKNOWN_BAR_W = 60;  // Width for bars with unknown birth date
-    const LABEL_COL_W   = 155; // Moet overeenkomen met CSS width van #tlStickyCol
-    const MIN_PX_YEAR   = 5;   // Minimum pixels per year
-    const SECTION_H     = 20;  // Height of section header row
-    const YEAR_PAD      = 5;   // Pixels between year text and bar edge
+    var ROW_H        = 28;  // Hoogte van één persoons-rij in pixels
+    var ROW_GAP      = 4;   // Ruimte tussen rijen binnen dezelfde familiegroep
+    var GROUP_GAP    = 12;  // Ruimte tussen familiegroepen
+    var RIGHT_PAD    = 32;  // Rechter marge na tijdas-einde
+    var TICK_AREA_H  = 40;  // Hoogte gereserveerd voor tijdas bovenaan
+    var BAR_H        = 16;  // Hoogte van een levensbalk
+    var RADIUS       = 3;   // Afronding van balkjes
+    var DEFAULT_SPAN = 50;  // Aangenomen levensduur als overlijdensdatum onbekend
+    var TICK_INTERVAL= 10;  // Jaren tussen tikmarkeringen
+    var UNKNOWN_BAR_W= 60;  // Breedte voor balkjes zonder geboortedatum
+    var LABEL_COL_W  = 155; // Overeenkomstig CSS width van #tlStickyCol
+    var MIN_PX_YEAR  = 5;   // Minimum pixels per jaar
+    var SECTION_H    = 20;  // Hoogte van generatie-header rij
+    var YEAR_PAD     = 5;   // Pixels tussen jaarlabel en balkrand
 
     /* ------------------------------------------------------------------
      * SECTION 3 — COLOUR PALETTE
      * ------------------------------------------------------------------ */
-    const COLOR = {
+    var COLOR = {
         HoofdID:     '#c8960c',
         PHoofdID:    '#7b56c2',
         VHoofdID:    '#2d7d46',
@@ -83,29 +78,29 @@
         unknownText: '#666666',
         connLine:    '#cccccc',
         genSep:      '#e8e8e8',
-        sectionText: '#888888',
+        sectionText: '#888888'
     };
 
     function descendantColor(genDepth) {
         if (genDepth <= 1) return '#2196f3';
         if (genDepth === 2) return '#00897b';
-        const steps  = genDepth - 2;
-        const factor = Math.min(steps * 0.20, 0.80);
-        const r = Math.round(0   + (255 - 0)   * factor);
-        const g = Math.round(137 + (255 - 137) * factor);
-        const b = Math.round(123 + (255 - 123) * factor);
-        return `rgb(${r},${g},${b})`;
+        var steps  = genDepth - 2;
+        var factor = Math.min(steps * 0.20, 0.80);
+        var r = Math.round(0   + (255 - 0)   * factor);
+        var g = Math.round(137 + (255 - 137) * factor);
+        var b = Math.round(123 + (255 - 123) * factor);
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
     }
 
     /* ------------------------------------------------------------------
      * SECTION 4 — STATE
      * ------------------------------------------------------------------ */
-    let dataset    = [];
-    let rootId     = null;
-    let hitRects   = [];
-    let dynMinYear = 1800;
-    let dynMaxYear = new Date().getFullYear();
-    const TODAY    = new Date().getFullYear();
+    var dataset    = [];
+    var rootId     = null;
+    var hitRects   = [];
+    var dynMinYear = 1800;
+    var dynMaxYear = new Date().getFullYear();
+    var TODAY      = new Date().getFullYear();
 
     /* ------------------------------------------------------------------
      * SECTION 5 — DATE UTILITIES
@@ -114,28 +109,28 @@
 
     function parseYear(dateStr) {
         if (!dateStr) return null;
-        const d = resolveQ(String(dateStr).trim());
+        var d = resolveQ(String(dateStr).trim());
 
-        const dmyA = d.match(/^(\d{1,2})[-/\s]([a-zA-Z]+)[-/\s](\d{4})$/);
-        if (dmyA) { const yr = parseInt(dmyA[3], 10); return (yr >= 100 && yr <= TODAY + 5) ? yr : null; }
+        var dmyA = d.match(/^(\d{1,2})[-/\s]([a-zA-Z]+)[-/\s](\d{4})$/);
+        if (dmyA) { var yr1 = parseInt(dmyA[3], 10); return (yr1 >= 100 && yr1 <= TODAY + 5) ? yr1 : null; }
 
-        const ymdA = d.match(/^(\d{4})[-/\s]([a-zA-Z]+)[-/\s](\d{1,2})$/);
-        if (ymdA) { const yr = parseInt(ymdA[1], 10); return (yr >= 100 && yr <= TODAY + 5) ? yr : null; }
+        var ymdA = d.match(/^(\d{4})[-/\s]([a-zA-Z]+)[-/\s](\d{1,2})$/);
+        if (ymdA) { var yr2 = parseInt(ymdA[1], 10); return (yr2 >= 100 && yr2 <= TODAY + 5) ? yr2 : null; }
 
-        const yOnly = d.match(/^(\d{4})$/);
-        if (yOnly) { const yr = parseInt(yOnly[1], 10); return (yr >= 100 && yr <= TODAY + 5) ? yr : null; }
+        var yOnly = d.match(/^(\d{4})$/);
+        if (yOnly) { var yr3 = parseInt(yOnly[1], 10); return (yr3 >= 100 && yr3 <= TODAY + 5) ? yr3 : null; }
 
         try {
-            const obj = window.ftParseBirthday(d);
+            var obj = window.ftParseBirthday(d);
             if (!obj || isNaN(obj.getTime())) return null;
-            const yr = obj.getFullYear();
-            return (yr >= 100 && yr <= TODAY + 5) ? yr : null;
+            var yr4 = obj.getFullYear();
+            return (yr4 >= 100 && yr4 <= TODAY + 5) ? yr4 : null;
         } catch (e) { return null; }
     }
 
     function fmtDate(dateStr) {
-        if (!dateStr) return '—';
-        const r = resolveQ(String(dateStr).trim());
+        if (!dateStr) return '\u2014'; // Em-dash
+        var r = resolveQ(String(dateStr).trim());
         return window.ftFormatDate ? window.ftFormatDate(r) : r;
     }
 
@@ -145,9 +140,9 @@
     function safe(val) { return window.ftSafe(val); }
 
     function findPerson(id) {
-        const sid = safe(id);
+        var sid = safe(id);
         if (!sid) return null;
-        return dataset.find(p => safe(p.ID) === sid) || null;
+        return dataset.find(function (p) { return safe(p.ID) === sid; }) || null;
     }
 
     function displayName(p) {
@@ -156,9 +151,9 @@
 
     function needsDarkText(hexOrRgb) {
         if (!hexOrRgb) return false;
-        const rgb = hexOrRgb.match(/\d+/g);
+        var rgb = hexOrRgb.match(/\d+/g);
         if (!rgb) return false;
-        const lum = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
+        var lum = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
         return lum > 160;
     }
 
@@ -173,76 +168,104 @@
      * SECTION 8 — DYNAMIC YEAR RANGE
      * ------------------------------------------------------------------ */
     function setDynamicRange(rootPerson) {
-        const rb = parseYear(rootPerson.Geboortedatum);
+        var rb = parseYear(rootPerson.Geboortedatum);
         if (rb) {
             dynMinYear = rb - 200;
             dynMaxYear = Math.max(rb + 200, TODAY);
         } else {
-            const years = dataset.map(p => parseYear(p.Geboortedatum)).filter(Boolean);
-            dynMinYear  = years.length ? Math.min(...years) - 10 : TODAY - 200;
-            dynMaxYear  = TODAY;
+            var years  = dataset.map(function (p) { return parseYear(p.Geboortedatum); }).filter(Boolean);
+            dynMinYear = years.length ? Math.min.apply(null, years) - 10 : TODAY - 200;
+            dynMaxYear = TODAY;
         }
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 9 — ROW BUILDER
+     * SECTION 9 — GENERATIE-LABEL HELPER
+     * Labels worden nu via i18nModule.t() opgehaald uit de timeline namespace.
+     * ------------------------------------------------------------------ */
+    function genLabel(depth, shownGenLabels) {
+        if (shownGenLabels.has(depth)) return null; // Al getoond voor deze diepte
+        shownGenLabels.add(depth);
+
+        // Vaste keys voor bekende generatiediepten
+        var fixedKeys = [
+            null,                                    // 0 = root — apart afgehandeld
+            'timeline:gen.children',                 // +1
+            'timeline:gen.grandchildren',            // +2
+            'timeline:gen.greatgrandchildren',       // +3
+            'timeline:gen.greatgreatgrandchildren'   // +4
+        ];
+
+        if (depth === 0) return null; // Root heeft eigen label via buildRows
+        if (depth >= 1 && depth <= 4 && fixedKeys[depth]) {
+            return i18nModule.t(fixedKeys[depth]); // Vertaald via i18n
+        }
+        // Diepte > 4: dynamisch label met interpolatie
+        return i18nModule.t('timeline:gen.furtherDescendants', { n: depth });
+    }
+
+    /* ------------------------------------------------------------------
+     * SECTION 10 — ROW BUILDER
      * ------------------------------------------------------------------ */
     function buildRows(rootPerson) {
-        const relaties = window.RelatieEngine.computeRelaties(dataset, safe(rootPerson.ID));
-        const seen = new Set();
-        const rows = [];
+        var relaties = window.RelatieEngine.computeRelaties(dataset, safe(rootPerson.ID));
+        var seen     = new Set();
+        var rows     = [];
 
         function makeEntry(person, relatie, color) {
-            const by = parseYear(person.Geboortedatum);
-            const dy = parseYear(person.Overlijdensdatum);
-            return { person, relatie, color, birthYear: by, deathYear: dy,
+            var by = parseYear(person.Geboortedatum);
+            var dy = parseYear(person.Overlijdensdatum);
+            return { person: person, relatie: relatie, color: color,
+                     birthYear: by, deathYear: dy,
                      isDead: dy !== null, isUnknown: by === null,
                      isRoot: safe(person.ID) === safe(rootPerson.ID) };
         }
 
         function addRow(id, relatie, color, genNum, isDescendant, genDepth, sectionLabel, isLastInUnit) {
-            const sid = safe(id);
+            var sid = safe(id);
             if (!sid || seen.has(sid)) return false;
-            const p = findPerson(sid);
+            var p = findPerson(sid);
             if (!p) return false;
             seen.add(sid);
-            rows.push({ entry: makeEntry(p, relatie, color), isDescendant, genDepth,
-                        genNum, sectionLabel, isLastInUnit });
+            rows.push({ entry: makeEntry(p, relatie, color), isDescendant: isDescendant,
+                        genDepth: genDepth, genNum: genNum,
+                        sectionLabel: sectionLabel, isLastInUnit: isLastInUnit });
             return true;
         }
 
         function collectAncestorLevel(parentIds, sectionLabel, genNum) {
-            const buffer    = [];
-            const nextLevel = [];
-            parentIds.forEach(pid => {
-                const parent = findPerson(pid);
+            var buffer    = [];
+            var nextLevel = [];
+            parentIds.forEach(function (pid) {
+                var parent = findPerson(pid);
                 if (!parent || seen.has(safe(pid))) return;
                 seen.add(safe(pid));
-                const rootFatherId = safe(rootPerson.VaderID);
-                const relatie = genNum === -1
+                var rootFatherId = safe(rootPerson.VaderID);
+                var relatie = genNum === -1
                     ? (safe(parent.ID) === rootFatherId ? 'VHoofdID' : 'MHoofdID')
                     : 'VHoofdID';
-                buffer.push({ id: pid, relatie, color: COLOR[relatie], genNum, sectionLabel });
-                const partnerId = safe(parent.PartnerID);
+                buffer.push({ id: pid, relatie: relatie, color: COLOR[relatie], genNum: genNum, sectionLabel: sectionLabel });
+                var partnerId = safe(parent.PartnerID);
                 if (partnerId && !seen.has(partnerId)) {
                     seen.add(partnerId);
-                    buffer.push({ id: partnerId, relatie: 'PHoofdID', color: COLOR.PHoofdID, genNum, sectionLabel: null });
+                    buffer.push({ id: partnerId, relatie: 'PHoofdID', color: COLOR.PHoofdID, genNum: genNum, sectionLabel: null });
                 }
                 [safe(parent.VaderID), safe(parent.MoederID)]
-                    .filter(id => id && !seen.has(id))
-                    .forEach(id => nextLevel.push(id));
+                    .filter(function (id) { return id && !seen.has(id); })
+                    .forEach(function (id) { nextLevel.push(id); });
             });
-            return { buffer, nextLevel: [...new Set(nextLevel)] };
+            return { buffer: buffer, nextLevel: Array.from(new Set(nextLevel)) };
         }
 
-        const gen1Ids = [safe(rootPerson.VaderID), safe(rootPerson.MoederID)].filter(Boolean);
-        const col1    = collectAncestorLevel(gen1Ids, 'Ouders  (gen −1)', -1);
-        const col2    = collectAncestorLevel(col1.nextLevel, 'Grootouders  (gen −2)', -2);
-        const col3    = collectAncestorLevel(col2.nextLevel, 'Betovergrootouders  (gen −3)', -3);
+        // Voorouders — labels via i18n
+        var gen1Ids = [safe(rootPerson.VaderID), safe(rootPerson.MoederID)].filter(Boolean);
+        var col1    = collectAncestorLevel(gen1Ids, i18nModule.t('timeline:gen.parents'),            -1);
+        var col2    = collectAncestorLevel(col1.nextLevel, i18nModule.t('timeline:gen.grandparents'), -2);
+        var col3    = collectAncestorLevel(col2.nextLevel, i18nModule.t('timeline:gen.greatgrandparents'), -3);
 
-        [col3.buffer, col2.buffer, col1.buffer].forEach(buffer => {
-            buffer.forEach(item => {
-                const p = findPerson(item.id);
+        [col3.buffer, col2.buffer, col1.buffer].forEach(function (buffer) {
+            buffer.forEach(function (item) {
+                var p = findPerson(item.id);
                 if (!p) return;
                 rows.push({ entry: makeEntry(p, item.relatie, item.color), isDescendant: false,
                             genDepth: 0, genNum: item.genNum,
@@ -250,51 +273,48 @@
             });
         });
 
-        addRow(rootPerson.ID, 'HoofdID', COLOR.HoofdID, 0, false, 0, 'Hoofdpersoon  (gen 0)', false);
+        // Hoofdpersoon — label via i18n
+        addRow(rootPerson.ID, 'HoofdID', COLOR.HoofdID, 0, false, 0,
+               i18nModule.t('timeline:gen.root'), false);
 
         if (safe(rootPerson.PartnerID)) {
             addRow(rootPerson.PartnerID, 'PHoofdID', COLOR.PHoofdID, 0, false, 0, null, false);
         }
 
+        // Broers en zussen
         relaties
-            .filter(r => safe(r.Relatie) === 'BZID')
-            .sort((a, b) => (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999))
-            .forEach(r => {
+            .filter(function (r) { return safe(r.Relatie) === 'BZID'; })
+            .sort(function (a, b) { return (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999); })
+            .forEach(function (r) {
                 addRow(r.ID, 'BZID', COLOR.BZID, 0, false, 0, null, false);
-                const sib = findPerson(r.ID);
+                var sib = findPerson(r.ID);
                 if (sib && safe(sib.PartnerID)) {
                     addRow(sib.PartnerID, 'BZPartnerID', COLOR.BZPartnerID, 0, false, 0, null, false);
                 }
             });
 
-        const childRelaties  = new Set(['KindID', 'HKindID', 'PHKindID']);
-        const rootChildren   = relaties
-            .filter(r => childRelaties.has(safe(r.Relatie)))
-            .sort((a, b) => (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999));
+        // Nakomelingen — labels via genLabel() → i18n
+        var childRelaties = new Set(['KindID', 'HKindID', 'PHKindID']);
+        var rootChildren  = relaties
+            .filter(function (r) { return childRelaties.has(safe(r.Relatie)); })
+            .sort(function (a, b) { return (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999); });
 
-        const shownGenLabels = new Set();
-
-        function genLabel(depth) {
-            if (shownGenLabels.has(depth)) return null;
-            shownGenLabels.add(depth);
-            const names = ['', 'Kinderen', 'Kleinkinderen', 'Achterkleinkinderen',
-                           'Betachterkleinkinderen', 'Verdere nakomelingen'];
-            return `${names[depth] || 'Gen +' + depth}  (gen +${depth})`;
-        }
+        var shownGenLabels = new Set();
 
         function addDescendantGroup(personId, genDepth) {
-            const person = findPerson(personId);
+            var person = findPerson(personId);
             if (!person || seen.has(safe(personId))) return;
-            addRow(safe(personId), 'KindID', descendantColor(genDepth), genDepth, true, genDepth, genLabel(genDepth), false);
-            const partnerId = safe(person.PartnerID);
+            var lbl = genLabel(genDepth, shownGenLabels); // Vertaald label
+            addRow(safe(personId), 'KindID', descendantColor(genDepth), genDepth, true, genDepth, lbl, false);
+            var partnerId = safe(person.PartnerID);
             if (partnerId) addRow(partnerId, 'PHoofdID', COLOR.partner, genDepth, true, genDepth, null, false);
             dataset
-                .filter(p => safe(p.VaderID) === safe(personId) || safe(p.MoederID) === safe(personId))
-                .sort((a, b) => (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999))
-                .forEach(child => { if (!seen.has(safe(child.ID))) addDescendantGroup(safe(child.ID), genDepth + 1); });
+                .filter(function (p) { return safe(p.VaderID) === safe(personId) || safe(p.MoederID) === safe(personId); })
+                .sort(function (a, b) { return (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999); })
+                .forEach(function (child) { if (!seen.has(safe(child.ID))) addDescendantGroup(safe(child.ID), genDepth + 1); });
         }
 
-        rootChildren.forEach((r, idx) => {
+        rootChildren.forEach(function (r, idx) {
             addDescendantGroup(safe(r.ID), 1);
             if (idx !== rootChildren.length - 1 && rows.length > 0) rows[rows.length - 1].isLastInUnit = true;
         });
@@ -304,48 +324,45 @@
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 10 — CANVAS RENDERER
-     * Wijziging v2.3.5: canvas-breedte gebaseerd op scrollArea.clientWidth
+     * SECTION 11 — CANVAS RENDERER
      * ------------------------------------------------------------------ */
     function renderCanvas(rows) {
         if (!rows || rows.length === 0) return;
 
         // Bereken canvas hoogte
-        let totalH    = TICK_AREA_H;
-        let prevLabel = null;
-        rows.forEach(row => {
+        var totalH    = TICK_AREA_H;
+        var prevLabel = null;
+        rows.forEach(function (row) {
             if (row.sectionLabel && row.sectionLabel !== prevLabel) { totalH += SECTION_H; prevLabel = row.sectionLabel; }
             totalH += ROW_H + (row.isLastInUnit ? GROUP_GAP : ROW_GAP);
         });
         totalH += 20;
 
-        // Canvas breedte — gebaseerd op scrollArea, sticky kolom staat buiten scrollArea
-        const yearSpan  = dynMaxYear - dynMinYear;
-        const available = Math.max(scrollArea.clientWidth - RIGHT_PAD, 400); // Scrollgebied breedte
-        const pxPerYear = Math.max(available / yearSpan, MIN_PX_YEAR);
-        const timeW     = yearSpan * pxPerYear;
+        // Canvas breedte — gebaseerd op scrollArea breedte
+        var yearSpan  = dynMaxYear - dynMinYear;
+        var available = Math.max(scrollArea.clientWidth - RIGHT_PAD, 400);
+        var pxPerYear = Math.max(available / yearSpan, MIN_PX_YEAR);
+        var timeW     = yearSpan * pxPerYear;
 
         canvas.height = totalH;
         canvas.width  = timeW + RIGHT_PAD;
+        stickyCol.style.height = totalH + 'px'; // Sticky kolom hoogte gelijkstellen
 
-        // Sticky kolom hoogte gelijkstellen aan canvas hoogte
-        stickyCol.style.height = totalH + 'px';
-
-        const ctx = canvas.getContext('2d');
+        var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         hitRects = [];
-        const barPositions = {};
-        const genLabelY    = {}; // genNum -> Y pixel voor sticky kolom
+        var barPositions = {};
+        var genLabelY    = {}; // genNum/genDepth -> Y pixel voor sticky kolom
 
         // Pass 1: tijdas
         drawTimeAxis(ctx, timeW);
 
         // Pass 2: rijen
-        let curY  = TICK_AREA_H;
+        var curY  = TICK_AREA_H;
         prevLabel = null;
 
-        rows.forEach(row => {
+        rows.forEach(function (row) {
             if (row.sectionLabel && row.sectionLabel !== prevLabel && !row.isDescendant) {
                 ctx.fillStyle = COLOR.genSep;
                 ctx.fillRect(0, curY, canvas.width, 1);
@@ -353,28 +370,28 @@
             }
 
             if (row.sectionLabel && row.sectionLabel !== prevLabel) {
-                const gn = row.isDescendant ? row.genDepth : row.genNum;
-                if (gn !== null && gn !== undefined && !(gn in genLabelY)) genLabelY[gn] = curY;
+                var gn0 = row.isDescendant ? row.genDepth : row.genNum;
+                if (gn0 !== null && gn0 !== undefined && !(gn0 in genLabelY)) genLabelY[gn0] = curY;
                 curY     += SECTION_H;
                 prevLabel = row.sectionLabel;
             }
 
-            const gn = row.isDescendant ? row.genDepth : row.genNum;
-            if (gn !== null && gn !== undefined && !(gn in genLabelY)) genLabelY[gn] = curY;
+            var gn1 = row.isDescendant ? row.genDepth : row.genNum;
+            if (gn1 !== null && gn1 !== undefined && !(gn1 in genLabelY)) genLabelY[gn1] = curY;
 
-            const rowY  = curY;
-            const barY  = rowY + (ROW_H - BAR_H) / 2;
-            const barCY = barY + BAR_H / 2;
+            var rowY  = curY;
+            var barY  = rowY + (ROW_H - BAR_H) / 2;
+            var barCY = barY + BAR_H / 2;
 
             if (row.entry.isUnknown) {
                 drawUnknownBar(ctx, barY, barCY, row.entry);
-                barPositions[safe(row.entry.person.ID)] = { barX: 4, barEndX: 4 + UNKNOWN_BAR_W, barCY };
+                barPositions[safe(row.entry.person.ID)] = { barX: 4, barEndX: 4 + UNKNOWN_BAR_W, barCY: barCY };
             } else {
                 drawLifeBar(ctx, barY, barCY, row.entry, timeW);
-                const bx    = yearToX(row.entry.birthYear, timeW);
-                const endYr = row.entry.isDead ? row.entry.deathYear : Math.min(row.entry.birthYear + DEFAULT_SPAN, TODAY);
-                const ex    = yearToX(Math.min(endYr, dynMaxYear), timeW);
-                barPositions[safe(row.entry.person.ID)] = { barX: bx, barEndX: Math.max(ex, bx + 4), barCY };
+                var bx    = yearToX(row.entry.birthYear, timeW);
+                var endYr = row.entry.isDead ? row.entry.deathYear : Math.min(row.entry.birthYear + DEFAULT_SPAN, TODAY);
+                var ex    = yearToX(Math.min(endYr, dynMaxYear), timeW);
+                barPositions[safe(row.entry.person.ID)] = { barX: bx, barEndX: Math.max(ex, bx + 4), barCY: barCY };
             }
 
             hitRects.push({ x: 0, y: rowY, w: canvas.width, h: ROW_H, entry: row.entry });
@@ -382,12 +399,12 @@
         });
 
         // Pass 3: connectors
-        rows.forEach(row => {
-            const p = row.entry.person;
-            [safe(p.VaderID), safe(p.MoederID)].forEach(parentId => {
+        rows.forEach(function (row) {
+            var p = row.entry.person;
+            [safe(p.VaderID), safe(p.MoederID)].forEach(function (parentId) {
                 if (!parentId) return;
-                const cp = barPositions[safe(p.ID)];
-                const pp = barPositions[parentId];
+                var cp = barPositions[safe(p.ID)];
+                var pp = barPositions[parentId];
                 if (!cp || !pp) return;
                 drawConnector(ctx, pp, cp);
             });
@@ -396,12 +413,12 @@
         // Pass 4: vandaag-lijn
         drawTodayLine(ctx, timeW);
 
-        // Pass 5: vul sticky kolom
+        // Pass 5: sticky kolom
         updateGenLabels(rows, genLabelY, totalH);
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 11 — DRAW FUNCTIONS
+     * SECTION 12 — DRAW FUNCTIONS
      * ------------------------------------------------------------------ */
     function drawTimeAxis(ctx, timeW) {
         ctx.strokeStyle = COLOR.tick;
@@ -413,10 +430,10 @@
         ctx.font         = '9px sans-serif';
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'bottom';
-        const firstTick = Math.ceil(dynMinYear / TICK_INTERVAL) * TICK_INTERVAL;
-        for (let y = firstTick; y <= dynMaxYear; y += TICK_INTERVAL) {
-            const x       = yearToX(y, timeW);
-            const isMajor = y % 50 === 0;
+        var firstTick = Math.ceil(dynMinYear / TICK_INTERVAL) * TICK_INTERVAL;
+        for (var y = firstTick; y <= dynMaxYear; y += TICK_INTERVAL) {
+            var x       = yearToX(y, timeW);
+            var isMajor = y % 50 === 0;
             ctx.strokeStyle = COLOR.tick;
             ctx.lineWidth   = isMajor ? 1 : 0.5;
             ctx.beginPath();
@@ -428,7 +445,7 @@
     }
 
     function drawTodayLine(ctx, timeW) {
-        const x = yearToX(TODAY, timeW);
+        var x = yearToX(TODAY, timeW);
         if (x < 0 || x > timeW) return;
         ctx.save();
         ctx.strokeStyle = COLOR.today;
@@ -442,16 +459,23 @@
     }
 
     function drawLifeBar(ctx, barY, barCY, entry, timeW) {
-        const { person, color, birthYear, deathYear, isDead } = entry;
-        const startX    = yearToX(birthYear, timeW);
-        const endYear   = isDead ? deathYear : Math.min(birthYear + DEFAULT_SPAN, TODAY);
-        const solidEndX = yearToX(Math.min(endYear, dynMaxYear), timeW);
-        const solidW    = Math.max(solidEndX - startX, 4);
+        var person    = entry.person;
+        var color     = entry.color;
+        var birthYear = entry.birthYear;
+        var deathYear = entry.deathYear;
+        var isDead    = entry.isDead;
+
+        var startX    = yearToX(birthYear, timeW);
+        var endYear   = isDead ? deathYear : Math.min(birthYear + DEFAULT_SPAN, TODAY);
+        var solidEndX = yearToX(Math.min(endYear, dynMaxYear), timeW);
+        var solidW    = Math.max(solidEndX - startX, 4);
+
         ctx.fillStyle = color;
         roundedRect(ctx, startX, barY, solidW, BAR_H, RADIUS);
         ctx.fill();
+
         if (!isDead) {
-            const todayX = yearToX(Math.min(TODAY, dynMaxYear), timeW);
+            var todayX = yearToX(Math.min(TODAY, dynMaxYear), timeW);
             if (todayX > solidEndX + 2) {
                 ctx.save();
                 ctx.strokeStyle = color;
@@ -464,9 +488,10 @@
                 ctx.restore();
             }
         }
-        ctx.fillStyle = COLOR.birthLabel;
-        ctx.font      = '9px sans-serif';
-        ctx.textAlign = 'right';
+
+        ctx.fillStyle    = COLOR.birthLabel;
+        ctx.font         = '9px sans-serif';
+        ctx.textAlign    = 'right';
         ctx.textBaseline = 'middle';
         if (birthYear) ctx.fillText(String(birthYear), startX - YEAR_PAD, barCY);
         if (isDead && deathYear) { ctx.textAlign = 'left'; ctx.fillText(String(deathYear), solidEndX + YEAR_PAD, barCY); }
@@ -475,13 +500,13 @@
     }
 
     function drawUnknownBar(ctx, barY, barCY, entry) {
-        const barX = 4;
+        var barX = 4;
         ctx.fillStyle = COLOR.unknown;
         roundedRect(ctx, barX, barY, UNKNOWN_BAR_W, BAR_H, RADIUS);
         ctx.fill();
-        ctx.fillStyle = COLOR.unknownText;
-        ctx.font      = 'bold 10px sans-serif';
-        ctx.textAlign = 'center';
+        ctx.fillStyle    = COLOR.unknownText;
+        ctx.font         = 'bold 10px sans-serif';
+        ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('?', barX + 10, barCY);
         ctx.font      = '9px sans-serif';
@@ -490,8 +515,8 @@
     }
 
     function drawBarLabel(ctx, name, barX, barY, barW, darkText) {
-        const pad  = 5;
-        const maxW = barW - pad * 2;
+        var pad  = 5;
+        var maxW = barW - pad * 2;
         if (maxW < 8) return;
         ctx.fillStyle    = darkText ? COLOR.barTextDark : COLOR.barText;
         ctx.font         = '9px sans-serif';
@@ -502,9 +527,9 @@
 
     function clipText(ctx, text, maxW) {
         if (ctx.measureText(text).width <= maxW) return text;
-        let t = text;
-        while (t.length > 0 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
-        return t + '…';
+        var t = text;
+        while (t.length > 0 && ctx.measureText(t + '\u2026').width > maxW) t = t.slice(0, -1);
+        return t + '\u2026';
     }
 
     function drawRootIndicator(ctx, cx, barY) {
@@ -518,10 +543,10 @@
     }
 
     function drawConnector(ctx, parentPos, childPos) {
-        const px = parentPos.barEndX;
-        const py = parentPos.barCY;
-        const cx = childPos.barX;
-        const cy = childPos.barCY;
+        var px = parentPos.barEndX;
+        var py = parentPos.barCY;
+        var cx = childPos.barX;
+        var cy = childPos.barCY;
         if (px >= cx - 2) return;
         ctx.save();
         ctx.strokeStyle = COLOR.connLine;
@@ -544,7 +569,7 @@
     }
 
     function roundedRect(ctx, x, y, w, h, r) {
-        const rr = Math.min(r, w / 2, h / 2);
+        var rr = Math.min(r, w / 2, h / 2);
         ctx.beginPath();
         ctx.moveTo(x + rr, y);
         ctx.lineTo(x + w - rr, y);
@@ -559,32 +584,28 @@
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 12 — STICKY GEN-LABEL KOLOM
-     * Wijziging v2.3.5: labels in #tlStickyCol i.p.v. absolute canvas-overlay
-     * De kolom heeft position:sticky in CSS — bij horizontaal scrollen blijft
-     * hij zichtbaar aan de linkerkant van de viewport.
+     * SECTION 13 — STICKY GEN-LABEL KOLOM
      * ------------------------------------------------------------------ */
     function updateGenLabels(rows, genLabelY, totalH) {
-        stickyCol.innerHTML = '';                                        // Verwijder bestaande labels
+        stickyCol.innerHTML = ''; // Verwijder bestaande labels
 
-        const placed    = new Set();
-        let   prevLabel = null;
+        var placed    = new Set();
+        var prevLabel = null;
 
-        rows.forEach(row => {
+        rows.forEach(function (row) {
             if (!row.sectionLabel || row.sectionLabel === prevLabel) return;
             prevLabel = row.sectionLabel;
             if (placed.has(row.sectionLabel)) return;
             placed.add(row.sectionLabel);
 
-            const gn = row.isDescendant ? row.genDepth : row.genNum;   // Generatienummer als Y-sleutel
-            const y  = (gn !== null && gn !== undefined && genLabelY[gn] !== undefined)
-                ? genLabelY[gn]                                         // Y uit renderCanvas pass 2
-                : 0;
+            var gn = row.isDescendant ? row.genDepth : row.genNum; // Generatienummer als Y-sleutel
+            var y  = (gn !== null && gn !== undefined && genLabelY[gn] !== undefined)
+                ? genLabelY[gn] : 0;
 
-            const lbl = document.createElement('div');
+            var lbl = document.createElement('div');
             Object.assign(lbl.style, {
-                position:     'absolute',                               // Absoluut binnen sticky kolom
-                top:          y + 'px',                                 // Y gealigneerd met canvas-rij
+                position:     'absolute',
+                top:          y + 'px',
                 left:         '5px',
                 right:        '4px',
                 height:       SECTION_H + 'px',
@@ -592,56 +613,74 @@
                 fontWeight:   'bold',
                 whiteSpace:   'nowrap',
                 overflow:     'hidden',
-                textOverflow: 'ellipsis',
+                textOverflow: 'ellipsis'
             });
-            lbl.textContent = row.sectionLabel;
-            stickyCol.appendChild(lbl);                                 // Label in sticky kolom plaatsen
+            lbl.textContent = row.sectionLabel; // Label tekst (al vertaald via genLabel())
+            stickyCol.appendChild(lbl);
         });
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 13 — HIT DETECTION & TOOLTIP
+     * SECTION 14 — HIT DETECTION & TOOLTIP
+     * Tooltip-tekst volledig via i18nModule.t()
      * ------------------------------------------------------------------ */
     function getHitAt(mx, my) {
-        for (let i = hitRects.length - 1; i >= 0; i--) {
-            const r = hitRects[i];
+        for (var i = hitRects.length - 1; i >= 0; i--) {
+            var r = hitRects[i];
             if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) return r;
         }
         return null;
     }
 
     function buildTooltipText(entry) {
-        const p    = entry.person;
-        const LBLS = { HoofdID:'Hoofdpersoon', VHoofdID:'Vader', MHoofdID:'Moeder',
-                       PHoofdID:'Partner', KindID:'Kind', HKindID:'Kind (hoofd)',
-                       PHKindID:'Kind (partner)', BZID:'Broer/Zus', BZPartnerID:'Partner broer/zus' };
-        const rel   = LBLS[entry.relatie] || entry.relatie || '—';
-        const name  = displayName(p) || '(geen naam)';
-        const geb   = fmtDate(p.Geboortedatum);
-        const overl = p.Overlijdensdatum ? fmtDate(p.Overlijdensdatum) : 'nog in leven';
-        let life = '';
-        if (entry.birthYear && entry.deathYear) life = `\nLeeftijd: ${entry.deathYear - entry.birthYear} jaar`;
-        else if (entry.birthYear) life = `\nLeeftijd: ~${TODAY - entry.birthYear} jaar`;
-        return `${name}  [${rel}]\nID: ${safe(p.ID) || '—'}\nGeboren: ${geb}\nOverleden: ${overl}${life}`;
+        var p    = entry.person;
+        // Relatie-labels via i18n — fallback naar ruwe sleutel als niet gevonden
+        var relKey = 'timeline:rel.' + entry.relatie;
+        var rel    = i18nModule.t(relKey);
+        if (!rel || rel === relKey) rel = entry.relatie || '\u2014'; // Fallback
+
+        var name  = displayName(p) || i18nModule.t('timeline:tooltip.noName'); // Vertaald fallback
+        var geb   = fmtDate(p.Geboortedatum);
+        var overl = p.Overlijdensdatum
+            ? fmtDate(p.Overlijdensdatum)
+            : i18nModule.t('timeline:tooltip.alive'); // "nog in leven"
+
+        var life = '';
+        if (entry.birthYear && entry.deathYear) {
+            // Exacte leeftijd: "Leeftijd: 72 jaar"
+            life = '\n' + i18nModule.t('timeline:tooltip.age') + ': ' +
+                   (entry.deathYear - entry.birthYear) + ' ' +
+                   i18nModule.t('timeline:tooltip.years');
+        } else if (entry.birthYear) {
+            // Geschatte leeftijd: "Leeftijd: ~45 jaar"
+            life = '\n' + i18nModule.t('timeline:tooltip.age') + ': ' +
+                   i18nModule.t('timeline:tooltip.approx', { age: TODAY - entry.birthYear });
+        }
+
+        return name + '  [' + rel + ']' +
+               '\nID: ' + (safe(p.ID) || '\u2014') +
+               '\n' + i18nModule.t('timeline:tooltip.born')  + ': ' + geb +
+               '\n' + i18nModule.t('timeline:tooltip.died')  + ': ' + overl +
+               life;
     }
 
     function canvasCoords(e) {
-        const rect = canvas.getBoundingClientRect();
+        var rect = canvas.getBoundingClientRect();
         return {
             mx: (e.clientX - rect.left) * (canvas.width  / rect.width),
-            my: (e.clientY - rect.top)  * (canvas.height / rect.height),
+            my: (e.clientY - rect.top)  * (canvas.height / rect.height)
         };
     }
 
     canvas.addEventListener('mousemove', function (e) {
-        const { mx, my } = canvasCoords(e);
-        const hit = getHitAt(mx, my);
+        var coords = canvasCoords(e);
+        var hit    = getHitAt(coords.mx, coords.my);
         if (hit) {
             canvas.style.cursor   = 'pointer';
             tooltip.style.display = 'block';
             tooltip.textContent   = buildTooltipText(hit.entry);
-            const tipW  = tooltip.offsetWidth || 220;
-            const flipL = (e.offsetX + tipW + 20 > scrollArea.clientWidth); // Gebruik scrollArea voor flip-check
+            var tipW  = tooltip.offsetWidth || 220;
+            var flipL = (e.offsetX + tipW + 20 > scrollArea.clientWidth);
             tooltip.style.left = (flipL ? e.offsetX - tipW - 8 : e.offsetX + 14) + 'px';
             tooltip.style.top  = Math.max(e.offsetY - 10, 0) + 'px';
         } else {
@@ -656,21 +695,27 @@
     });
 
     canvas.addEventListener('click', function (e) {
-        const { mx, my } = canvasCoords(e);
-        const hit = getHitAt(mx, my);
+        var coords = canvasCoords(e);
+        var hit    = getHitAt(coords.mx, coords.my);
         if (hit) { rootId = safe(hit.entry.person.ID); searchInput.value = ''; draw(); }
     });
 
     /* ------------------------------------------------------------------
-     * SECTION 14 — MAIN DRAW + PLACEHOLDER
+     * SECTION 15 — MAIN DRAW + PLACEHOLDER
      * ------------------------------------------------------------------ */
     function draw() {
         if (!rootId) return;
-        const root = findPerson(rootId);
-        if (!root) { showPlaceholder('Persoon niet gevonden.'); return; }
+        var root = findPerson(rootId);
+        if (!root) {
+            showPlaceholder(i18nModule.t('timeline:placeholder.notFound')); // Vertaald
+            return;
+        }
         setDynamicRange(root);
-        const rows = buildRows(root);
-        if (rows.length === 0) { showPlaceholder('Geen familieleden gevonden.'); return; }
+        var rows = buildRows(root);
+        if (rows.length === 0) {
+            showPlaceholder(i18nModule.t('timeline:placeholder.noFamily')); // Vertaald
+            return;
+        }
         placeholder.style.display = 'none';
         canvas.style.display      = 'block';
         renderCanvas(rows);
@@ -679,12 +724,12 @@
     function showPlaceholder(msg) {
         canvas.style.display      = 'none';
         placeholder.style.display = 'block';
-        placeholder.textContent   = msg;
-        stickyCol.innerHTML       = '';              // Reset sticky kolom bij placeholder
+        placeholder.textContent   = msg;   // Vertaald bericht
+        stickyCol.innerHTML       = '';    // Reset sticky kolom
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 15 — INIT
+     * SECTION 16 — INIT
      * ------------------------------------------------------------------ */
     function init() {
         dataset = window.StamboomStorage.get() || [];
