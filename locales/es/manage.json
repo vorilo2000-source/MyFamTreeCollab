@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Gestionar"
+  },
+  "welcome": {
+    "heading": "Bienvenido a tu Gestor del árbol",
+    "intro": "Busca una persona para gestionar el árbol genealógico."
+  },
+  "search": {
+    "placeholder": "Buscar por ID, nombre o fecha de nacimiento..."
+  },
+  "btn": {
+    "refresh": "Actualizar",
+    "add": "+ Añadir",
+    "save": "Guardar"
+  },
+  "rel": {
+    "parent":  "Progenitor/a",
+    "partner": "Pareja",
+    "sibling": "Hermano/a",
+    "root":    "Principal",
+    "child":   "Hijo/a",
+    "unknown": "-"
+  },
+  "action": {
+    "delete":         "🗑️",
+    "deleteTitle":    "Eliminar persona",
+    "deleteRowTitle": "Eliminar fila"
+  },
+  "placeholder": {
+    "select":   "Selecciona una persona usando la búsqueda",
+    "notFound": "No se encontraron personas"
+  },
+  "confirm": {
+    "delete": "¿Estás seguro de que quieres eliminar esta persona?"
+  },
+  "alert": {
+    "maxRows":    "Se han añadido 10 filas como máximo. Guarda primero.",
+    "saved":      "Conjunto de datos guardado correctamente",
+    "saveFailed": "Error al guardar: {{error}}"
+  }
+}
