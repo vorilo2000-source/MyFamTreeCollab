@@ -1,436 +1,449 @@
-/* ======================= js/manage.js v2.4.0 =======================
+/* ======================= js/manage.js v2.5.0 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Vereist: schema.js, idGenerator.js, storage.js, LiveSearch.js, relatieEngine.js
+
+   Wijziging v2.5.0 (sessie 26):
+   - Alle hardcoded strings vervangen door i18nModule.t('manage:...')
+   - Relatie-labels via manage:rel.* keys
+   - Acties-kolom titles via manage:action.*
+   - Bevestigingen, alerts, placeholders via manage:confirm.*, manage:alert.*, manage:placeholder.*
+   - const/let vervangen door var (ES5 conform projectstijl)
+   - Template literals vervangen door string-concatenatie
+
    Wijziging v2.4.0:
-   - Meerdere partners ondersteuning via pipe-gescheiden PartnerID (F3-48)
-   - Kinderen: PartnerID split op | zodat alle partners als aparte rij worden getoond
-   - Broers/zussen: zelfde split-logica voor hun partners
-   - Hoofdpersoon: extra partners (2e, 3e, ...) worden als extra Partner-rijen getoond
+   - Meerdere partners via pipe-gescheiden PartnerID (F3-48)
+
    Wijziging v2.3.2:
-   - Delete-knop werkt nu op alle bestaande rijen (fix: Acties als eerste in if-chain)
-   - Delete cleanup: verwijderd ID wordt ook gewist uit VaderID, MoederID en PartnerID
-     van alle andere personen in de dataset (inclusief pipe-gescheiden partnerlijsten)
-   Wijziging v2.3.1:
-   - Voeg rij delete actie toe en render aangepast
+   - Delete-knop werkt op alle bestaande rijen
+   - Delete cleanup: verwijderd ID gewist uit VaderID, MoederID, PartnerID
+
    Wijziging v2.3.0:
-   - KindPartnerID en BZPartnerID vervangen door één uniforme relatienaam 'Partner'
-     Partners zijn directe eigenschappen van een persoon (persoon.PartnerID),
-     geen aparte relatiecode nodig
+   - KindPartnerID en BZPartnerID vervangen door uniforme 'Partner'
+
    Wijziging v2.2.0:
-   - Kindpartner en BZpartner opzoeken via dataset (niet via relatieEngine)
+   - Kindpartner en BZpartner opzoeken via dataset
+
    Wijziging v2.1.0:
    - KindID filter uitgebreid naar HKindID en PHKindID
-   - Labels HKindID → 'Kind (hoofd)', PHKindID → 'Kind (partner)'
    =================================================================== */
 
-(function () {                                                              // Zelfuitvoerende functie: alle variabelen blijven lokaal, geen globale vervuiling
+(function () {                                                              // Zelfuitvoerende functie: alle variabelen blijven lokaal
     'use strict';                                                           // Strikte modus: voorkomt stille JS-fouten
 
     /* ======================= HELPERS ======================= */
-    const safe = window.ftSafe;                                             // Gebruik de centrale safe() uit utils.js — geen lokale kopie meer nodig
+    var safe = window.ftSafe;                                              // Centrale safe() uit utils.js
 
     /* ======================= KOLOMMEN DEFINITIE ======================= */
-    const COLUMNS = [                                                       // Array die alle tabelkolommen definieert met naam en bewerkbaarheid
-        { key: 'Acties',            readonly: true  },                     // UI kolom voor delete-knop, readonly want geen textarea nodig
-        { key: 'Relatie',           readonly: true  },                     // Relatie t.o.v. hoofdpersoon, automatisch berekend, niet bewerkbaar
-        { key: 'ID',                readonly: true  },                     // Uniek persoons-ID, gegenereerd door idGenerator.js, niet bewerkbaar
-        { key: 'Doopnaam',          readonly: false },                     // Officiële voornaam, gebruiker kan dit aanpassen
-        { key: 'Roepnaam',          readonly: false },                     // Roepnaam / gebruikelijke naam, bewerkbaar
-        { key: 'Prefix',            readonly: false },                     // Tussenvoegsel (van, de, van den), bewerkbaar
-        { key: 'Achternaam',        readonly: false },                     // Familienaam, bewerkbaar
-        { key: 'Geslacht',          readonly: false },                     // M / V / X, bewerkbaar
-        { key: 'Geboortedatum',     readonly: false },                     // Datum formaat yyyy-mm-dd, bewerkbaar
-        { key: 'Geboorteplaats',    readonly: false },                     // Stad/gemeente van geboorte, bewerkbaar
-        { key: 'Overlijdensdatum',  readonly: false },                     // Datum overlijden, leeg als nog in leven
-        { key: 'Overlijdensplaats', readonly: false },                     // Stad/gemeente van overlijden, bewerkbaar
-        { key: 'VaderID',           readonly: false },                     // ID van de vader, verwijzing naar andere persoon in dataset
-        { key: 'MoederID',          readonly: false },                     // ID van de moeder, verwijzing naar andere persoon in dataset
-        { key: 'PartnerID',         readonly: false },                     // ID van partner(s), meerdere mogelijk gescheiden door |
-        { key: 'Opmerkingen',       readonly: false }                      // Vrij tekstveld voor extra informatie
+    var COLUMNS = [                                                        // Array met alle tabelkolommen en hun bewerkbaarheid
+        { key: 'Acties',            readonly: true  },                    // UI-kolom voor delete-knop
+        { key: 'Relatie',           readonly: true  },                    // Relatie t.o.v. hoofdpersoon, automatisch berekend
+        { key: 'ID',                readonly: true  },                    // Uniek persoons-ID, gegenereerd door idGenerator.js
+        { key: 'Doopnaam',          readonly: false },                    // Officiële voornaam
+        { key: 'Roepnaam',          readonly: false },                    // Roepnaam / gebruikelijke naam
+        { key: 'Prefix',            readonly: false },                    // Tussenvoegsel (van, de, van den)
+        { key: 'Achternaam',        readonly: false },                    // Familienaam
+        { key: 'Geslacht',          readonly: false },                    // M / V / X
+        { key: 'Geboortedatum',     readonly: false },                    // Datum formaat yyyy-mm-dd
+        { key: 'Geboorteplaats',    readonly: false },                    // Stad/gemeente van geboorte
+        { key: 'Overlijdensdatum',  readonly: false },                    // Datum overlijden
+        { key: 'Overlijdensplaats', readonly: false },                    // Stad/gemeente van overlijden
+        { key: 'VaderID',           readonly: false },                    // ID van de vader
+        { key: 'MoederID',          readonly: false },                    // ID van de moeder
+        { key: 'PartnerID',         readonly: false },                    // ID van partner(s), gescheiden door |
+        { key: 'Opmerkingen',       readonly: false }                     // Vrij tekstveld
     ];
 
     /* ======================= STATE ======================= */
-    let dataset         = StamboomStorage.get();                           // Laad de volledige stamboom-dataset uit localStorage bij pagina-load
-    let selectedHoofdId = null;                                            // Houdt bij welke persoon momenteel geselecteerd is als hoofdpersoon
-    let tempRowCount    = 0;                                               // Telt hoeveel nieuwe (nog niet opgeslagen) rijen er zijn toegevoegd
+    var dataset         = StamboomStorage.get();                          // Volledige stamboom-dataset uit localStorage
+    var selectedHoofdId = null;                                           // Geselecteerde hoofdpersoon
+    var tempRowCount    = 0;                                              // Teller voor onopgeslagen rijen
 
     /* ======================= DOM ELEMENTEN ======================= */
-    const tableBody     = document.querySelector('#manageTable tbody');    // Het <tbody> element waar alle persoonsrijen in komen
-    const theadRow      = document.querySelector('#manageTable thead tr'); // De header-rij van de tabel voor kolomtitels
-    const addBtn        = document.getElementById('addBtn');               // Knop om een lege nieuwe rij toe te voegen aan de tabel
-    const saveBtn       = document.getElementById('saveBtn');              // Knop om alle wijzigingen op te slaan naar localStorage
-    const refreshBtn    = document.getElementById('refreshBtn');           // Knop om de tabel te herladen vanuit localStorage
-    const exportJsonBtn = document.getElementById('exportJson');           // Knop om de dataset te downloaden als .json bestand
-    const exportCsvBtn  = document.getElementById('exportCsv');            // Knop om de dataset te downloaden als .csv bestand
-    const searchInput   = document.getElementById('searchPerson');         // Zoekveld bovenaan de pagina voor live persoon-zoeken
+    var tableBody     = document.querySelector('#manageTable tbody');     // <tbody> voor persoonsrijen
+    var theadRow      = document.querySelector('#manageTable thead tr'); // Header-rij voor kolomtitels
+    var addBtn        = document.getElementById('addBtn');                // Knop: nieuwe rij toevoegen
+    var saveBtn       = document.getElementById('saveBtn');               // Knop: opslaan naar localStorage
+    var refreshBtn    = document.getElementById('refreshBtn');            // Knop: tabel herladen
+    var exportJsonBtn = document.getElementById('exportJson');            // Knop: download als JSON
+    var exportCsvBtn  = document.getElementById('exportCsv');             // Knop: download als CSV
+    var searchInput   = document.getElementById('searchPerson');          // Zoekveld live search
 
     /* ======================= HEADER BOUWEN ======================= */
     function buildHeader() {
-        theadRow.innerHTML = '';                                           // Verwijder alle bestaande kolomkoppen (bij refresh)
-        COLUMNS.forEach(col => {                                           // Loop door elke kolom-definitie in de COLUMNS array
-            const th = document.createElement('th');                      // Maak een nieuw <th> header-cel element
-            th.textContent = col.key;                                     // Zet de kolomnaam als zichtbare tekst in de cel
-            theadRow.appendChild(th);                                     // Voeg de header-cel toe aan de header-rij van de tabel
+        theadRow.innerHTML = '';                                          // Verwijder bestaande kolomkoppen
+        COLUMNS.forEach(function (col) {                                  // Loop door elke kolom-definitie
+            var th = document.createElement('th');                       // Maak een nieuw <th> element
+            th.textContent = col.key;                                    // Kolomnaam als zichtbare tekst
+            theadRow.appendChild(th);                                    // Toevoegen aan header-rij
         });
     }
 
     /* ======================= RELATIE ENGINE ======================= */
-    // Geen lokale versie meer — we gebruiken de centrale relatieEngine.js
-    const computeRelaties = window.RelatieEngine.computeRelaties;         // Haal de centrale functie op uit relatieEngine.js (moet eerder geladen zijn in HTML)
+    var computeRelaties = window.RelatieEngine.computeRelaties;          // Centrale functie uit relatieEngine.js
 
     /* ======================= TEXTAREA AUTO-HOOGTE ======================= */
     function adjustTextareas() {
-        tableBody.querySelectorAll('textarea').forEach(ta => {            // Loop door alle textarea-velden in de tabel
-            ta.style.height = 'auto';                                     // Reset eerst de hoogte zodat scrollHeight correct berekend wordt
-            const maxH = 120;                                             // Maximale hoogte in pixels voor een textarea (voorkomt te grote cellen)
-            if (ta.scrollHeight > maxH) {                                 // Als de inhoud meer ruimte nodig heeft dan het maximum
-                ta.style.height    = maxH + 'px';                         // Begrens de hoogte op het maximum
-                ta.style.overflowY = 'auto';                              // Voeg scrollbalk toe zodat de rest van de tekst bereikbaar blijft
+        tableBody.querySelectorAll('textarea').forEach(function (ta) {   // Loop door alle textarea-velden
+            ta.style.height = 'auto';                                    // Reset hoogte voor correcte scrollHeight
+            var maxH = 120;                                              // Maximum hoogte in pixels
+            if (ta.scrollHeight > maxH) {
+                ta.style.height    = maxH + 'px';                        // Begrens op maximum
+                ta.style.overflowY = 'auto';                             // Scrollbalk toevoegen
             } else {
-                ta.style.height    = ta.scrollHeight + 'px';              // Pas de hoogte precies aan op de inhoud
-                ta.style.overflowY = 'hidden';                            // Geen scrollbalk nodig: alle tekst is zichtbaar
+                ta.style.height    = ta.scrollHeight + 'px';             // Pas hoogte aan op inhoud
+                ta.style.overflowY = 'hidden';                           // Geen scrollbalk nodig
             }
         });
     }
 
     /* ======================= DELETE HANDLER FACTORY ======================= */
-    // Aparte functie zodat dezelfde logica herbruikbaar is voor bestaande én nieuwe rijen
+    // Herbruikbaar voor bestaande én nieuwe rijen
     function makeDeleteHandler(tr, getID) {
         return function () {
-            if (!confirm('Weet je zeker dat je deze persoon wilt verwijderen?')) return; // Vraag bevestiging voor definitieve actie
+            // Bevestigingsdialoog — vertaald via i18n
+            if (!confirm(i18nModule.t('manage:confirm.delete'))) return;
 
-            const id = getID();                                           // Haal het te verwijderen ID op via de meegegeven callback
+            var id = getID();                                            // Haal het te verwijderen ID op
 
             if (id) {
-                // Stap 1: verwijder de persoon zelf uit de dataset
-                dataset = dataset.filter(x => safe(x.ID) !== id);        // Filter de persoon met dit ID eruit
+                // Stap 1: verwijder de persoon uit de dataset
+                dataset = dataset.filter(function (x) { return safe(x.ID) !== id; });
 
                 // Stap 2: cleanup verwijzingen in alle andere personen
-                dataset = dataset.map(x => {
-                    const updated = { ...x };                             // Werk op een kopie zodat het originele object niet gemuteerd wordt
+                dataset = dataset.map(function (x) {
+                    var updated = Object.assign({}, x);                  // Ondiepe kopie
 
-                    // VaderID: leegmaken als het overeenkomt met het verwijderde ID
                     if (safe(updated.VaderID) === id) {
-                        updated.VaderID = '';                             // Veld leegmaken: vader bestaat niet meer
+                        updated.VaderID = '';                            // Vader bestaat niet meer
                     }
-
-                    // MoederID: leegmaken als het overeenkomt met het verwijderde ID
                     if (safe(updated.MoederID) === id) {
-                        updated.MoederID = '';                            // Veld leegmaken: moeder bestaat niet meer
+                        updated.MoederID = '';                           // Moeder bestaat niet meer
                     }
-
-                    // PartnerID: kan meerdere ID's bevatten gescheiden door |
                     if (safe(updated.PartnerID)) {
+                        // PartnerID kan meerdere ID's bevatten gescheiden door |
                         updated.PartnerID = updated.PartnerID
-                            .split('|')                                   // Splits op pipe-scheidingsteken om elk partner-ID apart te behandelen
-                            .map(s => s.trim())                           // Verwijder witruimte rondom elk ID
-                            .filter(s => s !== id)                        // Verwijder het gedelete ID uit de partnerlijst
-                            .join('|');                                   // Zet de resterende partner-ID's terug samen met pipe
+                            .split('|')
+                            .map(function (s) { return s.trim(); })
+                            .filter(function (s) { return s !== id; })   // Verwijder gedelete ID
+                            .join('|');
                     }
 
-                    return updated;                                       // Geef de opgeschoonde persoon terug
+                    return updated;
                 });
 
-                StamboomStorage.set(dataset);                             // Sla de volledige opgeschoonde dataset op in localStorage
+                StamboomStorage.set(dataset);                            // Opgeschoonde dataset opslaan
             }
 
-            tr.remove();                                                  // Verwijder de tabelrij direct uit de DOM voor directe visuele feedback
+            tr.remove();                                                 // Rij direct uit DOM verwijderen
         };
+    }
+
+    /* ======================= RELATIE-LABEL HELPER ======================= */
+    // Vertaalt interne relatiecodes naar gelokaliseerde labels via i18n
+    function relatieLabel(relatie) {
+        switch (relatie) {
+            case 'VHoofdID':
+            case 'MHoofdID':  return i18nModule.t('manage:rel.parent');  // Ouder
+            case 'PHoofdID':
+            case 'Partner':   return i18nModule.t('manage:rel.partner'); // Partner
+            case 'BZID':      return i18nModule.t('manage:rel.sibling'); // Broer/Zus
+            case 'HoofdID':   return i18nModule.t('manage:rel.root');    // Hoofdpersoon
+            case 'KindID':
+            case 'HKindID':
+            case 'PHKindID':  return i18nModule.t('manage:rel.child');   // Kind
+            default:          return relatie || i18nModule.t('manage:rel.unknown'); // Onbekend
+        }
     }
 
     /* ======================= TABEL RENDEREN ======================= */
     function renderTable(ds) {
-        if (!selectedHoofdId) {                                           // Controleer of er een hoofdpersoon geselecteerd is
-            showPlaceholder('Selecteer een persoon via de zoekfunctie');  // Geen selectie → toon instructie
-            return;                                                       // Stop de functie, niets te renderen
+        if (!selectedHoofdId) {
+            // Geen selectie — vertaalde melding
+            showPlaceholder(i18nModule.t('manage:placeholder.select'));
+            return;
         }
 
-        const contextData = computeRelaties(ds, selectedHoofdId);        // Bereken alle relaties rondom de geselecteerde hoofdpersoon
-        if (!contextData.length) {                                        // Als er geen personen teruggekomen zijn
-            showPlaceholder('Geen personen gevonden');                    // Toon melding in de tabel
-            return;                                                       // Stop de functie
+        var contextData = computeRelaties(ds, selectedHoofdId);          // Bereken relaties rondom hoofdpersoon
+        if (!contextData.length) {
+            // Geen personen gevonden — vertaalde melding
+            showPlaceholder(i18nModule.t('manage:placeholder.notFound'));
+            return;
         }
 
-        tableBody.innerHTML = '';                                         // Leeg de tabel zodat we opnieuw kunnen opbouwen
-        const renderQueue = [];                                           // Lege array die we vullen in de gewenste weergavevolgorde
+        tableBody.innerHTML = '';                                         // Leeg de tabel
+        var renderQueue = [];                                             // Volgorde-array voor weergave
 
-        // Vul de renderQueue in de juiste hiërarchische volgorde
+        // Ouders eerst
         contextData
-            .filter(p => p.Relatie === 'VHoofdID' || p.Relatie === 'MHoofdID') // Ouders van hoofd komen als eerste
-            .forEach(p => renderQueue.push(p));                           // Voeg elke ouder toe aan de queue
+            .filter(function (p) { return p.Relatie === 'VHoofdID' || p.Relatie === 'MHoofdID'; })
+            .forEach(function (p) { renderQueue.push(p); });
 
-        const hoofd = contextData.find(p => p.Relatie === 'HoofdID');    // Zoek de hoofdpersoon op in de verwerkte lijst
-        if (hoofd) renderQueue.push(hoofd);                               // Voeg hoofdpersoon toe na de ouders
+        // Hoofdpersoon
+        var hoofd = contextData.find(function (p) { return p.Relatie === 'HoofdID'; });
+        if (hoofd) renderQueue.push(hoofd);
 
+        // Eerste partner via relatieEngine
         contextData
-            .filter(p => p.Relatie === 'PHoofdID')                       // Eerste partner via relatieEngine (primaire partner)
-            .forEach(p => renderQueue.push(p));                           // Voeg eerste partner toe na hoofd
+            .filter(function (p) { return p.Relatie === 'PHoofdID'; })
+            .forEach(function (p) { renderQueue.push(p); });
 
-        // Extra partners van de hoofdpersoon: 2e, 3e, ... uit de pipe-lijst
+        // Extra partners van hoofdpersoon (2e, 3e, ...)
         if (hoofd && safe(hoofd.PartnerID)) {
-            hoofd.PartnerID.split('|')                                    // Splits op pipe: meerdere partners mogelijk
-                .map(id => id.trim())                                     // Witruimte rondom elk ID verwijderen
-                .filter(Boolean)                                          // Lege strings verwijderen
-                .slice(1)                                                 // Eerste partner overslaan — al toegevoegd via PHoofdID
-                .forEach(pid => {                                         // Loop door elk extra partner-ID
-                    const ep = dataset.find(p => safe(p.ID) === pid);    // Zoek extra partner in dataset
-                    if (ep) renderQueue.push({ ...ep, Relatie: 'PHoofdID' }); // Toon als PHoofdID zodat kleurcodering klopt
+            hoofd.PartnerID.split('|')
+                .map(function (id) { return id.trim(); })
+                .filter(Boolean)
+                .slice(1)                                                 // Eerste partner al toegevoegd via PHoofdID
+                .forEach(function (pid) {
+                    var ep = dataset.find(function (p) { return safe(p.ID) === pid; });
+                    if (ep) renderQueue.push(Object.assign({}, ep, { Relatie: 'PHoofdID' }));
                 });
         }
 
+        // Kinderen + hun partners
         contextData
-            .filter(p => ['KindID', 'HKindID', 'PHKindID'].includes(p.Relatie)) // Alle drie kindscenario's meenemen
-            .forEach(k => {
-                renderQueue.push(k);                                      // Voeg het kind toe aan de queue
-                if (safe(k.PartnerID)) {                                  // Controleer of kind partner(s) heeft
-                    k.PartnerID.split('|')                                // Splits op pipe: meerdere partners mogelijk
-                        .map(id => id.trim())                             // Witruimte rondom elk ID verwijderen
-                        .filter(Boolean)                                  // Lege strings na split verwijderen
-                        .forEach(pid => {                                 // Loop door elk partner-ID
-                            const kp = dataset.find(p => safe(p.ID) === pid); // Zoek partner in dataset
-                            if (kp) renderQueue.push({ ...kp, Relatie: 'Partner' }); // Partner direct na kind
+            .filter(function (p) { return ['KindID', 'HKindID', 'PHKindID'].includes(p.Relatie); })
+            .forEach(function (k) {
+                renderQueue.push(k);
+                if (safe(k.PartnerID)) {
+                    k.PartnerID.split('|')
+                        .map(function (id) { return id.trim(); })
+                        .filter(Boolean)
+                        .forEach(function (pid) {
+                            var kp = dataset.find(function (p) { return safe(p.ID) === pid; });
+                            if (kp) renderQueue.push(Object.assign({}, kp, { Relatie: 'Partner' }));
                         });
                 }
             });
 
+        // Broers/zussen + hun partners
         contextData
-            .filter(p => p.Relatie === 'BZID')                           // Loop door alle broers/zussen
-            .forEach(s => {
-                renderQueue.push(s);                                      // Voeg de broer/zus toe aan de queue
-                if (safe(s.PartnerID)) {                                  // Controleer of broer/zus partner(s) heeft
-                    s.PartnerID.split('|')                                // Splits op pipe: meerdere partners mogelijk
-                        .map(id => id.trim())                             // Witruimte rondom elk ID verwijderen
-                        .filter(Boolean)                                  // Lege strings na split verwijderen
-                        .forEach(pid => {                                 // Loop door elk partner-ID
-                            const bzP = dataset.find(p => safe(p.ID) === pid); // Zoek partner in dataset
-                            if (bzP) renderQueue.push({ ...bzP, Relatie: 'Partner' }); // Partner direct na broer/zus
+            .filter(function (p) { return p.Relatie === 'BZID'; })
+            .forEach(function (s) {
+                renderQueue.push(s);
+                if (safe(s.PartnerID)) {
+                    s.PartnerID.split('|')
+                        .map(function (id) { return id.trim(); })
+                        .filter(Boolean)
+                        .forEach(function (pid) {
+                            var bzP = dataset.find(function (p) { return safe(p.ID) === pid; });
+                            if (bzP) renderQueue.push(Object.assign({}, bzP, { Relatie: 'Partner' }));
                         });
                 }
             });
 
-        // Bouw voor elke persoon in de queue een tabelrij
-        renderQueue.forEach(p => {
-            const tr = document.createElement('tr');                     // Maak een nieuwe tabelrij
+        // Bouw tabelrijen
+        renderQueue.forEach(function (p) {
+            var tr = document.createElement('tr');                       // Nieuwe tabelrij
 
-            // Vertaal de interne relatiecodes naar leesbare Nederlandse labels
-            let relatieLabel = '';                                        // Begin met leeg label
-            switch (p.Relatie) {
-                case 'VHoofdID':
-                case 'MHoofdID':  relatieLabel = 'Ouder';     break;     // Vader of moeder = Ouder
-                case 'PHoofdID':
-                case 'Partner':   relatieLabel = 'Partner';   break;     // Alle partners = Partner
-                case 'BZID':      relatieLabel = 'Broer/Zus'; break;     // Broer of zus
-                case 'HoofdID':   relatieLabel = 'Hoofd';     break;     // Geselecteerde hoofdpersoon
-                case 'KindID':    relatieLabel = 'Kind';      break;     // Kind van hoofd én partner
-                case 'HKindID':   relatieLabel = 'Kind';      break;     // Kind van alleen de hoofdpersoon
-                case 'PHKindID':  relatieLabel = 'Kind';      break;     // Kind van alleen de partner
-                default:          relatieLabel = p.Relatie || '-';       // Onbekend type: toon de code zelf of streepje
-            }
+            // CSS-kleurklasse op basis van relatie
+            if (p.Relatie) tr.classList.add(p.Relatie);
 
-            if (p.Relatie) tr.classList.add(p.Relatie);                  // Voeg de relatiecode als CSS-class toe voor kleurcodering via RelationColors.css
-
-            COLUMNS.forEach(col => {                                      // Loop door elke kolomdefinitie om de tabelcel aan te maken
-                const td = document.createElement('td');                 // Maak een nieuwe tabelcel
+            COLUMNS.forEach(function (col, i) {
+                var td = document.createElement('td');                   // Cel per kolom
 
                 if (col.key === 'Acties') {
-                    // Acties-kolom als EERSTE afhandelen, vóór de readonly-check
-                    // Anders zou de readonly-tak deze kolom opvangen en geen knop tonen
-                    const btn = document.createElement('button');        // Maak de delete-knop aan
-                    btn.textContent = '🗑️';                              // Visueel icoon voor verwijderen
-                    btn.title = 'Verwijder persoon';                     // Tooltip bij hover
-                    btn.addEventListener(                                 // Koppel de delete-handler
-                        'click',
-                        makeDeleteHandler(tr, () => safe(p.ID))          // Geef een callback mee die het ID van deze persoon retourneert
-                    );
-                    td.appendChild(btn);                                 // Knop in de cel plaatsen
+                    // Delete-knop voor bestaande rij — vertaald via i18n
+                    var btn = document.createElement('button');
+                    btn.textContent = i18nModule.t('manage:action.delete');      // 🗑️
+                    btn.title       = i18nModule.t('manage:action.deleteTitle'); // Tooltip
+                    btn.addEventListener('click', makeDeleteHandler(tr, function () { return safe(p.ID); }));
+                    td.appendChild(btn);
 
                 } else if (col.key === 'Relatie') {
-                    // Relatie-kolom: toon het leesbare Nederlandse label
-                    td.textContent = relatieLabel;                       // Zet het vertaalde relatielabel als celtekst
+                    // Relatie-kolom: vertaald label via relatieLabel()
+                    td.textContent = relatieLabel(p.Relatie);
 
                 } else if (col.readonly) {
-                    // Overige readonly kolommen (zoals ID): toon als platte tekst
-                    td.textContent = p[col.key] || '';                   // Waarde tonen of leeg laten als het veld ontbreekt
+                    // Overige readonly kolommen (ID): platte tekst
+                    td.textContent = p[col.key] || '';
 
                 } else {
-                    // Bewerkbare kolom: gebruik een textarea zodat lange waarden goed passen
-                    const ta = document.createElement('textarea');       // Textarea voor bewerkbare invoer
-                    ta.value           = p[col.key] || '';               // Vul de huidige waarde in
-                    ta.dataset.field   = col.key;                        // Sla de veldnaam op als data-attribuut voor gebruik bij opslaan
-                    ta.style.width     = '100%';                         // Volle breedte van de cel
-                    ta.style.boxSizing = 'border-box';                   // Padding telt mee in breedte, geen overflow
-                    ta.style.resize    = 'vertical';                     // Gebruiker mag alleen verticaal vergroten
-                    td.appendChild(ta);                                  // Textarea in de cel plaatsen
+                    // Bewerkbare kolom: textarea
+                    var ta = document.createElement('textarea');
+                    ta.value           = p[col.key] || '';
+                    ta.dataset.field   = col.key;
+                    ta.style.width     = '100%';
+                    ta.style.boxSizing = 'border-box';
+                    ta.style.resize    = 'vertical';
+                    td.appendChild(ta);
                 }
 
-                tr.appendChild(td);                                      // Ingevulde cel toevoegen aan de tabelrij
+                tr.appendChild(td);
             });
 
-            tableBody.appendChild(tr);                                   // Complete rij toevoegen aan de tabel
+            tableBody.appendChild(tr);
         });
 
-        adjustTextareas();                                               // Pas de hoogte van alle textareas aan na het opbouwen van de tabel
+        adjustTextareas();                                               // Hoogte textareas aanpassen
     }
 
     /* ======================= PLACEHOLDER ======================= */
     function showPlaceholder(msg) {
-        tableBody.innerHTML = '';                                         // Verwijder alle bestaande rijen uit de tabel
-        const tr  = document.createElement('tr');                        // Maak een nieuwe rij voor de melding
-        const td  = document.createElement('td');                        // Maak een cel voor de meldingstekst
-        td.colSpan = COLUMNS.length;                                     // Laat de cel alle kolommen overspannen
-        td.textContent   = msg;                                          // Zet de meldingstekst
-        td.style.textAlign = 'center';                                   // Centreer de tekst horizontaal
-        tr.appendChild(td);                                              // Voeg de cel toe aan de rij
-        tableBody.appendChild(tr);                                       // Voeg de rij toe aan de tabel
+        tableBody.innerHTML = '';                                        // Verwijder bestaande rijen
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.colSpan         = COLUMNS.length;                            // Span alle kolommen
+        td.textContent     = msg;                                       // Vertaalde meldingstekst
+        td.style.textAlign = 'center';
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
     }
 
     /* ======================= NIEUWE RIJ TOEVOEGEN ======================= */
     function addRow() {
-        if (tempRowCount >= 10) {                                         // Maximaal 10 onopgeslagen rijen toestaan
-            alert('Maximaal 10 rijen toegevoegd. Klik eerst op Opslaan.'); // Informeer de gebruiker
-            return;                                                       // Stop zonder rij toe te voegen
+        if (tempRowCount >= 10) {
+            // Maximum bereikt — vertaald via i18n
+            alert(i18nModule.t('manage:alert.maxRows'));
+            return;
         }
 
-        const tr = document.createElement('tr');                         // Maak een nieuwe lege tabelrij
+        var tr = document.createElement('tr');                           // Nieuwe lege tabelrij
 
-        COLUMNS.forEach(col => {                                          // Loop door elke kolomdefinitie
-            const td = document.createElement('td');                     // Maak een cel per kolom
+        COLUMNS.forEach(function (col) {
+            var td = document.createElement('td');
 
             if (col.key === 'Acties') {
-                // Delete-knop voor nieuwe rij: verwijdert alleen uit DOM (geen dataset-cleanup nodig want nog niet opgeslagen)
-                const btn = document.createElement('button');            // Maak de delete-knop aan
-                btn.textContent = '🗑️';                                  // Visueel icoon
-                btn.title = 'Verwijder rij';                             // Tooltip
-                btn.addEventListener('click', () => tr.remove());        // Nieuwe rij heeft geen ID → alleen uit DOM verwijderen
-                td.appendChild(btn);                                     // Knop in de cel
+                // Delete-knop voor nieuwe rij — vertaald via i18n
+                var btn = document.createElement('button');
+                btn.textContent = i18nModule.t('manage:action.delete');         // 🗑️
+                btn.title       = i18nModule.t('manage:action.deleteRowTitle'); // Tooltip
+                btn.addEventListener('click', function () { tr.remove(); });    // Nieuwe rij: alleen DOM-verwijdering
+                td.appendChild(btn);
 
             } else if (col.readonly) {
-                td.textContent = '';                                     // Readonly cel leeg laten: ID wordt ingevuld na opslaan
+                td.textContent = '';                                     // Readonly cel leeg: ID volgt na opslaan
 
             } else {
-                const ta = document.createElement('textarea');           // Bewerkbare kolom krijgt een textarea
-                ta.value           = '';                                 // Begin leeg
-                ta.dataset.field   = col.key;                           // Veldnaam opslaan als data-attribuut
-                ta.style.width     = '100%';                            // Volle breedte
-                ta.style.boxSizing = 'border-box';                      // Padding telt mee in breedte
-                ta.style.resize    = 'vertical';                        // Alleen verticaal schalen toegestaan
-                td.appendChild(ta);                                     // Textarea in de cel
+                var ta = document.createElement('textarea');
+                ta.value           = '';
+                ta.dataset.field   = col.key;
+                ta.style.width     = '100%';
+                ta.style.boxSizing = 'border-box';
+                ta.style.resize    = 'vertical';
+                td.appendChild(ta);
             }
 
-            tr.appendChild(td);                                         // Cel in de rij
+            tr.appendChild(td);
         });
 
-        tableBody.appendChild(tr);                                      // Rij in de tabel
-        tempRowCount++;                                                  // Verhoog de teller voor onopgeslagen rijen
-        adjustTextareas();                                              // Pas hoogte aan voor de nieuwe textarea's
+        tableBody.appendChild(tr);
+        tempRowCount++;                                                  // Teller verhogen
+        adjustTextareas();
     }
 
     /* ======================= DATASET OPSLAAN ======================= */
     function saveDatasetMerged() {
         try {
-            const rows  = tableBody.querySelectorAll('tr');               // Haal alle zichtbare tabelrijen op
-            const idMap = new Map(dataset.map(p => [p.ID, p]));          // Maak een Map van bestaande personen: ID → persoon-object (voor snelle updates)
+            var rows  = tableBody.querySelectorAll('tr');                // Alle zichtbare tabelrijen
+            var idMap = new Map(dataset.map(function (p) { return [p.ID, p]; })); // ID → persoon-object
 
-            rows.forEach(tr => {                                          // Loop door elke zichtbare rij in de tabel
-                const persoon = {};                                       // Leeg object dat we gaan vullen vanuit de cellen
+            rows.forEach(function (tr) {
+                var persoon = {};                                        // Nieuw object vullen vanuit cellen
 
-                COLUMNS.forEach((col, i) => {                            // Loop door elke kolom om de waarde uit de cel te halen
-                    const cell = tr.cells[i];                            // Haal de cel op op basis van kolomindex
-                    if (col.readonly) {                                   // Alleen-lezen cel
-                        if (col.key === 'ID') {                           // Alleen het ID-veld is nuttig uit de alleen-lezen cellen
-                            persoon.ID = safe(cell.textContent);          // Lees het ID uit de celtekst
+                COLUMNS.forEach(function (col, i) {
+                    var cell = tr.cells[i];
+                    if (col.readonly) {
+                        if (col.key === 'ID') {
+                            persoon.ID = safe(cell.textContent);         // ID uit readonly cel lezen
                         }
                     } else {
-                        const ta = cell.querySelector('textarea');        // Zoek de textarea in de bewerkbare cel
-                        persoon[col.key] = ta ? ta.value.trim() : '';    // Haal de getrimde waarde op, of lege string als textarea ontbreekt
+                        var ta = cell.querySelector('textarea');
+                        persoon[col.key] = ta ? ta.value.trim() : '';   // Waarde uit textarea
                     }
                 });
 
-                if (!persoon.ID) {                                        // Nieuwe rij heeft nog geen ID (was leeg)
-                    persoon.ID = window.genereerCode(                     // Genereer een nieuw uniek ID via de centrale generator
+                if (!persoon.ID) {
+                    // Nieuw record: genereer uniek ID
+                    persoon.ID = window.genereerCode(
                         persoon,
-                        Array.from(idMap.values())                        // Geef alle bestaande personen mee om uniciteit te garanderen
+                        Array.from(idMap.values())                       // Bestaande personen voor uniciteit
                     );
                 }
 
-                idMap.set(persoon.ID, {                                   // Sla de persoon op in de Map (update als al bestaat, voeg toe als nieuw)
-                    ...idMap.get(persoon.ID),                             // Bewaar alle bestaande velden van de persoon (zoals velden die niet in de tabel staan)
-                    ...persoon                                            // Overschrijf met de gewijzigde waarden uit de tabel
-                });
+                idMap.set(persoon.ID, Object.assign(
+                    {},
+                    idMap.get(persoon.ID) || {},                         // Bewaar bestaande velden
+                    persoon                                              // Overschrijf met gewijzigde waarden
+                ));
             });
 
-            dataset = Array.from(idMap.values());                        // Zet de Map terug naar een array voor opslag
-            StamboomStorage.set(dataset);                                 // Sla de bijgewerkte dataset op in localStorage
-            tempRowCount = 0;                                             // Reset de teller voor onopgeslagen rijen
-            alert('Dataset succesvol opgeslagen');                        // Bevestig aan de gebruiker dat opslaan gelukt is
+            dataset = Array.from(idMap.values());                       // Map terug naar array
+            StamboomStorage.set(dataset);                               // Opslaan in localStorage
+            tempRowCount = 0;                                            // Teller resetten
+            alert(i18nModule.t('manage:alert.saved'));                   // Bevestiging — vertaald
         } catch (e) {
-            alert(`Opslaan mislukt: ${e.message}`);                       // Toon foutmelding als er iets misgaat
+            alert(i18nModule.t('manage:alert.saveFailed', { error: e.message })); // Foutmelding — vertaald
         }
     }
 
     /* ======================= EXPORT JSON ======================= */
     function exportJSON() {
-        const data = JSON.stringify(dataset, null, 2);                   // Zet de dataset om naar leesbare JSON-tekst met 2 spaties inspringing
-        const blob = new Blob([data], { type: 'application/json' });     // Maak een downloadbaar bestand van de JSON-tekst
-        const url  = URL.createObjectURL(blob);                          // Maak een tijdelijke URL aan voor het bestand
-        const a    = document.createElement('a');                        // Maak een onzichtbare downloadlink
-        a.href     = url;                                                // Koppel de tijdelijke URL aan de link
-        a.download = 'stamboom.json';                                    // Stel de bestandsnaam in voor de download
-        a.click();                                                       // Simuleer een klik om de download te starten
-        URL.revokeObjectURL(url);                                        // Verwijder de tijdelijke URL uit het geheugen
+        var data = JSON.stringify(dataset, null, 2);                    // Dataset naar leesbare JSON
+        var blob = new Blob([data], { type: 'application/json' });
+        var url  = URL.createObjectURL(blob);
+        var a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'stamboom.json';
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     /* ======================= EXPORT CSV ======================= */
     function exportCSV() {
-        const headers = COLUMNS.map(c => c.key).join(',');               // Maak de headerregel: kolomnamen gescheiden door komma's
-        const rows    = dataset                                          // Loop door alle personen in de dataset
-            .map(p => COLUMNS                                            // Loop door alle kolommen voor elke persoon
-                .map(c => `"${(p[c.key] || '').replace(/"/g, '""')}"`)  // Zet elke waarde tussen aanhalingstekens, escape interne aanhalingstekens
-                .join(',')                                               // Verbind de kolomwaarden met komma's tot één CSV-regel
-            )
-            .join('\n');                                                 // Verbind alle persoon-regels met een nieuwe regel
+        var headers = COLUMNS.map(function (c) { return c.key; }).join(',');
+        var rows    = dataset
+            .map(function (p) {
+                return COLUMNS
+                    .map(function (c) { return '"' + (p[c.key] || '').replace(/"/g, '""') + '"'; })
+                    .join(',');
+            })
+            .join('\n');
 
-        const csv  = headers + '\n' + rows;                             // Combineer header en data tot volledige CSV-inhoud
-        const blob = new Blob([csv], { type: 'text/csv' });             // Maak een downloadbaar bestand van de CSV-tekst
-        const url  = URL.createObjectURL(blob);                         // Tijdelijke download-URL aanmaken
-        const a    = document.createElement('a');                       // Onzichtbare downloadlink aanmaken
-        a.href     = url;                                                // URL koppelen
-        a.download = 'stamboom.csv';                                    // Bestandsnaam instellen
-        a.click();                                                       // Download starten
-        URL.revokeObjectURL(url);                                       // Tijdelijke URL opruimen uit geheugen
+        var csv  = headers + '\n' + rows;
+        var blob = new Blob([csv], { type: 'text/csv' });
+        var url  = URL.createObjectURL(blob);
+        var a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'stamboom.csv';
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     /* ======================= INITIALISATIE ======================= */
     function init() {
-        buildHeader();                                                   // Bouw de kolomtitels in de tabelheader
+        buildHeader();                                                   // Kolomtitels bouwen
 
-        showPlaceholder('Selecteer een persoon via de zoekfunctie');     // Toon beginmelding: er is nog niemand geselecteerd
+        // Beginmelding — vertaald via i18n
+        showPlaceholder(i18nModule.t('manage:placeholder.select'));
 
-        addBtn.addEventListener('click', addRow);                        // Koppel de Voeg toe-knop aan de addRow functie
-        saveBtn.addEventListener('click', saveDatasetMerged);            // Koppel de Opslaan-knop aan de saveDatasetMerged functie
-        refreshBtn.addEventListener('click', () => {                     // Koppel de Vernieuwen-knop
-            if (selectedHoofdId) renderTable(dataset);                   // Herlaad de tabel als er een persoon geselecteerd is
-            else showPlaceholder('Selecteer een persoon via de zoekfunctie'); // Anders toon de beginmelding
+        addBtn.addEventListener('click', addRow);                        // Voeg toe-knop
+        saveBtn.addEventListener('click', saveDatasetMerged);            // Opslaan-knop
+        refreshBtn.addEventListener('click', function () {
+            if (selectedHoofdId) {
+                renderTable(dataset);                                    // Herlaad tabel
+            } else {
+                showPlaceholder(i18nModule.t('manage:placeholder.select')); // Beginmelding
+            }
         });
-        exportJsonBtn?.addEventListener('click', exportJSON);            // Koppel de JSON-exportknop (?. = veilig: doet niets als knop niet bestaat)
-        exportCsvBtn?.addEventListener('click', exportCSV);              // Koppel de CSV-exportknop (?. = veilig: doet niets als knop niet bestaat)
 
-        if (typeof initLiveSearch === 'function') {                      // Controleer of LiveSearch.js correct geladen is
-            initLiveSearch(searchInput, dataset, (selectedID) => {       // Initialiseer de live zoekfunctie met het zoekveld en de dataset
-                selectedHoofdId = selectedID;                            // Sla het geselecteerde persoons-ID op als nieuwe hoofdpersoon
-                renderTable(dataset);                                    // Herrender de tabel met de nieuw geselecteerde persoon als middelpunt
+        if (exportJsonBtn) exportJsonBtn.addEventListener('click', exportJSON);
+        if (exportCsvBtn)  exportCsvBtn.addEventListener('click',  exportCSV);
+
+        if (typeof initLiveSearch === 'function') {
+            initLiveSearch(searchInput, dataset, function (selectedID) {
+                selectedHoofdId = selectedID;                            // Nieuwe hoofdpersoon
+                renderTable(dataset);                                    // Tabel herbouwen
             });
 
-            document.addEventListener('click', (e) => {                 // Luister naar klikken overal op de pagina
-                const popup = document.getElementById('searchPopup');    // Zoek de zoekresultaten-popup op
-                if (popup && !popup.contains(e.target)                   // Als de popup bestaat en de klik was buiten de popup
-                          && e.target !== searchInput) {                 // EN de klik was niet op het zoekveld zelf
-                    popup.remove();                                      // Verwijder de popup uit de DOM
+            document.addEventListener('click', function (e) {
+                var popup = document.getElementById('searchPopup');      // Zoekresultaten-popup
+                if (popup && !popup.contains(e.target) && e.target !== searchInput) {
+                    popup.remove();                                      // Sluit popup bij klik buiten
                 }
             });
         }
     }
 
-    init();                                                              // Start de initialisatie zodra het script geladen is
+    init();                                                              // Start initialisatie
 
-})();                                                                    // Sluit en voer de zelfuitvoerende functie direct uit
+})();                                                                    // Sluit en voer direct uit
