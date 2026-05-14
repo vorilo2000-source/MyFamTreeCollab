@@ -1,16 +1,18 @@
-<!-- ======================= stamboom/timeline.html v2.3.0 =======================
+<!-- ======================= stamboom/timeline.html v2.4.0 =======================
      Tijdlijnpagina: visualiseert personen op een horizontale tijdas via HTML5 Canvas
+
+     Wijziging v2.4.0 (sessie 26):
+     - i18n geïntegreerd: data-i18n attributen op alle statische teksten
+     - i18next scripts + i18n.js toegevoegd aan <head>
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
+     - Placeholder, search placeholder via i18nModule.t() in timeline.js
 
      Wijziging v2.3.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
      - SiteAnalytics.trackPage("timeline") toegevoegd in fetch-scriptblok
 
      Wijziging v2.2.0: sticky generatiekolom
-     - #timelineContainer gesplitst in #tlStickyCol (sticky links) + #tlScrollArea (canvas)
-     - Bij horizontaal scrollen blijft de generatiekolom zichtbaar aan de linkerkant
-     Wijziging v2.1.0: canvas-rendering vervangen DOM-nodes, container aangepast,
-                       tooltip-overlay toegevoegd, welkomstblok behouden
-     v2.1.1 Login + Favicon / App-icoon
+     Wijziging v2.1.0: canvas-rendering, tooltip-overlay
      Scripts: utils.js → schema.js → storage.js → LiveSearch.js → relatieEngine.js → timeline.js
      ======================================================================= -->
 <!DOCTYPE html>
@@ -18,17 +20,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tijdlijn</title>
+    <title data-i18n="timeline:page.title">Tijdlijn</title>
 
-     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <!-- ======================= i18next bibliotheken ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>
 
     <link rel="stylesheet" href="../css/style.css">
-     
     <link rel="stylesheet" href="../css/timeline.css">
+
     <style>
         /* ======================= WELKOMSTBLOK ======================= */
         .welkom-blok { margin-bottom: 20px; }
@@ -45,19 +53,15 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
-        #sandboxSearch:focus {
-            outline: none;
-            border-color: #1E90FF;
-        }
+        #sandboxSearch:focus { outline: none; border-color: #1E90FF; }
 
         /* ======================= TIJDLIJN BUITENSTE WRAPPER ======================= */
-        /* overflow-x: auto zit hier zodat sticky werkt binnen de scrollbare context  */
         #timelineContainer {
-            position: relative;            /* Ankerpunt voor tooltip */
-            display: flex;                 /* Sticky kolom + canvas naast elkaar */
-            flex-direction: row;           /* Horizontale layout */
-            align-items: stretch;          /* Beide kolommen even hoog */
-            overflow-x: auto;              /* Horizontale scroll op de hele container */
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            overflow-x: auto;
             border: 1px solid #ddd;
             border-radius: 6px;
             background: #fafafa;
@@ -65,34 +69,30 @@
         }
 
         /* ======================= STICKY GENERATIEKOLOM ======================= */
-        /* Blijft zichtbaar aan de linkerkant bij horizontaal scrollen             */
         #tlStickyCol {
-            position: sticky;              /* Plakt aan de linkerkant bij scrollen */
-            left: 0;                       /* Altijd zichtbaar aan linkerzijde */
-            width: 155px;                  /* Zelfde breedte als LABEL_COL_W in timeline.js */
-            flex-shrink: 0;               /* Kolom mag niet krimpen */
-            background: rgba(248,248,248,0.97); /* Lichte achtergrond — dekt canvas af */
-            border-right: 1px solid #e0e0e0;   /* Scheidingslijn tussen kolom en canvas */
-            z-index: 20;                   /* Boven het canvas zodat labels altijd zichtbaar zijn */
+            position: sticky;
+            left: 0;
+            width: 155px;
+            flex-shrink: 0;
+            background: rgba(248,248,248,0.97);
+            border-right: 1px solid #e0e0e0;
+            z-index: 20;
             font-family: sans-serif;
             font-size: 10px;
             color: #666;
-            overflow: hidden;              /* Labels die buiten de kolom vallen worden afgekapt */
-            pointer-events: none;          /* Klikken gaan door naar canvas */
+            overflow: hidden;
+            pointer-events: none;
         }
 
         /* ======================= SCROLL GEBIED (canvas) ======================= */
         #tlScrollArea {
-            position: relative;            /* Ankerpunt voor absoluut gepositioneerde tooltip */
-            flex: 1;                       /* Neemt resterende breedte in */
-            min-width: 0;                  /* Voorkomt dat flex-child buiten container groeit */
+            position: relative;
+            flex: 1;
+            min-width: 0;
         }
 
         /* ======================= CANVAS ======================= */
-        #timelineCanvas {
-            display: block;                /* Geen inline witruimte onder canvas */
-            cursor: default;
-        }
+        #timelineCanvas { display: block; cursor: default; }
 
         /* ======================= PLACEHOLDER TEKST ======================= */
         #timelinePlaceholder {
@@ -104,7 +104,7 @@
 
         /* ======================= TOOLTIP ======================= */
         #timelineTooltip {
-            position: absolute;            /* Zweeft boven canvas, relatief aan #tlScrollArea */
+            position: absolute;
             pointer-events: none;
             background: rgba(30, 30, 30, 0.92);
             color: #fff;
@@ -121,43 +121,44 @@
 </head>
 <body>
 
-<!-- ======================= TopBar ======================= -->
+<!-- ======================= TopBar placeholder ======================= -->
 <div id="topbar-placeholder"></div>
 
-<!-- ======================= Navbar ======================= -->
-<div id="Navbar-placeholder"></div>
+<!-- ======================= Navbar placeholder ======================= -->
+<div id="navbar-placeholder"></div>
 
 <!-- ======================= Hoofd content ======================= -->
 <main>
     <div class="container">
 
-        <!-- ======================= Welkomstblok ======================= -->
+        <!-- Welkomstblok — vertaald via data-i18n -->
         <div class="welkom-blok">
-            <h1>Welkom bij je stamboom Tijdlijn</h1>
-            <p>
+            <h1 data-i18n="timeline:welcome.heading">Welkom bij je stamboom Tijdlijn</h1>
+            <p data-i18n="timeline:welcome.intro">
                 Zoek een persoon op om de tijdlijn van zijn of haar familie te bekijken.
                 Elke persoon wordt weergegeven als een horizontale balk van geboorte tot overlijden,
                 gegroepeerd per generatie.
             </p>
         </div>
 
-        <!-- ======================= Zoekbalk ======================= -->
+        <!-- Zoekbalk — placeholder via JS na i18n init -->
         <div class="zoek-sectie">
-            <input type="text" id="sandboxSearch" placeholder="Zoek op naam, ID of geboortedatum...">
+            <input type="text" id="sandboxSearch"
+                   data-i18n-placeholder="timeline:search.placeholder"
+                   placeholder="Zoek op naam, ID of geboortedatum...">
         </div>
 
-        <!-- ======================= Tijdlijn container ======================= -->
+        <!-- Tijdlijn container -->
         <div id="timelineContainer">
 
-            <!-- Sticky generatiekolom: blijft zichtbaar bij horizontaal scrollen -->
-            <!-- timeline.js vult deze kolom met generatielabels via updateGenLabels() -->
+            <!-- Sticky generatiekolom: timeline.js vult deze via updateGenLabels() -->
             <div id="tlStickyCol"></div>
 
             <!-- Scrollgebied: bevat canvas en tooltip -->
             <div id="tlScrollArea">
 
-                <!-- Placeholder: zichtbaar zolang geen persoon geselecteerd is -->
-                <div id="timelinePlaceholder">Zoek een persoon om de tijdlijn te laden.</div>
+                <!-- Placeholder — tekst via JS gezet na i18n init -->
+                <div id="timelinePlaceholder"></div>
 
                 <!-- Canvas: timeline.js tekent hier de balkjes en tijdas -->
                 <canvas id="timelineCanvas" style="display: none;"></canvas>
@@ -166,63 +167,75 @@
                 <div id="timelineTooltip"></div>
 
             </div>
-
         </div>
 
     </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
+<!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
-<!-- =============================================================
-     SCRIPTS — volgorde is verplicht:
-     1. Supabase SDK        — vereist door auth.js
-     2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. siteAnalytics.js   — bezoektracking, na auth.js
-     5. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
-     6. Navbar fetch        — onafhankelijk, mag parallel
-     7. Pagina-scripts      — altijd als laatste
-     ============================================================= -->
+<!-- ======================= Externe scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js -->
 
-<script>
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
-
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            var ph = document.getElementById('Navbar-placeholder');
-            if (ph) ph.innerHTML = data;
-        });
-
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
-        });
-
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-    SiteAnalytics.trackPage("timeline"); // Bezoek registreren in Supabase page_visits tabel
-</script>
-
-<!-- ======================= Scripts (volgorde verplicht) ======================= -->
+<!-- ======================= Pagina-scripts (volgorde verplicht) ======================= -->
 <script src="../js/schema.js"></script>
 <script src="../js/storage.js"></script>
 <script src="../js/LiveSearch.js"></script>
 <script src="../js/relatieEngine.js"></script>
 <script src="../js/timeline.js"></script>
+
+<script>
+// ======================= i18n initialisatie + component fetch =======================
+i18nModule.init()
+    .then(function () { return i18nModule.loadNamespace('timeline'); })
+    .then(function () {
+
+    // Paginatitel vertalen
+    document.title = i18nModule.t('timeline:page.title');
+
+    // Placeholder vertalen (data-i18n-placeholder)
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-placeholder');
+        if (key) el.placeholder = i18nModule.t(key); // Vertaald placeholder
+    });
+
+    // Standaard placeholder-tekst instellen — timeline.js overschrijft dit bij selectie
+    var ph = document.getElementById('timelinePlaceholder');
+    if (ph) ph.textContent = i18nModule.t('timeline:placeholder.default');
+
+    // Laad TopBar en activeer i18n + topbar.js
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Laad Navbar en activeer i18n
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+        });
+
+    // Laad Footer en activeer i18n
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+        });
+
+    // Pagina tracking
+    SiteAnalytics.trackPage('timeline'); // Bezoek registreren in Supabase page_visits tabel
+
+});
+</script>
 
 </body>
 </html>
