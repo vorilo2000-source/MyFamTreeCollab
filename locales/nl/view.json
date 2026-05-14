@@ -1,0 +1,19 @@
+{
+  "page": {
+    "title": "Stamboom"
+  },
+  "welcome": {
+    "heading": "Welkom bij je stamboom View",
+    "intro": "Zoek een persoon op om de stamboom rondom hem of haar te bekijken. Klik op een node om die persoon als nieuw middelpunt te kiezen."
+  },
+  "search": {
+    "placeholder": "Zoek op ID, naam of geboortedatum..."
+  },
+  "siblings": {
+    "title": "Broers & zussen"
+  },
+  "tree": {
+    "selectPerson": "Selecteer een persoon",
+    "notFound": "Persoon niet gevonden"
+  }
+}
