@@ -1,0 +1,48 @@
+{
+  "page": {
+    "title": "Tijdlijn"
+  },
+  "welcome": {
+    "heading": "Welkom bij je stamboom Tijdlijn",
+    "intro": "Zoek een persoon op om de tijdlijn van zijn of haar familie te bekijken. Elke persoon wordt weergegeven als een horizontale balk van geboorte tot overlijden, gegroepeerd per generatie."
+  },
+  "search": {
+    "placeholder": "Zoek op naam, ID of geboortedatum..."
+  },
+  "placeholder": {
+    "default":   "Zoek een persoon om de tijdlijn te laden.",
+    "notFound":  "Persoon niet gevonden.",
+    "noFamily":  "Geen familieleden gevonden."
+  },
+  "gen": {
+    "parents":                 "Ouders  (gen −1)",
+    "grandparents":            "Grootouders  (gen −2)",
+    "greatgrandparents":       "Betovergrootouders  (gen −3)",
+    "root":                    "Hoofdpersoon  (gen 0)",
+    "children":                "Kinderen  (gen +1)",
+    "grandchildren":           "Kleinkinderen  (gen +2)",
+    "greatgrandchildren":      "Achterkleinkinderen  (gen +3)",
+    "greatgreatgrandchildren": "Betachterkleinkinderen  (gen +4)",
+    "furtherDescendants":      "Verdere nakomelingen  (gen +{{n}})"
+  },
+  "rel": {
+    "HoofdID":     "Hoofdpersoon",
+    "VHoofdID":    "Vader",
+    "MHoofdID":    "Moeder",
+    "PHoofdID":    "Partner",
+    "KindID":      "Kind",
+    "HKindID":     "Kind (hoofd)",
+    "PHKindID":    "Kind (partner)",
+    "BZID":        "Broer/Zus",
+    "BZPartnerID": "Partner broer/zus"
+  },
+  "tooltip": {
+    "noName":  "(geen naam)",
+    "born":    "Geboren",
+    "died":    "Overleden",
+    "alive":   "nog in leven",
+    "age":     "Leeftijd",
+    "years":   "jaar",
+    "approx":  "~{{age}} jaar"
+  }
+}
