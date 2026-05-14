@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Beheer"
+  },
+  "welcome": {
+    "heading": "Welkom bij je stamboom Manager",
+    "intro": "Zoek een persoon op om de stamboom te beheren."
+  },
+  "search": {
+    "placeholder": "Zoek op ID, naam of geboortedatum..."
+  },
+  "btn": {
+    "refresh": "Vernieuwen",
+    "add": "+ Toevoegen",
+    "save": "Opslaan"
+  },
+  "rel": {
+    "parent":  "Ouder",
+    "partner": "Partner",
+    "sibling": "Broer/Zus",
+    "root":    "Hoofd",
+    "child":   "Kind",
+    "unknown": "-"
+  },
+  "action": {
+    "delete":         "🗑️",
+    "deleteTitle":    "Verwijder persoon",
+    "deleteRowTitle": "Verwijder rij"
+  },
+  "placeholder": {
+    "select":   "Selecteer een persoon via de zoekfunctie",
+    "notFound": "Geen personen gevonden"
+  },
+  "confirm": {
+    "delete": "Weet je zeker dat je deze persoon wilt verwijderen?"
+  },
+  "alert": {
+    "maxRows":    "Maximaal 10 rijen toegevoegd. Klik eerst op Opslaan.",
+    "saved":      "Dataset succesvol opgeslagen",
+    "saveFailed": "Opslaan mislukt: {{error}}"
+  }
+}
