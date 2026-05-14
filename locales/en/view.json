@@ -1,0 +1,19 @@
+{
+  "page": {
+    "title": "Family Tree"
+  },
+  "welcome": {
+    "heading": "Welcome to your Family Tree View",
+    "intro": "Search for a person to view the family tree around them. Click a node to select that person as the new centre."
+  },
+  "search": {
+    "placeholder": "Search by ID, name or date of birth..."
+  },
+  "siblings": {
+    "title": "Siblings"
+  },
+  "tree": {
+    "selectPerson": "Select a person",
+    "notFound": "Person not found"
+  }
+}
