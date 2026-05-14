@@ -1,8 +1,14 @@
 // =============================================================================
 // reset.js — Wachtwoord Reset Logica
-// MyFamTreeCollab v1.0.0
+// MyFamTreeCollab v1.1.0
 // -----------------------------------------------------------------------------
-// Verwerkt het wachtwoord-resetformulier op home/reset.html.
+// Wijziging v1.1.0 (sessie 26):
+// - Alle hardcoded strings via i18nModule.t('auth:reset.*')
+// - Knoplabels (opslaan, bezig) via i18n
+// - Fout- en succesmeldingen via i18n
+// - Wachtwoord-mismatch melding via i18n
+//
+// v1.0.0: Verwerkt het wachtwoord-resetformulier op home/reset.html.
 //
 // Flow:
 // 1. Supabase detecteert de token in de URL en logt de gebruiker in
@@ -11,112 +17,120 @@
 // 4. AuthModule.updatePassword() slaat het nieuwe wachtwoord op
 // 5. Redirect naar home na succesvolle reset
 //
-// Dependencies: Supabase SDK, auth.js
+// Dependencies: Supabase SDK, auth.js, i18n.js
 // Load order:   utils.js → auth.js → topbar.js → reset.js
 // =============================================================================
 
 (function () {
-  "use strict";
+    "use strict";
 
-  // ---------------------------------------------------------------------------
-  // Wacht op DOMContentLoaded zodat alle elementen beschikbaar zijn
-  // ---------------------------------------------------------------------------
-  document.addEventListener("DOMContentLoaded", function () {
-
-    // Haal alle benodigde DOM-elementen op
-    const formulier  = document.getElementById("reset-formulier"); // Formulier sectie
-    const ongeldig   = document.getElementById("reset-ongeldig");  // Ongeldige link sectie
-    const btn        = document.getElementById("btn-reset");       // Opslaan knop
-    const msgEl      = document.getElementById("reset-msg");       // Feedback bericht
-    const pwdInput   = document.getElementById("reset-pwd");       // Nieuw wachtwoord veld
-    const pwd2Input  = document.getElementById("reset-pwd2");      // Herhaal wachtwoord veld
-
-    // -------------------------------------------------------------------------
-    // _showMsg(text, type)
-    // Toont een feedback bericht onder het formulier.
-    // type is 'error' of 'success'
-    // -------------------------------------------------------------------------
-    function _showMsg(text, type) {
-      msgEl.textContent = text;
-      msgEl.className   = "reset-msg " + type;
+    // ---------------------------------------------------------------------------
+    // _t(key, fallback)
+    // Veilige i18n wrapper — werkt ook als namespace nog niet volledig geladen is.
+    // ---------------------------------------------------------------------------
+    function _t(key, fallback) {
+        try {
+            if (window.i18nModule && typeof window.i18nModule.t === 'function') {
+                var result = window.i18nModule.t(key);
+                if (result && result !== key) return result; // Vertaling gevonden
+            }
+        } catch (e) { /* i18n niet klaar */ }
+        return fallback || key;                              // Fallback op hardcoded NL
     }
 
-    // -------------------------------------------------------------------------
-    // Luister op auth-wijzigingen van Supabase
-    // Supabase stuurt automatisch een PASSWORD_RECOVERY event als de gebruiker
-    // via de resetlink op deze pagina komt — de token in de URL wordt automatisch
-    // verwerkt door de Supabase client.
-    // -------------------------------------------------------------------------
-    AuthModule.onAuthChange(async function (event, session) {
+    // ---------------------------------------------------------------------------
+    // Wacht op DOMContentLoaded zodat alle elementen beschikbaar zijn
+    // ---------------------------------------------------------------------------
+    document.addEventListener("DOMContentLoaded", function () {
 
-      if (event === "PASSWORD_RECOVERY") {
-        // Resetlink is geldig — toon het formulier
-        // (formulier is al zichtbaar als standaard — geen actie nodig)
-        if (pwdInput) pwdInput.focus(); // Focus op het eerste veld
-      }
+        // DOM-elementen ophalen
+        var formulier = document.getElementById("reset-formulier"); // Formulier sectie
+        var ongeldig  = document.getElementById("reset-ongeldig");  // Ongeldige link sectie
+        var btn       = document.getElementById("btn-reset");       // Opslaan knop
+        var msgEl     = document.getElementById("reset-msg");       // Feedback bericht
+        var pwdInput  = document.getElementById("reset-pwd");       // Nieuw wachtwoord veld
+        var pwd2Input = document.getElementById("reset-pwd2");      // Herhaal wachtwoord veld
 
-      if (event === "SIGNED_IN" && !session) {
-        // Geen geldige sessie via resetlink — toon ongeldige link melding
-        formulier.style.display = "none";
-        ongeldig.style.display  = "block";
-      }
-    });
+        // -------------------------------------------------------------------------
+        // _showMsg(text, type)
+        // Toont feedback bericht. type = 'error' | 'success'
+        // -------------------------------------------------------------------------
+        function _showMsg(text, type) {
+            msgEl.textContent = text;
+            msgEl.className   = "reset-msg " + type;
+        }
 
-    // -------------------------------------------------------------------------
-    // Controleer bij laden of er een actieve sessie is via de URL-token
-    // Als er geen token in de URL zit EN geen sessie, toon ongeldige melding
-    // -------------------------------------------------------------------------
-    (async function checkToken() {
-      // Wacht kort zodat Supabase de URL-token kan verwerken
-      await new Promise(resolve => setTimeout(resolve, 500));
+        // -------------------------------------------------------------------------
+        // Auth-wijzigingen opvangen van Supabase
+        // PASSWORD_RECOVERY event = resetlink is geldig
+        // -------------------------------------------------------------------------
+        AuthModule.onAuthChange(async function (event, session) {
+            if (event === "PASSWORD_RECOVERY") {
+                // Resetlink geldig — formulier was al zichtbaar als standaard
+                if (pwdInput) pwdInput.focus();                       // Focus op eerste veld
+            }
+            if (event === "SIGNED_IN" && !session) {
+                // Geen geldige sessie — toon ongeldige link melding
+                formulier.style.display = "none";
+                ongeldig.style.display  = "block";
+            }
+        });
 
-      const session = await AuthModule.getSession();
-      const url     = window.location.href;
+        // -------------------------------------------------------------------------
+        // Controleer bij laden of er een actieve sessie is via de URL-token
+        // -------------------------------------------------------------------------
+        (async function checkToken() {
+            // Kort wachten zodat Supabase de URL-token kan verwerken
+            await new Promise(function (resolve) { setTimeout(resolve, 500); });
 
-      // Als er geen sessie is en geen token in de URL, is de link ongeldig
-      const heeftToken = url.includes("access_token") || url.includes("token_hash") || url.includes("code=");
+            var session  = await AuthModule.getSession();
+            var url      = window.location.href;
+            var heeftToken = url.includes("access_token") ||
+                             url.includes("token_hash")   ||
+                             url.includes("code=");
 
-      if (!session && !heeftToken) {
-        formulier.style.display = "none";
-        ongeldig.style.display  = "block";
-      }
-    })();
+            // Geen sessie én geen token → ongeldige link
+            if (!session && !heeftToken) {
+                formulier.style.display = "none";
+                ongeldig.style.display  = "block";
+            }
+        })();
 
-    // -------------------------------------------------------------------------
-    // Knop click handler: valideer en sla nieuw wachtwoord op
-    // -------------------------------------------------------------------------
-    btn.addEventListener("click", async function () {
-      const pwd  = pwdInput.value;
-      const pwd2 = pwd2Input.value;
+        // -------------------------------------------------------------------------
+        // Knop click handler: valideer en sla nieuw wachtwoord op
+        // -------------------------------------------------------------------------
+        btn.addEventListener("click", async function () {
+            var pwd  = pwdInput.value;
+            var pwd2 = pwd2Input.value;
 
-      // Client-side validatie: wachtwoorden moeten overeenkomen
-      if (pwd !== pwd2) {
-        _showMsg("Wachtwoorden komen niet overeen.", "error");
-        return;
-      }
+            // Wachtwoorden moeten overeenkomen — vertaald via i18n
+            if (pwd !== pwd2) {
+                _showMsg(_t('auth:reset.mismatch', 'Wachtwoorden komen niet overeen.'), "error");
+                return;
+            }
 
-      // Knop uitschakelen tijdens het opslaan
-      btn.disabled    = true;
-      btn.textContent = "Bezig…";
+            // Knop uitschakelen tijdens opslaan — vertaald label
+            btn.disabled    = true;
+            btn.textContent = _t('auth:reset.busy', 'Bezig…');
 
-      const { error } = await AuthModule.updatePassword(pwd);
+            var result = await AuthModule.updatePassword(pwd);
 
-      // Knop altijd terugzetten — ongeacht resultaat
-      btn.disabled    = false;
-      btn.textContent = "Wachtwoord opslaan";
+            // Knop altijd terugzetten
+            btn.disabled    = false;
+            btn.textContent = _t('auth:reset.btn', 'Wachtwoord opslaan');
 
-      if (error) {
-        _showMsg(error, "error");
-        return;
-      }
+            if (result.error) {
+                _showMsg(result.error, "error");                      // Fout uit auth.js (al vertaald)
+                return;
+            }
 
-      // Succes: toon bevestiging en redirect naar home na 2 seconden
-      _showMsg("Wachtwoord opgeslagen! Je wordt doorgestuurd…", "success");
-      setTimeout(function () {
-        window.location.href = "/MyFamTreeCollab/";
-      }, 2000);
-    });
+            // Succes — vertaald bericht + redirect
+            _showMsg(_t('auth:reset.success', 'Wachtwoord opgeslagen! Je wordt doorgestuurd…'), "success");
+            setTimeout(function () {
+                window.location.href = "/MyFamTreeCollab/";
+            }, 2000);
+        });
 
-  }); // einde DOMContentLoaded
+    }); // einde DOMContentLoaded
 
 })();
