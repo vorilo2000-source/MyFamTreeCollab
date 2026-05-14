@@ -433,8 +433,23 @@
 
   // ---------------------------------------------------------------------------
   // init()
+  // Laadt de auth namespace EERST zodat _injectModal() en _renderTopBar()
+  // de vertaalde strings kunnen ophalen via _t().
   // ---------------------------------------------------------------------------
   async function init() {
+
+    // Stap 1: zorg dat i18nModule en de auth namespace klaar zijn.
+    // Zonder dit toont _injectModal() ruwe keys (bijv. "tabs.login").
+    if (window.i18nModule && typeof window.i18nModule.init === 'function') {
+      try {
+        await window.i18nModule.init();                  // i18next initialiseren (idempotent)
+        await window.i18nModule.loadNamespace('auth');   // auth namespace inladen
+      } catch (e) {
+        console.warn('[topbar] i18n init mislukt (niet-fataal):', e);
+      }
+    }
+
+    // Stap 2: modal injecteren — nu zijn de vertaalde strings beschikbaar
     _injectModal();
 
     var session = await AuthModule.getSession();
