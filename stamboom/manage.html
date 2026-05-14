@@ -1,5 +1,11 @@
-<!-- ======================= stamboom/manage.html v2.4.0 =======================
+<!-- ======================= stamboom/manage.html v2.5.0 =======================
      Beheerpagina: stamboom bewerken als tabel met live search
+
+     Wijziging v2.5.0 (sessie 26):
+     - i18n geïntegreerd: data-i18n attributen op alle statische teksten
+     - i18next scripts + i18n.js toegevoegd aan <head>
+     - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
+     - Placeholder en knoplabels via data-i18n; placeholder gezet na init
 
      Wijziging v2.4.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -7,18 +13,6 @@
 
      Wijziging v2.3.0 (F5-04):
      - AccessGuard toegevoegd: alleen editor en owner mogen bewerken
-     - shareModule.js + accessGuard.js toegevoegd aan laadvolgorde
-     - Viewer krijgt foutblok te zien, main blijft verborgen
-
-     Wijziging v2.2.0:
-     - Horizontale scroll toegevoegd via wrapper (zelfde principe als template.html)
-     - white-space: nowrap toegevoegd zodat tabel breedte behoudt (v2.2.1)
-     - Geen impact op bestaande JS functionaliteit
-     - v2.2.2: login + Favicon / App-icoon
-     - v2.2.3: bugfix — ontbrekende CSS-links toegevoegd (style.css, Tree.css,
-               RelationColors.css), navbar placeholder ID mismatch opgelost
-               (Navbar-placeholder → consistente schrijfwijze), dubbele utils.js
-               import verwijderd.
 
      Scripts: utils.js → schema.js → idGenerator.js → storage.js → auth.js →
               siteAnalytics.js → shareModule.js → accessGuard.js → LiveSearch.js →
@@ -29,16 +23,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beheer</title>
+    <title data-i18n="manage:page.title">Beheer</title>
 
     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <!-- ======================= i18next bibliotheken ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>
 
     <link rel="stylesheet" href="../css/style.css">
-     
     <link rel="stylesheet" href="../css/Tree.css">
     <link rel="stylesheet" href="../css/RelationColors.css">
 
@@ -96,59 +95,56 @@
 </head>
 <body>
 
+<!-- ======================= TopBar placeholder ======================= -->
 <div id="topbar-placeholder"></div>
+
+<!-- ======================= Navbar placeholder ======================= -->
 <div id="navbar-placeholder"></div>
 
 <main>
     <div class="container">
+
+        <!-- Welkomstblok — vertaald via data-i18n -->
         <div class="welkom-blok">
-            <h1>Welkom bij je stamboom Manager</h1>
-            <p>Zoek een persoon op om de stamboom te beheren.</p>
+            <h1 data-i18n="manage:welcome.heading">Welkom bij je stamboom Manager</h1>
+            <p data-i18n="manage:welcome.intro">Zoek een persoon op om de stamboom te beheren.</p>
         </div>
+
+        <!-- Zoekbalk — placeholder via JS na i18n init -->
         <div class="zoek-sectie">
-            <input type="text" id="searchPerson" placeholder="Zoek op ID, naam of geboortedatum...">
+            <input type="text" id="searchPerson"
+                   data-i18n-placeholder="manage:search.placeholder"
+                   placeholder="Zoek op ID, naam of geboortedatum...">
         </div>
+
+        <!-- Knoppen — labels vertaald via data-i18n -->
         <div class="knoppen-balk">
-            <button id="refreshBtn">Vernieuwen</button>
-            <button id="addBtn">+ Toevoegen</button>
-            <button id="saveBtn">Opslaan</button>
+            <button id="refreshBtn" data-i18n="manage:btn.refresh">Vernieuwen</button>
+            <button id="addBtn"     data-i18n="manage:btn.add">+ Toevoegen</button>
+            <button id="saveBtn"    data-i18n="manage:btn.save">Opslaan</button>
         </div>
+
+        <!-- Tabel — gevuld door manage.js -->
         <div class="manage-tabel-wrapper">
             <table id="manageTable">
                 <thead><tr></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
+
     </div>
 </main>
 
+<!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
+<!-- ======================= Externe scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js -->
 
-<script>
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('navbar-placeholder').innerHTML = data; });
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) { document.getElementById('footer-placeholder').innerHTML = data; });
-
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-    SiteAnalytics.trackPage("manage"); // Bezoek registreren in Supabase page_visits tabel
-</script>
-
+<!-- ======================= Pagina-scripts (volgorde verplicht) ======================= -->
 <script src="../js/schema.js"></script>
 <script src="../js/idGenerator.js"></script>
 <script src="../js/storage.js"></script>
@@ -159,11 +155,57 @@
 <script src="../js/manage.js"></script>
 
 <script>
-    /* Rolcheck: manage.html is alleen toegankelijk voor editor en owner.
-       Viewer krijgt een foutblok te zien. */
-    document.addEventListener('DOMContentLoaded', function () {
-        window.AccessGuard.check(['editor']);    // Owner wordt intern altijd toegelaten
+// ======================= i18n initialisatie + component fetch =======================
+i18nModule.init()
+    .then(function () { return i18nModule.loadNamespace('manage'); })
+    .then(function () {
+
+    // Paginatitel vertalen
+    document.title = i18nModule.t('manage:page.title');
+
+    // Placeholder vertalen (data-i18n-placeholder)
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        var key = el.getAttribute('data-i18n-placeholder');
+        if (key) el.placeholder = i18nModule.t(key); // Vertaald placeholder
     });
+
+    // Laad TopBar en activeer i18n + topbar.js
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+            var s = document.createElement('script');
+            s.src = '../js/topbar.js';
+            document.body.appendChild(s);
+        });
+
+    // Laad Navbar en activeer i18n
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+        });
+
+    // Laad Footer en activeer i18n
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+        });
+
+    // Pagina tracking
+    SiteAnalytics.trackPage('manage'); // Bezoek registreren in Supabase page_visits tabel
+
+    // Rolcheck: manage.html is alleen toegankelijk voor editor en owner
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            window.AccessGuard.check(['editor']); // Owner intern altijd toegelaten
+        });
+    } else {
+        window.AccessGuard.check(['editor']);
+    }
+
+});
 </script>
 
 </body>
