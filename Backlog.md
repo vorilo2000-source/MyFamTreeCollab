@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-12
+## Bijgewerkt: 2026-05-15
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -119,13 +119,13 @@
 | F8-06 | 🔴 Hoog | `Layout/Navbar.html` — `data-i18n="common:nav.*"` | ✅ Gedaan |
 | F8-07 | 🔴 Hoog | `Layout/Footer.html` — `data-i18n="common:footer.supportVia"` | ✅ Gedaan |
 | F8-08 | 🔴 Hoog | `locales/{nl,en,es}/create.json` aanmaken | ✅ Gedaan |
-| F8-09 | 🔴 Hoog | `locales/{nl,en,es}/manage.json` aanmaken | 📋 Open |
-| F8-10 | 🔴 Hoog | `locales/{nl,en,es}/auth.json` aanmaken | 📋 Open |
+| F8-09 | 🔴 Hoog | `locales/{nl,en,es}/manage.json` aanmaken | ✅ Gedaan |
+| F8-10 | 🔴 Hoog | `locales/{nl,en,es}/auth.json` aanmaken | ✅ Gedaan |
 | F8-11 | 🟡 Middel | `home/create.html` refactoren met `data-i18n` | ✅ Gedaan |
 | F8-12 | 🟡 Middel | `home/about.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-13 | 🟡 Middel | `stamboom/manage.html` refactoren met `data-i18n` | 📋 Open |
-| F8-14 | 🟡 Middel | `home/confirm.html` refactoren met `data-i18n` | 📋 Open |
-| F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` | 📋 Open |
+| F8-13 | 🟡 Middel | `stamboom/manage.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-14 | 🟡 Middel | `home/confirm.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | 📋 Open |
 | F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | ✅ Gedaan |
 | F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
@@ -143,6 +143,30 @@
 | F8-30 | 🟡 Middel | `Docs/disclaimer.html` drietalig EN/NL/ES | ✅ Gedaan |
 | F8-31 | 🟡 Middel | `Docs/privacy.html` drietalig EN/NL/ES | ✅ Gedaan |
 | F8-32 | 🟡 Middel | `Docs/terms.html` drietalig EN/NL/ES | ✅ Gedaan |
+| F8-33 | 🔴 Hoog | `stamboom/stats.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-34 | 🔴 Hoog | `stamboom/collab.html` + `js/collab.js` i18n | ✅ Gedaan |
+| F8-35 | 🔴 Hoog | `stamboom/storage.html` refactoren met `data-i18n` | ✅ Gedaan |
+| F8-36 | 🔴 Hoog | `stamboom/view.html` + `js/view.js` i18n | ✅ Gedaan |
+| F8-37 | 🔴 Hoog | `stamboom/timeline.html` + `js/timeline.js` i18n | ✅ Gedaan |
+| F8-38 | 🔴 Hoog | `js/auth.js` foutmeldingen via i18n | ✅ Gedaan |
+| F8-39 | 🔴 Hoog | `js/topbar.js` modal via data-i18n | ✅ Gedaan |
+| F8-40 | 🔴 Hoog | `home/reset.html` + `js/reset.js` i18n | ✅ Gedaan |
+
+---
+
+## Fase 9 — Bronnen (genealogisch onderzoek) 📋 NIEUW
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F9-01 | 🔴 Hoog | Ontwerp bronnen-datamodel (Supabase tabel `bronnen`) | 📋 Open |
+| F9-02 | 🔴 Hoog | `stamboom/bronnen.html` aanmaken — overzicht en beheer | 📋 Open |
+| F9-03 | 🔴 Hoog | `js/bronnen.js` aanmaken — CRUD voor bronnen | 📋 Open |
+| F9-04 | 🟡 Middel | Bron koppelen aan persoon in `manage.html` | 📋 Open |
+| F9-05 | 🟡 Middel | Bronnen tonen in `view.html` per persoon | 📋 Open |
+| F9-06 | 🟡 Middel | Brontypen: boek, archief, website, mondelinge overlevering | 📋 Open |
+| F9-07 | 🟡 Middel | `locales/{nl,en,es}/bronnen.json` aanmaken | 📋 Open |
+| F9-08 | 🟢 Laag | Extern archieflink valideren (URL check) | 📋 Open |
+| F9-09 | 🟢 Laag | Bron exporteren als onderdeel van GEDCOM | 📋 Open |
 
 ---
 
@@ -150,28 +174,7 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| FA-01 | 🔴 Hoog | Supabase project aanmaken + API-key configureren | ✅ Gedaan |
-| FA-02 | 🔴 Hoog | `js/auth.js` aanmaken: registreren, inloggen, uitloggen | ✅ Gedaan |
-| FA-03 | 🔴 Hoog | Login modal via `js/topbar.js` | ✅ Gedaan |
-| FA-04 | 🔴 Hoog | TopBar uitbreiden: gebruikersnaam + uitlogknop | ✅ Gedaan |
-| FA-05 | 🟡 Middel | Sessie bewaren na pagina-refresh | ✅ Gedaan |
-| FA-06 | 🟡 Middel | Ko-fi donatie knop in TopBar en Footer | ✅ Gedaan |
-| FA-07 | 🔴 Hoog | Wachtwoord vergeten flow | ✅ Gedaan |
-| FA-08 | 🔴 Hoog | SMTP instellen via Gmail App Password | ✅ Gedaan |
-| FA-09 | 🟡 Middel | Supabase redirect URL instellen | ✅ Gedaan |
-| FA-10 | 🟡 Middel | Supabase profiles tabel aanmaken met RLS | ✅ Gedaan |
-| FA-11 | 🟢 Laag | Donateurs-badge | 🔮 Toekomst |
-| FA-12 | 🟡 Middel | E-mail templates huisstijl | ✅ Gedaan |
-| FA-13 | 🔴 Hoog | Admin dropdown verbergen voor niet-admins | ✅ Gedaan |
-| FA-14 | 🟡 Middel | Admin beheerpagina `admin/accountbeheer.html` | ✅ Gedaan |
-| FA-15 | 🔴 Hoog | `home/confirm.html` aanmaken | ✅ Gedaan |
-| FA-16 | 🔴 Hoog | Supabase email template Confirm signup bijgewerkt | ✅ Gedaan |
-| FA-17 | 🔴 Hoog | Supabase anon key vervangen door sb_publishable_ formaat | ✅ Gedaan |
-| FA-18 | 🟡 Middel | Tier constraint uitgebreid met 'guest' | ✅ Gedaan |
-| FA-19 | 🔴 Hoog | Confirm-knop in accountbeheer — manueel bevestigen onbevestigde accounts | ✅ Gedaan |
-| FA-20 | 🔴 Hoog | Admin-notificatie bij bevestiging — mail naar vorilo2000@gmail.com via Resend | ✅ Gedaan |
-| FA-21 | 🟡 Middel | Bevestigingsmail naar account zelf bij manuele bevestiging | ✅ Gedaan |
-| FA-22 | 🟡 Middel | Notificatie bij automatische bevestiging via confirm.html | ✅ Gedaan |
+| FA-01 t/m FA-22 | Account, auth, Ko-fi, admin, bevestigingsmail | ✅ Gedaan |
 
 ---
 
@@ -179,16 +182,7 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| FA+-01 | 🔴 Hoog | Supabase tabel `stambomen` aanmaken | ✅ Gedaan |
-| FA+-02 | 🔴 Hoog | `js/cloudSync.js` aanmaken | ✅ Gedaan |
-| FA+-03 | 🔴 Hoog | `stamboom/storage.html` tabbladen: Mijn data + Cloud backup | ✅ Gedaan |
-| FA+-04 | 🔴 Hoog | Gratis limiet bewaken: max 100 personen lokaal | ✅ Gedaan |
-| FA+-05 | 🟡 Middel | "Laad vanuit cloud" knop op `storage.html` | ✅ Gedaan |
-| FA+-06 | 🟡 Middel | Conflictmelding tonen als cloud-versie nieuwer is | ✅ Gedaan |
-| FA+-07 | 🟡 Middel | `home/account.html` aanmaken | 🔮 Toekomst |
-| FA+-08 | 🟢 Laag | Timestamp tonen van laatste cloud-backup | ✅ Gedaan |
-| FA+-09 | 🔴 Hoog | Tier/rollen systeem in profiles | ✅ Gedaan |
-| FA+-10 | 🔴 Hoog | Cloud toegang alleen voor premium/admin | ✅ Gedaan |
+| FA+-01 t/m FA+-10 | Cloud sync, tiers, rollen | ✅ Gedaan |
 
 ---
 
@@ -196,14 +190,7 @@
 
 | ID | Taak | Status |
 |----|------|--------|
-| F5-01 | Backend: Supabase gekozen en opgezet | ✅ Gedaan |
-| F5-02 | Gebruikersaccounts: registreren, inloggen, uitloggen | ✅ Gedaan |
-| F5-03 | Data sync tussen apparaten | ✅ Gedaan |
-| F5-04 | Stamboom delen met andere gebruikers | ✅ Gedaan |
-| F5-05 | Samenwerkingsmodus: berichtenboard per persoon | ✅ Gedaan |
-| F5-06 | Versiebeheer per persoon | ✅ Gedaan |
-| F5-07 | Meerdere stambomen per gebruiker in cloud | ✅ Gedaan |
-| F5-08 | account.html — overzicht stambomen, backups, profiel | ✅ Gedaan |
+| F5-01 t/m F5-08 | Supabase, accounts, sync, delen, versiegeschiedenis | ✅ Gedaan |
 | F5-09 | Promotiecodes voor cloud toegang | 🔮 Toekomst |
 | F5-10 | Abonnementen en betaaltiers verder uitwerken | → Fase 7 |
 | F5-11 | Ko-fi webhook integratie voor donateur-badge | → Fase 7 |
@@ -214,7 +201,7 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F6-01 t/m F6-20 | Rolmodel implementatie, demo database, upgrade flow, versiebeheer, handleiding | ✅ Gedaan |
+| F6-01 t/m F6-20 | Rolmodel, demo database, upgrade flow, versiebeheer, handleiding | ✅ Gedaan |
 
 ---
 
@@ -222,49 +209,34 @@
 
 | ID | Taak | Status |
 |----|------|--------|
-| F7-01 | Stripe integratie voor owner-donatie | 🔮 Toekomst |
-| F7-02 | Supabase webhook: Stripe betaling → tier owner | 🔮 Toekomst |
-| F7-03 | Bedrijfsoprichting & belastingstructuur | 🔮 Toekomst |
-| F7-04 | Ko-fi behouden als vrijwillige steunknop | 🔮 Toekomst |
-| F7-05 | Prijsstelling definitief vaststellen | 🔮 Toekomst |
-| F7-06 | Owner-limiet verhogen op basis van inkomsten | 🔮 Toekomst |
+| F7-01 t/m F7-06 | Stripe, Ko-fi, prijsstelling | 🔮 Toekomst |
 
 ---
 
 ## Bugfixes
 
+### Sessie 2026-05-15
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-41 | stats.html: KPI labels toonden raw keys — namespace niet ge-await'ed + DOM-timing | ✅ Opgelost |
+| BF-42 | topbar.js: modal toonde raw keys — _injectModal() gebruikte _t() vóór namespace geladen was | ✅ Opgelost |
+| BF-43 | topbar.js: loadNamespace('auth') in init() veroorzaakte updateContent() op hele DOM → pagina-keys overschreven | ✅ Opgelost |
+
 ### Sessie 2026-05-12
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-39 | Navbar toonde `nav.sub.*` als tekst — oorzaak: trailing comma in `common.json` + ontbrekende keys op GitHub | ✅ Opgelost |
+| BF-39 | Navbar toonde `nav.sub.*` als tekst — trailing comma in `common.json` + ontbrekende keys | ✅ Opgelost |
 | BF-40 | Taalwissel werkte niet op Navbar — zelfde oorzaak als BF-39 | ✅ Opgelost |
 
 ### Sessie 2026-05-10
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-36 | i18n keys toonden letterlijk — oorzaak: dot i.p.v. colon als namespace separator | ✅ Opgelost |
-| BF-37 | Taalwissel resette switcher — `onComponentLoaded()` riep `buildLanguageSwitcher()` bij elke injectie | ✅ Opgelost |
-| BF-38 | Namespace niet herladen na taalwissel — `handleLanguageChange()` miste `loadNamespaces()` | ✅ Opgelost |
-
-### Sessie 2026-05-09
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-33 | `handle_new_user` trigger — RLS blokkeerde INSERT via `auth.uid()` mismatch | ✅ Opgelost |
-| BF-34 | `admin_users` view — `email_confirmed_at` ontbrak, geen JOIN op `auth.users` | ✅ Opgelost |
-| BF-35 | Edge Function JWT 401 — `verify_jwt = false` ingesteld, Authorization header verwijderd | ✅ Opgelost |
-
-### Sessie 2026-05-07
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-28 | auth.js — SUPABASE_ANON JWT key had `iat` in de toekomst | ✅ Opgelost |
-| BF-29 | Bevestigingsmail redirect naar 404 | ✅ Opgelost |
-| BF-30 | `profiles_tier_check` stond `guest` niet toe | ✅ Opgelost |
-| BF-31 | accountbeheer.js — `statViewer`/`statEditor` DOM IDs bestonden niet meer | ✅ Opgelost |
-| BF-32 | `handle_new_user` had geen `tier` in INSERT | ✅ Opgelost |
+| BF-36 | i18n keys toonden letterlijk — dot i.p.v. colon als namespace separator | ✅ Opgelost |
+| BF-37 | Taalwissel resette switcher | ✅ Opgelost |
+| BF-38 | Namespace niet herladen na taalwissel | ✅ Opgelost |
 
 ---
 
@@ -272,7 +244,7 @@
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| AN-01 t/m AN-40 | trackPage() alle pagina's + dashboard uitbreidingen | ✅ Gedaan |
+| AN-01 t/m AN-40 | trackPage() alle pagina's + dashboard | ✅ Gedaan |
 | AN-21 | `stamboom/account.html` — tracking toevoegen | 📋 Open |
 
 ---
@@ -287,7 +259,7 @@
 | TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// | 🟡 Middel |
 | TD-05 | Popup-stijlen in LiveSearch.js hardcoded inline | 🟢 Laag |
 | TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js | 🔴 Hoog |
-| TD-07 | Resend zonder eigen domein — `onboarding@resend.dev`, mail alleen naar Resend-account | 🟡 Middel |
+| TD-07 | Resend zonder eigen domein — mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
 | TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
 | TD-10 | `page_visits` RLS uitgeschakeld — beveiligd via view | 🟡 Middel |
