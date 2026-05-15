@@ -60,62 +60,57 @@
     var root = document.createElement("div");
     root.id = "auth-modal-root";
 
-    // Modal HTML opbouwen met i18n teksten
+    // Modal HTML met data-i18n attributen — updateContent() vertaalt ze achteraf.
+    // Zo werkt de modal correct ongeacht het laadmoment van topbar.js t.o.v. i18next.
     root.innerHTML =
       '<div id="auth-modal-backdrop" onclick="TopBarAuth.closeModal()"></div>' +
-      '<div id="auth-modal-box" role="dialog" aria-modal="true" aria-label="' + _t('auth:modal.ariaLabel', 'Inloggen') + '">' +
-        '<button id="auth-modal-close" onclick="TopBarAuth.closeModal()" aria-label="' + _t('auth:modal.close', 'Sluiten') + '">&times;</button>' +
+      '<div id="auth-modal-box" role="dialog" aria-modal="true" data-i18n="[aria-label]auth:modal.ariaLabel">' +
+        '<button id="auth-modal-close" onclick="TopBarAuth.closeModal()" data-i18n="[aria-label]auth:modal.close">&times;</button>' +
         '<div class="auth-tabs" id="auth-tabs">' +
-          '<button class="auth-tab active" id="tab-btn-login"    onclick="TopBarAuth.switchTab(\'login\')">'    + _t('auth:tabs.login',    'Inloggen')        + '</button>' +
-          '<button class="auth-tab"        id="tab-btn-register" onclick="TopBarAuth.switchTab(\'register\')">' + _t('auth:tabs.register', 'Account aanmaken') + '</button>' +
+          '<button class="auth-tab active" id="tab-btn-login"    onclick="TopBarAuth.switchTab('login')"    data-i18n="auth:tabs.login"></button>' +
+          '<button class="auth-tab"        id="tab-btn-register" onclick="TopBarAuth.switchTab('register')" data-i18n="auth:tabs.register"></button>' +
         '</div>' +
-
-        // ── Login sectie ──
         '<div class="auth-form-section active" id="auth-section-login">' +
           '<div class="auth-field">' +
-            '<label for="auth-login-email">' + _t('auth:login.labelEmail', 'E-mailadres') + '</label>' +
-            '<input type="email" id="auth-login-email" placeholder="' + _t('auth:login.placeholderEmail', 'naam@voorbeeld.nl') + '" autocomplete="email" />' +
+            '<label for="auth-login-email" data-i18n="auth:login.labelEmail"></label>' +
+            '<input type="email" id="auth-login-email" data-i18n="[placeholder]auth:login.placeholderEmail" autocomplete="email" />' +
           '</div>' +
           '<div class="auth-field">' +
-            '<label for="auth-login-password">' + _t('auth:login.labelPassword', 'Wachtwoord') + '</label>' +
-            '<input type="password" id="auth-login-password" placeholder="' + _t('auth:login.placeholderPassword', '••••••••') + '" autocomplete="current-password" />' +
+            '<label for="auth-login-password" data-i18n="auth:login.labelPassword"></label>' +
+            '<input type="password" id="auth-login-password" data-i18n="[placeholder]auth:login.placeholderPassword" autocomplete="current-password" />' +
           '</div>' +
-          '<button class="auth-btn-primary" id="auth-btn-login" onclick="TopBarAuth.doLogin()">' + _t('auth:login.btn', 'Inloggen') + '</button>' +
-          '<p class="auth-forgot-link"><a href="#" onclick="TopBarAuth.switchTab(\'forgot\'); return false;">' + _t('auth:login.forgot', 'Wachtwoord vergeten?') + '</a></p>' +
+          '<button class="auth-btn-primary" id="auth-btn-login" onclick="TopBarAuth.doLogin()" data-i18n="auth:login.btn"></button>' +
+          '<p class="auth-forgot-link"><a href="#" onclick="TopBarAuth.switchTab('forgot'); return false;" data-i18n="auth:login.forgot"></a></p>' +
           '<div class="auth-msg" id="auth-msg-login"></div>' +
         '</div>' +
-
-        // ── Registratie sectie ──
         '<div class="auth-form-section" id="auth-section-register">' +
           '<div class="auth-field">' +
-            '<label for="auth-reg-username">' + _t('auth:register.labelUsername', 'Gebruikersnaam') + '</label>' +
-            '<input type="text" id="auth-reg-username" placeholder="' + _t('auth:register.placeholderUsername', 'Hoe wil je heten?') + '" autocomplete="nickname" maxlength="32" />' +
+            '<label for="auth-reg-username" data-i18n="auth:register.labelUsername"></label>' +
+            '<input type="text" id="auth-reg-username" data-i18n="[placeholder]auth:register.placeholderUsername" autocomplete="nickname" maxlength="32" />' +
           '</div>' +
           '<div class="auth-field">' +
-            '<label for="auth-reg-email">' + _t('auth:register.labelEmail', 'E-mailadres') + '</label>' +
-            '<input type="email" id="auth-reg-email" placeholder="' + _t('auth:login.placeholderEmail', 'naam@voorbeeld.nl') + '" autocomplete="email" />' +
+            '<label for="auth-reg-email" data-i18n="auth:register.labelEmail"></label>' +
+            '<input type="email" id="auth-reg-email" data-i18n="[placeholder]auth:login.placeholderEmail" autocomplete="email" />' +
           '</div>' +
           '<div class="auth-field">' +
-            '<label for="auth-reg-password">' + _t('auth:register.labelPassword', 'Wachtwoord') + '</label>' +
-            '<input type="password" id="auth-reg-password" placeholder="' + _t('auth:register.placeholderPassword', 'Minimaal 6 tekens') + '" autocomplete="new-password" />' +
+            '<label for="auth-reg-password" data-i18n="auth:register.labelPassword"></label>' +
+            '<input type="password" id="auth-reg-password" data-i18n="[placeholder]auth:register.placeholderPassword" autocomplete="new-password" />' +
           '</div>' +
           '<div class="auth-field">' +
-            '<label for="auth-reg-password2">' + _t('auth:register.labelPassword2', 'Wachtwoord herhalen') + '</label>' +
-            '<input type="password" id="auth-reg-password2" placeholder="' + _t('auth:register.placeholderPassword2', 'Herhaal wachtwoord') + '" autocomplete="new-password" />' +
+            '<label for="auth-reg-password2" data-i18n="auth:register.labelPassword2"></label>' +
+            '<input type="password" id="auth-reg-password2" data-i18n="[placeholder]auth:register.placeholderPassword2" autocomplete="new-password" />' +
           '</div>' +
-          '<button class="auth-btn-primary" id="auth-btn-register" onclick="TopBarAuth.doRegister()">' + _t('auth:register.btn', 'Account aanmaken') + '</button>' +
+          '<button class="auth-btn-primary" id="auth-btn-register" onclick="TopBarAuth.doRegister()" data-i18n="auth:register.btn"></button>' +
           '<div class="auth-msg" id="auth-msg-register"></div>' +
         '</div>' +
-
-        // ── Wachtwoord vergeten sectie ──
         '<div class="auth-form-section" id="auth-section-forgot">' +
-          '<p class="auth-back-link"><a href="#" onclick="TopBarAuth.switchTab(\'login\'); return false;">' + _t('auth:forgot.back', '← Terug naar inloggen') + '</a></p>' +
-          '<p class="auth-forgot-intro">' + _t('auth:forgot.intro', 'Vul je e-mailadres in. Je ontvangt een link om een nieuw wachtwoord in te stellen.') + '</p>' +
+          '<p class="auth-back-link"><a href="#" onclick="TopBarAuth.switchTab('login'); return false;" data-i18n="auth:forgot.back"></a></p>' +
+          '<p class="auth-forgot-intro" data-i18n="auth:forgot.intro"></p>' +
           '<div class="auth-field">' +
-            '<label for="auth-forgot-email">' + _t('auth:forgot.labelEmail', 'E-mailadres') + '</label>' +
-            '<input type="email" id="auth-forgot-email" placeholder="' + _t('auth:login.placeholderEmail', 'naam@voorbeeld.nl') + '" autocomplete="email" />' +
+            '<label for="auth-forgot-email" data-i18n="auth:forgot.labelEmail"></label>' +
+            '<input type="email" id="auth-forgot-email" data-i18n="[placeholder]auth:login.placeholderEmail" autocomplete="email" />' +
           '</div>' +
-          '<button class="auth-btn-primary" id="auth-btn-forgot" onclick="TopBarAuth.doForgotPassword()">' + _t('auth:forgot.btn', 'Resetlink versturen') + '</button>' +
+          '<button class="auth-btn-primary" id="auth-btn-forgot" onclick="TopBarAuth.doForgotPassword()" data-i18n="auth:forgot.btn"></button>' +
           '<div class="auth-msg" id="auth-msg-forgot"></div>' +
         '</div>' +
       '</div>';
@@ -344,8 +339,13 @@
   // ---------------------------------------------------------------------------
   // Modal functies
   // ---------------------------------------------------------------------------
-  function openModal() {
+  async function openModal() {
     _injectModal();
+    // Laad auth namespace en vertaal data-i18n attributen in de modal.
+    // loadNamespace() is no-op als al gecached — roept daarna updateContent() aan.
+    if (window.i18nModule && typeof window.i18nModule.loadNamespace === 'function') {
+      await window.i18nModule.loadNamespace('auth');
+    }
     switchTab("login");
     document.getElementById("auth-modal-root").classList.add("open");
     setTimeout(function () {
@@ -432,24 +432,36 @@
   }
 
   // ---------------------------------------------------------------------------
+  // _waitForI18n()
+  // Wacht tot i18next geïnitialiseerd is (max 3 seconden, polling elke 50ms).
+  // topbar.js wordt dynamisch geladen NA de pagina-init — i18next kan al klaar
+  // zijn of nog bezig. We mogen init() NIET opnieuw aanroepen (gooit fout).
+  // ---------------------------------------------------------------------------
+  function _waitForI18n() {
+    return new Promise(function (resolve) {
+      var attempts = 0;
+      var interval = setInterval(function () {
+        attempts++;
+        // i18next is klaar als isInitialized true is EN de i18nModule beschikbaar
+        if (window.i18next && window.i18next.isInitialized && window.i18nModule) {
+          clearInterval(interval);
+          resolve();
+        }
+        if (attempts >= 60) { // max 3 seconden (60 × 50ms)
+          clearInterval(interval);
+          console.warn('[topbar] i18next niet klaar na 3s — modal zonder vertalingen');
+          resolve(); // Toch doorgaan met fallback-strings
+        }
+      }, 50);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // init()
-  // Laadt de auth namespace EERST zodat _injectModal() en _renderTopBar()
-  // de vertaalde strings kunnen ophalen via _t().
   // ---------------------------------------------------------------------------
   async function init() {
 
-    // Stap 1: zorg dat i18nModule en de auth namespace klaar zijn.
-    // Zonder dit toont _injectModal() ruwe keys (bijv. "tabs.login").
-    if (window.i18nModule && typeof window.i18nModule.init === 'function') {
-      try {
-        await window.i18nModule.init();                  // i18next initialiseren (idempotent)
-        await window.i18nModule.loadNamespace('auth');   // auth namespace inladen
-      } catch (e) {
-        console.warn('[topbar] i18n init mislukt (niet-fataal):', e);
-      }
-    }
-
-    // Stap 2: modal injecteren — nu zijn de vertaalde strings beschikbaar
+    // Modal alvast injecteren — data-i18n attributen worden vertaald bij openModal()
     _injectModal();
 
     var session = await AuthModule.getSession();
