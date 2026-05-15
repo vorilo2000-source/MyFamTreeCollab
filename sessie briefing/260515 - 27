@@ -1,0 +1,138 @@
+# Sessie 27 — Bronnen (genealogisch onderzoek)
+
+**Datum:** nvt
+**Sessiescope:** Fase 9 — bronnen-module implementeren
+
+---
+
+## Context
+
+Sessie 26 heeft alle Stamboom-menu pagina's + auth namespace meertalig gemaakt.
+Sessie 27 start een nieuwe feature: **bronnen koppelen aan personen** (F9-01 t/m F9-09).
+
+---
+
+## ✅ Wat al werkt — niet opnieuw bouwen
+
+- `js/i18n.js` v1.0.0 — volledig werkend
+- `locales/{nl,en,es}/common.json` v1.1.0 — volledig
+- `Layout/TopBar.html` v0.5 — language switcher geïntegreerd
+- `Layout/Navbar.html` v1.1.0 — volledig meertalig
+- `Layout/Footer.html` v1.6.0 — volledig meertalig
+- Alle Start-menu pagina's — volledig meertalig
+- Alle Stamboom-menu pagina's — volledig meertalig
+- Auth namespace — modal, reset, confirm volledig meertalig
+
+---
+
+## 🔧 Kritische i18n regels (niet vergeten)
+
+**1. Namespace separator = dubbele punt**
+```
+✅ data-i18n="bronnen:form.titel"
+❌ data-i18n="bronnen.form.titel"
+```
+
+**2. Namespace laden via promise-keten**
+```javascript
+i18nModule.init()
+    .then(function () { return i18nModule.loadNamespace('bronnen'); })
+    .then(function () {
+        document.title = i18nModule.t('bronnen:page.title');
+        // ... rest van de logica
+    });
+```
+
+**3. TopBar/Navbar/Footer via onComponentLoaded()**
+```javascript
+fetch('/MyFamTreeCollab/Layout/TopBar.html')
+    .then(r => r.text())
+    .then(html => i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder')));
+```
+
+**4. JS strings via i18nModule.t() — nooit hardcoded**
+
+**5. ES5 stijl in JS bestanden (var, geen const/let, geen template literals)**
+
+---
+
+## 📋 Takenlijst sessie 27
+
+### Stap 1 — Datamodel ontwerpen
+
+- [ ] Supabase tabel `bronnen` definiëren:
+  - `id` (uuid, PK)
+  - `persoon_id` (text — verwijzing naar persoon.ID)
+  - `stamboom_id` (uuid — verwijzing naar stambomen.id)
+  - `user_id` (uuid — eigenaar)
+  - `type` (text: 'boek' | 'archief' | 'website' | 'mondeling' | 'foto' | 'overig')
+  - `titel` (text)
+  - `auteur` (text, nullable)
+  - `jaar` (int, nullable)
+  - `url` (text, nullable)
+  - `notitie` (text, nullable)
+  - `created_at` (timestamptz)
+
+### Stap 2 — Pagina + JS aanmaken
+
+- [ ] `stamboom/bronnen.html` — overzicht en beheer bronnen per persoon
+- [ ] `js/bronnen.js` — CRUD (laden, toevoegen, bewerken, verwijderen)
+- [ ] `locales/{nl,en,es}/bronnen.json` — alle UI-teksten
+
+### Stap 3 — Integratie in bestaande pagina's
+
+- [ ] `stamboom/manage.html` — bron-knop per persoon-rij
+- [ ] `stamboom/view.html` — bronnen tonen per persoon (klein blokje)
+
+### Stap 4 — Navbar uitbreiden
+
+- [ ] `Layout/Navbar.html` — link naar `stamboom/bronnen.html` toevoegen onder Stamboom-menu
+- [ ] `locales/{nl,en,es}/common.json` — `nav.sub.bronnen` key toevoegen
+
+---
+
+## 📋 Aan te leveren bestanden
+
+1. SQL voor Supabase tabel `bronnen` (met RLS)
+2. `stamboom/bronnen.html`
+3. `js/bronnen.js`
+4. `locales/nl/bronnen.json`
+5. `locales/en/bronnen.json`
+6. `locales/es/bronnen.json`
+7. Gewijzigde `Layout/Navbar.html`
+8. Gewijzigde `locales/*/common.json`
+9. Sessie-entry voor `PROJECT_LOG.md`
+10. Bijgewerkte `BACKLOG.md`
+
+---
+
+## 🧪 Acceptatiecriteria
+
+- [ ] Bronnen kunnen worden toegevoegd, bewerkt en verwijderd
+- [ ] Bron is gekoppeld aan persoon-ID + stamboom-ID
+- [ ] Taalwissel werkt op bronnen-pagina
+- [ ] RLS: gebruiker ziet alleen eigen bronnen (+ bronnen van gedeelde bomen)
+- [ ] Geen console errors
+
+---
+
+## Technische context
+
+**Stack:** Vanilla HTML + CSS + JavaScript — geen frameworks
+**Supabase:** `https://oihzuwlcgyyeuhghjahp.supabase.co`
+**GitHub Pages:** `https://vorilo2000-source.github.io/MyFamTreeCollab/`
+**Laadvolgorde (verplicht):**
+```
+supabase-js → utils.js → auth.js → siteAnalytics.js →
+i18next CDN → i18n.js → [pagina init] → topbar.js (via fetch)
+```
+
+---
+
+## Nog open uit eerdere sessies
+
+| ID | Taak |
+|----|------|
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
+| F8-19 | `Handleiding.html` bijwerken met i18n uitleg |
+| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js |
