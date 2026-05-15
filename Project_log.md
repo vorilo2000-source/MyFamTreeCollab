@@ -1,7 +1,108 @@
 MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-05-12
+## Bijgewerkt: 2026-05-15
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 26 — i18n uitrollen op Stamboom-menu pagina's + auth namespace
+
+**Datum:** 2026-05-15
+**Doel:** i18next namespace setup uitrollen op alle pagina's onder het Stamboom-menu. Auth namespace aanmaken voor login modal, reset en confirm flow.
+
+---
+
+### Uitgevoerde acties
+
+#### Stamboom-menu pagina's gerefactord
+- `stamboom/stats.html` v2.1.0 → v2.2.1: i18n + stats namespace + DOMContentLoaded/timing bugfix
+- `stamboom/collab.html` v2.3.0 → v2.4.0: i18n + collab namespace
+- `stamboom/storage.html` v2.8.0 → v2.9.0: i18n + storage namespace
+- `stamboom/view.html` v2.1.0 → v2.2.0: i18n + view namespace
+- `stamboom/timeline.html` v2.3.0 → v2.4.0: i18n + timeline namespace
+- `stamboom/manage.html` v2.4.0 → v2.5.0: i18n + manage namespace
+
+#### JS bestanden bijgewerkt
+- `js/collab.js` v2.3.0 → v2.4.0: STATUS_CONFIG labels via i18n, rolLabel() via i18n, alle strings vertaald
+- `js/view.js` v1.6.4 → v1.6.5: 2 hardcoded strings via i18nModule.t(), ES5 conform
+- `js/timeline.js` v2.3.5 → v2.4.0: genLabel() via i18n, tooltip-velden via i18n, placeholders via i18n
+- `js/manage.js` v2.4.0 → v2.5.0: relatieLabel() helper via i18n, alle alerts/confirms vertaald
+
+#### Auth namespace aangemaakt
+- `js/auth.js` v2.5.1 → v2.5.2: _errMsg() via i18nModule.t() met fallback
+- `js/topbar.js` v2.3.0 → v2.3.2: _injectModal() met data-i18n attributen, _translateModal() voor gerichte vertaling, openModal() laadt auth namespace
+- `home/confirm.html` v1.2.0 → v1.3.0: i18n + auth namespace
+- `home/reset.html` v1.0.0 → v1.1.0: i18n + auth namespace + data-i18n attributen
+- `js/reset.js` v1.0.0 → v1.1.0: alle strings via i18nModule.t()
+
+#### Nieuwe namespace JSON bestanden (nl/en/es)
+- `locales/*/stats.json` — 9 keys (kpi labels, families)
+- `locales/*/collab.json` — 47 keys (status, modal, tree, search, message, diff, error, rol)
+- `locales/*/storage.json` — 75 keys (tabs, cloud, shared, modal, confirm, status, error, share)
+- `locales/*/view.json` — 7 keys (welcome, search, siblings, tree)
+- `locales/*/timeline.json` — 34 keys (gen labels, rel labels, tooltip, placeholder)
+- `locales/*/manage.json` — 26 keys (btn, rel, action, placeholder, confirm, alert)
+- `locales/*/auth.json` — 73 keys (modal, tabs, login, register, forgot, topbar, dropdown, error, confirm, reset)
+
+#### Bugfixes tijdens sessie
+- stats.html: namespace niet ge-await'ed + KPI DOM-timing → loadNamespace via promise-keten + readyState check
+- topbar.js: _injectModal() gebruikte _t() calls op moment dat auth namespace nog niet geladen was → omgebouwd naar data-i18n attributen + _translateModal() voor gerichte DOM-scan
+- topbar.js: loadNamespace('auth') in init() veroorzaakte updateContent() op hele DOM → verplaatst naar openModal()
+- storage.html: tabs samenvoegen onderzocht → niet zinvol (fundamenteel andere data)
+
+#### Onderzoek
+- Tabs in storage.html (Mijn data + Cloud stambomen) onderzocht op samenvoegen → besloten: niet samenvoegen. Fundamenteel andere data, andere interactie, andere bron (localStorage vs Supabase).
+
+---
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `stamboom/stats.html` | v2.1.0 | v2.2.1 | i18n + timing bugfix |
+| `stamboom/collab.html` | v2.3.0 | v2.4.0 | i18n geïntegreerd |
+| `js/collab.js` | v2.3.0 | v2.4.0 | i18n strings |
+| `stamboom/storage.html` | v2.8.0 | v2.9.0 | i18n geïntegreerd |
+| `stamboom/view.html` | v2.1.0 | v2.2.0 | i18n geïntegreerd |
+| `js/view.js` | v1.6.4 | v1.6.5 | i18n strings |
+| `stamboom/timeline.html` | v2.3.0 | v2.4.0 | i18n geïntegreerd |
+| `js/timeline.js` | v2.3.5 | v2.4.0 | i18n strings |
+| `stamboom/manage.html` | v2.4.0 | v2.5.0 | i18n geïntegreerd |
+| `js/manage.js` | v2.4.0 | v2.5.0 | i18n strings |
+| `js/auth.js` | v2.5.1 | v2.5.2 | _errMsg() via i18n |
+| `js/topbar.js` | v2.3.0 | v2.3.2 | data-i18n modal + _translateModal() |
+| `home/confirm.html` | v1.2.0 | v1.3.0 | i18n geïntegreerd |
+| `home/reset.html` | v1.0.0 | v1.1.0 | i18n geïntegreerd |
+| `js/reset.js` | v1.0.0 | v1.1.0 | i18n strings |
+| `locales/nl/stats.json` | — | v1.0.0 | Nieuw |
+| `locales/en/stats.json` | — | v1.0.0 | Nieuw |
+| `locales/es/stats.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/collab.json` | — | v1.0.0 | Nieuw |
+| `locales/en/collab.json` | — | v1.0.0 | Nieuw |
+| `locales/es/collab.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/storage.json` | — | v1.0.0 | Nieuw |
+| `locales/en/storage.json` | — | v1.0.0 | Nieuw |
+| `locales/es/storage.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/view.json` | — | v1.0.0 | Nieuw |
+| `locales/en/view.json` | — | v1.0.0 | Nieuw |
+| `locales/es/view.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/timeline.json` | — | v1.0.0 | Nieuw |
+| `locales/en/timeline.json` | — | v1.0.0 | Nieuw |
+| `locales/es/timeline.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/manage.json` | — | v1.0.0 | Nieuw |
+| `locales/en/manage.json` | — | v1.0.0 | Nieuw |
+| `locales/es/manage.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/auth.json` | — | v1.0.0 | Nieuw |
+| `locales/en/auth.json` | — | v1.0.0 | Nieuw |
+| `locales/es/auth.json` | — | v1.0.0 | Nieuw |
+
+### Nog open na sessie 26
+
+| ID | Taak |
+|----|------|
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
+| F8-19 | `Handleiding.html` bijwerken met i18n uitleg |
+| Nieuw | Bronnen-module implementeren (genealogisch onderzoek) |
 
 ---
 
