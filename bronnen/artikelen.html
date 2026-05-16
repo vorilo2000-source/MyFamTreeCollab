@@ -1,13 +1,11 @@
-<!-- ======================= bronnen/artikelen.html v0.2.0 =======================
-     consistente opmaak — Navbar + TopBar + 'komt binnenkort' blok,
-     geen aparte header meer, script.js verwijderd. Login + Favicon / App-icoon toegevoegd
-
-     Wijziging v0.2.0 (sessie 20):
-     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
-     - SiteAnalytics.trackPage("artikelen") toegevoegd in fetch-scriptblok
-     - Dubbele Supabase/utils/auth script-blokken bovenaan opgeruimd
-     - Padverwijzing /js/ gecorrigeerd naar ../js/
-     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder (was Navbar-placeholder)
+<!-- ======================= bronnen/artikelen.html v0.3.0 =======================
+     Wijziging v0.3.0 (sessie 27):
+     - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
+     - Namespace 'bronnen' geladen via i18nModule.init() promise-keten
+     - data-i18n attributen toegevoegd op alle zichtbare teksten
+     - Components geladen via i18nModule.onComponentLoaded() (i.p.v. innerHTML)
+     - document.title via i18nModule.t()
+     - Laadvolgorde: supabase → utils → auth → siteAnalytics → i18next CDN → i18n.js
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -15,15 +13,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artikelen</title>
-        
+
     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-    
+
     <style>
         /* ======================= BINNENKORT BLOK ======================= */
         .binnenkort-blok {                                                 /* Centraal informatieblok */
@@ -54,13 +52,14 @@
 <!-- ======================= Hoofd content ======================= -->
 <main>
     <div class="binnenkort-blok">
-        <div class="icoon">📰</div>                                        <!-- Artikelen icoon -->
-        <h1>Artikelen</h1>
-        <p>
+        <div class="icoon">📰</div>
+        <h1 data-i18n="bronnen:artikelen.titel">Artikelen</h1>           <!-- i18n: paginatitel -->
+        <p data-i18n="bronnen:artikelen.beschrijving">                   <!-- i18n: omschrijving -->
             De artikelen pagina is momenteel in ontwikkeling.<br>
             Binnenkort kun je hier de stamboom artikelen bekijken.
         </p>
-        <a href="/MyFamTreeCollab/" class="knop-home">Terug naar Home</a>
+        <a href="/MyFamTreeCollab/" class="knop-home"
+           data-i18n="bronnen:artikelen.knopHome">Terug naar Home</a>    <!-- i18n: knoptekst -->
     </div>
 </main>
 
@@ -68,50 +67,80 @@
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — volgorde is verplicht:
+     SCRIPTS — verplichte laadvolgorde (sessie 27):
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
-     4. siteAnalytics.js   — bezoektracking, na auth.js
-     5. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
-     6. Navbar fetch        — onafhankelijk, mag parallel
-     7. Footer fetch
+     4. siteAnalytics.js    — bezoektracking, na auth.js
+     5. i18next CDN         — vereist door i18n.js
+     6. i18next-http-backend CDN
+     7. i18next-browser-languagedetector CDN
+     8. i18n.js             — wraps i18next, exposeert window.i18nModule
+     9. Pagina init script  — init() → loadNamespace('bronnen') → render
      ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
+<script src="../js/utils.js"></script>                                         <!-- Gedeelde hulpfuncties -->
+<script src="../js/auth.js"></script>                                          <!-- Authenticatie module -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                  <!-- Bezoektracking, na auth.js -->
+
+<!-- i18next en plugins — volgorde is verplicht -->
+<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+<script src="/MyFamTreeCollab/js/i18n.js"></script>                           <!-- i18n module wrapper -->
 
 <script>
-    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
-    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            // #top-auth bestaat nu — veilig om topbar.js te laden
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
-        });
+    // ── Pagina initialisatie ──────────────────────────────────────────────
+    // Volgorde: i18n init → namespace laden → components laden → tracking
+    i18nModule.init()
+        .then(function () {
+            return i18nModule.loadNamespace('bronnen');                    // laad bronnen.json voor actieve taal
+        })
+        .then(function () {
+            // Paginatitel instellen via i18n (nooit hardcoded)
+            document.title = i18nModule.t('bronnen:artikelen.paginaTitel');
 
-    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            var ph = document.getElementById('navbar-placeholder');
-            if (ph) ph.innerHTML = data;
+            // TopBar laden en vertalen via onComponentLoaded()
+            // Dit garandeert #top-auth in de DOM vóór topbar.js initialiseert
+            return fetch('/MyFamTreeCollab/Layout/TopBar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(                          // inject + vertaal component
+                        html,
+                        document.getElementById('topbar-placeholder')
+                    );
+                    // topbar.js injecteren nadat #top-auth in de DOM zit
+                    var s = document.createElement('script');
+                    s.src = '../js/topbar.js';
+                    document.body.appendChild(s);
+                });
+        })
+        .then(function () {
+            // Navbar laden en vertalen
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(
+                        html,
+                        document.getElementById('navbar-placeholder')
+                    );
+                });
+        })
+        .then(function () {
+            // Footer laden en vertalen
+            return fetch('/MyFamTreeCollab/Layout/Footer.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(
+                        html,
+                        document.getElementById('footer-placeholder')
+                    );
+                });
+        })
+        .then(function () {
+            // Paginabezoek registreren — altijd als laatste stap
+            SiteAnalytics.trackPage('artikelen');
         });
-
-    // Stap 3: Footer laden
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
-        });
-
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-    SiteAnalytics.trackPage("artikelen"); // Bezoek registreren in Supabase page_visits tabel
 </script>
 
 </body>
