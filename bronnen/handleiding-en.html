@@ -1,0 +1,518 @@
+<!-- ======================= bronnen/handleiding-en.html v2.4.0 =======================
+     English user guide for MyFamTreeCollab
+     See handleiding-nl.html (Dutch) and handleiding-es.html (Spanish) for other languages
+
+     Wijzigingen v2.4.0 (sessie 27):
+     - Nieuw bestand — Engelstalige vertaling van handleiding-nl.html v2.3.0
+     - i18n laadvolgorde: i18next CDN + i18n.js
+     - Components via i18nModule.onComponentLoaded()
+     - Taalwisselaar met redirect-handler naar handleiding-{lang}.html
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Guide — MyFamTreeCollab</title>
+
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        /* ── Page layout ───────────────────────────────────────────────── */
+        .handleiding-wrapper { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+        .welkom-blok { margin-bottom: 32px; }
+        .welkom-blok h1 { font-size: 1.6rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+        .inhoudsopgave { background: #f8f8f5; border: 1px solid #ddd; border-radius: 6px; padding: 20px 24px; margin-bottom: 40px; }
+        .inhoudsopgave h2 { font-size: 1rem; font-weight: bold; margin: 0 0 12px 0; color: #333; }
+        .inhoudsopgave ol { margin: 0; padding-left: 20px; }
+        .inhoudsopgave li { margin-bottom: 6px; font-size: 0.92rem; }
+        .inhoudsopgave a  { color: #2563eb; text-decoration: none; }
+        .inhoudsopgave a:hover { text-decoration: underline; }
+        .sectie { margin-bottom: 48px; scroll-margin-top: 20px; }
+        .sectie h2 { font-size: 1.25rem; font-weight: bold; margin: 0 0 16px 0; color: #222; padding-bottom: 8px; border-bottom: 2px solid #eee; }
+        .sectie h3 { font-size: 1rem; font-weight: bold; margin: 24px 0 8px 0; color: #333; }
+        .sectie p  { font-size: 0.95rem; color: #444; line-height: 1.7; margin: 0 0 12px 0; }
+        .sectie ul, .sectie ol { margin: 0 0 12px 20px; }
+        .sectie li { font-size: 0.95rem; color: #444; line-height: 1.7; margin-bottom: 4px; }
+        .stappen { counter-reset: stap; list-style: none; padding: 0; margin: 0 0 16px 0; }
+        .stappen li { counter-increment: stap; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; font-size: 0.95rem; color: #444; line-height: 1.6; }
+        .stappen li::before { content: counter(stap); display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; background: #2563eb; color: white; border-radius: 50%; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; margin-top: 1px; }
+        .tip { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #1e40af; line-height: 1.5; }
+        .tip strong { color: #1e3a8a; }
+        .waarschuwing { background: #fff7ed; border-left: 4px solid #f97316; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #9a3412; line-height: 1.5; }
+        .terug-top { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: #2563eb; text-decoration: none; }
+        .terug-top:hover { text-decoration: underline; }
+        .versie-badge { display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 0.78rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+        .rol-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .rol-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .rol-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle; }
+        .rol-tabel tr:last-child td { border-bottom: none; }
+        .tier-badge { display: inline-block; font-size: 0.65rem; font-family: monospace; padding: 1px 5px; border-radius: 3px; font-weight: bold; margin-left: 4px; border: 1px solid; vertical-align: middle; }
+        .tier-null  { background: #f0f0f0; color: #888; border-color: #ddd; }
+        .tier-guest { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+        .tier-owner { background: #fff3cd; color: #7a4f00; border-color: #f0ad4e; }
+        .rechten-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .rechten-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .rechten-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle; }
+        .rechten-tabel tr:last-child td { border-bottom: none; }
+        .check-ja     { color: #166534; font-weight: bold; }
+        .check-nee    { color: #991b1b; }
+        .check-limiet { color: #555; font-size: 0.82rem; }
+        .status-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .status-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .status-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; }
+        .status-tabel tr:last-child td { border-bottom: none; }
+        .info-noot { background: #f8f9fb; border-left: 4px solid #6b7280; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.88rem; color: #444; line-height: 1.5; }
+        .info-noot strong { color: #1a1a1a; }
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div>
+<div id="navbar-placeholder"></div>
+
+<main>
+    <div class="handleiding-wrapper">
+
+        <div class="welkom-blok">
+            <h1>User Guide <span class="versie-badge">v2.3.0</span></h1>
+            <p>Welcome to the MyFamTreeCollab user guide. Here you will find step-by-step instructions for all features of the application, from creating your first person to exporting your family tree and collaborating with others.</p>
+        </div>
+
+        <div class="inhoudsopgave">
+            <h2>Table of Contents</h2>
+            <ol>
+                <li><a href="#aan-de-slag">Getting started</a></li>
+                <li><a href="#account">Creating an account and logging in</a></li>
+                <li><a href="#persoon-aanmaken">Adding your first person</a></li>
+                <li><a href="#stamboom-beheren">Managing your family tree</a></li>
+                <li><a href="#stamboom-bekijken">Viewing your family tree</a></li>
+                <li><a href="#tijdlijn">Timeline</a></li>
+                <li><a href="#statistieken">Statistics</a></li>
+                <li><a href="#mijn-account">My Account</a></li>
+                <li><a href="#versiegeschiedenis">Version history</a></li>
+                <li><a href="#cloud">Cloud family trees</a></li>
+                <li><a href="#importeren">Importing</a></li>
+                <li><a href="#exporteren">Exporting</a></li>
+                <li><a href="#wachtwoord-reset">Forgot password</a></li>
+                <li><a href="#delen">Sharing &amp; collaborating</a></li>
+                <li><a href="#collab">Message board (Collaboration)</a></li>
+                <li><a href="#steun">Support this project</a></li>
+            </ol>
+        </div>
+
+        <div class="sectie" id="aan-de-slag">
+            <h2>1. Getting started</h2>
+            <p>MyFamTreeCollab runs entirely in your browser. No installation needed — just open the website and start. Your data is stored locally on your device by default.</p>
+            <div class="tip"><strong>Demo mode:</strong> If you open the app without an account, load the demo family tree — it contains two families (De Vries and Martens) across multiple generations. You can try out all features this way; demo data is not saved. Create a free account to build and save your own family tree.</div>
+            <p>The navigation bar at the top takes you to all sections: Manage, Family Tree, Timeline, Statistics and Export.</p>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="account">
+            <h2>2. Creating an account and logging in</h2>
+            <p>An account gives you access to local storage and cloud synchronisation across devices. Registration is free. There are two account types:</p>
+            <ul>
+                <li><strong>Basic account</strong> <code>guest</code> — free. Local family tree up to 60 people. No cloud, no collaboration. All new accounts start as basic accounts.</li>
+                <li><strong>Owner account</strong> <code>owner</code> — via a donation (~€5 per 6 months). Unlimited people, cloud backup, sharing family trees and inviting others.</li>
+            </ul>
+            <div class="info-noot">💡 <strong>Viewer and Editor are not account types.</strong> They are family tree permissions that an Owner grants for a specific tree. See <a href="#delen">section 14</a> for more details.</div>
+            <h3>Creating an account</h3>
+            <ul class="stappen">
+                <li>Click <strong>Login</strong> in the bar at the top of the page.</li>
+                <li>Click the <strong>"Create account"</strong> tab.</li>
+                <li>Enter your username, email address and password.</li>
+                <li>Click <strong>"Create account"</strong>.</li>
+                <li>You will receive a confirmation email — click the link to activate your account.</li>
+                <li>You can then log in. Your account starts as a <strong>Basic account</strong>.</li>
+            </ul>
+            <h3>Logging in</h3>
+            <ul class="stappen">
+                <li>Click <strong>Login</strong> in the bar at the top.</li>
+                <li>Enter your email address and password.</li>
+                <li>Click <strong>"Log in"</strong>.</li>
+                <li>Your username will appear at the top of the page.</li>
+            </ul>
+            <h3>Logging out</h3>
+            <p>Click your username at the top to open the user menu, then click <strong>"🚪 Log out"</strong>.</p>
+            <h3>User menu</h3>
+            <ul>
+                <li><strong>⚙️ My Account</strong> — profile, password, cloud family trees</li>
+                <li><strong>📜 Version history</strong> — view and restore earlier versions</li>
+                <li><strong>💬 Collaborate</strong> — message board. Red number = unread messages.</li>
+                <li><strong>🚪 Log out</strong> — ends your session and clears local data</li>
+            </ul>
+            <h3>Notification badge</h3>
+            <p>A red number appears next to your username when new messages are posted in family trees you have access to. It disappears automatically when you visit the Collaborate page.</p>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="persoon-aanmaken">
+            <h2>3. Adding your first person</h2>
+            <p>Every family tree starts with one person — the <strong>Main ID</strong>. This is usually yourself or the person whose family tree you are building.</p>
+            <ul class="stappen">
+                <li>Go to <strong>Start Now</strong> on the homepage, or click <strong>Manage</strong> in the navigation.</li>
+                <li>Click <strong>"New family tree"</strong> if you have no people yet.</li>
+                <li>Fill in the details: First name and Last name are required, the rest is optional.</li>
+                <li>Click <strong>"Save"</strong>.</li>
+                <li>Check the details in the preview panel.</li>
+                <li>Click <strong>"Confirm &amp; go to Manage"</strong>.</li>
+            </ul>
+            <div class="tip"><strong>Tip:</strong> You can always edit details later via the Manage page.</div>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="stamboom-beheren">
+            <h2>4. Managing your family tree</h2>
+            <p>On the Manage page you add family members, edit existing people and record relationships.</p>
+            <h3>Adding a person</h3>
+            <ul class="stappen">
+                <li>Go to <strong>Manage</strong> in the navigation.</li>
+                <li>Click <strong>"+ Add"</strong>.</li>
+                <li>Fill in the details. FatherID, MotherID and PartnerID link the person to others.</li>
+                <li>Click <strong>"Save"</strong>.</li>
+            </ul>
+            <h3>Editing a person</h3>
+            <ul class="stappen">
+                <li>Search for the person using the search bar at the top.</li>
+                <li>The table shows the selected person with their family.</li>
+                <li>Edit the details directly and click <strong>"Save"</strong>.</li>
+            </ul>
+            <h3>Deleting a person</h3>
+            <ul class="stappen">
+                <li>Search for the person using the search bar.</li>
+                <li>Click the 🗑️ icon on the left of the row.</li>
+                <li>Confirm the deletion. The ID is automatically removed from all relationships.</li>
+            </ul>
+            <h3>Recording relationships</h3>
+            <ul>
+                <li><strong>FatherID</strong> — ID of the father</li>
+                <li><strong>MotherID</strong> — ID of the mother</li>
+                <li><strong>PartnerID</strong> — ID of the partner. Multiple partners: <code>P-001|P-003</code></li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="stamboom-bekijken">
+            <h2>5. Viewing your family tree</h2>
+            <p>The Family Tree page shows a visual overview of family members around a selected person.</p>
+            <ul class="stappen">
+                <li>Click <strong>Family Tree</strong> in the navigation.</li>
+                <li>Search for a person using the search bar.</li>
+                <li>The tree shows the selected person (yellow) with parents (green), partner(s) (purple) and children (blue).</li>
+                <li>Click a node to make that person the new centre.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="tijdlijn">
+            <h2>6. Timeline</h2>
+            <p>The Timeline shows all family members on a horizontal time axis. Each person is a bar from birth year to death year.</p>
+            <ul class="stappen">
+                <li>Click <strong>Timeline</strong> in the navigation.</li>
+                <li>Search for a person using the search bar.</li>
+                <li>The timeline loads automatically with all family members grouped by generation.</li>
+                <li>Hover over a bar for more details.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="statistieken">
+            <h2>7. Statistics</h2>
+            <p>The Statistics page gives an overview of your family tree: number of people, gender distribution, oldest and youngest person.</p>
+            <ul class="stappen">
+                <li>Click <strong>Statistics</strong> in the navigation.</li>
+                <li>Statistics are calculated automatically from your family tree data.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="mijn-account">
+            <h2>8. My Account</h2>
+            <p>The account page gives you a complete overview of your profile and settings. Accessible via the user menu at the top right.</p>
+            <h3>Profile</h3>
+            <p>At the top you see your avatar, username, email address, account type and membership date.</p>
+            <h3>Local data &amp; active family tree</h3>
+            <p>On the <strong>"📋 My data"</strong> tab you see a blue bar at the top showing the name of the currently active family tree.</p>
+            <h3>Choosing an avatar</h3>
+            <ul class="stappen">
+                <li>Click one of the 8 emoji avatars.</li>
+                <li>The choice is saved immediately to your account.</li>
+            </ul>
+            <h3>Changing your password</h3>
+            <ul class="stappen">
+                <li>Enter your new password (minimum 8 characters).</li>
+                <li>Confirm the password in the second field.</li>
+                <li>Click <strong>"Save"</strong>.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="versiegeschiedenis">
+            <h2>9. Version history</h2>
+            <p>Version history lets you view, compare and restore earlier versions of a family tree. A maximum of <strong>5 versions</strong> are kept per tree.</p>
+            <div class="tip"><strong>Required:</strong> Logged in as <strong>Owner</strong>.</div>
+            <ul class="stappen">
+                <li>Go to <strong>My Account → 📜 Version history</strong>.</li>
+                <li>Choose a family tree from the dropdown.</li>
+                <li>Click <strong>"👁 Preview"</strong> to view a version without loading it.</li>
+                <li>Click <strong>"⏪ Restore"</strong> to revert to a version.</li>
+                <li>Click <strong>"🔍 Compare"</strong> twice to view two versions side by side.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="cloud">
+            <h2>10. Cloud family trees</h2>
+            <p>With an <strong>Owner</strong> account you can save multiple family trees to the cloud.</p>
+            <div class="tip"><strong>Required:</strong> Owner to save. Viewers/Editors can load shared trees via "🔗 Shared with me".</div>
+            <h3>Saving a family tree</h3>
+            <ul class="stappen">
+                <li>Go to <strong>Storage → ☁️ Cloud family trees</strong>.</li>
+                <li>Enter a name and click <strong>"➕ Save as new"</strong>.</li>
+            </ul>
+            <h3>Loading a family tree</h3>
+            <ul class="stappen">
+                <li>Go to <strong>Storage → ☁️ Cloud family trees</strong>.</li>
+                <li>Click <strong>"⬇️ Load"</strong> next to the desired tree.</li>
+                <li>The tree is now available locally and marked as <strong>ACTIVE</strong>.</li>
+            </ul>
+            <h3>Deleting a family tree</h3>
+            <ul class="stappen">
+                <li>Click <strong>"🗑️ Delete"</strong> next to the tree.</li>
+                <li>Confirm the prompt. The ACTIVE bar disappears automatically.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="importeren">
+            <h2>11. Importing</h2>
+            <p>You can import existing family tree data via a CSV file.</p>
+            <ul class="stappen">
+                <li>Download the <a href="/MyFamTreeCollab/bronnen/template.html">CSV template</a>.</li>
+                <li>Fill in the template with your family data.</li>
+                <li>Go to <strong>Import</strong> via the navigation.</li>
+                <li>Click <strong>"Choose file"</strong> and select your CSV.</li>
+                <li>Click <strong>"Import"</strong>.</li>
+            </ul>
+            <div class="waarschuwing"><strong>Note:</strong> Only available for <strong>Owner</strong> accounts.</div>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="exporteren">
+            <h2>12. Exporting</h2>
+            <p>Export your family tree as CSV or JSON. Available for all logged-in accounts (Basic and Owner).</p>
+            <ul class="stappen">
+                <li>Go to <strong>Export</strong> via the navigation.</li>
+                <li>Click <strong>"Export CSV"</strong> or <strong>"Export JSON"</strong>.</li>
+            </ul>
+            <div class="tip"><strong>Tip:</strong> Make regular JSON exports as a backup.</div>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="wachtwoord-reset">
+            <h2>13. Forgot password</h2>
+            <ul class="stappen">
+                <li>Click <strong>Login</strong> at the top of the page.</li>
+                <li>Click <strong>"Forgot password?"</strong>.</li>
+                <li>Enter your email address and click <strong>"Send reset link"</strong>.</li>
+                <li>Check your email and click the link.</li>
+                <li>Enter your new password and click <strong>"Save password"</strong>.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="delen">
+            <h2>14. Sharing &amp; collaborating</h2>
+            <p>As an <strong>Owner</strong> you can invite others to view or contribute to your family tree. Invited users receive a tree permission: <strong>Viewer</strong> or <strong>Editor</strong>.</p>
+            <div class="tip"><strong>Required:</strong> Logged in as <strong>Owner</strong>. The tree must be saved to the cloud.</div>
+            <h3>Account types overview</h3>
+            <table class="rol-tabel">
+                <thead>
+                    <tr>
+                        <th>What can you do?</th>
+                        <th>👤 Not logged in <span class="tier-badge tier-null">null</span></th>
+                        <th>🖥️ Basic account <span class="tier-badge tier-guest">guest</span></th>
+                        <th>👑 Owner <span class="tier-badge tier-owner">owner</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>View demo family tree</td><td class="check-ja">✓</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Create own family tree</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Max. people locally</td><td class="check-nee">✗</td><td class="check-limiet">60 people</td><td class="check-limiet">Unlimited</td></tr>
+                    <tr><td>Create cloud family trees</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Share family tree</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Invite Viewer / Editor</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Restore versions</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-limiet">Max. 5 versions</td></tr>
+                    <tr><td>Export (CSV / JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Import (CSV)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                </tbody>
+            </table>
+            <h3>Tree permissions: Viewer &amp; Editor</h3>
+            <table class="rechten-tabel">
+                <thead>
+                    <tr><th>What can you do on the shared tree?</th><th>✏️ Editor</th><th>👁️ Viewer</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Load shared family tree</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>View family tree</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Use message board</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Add &amp; edit people</td><td class="check-ja">✓</td><td class="check-nee">✗</td></tr>
+                    <tr><td>Post a change proposal</td><td class="check-ja">✓</td><td class="check-nee">✗</td></tr>
+                    <tr><td>Invite others</td><td class="check-nee">✗</td><td class="check-nee">✗</td></tr>
+                    <tr><td>Leave collaboration</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                </tbody>
+            </table>
+            <h3>Inviting someone</h3>
+            <ul class="stappen">
+                <li>Go to <strong>Storage → ☁️ Cloud family trees</strong>.</li>
+                <li>Click <strong>"🔗 Share"</strong> next to the tree.</li>
+                <li>Enter the email address of the person you want to invite.</li>
+                <li>Choose a permission: <strong>👁 Viewer</strong> or <strong>✏️ Editor</strong>.</li>
+                <li>Click <strong>"Invite"</strong>.</li>
+            </ul>
+            <div class="tip"><strong>Note:</strong> The invited user must already have an account. A free basic account is sufficient.</div>
+            <h3>Revoking access</h3>
+            <ul class="stappen">
+                <li>Open the share panel via <strong>"🔗 Share"</strong>.</li>
+                <li>Click <strong>"Revoke"</strong> next to the user.</li>
+            </ul>
+            <h3>Viewing shared trees (Viewer/Editor)</h3>
+            <ul class="stappen">
+                <li>Go to <strong>Storage → 🔗 Shared with me</strong>.</li>
+                <li>Click <strong>"⬇️ Load"</strong> to load the tree.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="collab">
+            <h2>15. Message board (Collaboration)</h2>
+            <p>The message board shows all family trees you have access to. Per tree you see discussions about specific people, organised by person ID.</p>
+            <div class="tip"><strong>Required:</strong> Logged in with access to at least one family tree.</div>
+            <h3>Opening the message board</h3>
+            <ul class="stappen">
+                <li>Click <strong>💬 Collaborate</strong> in the navigation or in the user menu.</li>
+                <li>All trees you have access to are loaded, each in its own section.</li>
+            </ul>
+            <h3>Active vs. read-only trees</h3>
+            <ul>
+                <li><strong>✓ Active</strong> (blue accent line) — the loaded tree. You can start discussions and post messages here.</li>
+                <li><strong>Read only</strong> — other trees. Click the link in the yellow banner to activate that tree.</li>
+            </ul>
+            <h3>Starting a discussion</h3>
+            <ul class="stappen">
+                <li>Type a name or ID in the search bar of the <strong>active</strong> tree.</li>
+                <li>Click the desired person in the dropdown.</li>
+                <li>Confirm in the modal — a new discussion block appears.</li>
+            </ul>
+            <h3>Posting a message</h3>
+            <ul class="stappen">
+                <li>Open a discussion block by clicking its header.</li>
+                <li>Type your message in the text field at the bottom.</li>
+                <li>Click <strong>"Send"</strong>.</li>
+            </ul>
+            <h3>Discussion status</h3>
+            <table class="status-tabel">
+                <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>🆕 New</td><td>Not yet picked up</td></tr>
+                    <tr><td>🔓 Open</td><td>Active and pending</td></tr>
+                    <tr><td>🔄 In progress</td><td>Someone is working on it</td></tr>
+                    <tr><td>✅ Closed</td><td>Resolved</td></tr>
+                </tbody>
+            </table>
+            <h3>Posting a change proposal (Editor/Owner)</h3>
+            <ul class="stappen">
+                <li>Click <strong>"📝 Propose change"</strong> in the message form.</li>
+                <li>Describe the proposed change in the yellow text field.</li>
+                <li>Send the message — the proposal appears as a separate yellow block.</li>
+            </ul>
+            <h3>Deleting a message</h3>
+            <p>Owners can delete any message via <strong>✕</strong>. Viewers and Editors can only delete their own messages.</p>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="steun">
+            <h2>16. Support this project</h2>
+            <p>MyFamTreeCollab is free to use. If you find the app valuable, you can support development via Ko-fi.</p>
+            <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
+               style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#FF5E5B; color:#fff; text-decoration:none; border-radius:6px; font-size:0.95rem; font-weight:bold;">
+                <img src="/MyFamTreeCollab/img/Coffee.png" alt="Ko-fi" style="height:50px;">
+                Support this project
+            </a>
+            <a href="#" class="terug-top" style="display:block; margin-top:16px;">↑ Back to top</a>
+        </div>
+
+    </div>
+</main>
+
+<div id="footer-placeholder"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+<script src="/MyFamTreeCollab/js/i18n.js"></script>
+
+<script>
+    // Redirect-map: language code → corresponding guide page
+    var HANDLEIDING_REDIRECT = {
+        'nl': '/MyFamTreeCollab/bronnen/handleiding-nl.html',              // Dutch
+        'en': '/MyFamTreeCollab/bronnen/handleiding-en.html',              // English — current page
+        'es': '/MyFamTreeCollab/bronnen/handleiding-es.html'               // Spanish
+    };
+
+    i18nModule.init()
+        .then(function () {
+            return i18nModule.loadNamespace('bronnen');                    // load namespace for TopBar/Navbar translation
+        })
+        .then(function () {
+            document.title = 'User Guide — MyFamTreeCollab';              // Fixed EN title
+
+            return fetch('/MyFamTreeCollab/Layout/TopBar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                    var s = document.createElement('script');
+                    s.src = '../js/topbar.js';
+                    document.body.appendChild(s);
+                });
+        })
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+                });
+        })
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/Footer.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+                });
+        })
+        .then(function () {
+            // Redirect handler — intercepts language switcher and navigates to correct guide page
+            document.addEventListener('change', function (e) {
+                if (e.target.id !== 'languageSwitcher') { return; }        // Only the language switcher
+                var doel = HANDLEIDING_REDIRECT[e.target.value];           // Find matching page
+                if (doel) { window.location.href = doel; }                 // Redirect
+            });
+
+            SiteAnalytics.trackPage('handleiding-en');                     // Register page visit
+        });
+</script>
+
+</body>
+</html>
