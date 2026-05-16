@@ -1,0 +1,528 @@
+<!-- ======================= bronnen/handleiding-es.html v2.4.0 =======================
+     Guía de usuario en español para MyFamTreeCollab
+     Véase handleiding-nl.html (neerlandés) y handleiding-en.html (inglés) para otros idiomas
+
+     Wijzigingen v2.4.0 (sessie 27):
+     - Nieuw bestand — Spaanstalige vertaling van handleiding-nl.html v2.3.0
+     - i18n laadvolgorde: i18next CDN + i18n.js
+     - Components via i18nModule.onComponentLoaded()
+     - Taalwisselaar met redirect-handler naar handleiding-{lang}.html
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de usuario — MyFamTreeCollab</title>
+
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        /* ── Diseño de página ──────────────────────────────────────────── */
+        .handleiding-wrapper { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+        .welkom-blok { margin-bottom: 32px; }
+        .welkom-blok h1 { font-size: 1.6rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
+        .inhoudsopgave { background: #f8f8f5; border: 1px solid #ddd; border-radius: 6px; padding: 20px 24px; margin-bottom: 40px; }
+        .inhoudsopgave h2 { font-size: 1rem; font-weight: bold; margin: 0 0 12px 0; color: #333; }
+        .inhoudsopgave ol { margin: 0; padding-left: 20px; }
+        .inhoudsopgave li { margin-bottom: 6px; font-size: 0.92rem; }
+        .inhoudsopgave a  { color: #2563eb; text-decoration: none; }
+        .inhoudsopgave a:hover { text-decoration: underline; }
+        .sectie { margin-bottom: 48px; scroll-margin-top: 20px; }
+        .sectie h2 { font-size: 1.25rem; font-weight: bold; margin: 0 0 16px 0; color: #222; padding-bottom: 8px; border-bottom: 2px solid #eee; }
+        .sectie h3 { font-size: 1rem; font-weight: bold; margin: 24px 0 8px 0; color: #333; }
+        .sectie p  { font-size: 0.95rem; color: #444; line-height: 1.7; margin: 0 0 12px 0; }
+        .sectie ul, .sectie ol { margin: 0 0 12px 20px; }
+        .sectie li { font-size: 0.95rem; color: #444; line-height: 1.7; margin-bottom: 4px; }
+        .stappen { counter-reset: stap; list-style: none; padding: 0; margin: 0 0 16px 0; }
+        .stappen li { counter-increment: stap; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; font-size: 0.95rem; color: #444; line-height: 1.6; }
+        .stappen li::before { content: counter(stap); display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; background: #2563eb; color: white; border-radius: 50%; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; margin-top: 1px; }
+        .tip { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #1e40af; line-height: 1.5; }
+        .tip strong { color: #1e3a8a; }
+        .waarschuwing { background: #fff7ed; border-left: 4px solid #f97316; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: #9a3412; line-height: 1.5; }
+        .terug-top { display: inline-block; margin-top: 8px; font-size: 0.85rem; color: #2563eb; text-decoration: none; }
+        .terug-top:hover { text-decoration: underline; }
+        .versie-badge { display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 0.78rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+        .rol-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .rol-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .rol-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle; }
+        .rol-tabel tr:last-child td { border-bottom: none; }
+        .tier-badge { display: inline-block; font-size: 0.65rem; font-family: monospace; padding: 1px 5px; border-radius: 3px; font-weight: bold; margin-left: 4px; border: 1px solid; vertical-align: middle; }
+        .tier-null  { background: #f0f0f0; color: #888; border-color: #ddd; }
+        .tier-guest { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+        .tier-owner { background: #fff3cd; color: #7a4f00; border-color: #f0ad4e; }
+        .rechten-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .rechten-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .rechten-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; vertical-align: middle; }
+        .rechten-tabel tr:last-child td { border-bottom: none; }
+        .check-ja     { color: #166534; font-weight: bold; }
+        .check-nee    { color: #991b1b; }
+        .check-limiet { color: #555; font-size: 0.82rem; }
+        .status-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 16px 0; }
+        .status-tabel th { background: #f4f6f9; font-weight: bold; color: #333; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; }
+        .status-tabel td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #444; }
+        .status-tabel tr:last-child td { border-bottom: none; }
+        .info-noot { background: #f8f9fb; border-left: 4px solid #6b7280; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 16px 0; font-size: 0.88rem; color: #444; line-height: 1.5; }
+        .info-noot strong { color: #1a1a1a; }
+    </style>
+</head>
+<body>
+
+<div id="topbar-placeholder"></div>
+<div id="navbar-placeholder"></div>
+
+<main>
+    <div class="handleiding-wrapper">
+
+        <div class="welkom-blok">
+            <h1>Guía de usuario <span class="versie-badge">v2.3.0</span></h1>
+            <p>Bienvenido a la guía de usuario de MyFamTreeCollab. Aquí encontrarás instrucciones paso a paso para todas las funciones de la aplicación, desde crear tu primera persona hasta exportar tu árbol genealógico y colaborar con otros.</p>
+        </div>
+
+        <div class="inhoudsopgave">
+            <h2>Índice</h2>
+            <ol>
+                <li><a href="#aan-de-slag">Primeros pasos</a></li>
+                <li><a href="#account">Crear una cuenta e iniciar sesión</a></li>
+                <li><a href="#persoon-aanmaken">Añadir tu primera persona</a></li>
+                <li><a href="#stamboom-beheren">Gestionar tu árbol genealógico</a></li>
+                <li><a href="#stamboom-bekijken">Ver tu árbol genealógico</a></li>
+                <li><a href="#tijdlijn">Línea de tiempo</a></li>
+                <li><a href="#statistieken">Estadísticas</a></li>
+                <li><a href="#mijn-account">Mi cuenta</a></li>
+                <li><a href="#versiegeschiedenis">Historial de versiones</a></li>
+                <li><a href="#cloud">Árboles genealógicos en la nube</a></li>
+                <li><a href="#importeren">Importar</a></li>
+                <li><a href="#exporteren">Exportar</a></li>
+                <li><a href="#wachtwoord-reset">Contraseña olvidada</a></li>
+                <li><a href="#delen">Compartir y colaborar</a></li>
+                <li><a href="#collab">Tablón de mensajes (Colaboración)</a></li>
+                <li><a href="#steun">Apoyar este proyecto</a></li>
+            </ol>
+        </div>
+
+        <div class="sectie" id="aan-de-slag">
+            <h2>1. Primeros pasos</h2>
+            <p>MyFamTreeCollab funciona completamente en tu navegador. No necesitas instalar nada — abre el sitio web y empieza. Tus datos se guardan de forma predeterminada en tu dispositivo de manera local.</p>
+            <div class="tip"><strong>Modo demo:</strong> Si abres la aplicación sin cuenta, carga el árbol genealógico de demostración — contiene dos familias (De Vries y Martens) a lo largo de varias generaciones. Puedes probar todas las funciones de esta forma; los datos de la demo no se guardan. Crea una cuenta gratuita para construir y guardar tu propio árbol genealógico.</div>
+            <p>La barra de navegación en la parte superior te lleva a todas las secciones: Gestionar, Árbol genealógico, Línea de tiempo, Estadísticas y Exportar.</p>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="account">
+            <h2>2. Crear una cuenta e iniciar sesión</h2>
+            <p>Una cuenta te da acceso al almacenamiento local y a la sincronización en la nube entre dispositivos. El registro es gratuito. Hay dos tipos de cuenta:</p>
+            <ul>
+                <li><strong>Cuenta básica</strong> <code>guest</code> — gratuita. Árbol genealógico local de hasta 60 personas. Sin nube, sin colaboración. Todas las cuentas nuevas empiezan como cuenta básica.</li>
+                <li><strong>Cuenta Owner</strong> <code>owner</code> — mediante una donación (~€5 cada 6 meses). Personas ilimitadas, copia de seguridad en la nube, compartir árboles e invitar a otros.</li>
+            </ul>
+            <div class="info-noot">💡 <strong>Viewer y Editor no son tipos de cuenta.</strong> Son permisos de árbol genealógico que un Owner concede para un árbol específico. Véase la <a href="#delen">sección 14</a> para más información.</div>
+            <h3>Crear una cuenta</h3>
+            <ul class="stappen">
+                <li>Haz clic en <strong>Iniciar sesión</strong> en la barra de la parte superior.</li>
+                <li>Haz clic en la pestaña <strong>"Crear cuenta"</strong>.</li>
+                <li>Introduce tu nombre de usuario, dirección de correo electrónico y contraseña.</li>
+                <li>Haz clic en <strong>"Crear cuenta"</strong>.</li>
+                <li>Recibirás un correo de confirmación — haz clic en el enlace para activar tu cuenta.</li>
+                <li>Después podrás iniciar sesión. Tu cuenta empieza como <strong>Cuenta básica</strong>.</li>
+            </ul>
+            <h3>Iniciar sesión</h3>
+            <ul class="stappen">
+                <li>Haz clic en <strong>Iniciar sesión</strong> en la barra de la parte superior.</li>
+                <li>Introduce tu dirección de correo electrónico y contraseña.</li>
+                <li>Haz clic en <strong>"Iniciar sesión"</strong>.</li>
+                <li>Tu nombre de usuario aparecerá en la parte superior de la página.</li>
+            </ul>
+            <h3>Cerrar sesión</h3>
+            <p>Haz clic en tu nombre de usuario en la parte superior para abrir el menú de usuario, luego haz clic en <strong>"🚪 Cerrar sesión"</strong>.</p>
+            <h3>Menú de usuario</h3>
+            <ul>
+                <li><strong>⚙️ Mi cuenta</strong> — perfil, contraseña, árboles en la nube</li>
+                <li><strong>📜 Historial de versiones</strong> — ver y restaurar versiones anteriores</li>
+                <li><strong>💬 Colaborar</strong> — tablón de mensajes. Número rojo = mensajes no leídos.</li>
+                <li><strong>🚪 Cerrar sesión</strong> — termina tu sesión y borra los datos locales</li>
+            </ul>
+            <h3>Insignia de notificación</h3>
+            <p>Aparece un número rojo junto a tu nombre de usuario cuando se publican nuevos mensajes en árboles genealógicos a los que tienes acceso. Desaparece automáticamente cuando visitas la página de Colaboración.</p>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="persoon-aanmaken">
+            <h2>3. Añadir tu primera persona</h2>
+            <p>Todo árbol genealógico comienza con una persona — el <strong>ID principal</strong>. Normalmente eres tú mismo o la persona cuyo árbol genealógico estás construyendo.</p>
+            <ul class="stappen">
+                <li>Ve a <strong>Comenzar ahora</strong> en la página de inicio, o haz clic en <strong>Gestionar</strong> en la navegación.</li>
+                <li>Haz clic en <strong>"Nuevo árbol genealógico"</strong> si aún no tienes personas.</li>
+                <li>Rellena los datos: el nombre y los apellidos son obligatorios, el resto es opcional.</li>
+                <li>Haz clic en <strong>"Guardar"</strong>.</li>
+                <li>Comprueba los datos en el panel de vista previa.</li>
+                <li>Haz clic en <strong>"Confirmar e ir a Gestionar"</strong>.</li>
+            </ul>
+            <div class="tip"><strong>Consejo:</strong> Siempre puedes editar los datos más adelante desde la página Gestionar.</div>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="stamboom-beheren">
+            <h2>4. Gestionar tu árbol genealógico</h2>
+            <p>En la página Gestionar añades familiares, editas personas existentes y registras relaciones.</p>
+            <h3>Añadir una persona</h3>
+            <ul class="stappen">
+                <li>Ve a <strong>Gestionar</strong> en la navegación.</li>
+                <li>Haz clic en <strong>"+ Añadir"</strong>.</li>
+                <li>Rellena los datos. PadreID, MadreID y ParejaID vinculan a la persona con otras.</li>
+                <li>Haz clic en <strong>"Guardar"</strong>.</li>
+            </ul>
+            <h3>Editar una persona</h3>
+            <ul class="stappen">
+                <li>Busca a la persona usando la barra de búsqueda en la parte superior.</li>
+                <li>La tabla muestra a la persona seleccionada con su familia.</li>
+                <li>Edita los datos directamente y haz clic en <strong>"Guardar"</strong>.</li>
+            </ul>
+            <h3>Eliminar una persona</h3>
+            <ul class="stappen">
+                <li>Busca a la persona usando la barra de búsqueda.</li>
+                <li>Haz clic en el icono 🗑️ a la izquierda de la fila.</li>
+                <li>Confirma la eliminación. El ID se elimina automáticamente de todas las relaciones.</li>
+            </ul>
+            <h3>Registrar relaciones</h3>
+            <ul>
+                <li><strong>PadreID</strong> — ID del padre</li>
+                <li><strong>MadreID</strong> — ID de la madre</li>
+                <li><strong>ParejaID</strong> — ID de la pareja. Varias parejas: <code>P-001|P-003</code></li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="stamboom-bekijken">
+            <h2>5. Ver tu árbol genealógico</h2>
+            <p>La página Árbol genealógico muestra una vista visual de los familiares alrededor de una persona seleccionada.</p>
+            <ul class="stappen">
+                <li>Haz clic en <strong>Árbol genealógico</strong> en la navegación.</li>
+                <li>Busca a una persona usando la barra de búsqueda.</li>
+                <li>El árbol muestra a la persona seleccionada (amarillo) con padres (verde), pareja(s) (morado) e hijos (azul).</li>
+                <li>Haz clic en un nodo para convertir esa persona en el nuevo centro.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="tijdlijn">
+            <h2>6. Línea de tiempo</h2>
+            <p>La línea de tiempo muestra a todos los familiares en un eje de tiempo horizontal. Cada persona es una barra desde el año de nacimiento hasta el año de fallecimiento.</p>
+            <ul class="stappen">
+                <li>Haz clic en <strong>Línea de tiempo</strong> en la navegación.</li>
+                <li>Busca a una persona usando la barra de búsqueda.</li>
+                <li>La línea de tiempo se carga automáticamente con todos los familiares agrupados por generación.</li>
+                <li>Pasa el cursor sobre una barra para ver más detalles.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="statistieken">
+            <h2>7. Estadísticas</h2>
+            <p>La página de Estadísticas ofrece un resumen de tu árbol genealógico: número de personas, distribución por género, persona más mayor y más joven.</p>
+            <ul class="stappen">
+                <li>Haz clic en <strong>Estadísticas</strong> en la navegación.</li>
+                <li>Las estadísticas se calculan automáticamente a partir de los datos de tu árbol genealógico.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="mijn-account">
+            <h2>8. Mi cuenta</h2>
+            <p>La página de cuenta te ofrece un resumen completo de tu perfil y ajustes. Accesible desde el menú de usuario en la parte superior derecha.</p>
+            <h3>Perfil</h3>
+            <p>En la parte superior verás tu avatar, nombre de usuario, dirección de correo electrónico, tipo de cuenta y fecha de registro.</p>
+            <h3>Datos locales y árbol activo</h3>
+            <p>En la pestaña <strong>"📋 Mis datos"</strong> verás una barra azul en la parte superior con el nombre del árbol genealógico activo.</p>
+            <h3>Elegir un avatar</h3>
+            <ul class="stappen">
+                <li>Haz clic en uno de los 8 avatares emoji.</li>
+                <li>La elección se guarda inmediatamente en tu cuenta.</li>
+            </ul>
+            <h3>Cambiar tu contraseña</h3>
+            <ul class="stappen">
+                <li>Introduce tu nueva contraseña (mínimo 8 caracteres).</li>
+                <li>Confirma la contraseña en el segundo campo.</li>
+                <li>Haz clic en <strong>"Guardar"</strong>.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="versiegeschiedenis">
+            <h2>9. Historial de versiones</h2>
+            <p>El historial de versiones te permite ver, comparar y restaurar versiones anteriores de un árbol genealógico. Se guardan un máximo de <strong>5 versiones</strong> por árbol.</p>
+            <div class="tip"><strong>Requisito:</strong> Haber iniciado sesión como <strong>Owner</strong>.</div>
+            <ul class="stappen">
+                <li>Ve a <strong>Mi cuenta → 📜 Historial de versiones</strong>.</li>
+                <li>Elige un árbol genealógico en el menú desplegable.</li>
+                <li>Haz clic en <strong>"👁 Vista previa"</strong> para ver una versión sin cargarla.</li>
+                <li>Haz clic en <strong>"⏪ Restaurar"</strong> para volver a una versión anterior.</li>
+                <li>Haz clic dos veces en <strong>"🔍 Comparar"</strong> para ver dos versiones una al lado de la otra.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="cloud">
+            <h2>10. Árboles genealógicos en la nube</h2>
+            <p>Con una cuenta <strong>Owner</strong> puedes guardar varios árboles genealógicos en la nube.</p>
+            <div class="tip"><strong>Requisito:</strong> Owner para guardar. Los Viewers/Editors pueden cargar árboles compartidos desde "🔗 Compartido conmigo".</div>
+            <h3>Guardar un árbol genealógico</h3>
+            <ul class="stappen">
+                <li>Ve a <strong>Almacenamiento → ☁️ Árboles en la nube</strong>.</li>
+                <li>Introduce un nombre y haz clic en <strong>"➕ Guardar como nuevo"</strong>.</li>
+            </ul>
+            <h3>Cargar un árbol genealógico</h3>
+            <ul class="stappen">
+                <li>Ve a <strong>Almacenamiento → ☁️ Árboles en la nube</strong>.</li>
+                <li>Haz clic en <strong>"⬇️ Cargar"</strong> junto al árbol deseado.</li>
+                <li>El árbol ya está disponible localmente y marcado como <strong>ACTIVO</strong>.</li>
+            </ul>
+            <h3>Eliminar un árbol genealógico</h3>
+            <ul class="stappen">
+                <li>Haz clic en <strong>"🗑️ Eliminar"</strong> junto al árbol.</li>
+                <li>Confirma el aviso. La barra ACTIVO desaparece automáticamente.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="importeren">
+            <h2>11. Importar</h2>
+            <p>Puedes importar datos de un árbol genealógico existente mediante un archivo CSV.</p>
+            <ul class="stappen">
+                <li>Descarga la <a href="/MyFamTreeCollab/bronnen/template.html">plantilla CSV</a>.</li>
+                <li>Rellena la plantilla con los datos de tu familia.</li>
+                <li>Ve a <strong>Importar</strong> desde la navegación.</li>
+                <li>Haz clic en <strong>"Elegir archivo"</strong> y selecciona tu CSV.</li>
+                <li>Haz clic en <strong>"Importar"</strong>.</li>
+            </ul>
+            <div class="waarschuwing"><strong>Atención:</strong> Solo disponible para cuentas <strong>Owner</strong>.</div>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="exporteren">
+            <h2>12. Exportar</h2>
+            <p>Exporta tu árbol genealógico en formato CSV o JSON. Disponible para todas las cuentas con sesión iniciada (Básica y Owner).</p>
+            <ul class="stappen">
+                <li>Ve a <strong>Exportar</strong> desde la navegación.</li>
+                <li>Haz clic en <strong>"Exportar CSV"</strong> o <strong>"Exportar JSON"</strong>.</li>
+            </ul>
+            <div class="tip"><strong>Consejo:</strong> Realiza exportaciones JSON regularmente como copia de seguridad.</div>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="wachtwoord-reset">
+            <h2>13. Contraseña olvidada</h2>
+            <ul class="stappen">
+                <li>Haz clic en <strong>Iniciar sesión</strong> en la parte superior de la página.</li>
+                <li>Haz clic en <strong>"¿Olvidaste tu contraseña?"</strong>.</li>
+                <li>Introduce tu dirección de correo electrónico y haz clic en <strong>"Enviar enlace de restablecimiento"</strong>.</li>
+                <li>Revisa tu correo y haz clic en el enlace.</li>
+                <li>Introduce tu nueva contraseña y haz clic en <strong>"Guardar contraseña"</strong>.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="delen">
+            <h2>14. Compartir y colaborar</h2>
+            <p>Como <strong>Owner</strong> puedes invitar a otros a ver o contribuir a tu árbol genealógico. Los usuarios invitados reciben un permiso de árbol: <strong>Viewer</strong> o <strong>Editor</strong>.</p>
+            <div class="tip"><strong>Requisito:</strong> Haber iniciado sesión como <strong>Owner</strong>. El árbol debe estar guardado en la nube.</div>
+            <h3>Resumen de tipos de cuenta</h3>
+            <table class="rol-tabel">
+                <thead>
+                    <tr>
+                        <th>¿Qué puedes hacer?</th>
+                        <th>👤 Sin sesión iniciada <span class="tier-badge tier-null">null</span></th>
+                        <th>🖥️ Cuenta básica <span class="tier-badge tier-guest">guest</span></th>
+                        <th>👑 Owner <span class="tier-badge tier-owner">owner</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Ver árbol genealógico demo</td><td class="check-ja">✓</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Crear árbol genealógico propio</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Máx. personas localmente</td><td class="check-nee">✗</td><td class="check-limiet">60 personas</td><td class="check-limiet">Ilimitado</td></tr>
+                    <tr><td>Crear árboles en la nube</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Compartir árbol genealógico</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Invitar Viewer / Editor</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Restaurar versiones</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-limiet">Máx. 5 versiones</td></tr>
+                    <tr><td>Exportar (CSV / JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Importar (CSV)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                </tbody>
+            </table>
+            <h3>Permisos de árbol: Viewer y Editor</h3>
+            <table class="rechten-tabel">
+                <thead>
+                    <tr><th>¿Qué puedes hacer en el árbol compartido?</th><th>✏️ Editor</th><th>👁️ Viewer</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Cargar árbol genealógico compartido</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Ver árbol genealógico</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Usar el tablón de mensajes</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Añadir y editar personas</td><td class="check-ja">✓</td><td class="check-nee">✗</td></tr>
+                    <tr><td>Publicar una propuesta de cambio</td><td class="check-ja">✓</td><td class="check-nee">✗</td></tr>
+                    <tr><td>Invitar a otros</td><td class="check-nee">✗</td><td class="check-nee">✗</td></tr>
+                    <tr><td>Abandonar la colaboración</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                </tbody>
+            </table>
+            <h3>Invitar a alguien</h3>
+            <ul class="stappen">
+                <li>Ve a <strong>Almacenamiento → ☁️ Árboles en la nube</strong>.</li>
+                <li>Haz clic en <strong>"🔗 Compartir"</strong> junto al árbol.</li>
+                <li>Introduce la dirección de correo electrónico de la persona que quieres invitar.</li>
+                <li>Elige un permiso: <strong>👁 Viewer</strong> o <strong>✏️ Editor</strong>.</li>
+                <li>Haz clic en <strong>"Invitar"</strong>.</li>
+            </ul>
+            <div class="tip"><strong>Atención:</strong> El usuario invitado ya debe tener una cuenta. Una cuenta básica gratuita es suficiente.</div>
+            <h3>Revocar acceso</h3>
+            <ul class="stappen">
+                <li>Abre el panel de compartir con <strong>"🔗 Compartir"</strong>.</li>
+                <li>Haz clic en <strong>"Revocar"</strong> junto al usuario.</li>
+            </ul>
+            <h3>Ver árboles compartidos (Viewer/Editor)</h3>
+            <ul class="stappen">
+                <li>Ve a <strong>Almacenamiento → 🔗 Compartido conmigo</strong>.</li>
+                <li>Haz clic en <strong>"⬇️ Cargar"</strong> para cargar el árbol.</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="collab">
+            <h2>15. Tablón de mensajes (Colaboración)</h2>
+            <p>El tablón de mensajes muestra todos los árboles genealógicos a los que tienes acceso. Por árbol verás discusiones sobre personas específicas, organizadas por ID de persona.</p>
+            <div class="tip"><strong>Requisito:</strong> Haber iniciado sesión con acceso a al menos un árbol genealógico.</div>
+            <h3>Abrir el tablón de mensajes</h3>
+            <ul class="stappen">
+                <li>Haz clic en <strong>💬 Colaborar</strong> en la navegación o en el menú de usuario.</li>
+                <li>Todos los árboles a los que tienes acceso se cargan, cada uno en su propia sección.</li>
+            </ul>
+            <h3>Árboles activos vs. de solo lectura</h3>
+            <ul>
+                <li><strong>✓ Activo</strong> (línea de acento azul) — el árbol cargado. Aquí puedes iniciar discusiones y publicar mensajes.</li>
+                <li><strong>Solo lectura</strong> — otros árboles. Haz clic en el enlace del banner amarillo para activar ese árbol.</li>
+            </ul>
+            <h3>Iniciar una discusión</h3>
+            <ul class="stappen">
+                <li>Escribe un nombre o ID en la barra de búsqueda del árbol <strong>activo</strong>.</li>
+                <li>Haz clic en la persona deseada en el menú desplegable.</li>
+                <li>Confirma en el modal — aparece un nuevo bloque de discusión.</li>
+            </ul>
+            <h3>Publicar un mensaje</h3>
+            <ul class="stappen">
+                <li>Abre un bloque de discusión haciendo clic en su encabezado.</li>
+                <li>Escribe tu mensaje en el campo de texto en la parte inferior.</li>
+                <li>Haz clic en <strong>"Enviar"</strong>.</li>
+            </ul>
+            <h3>Estado de la discusión</h3>
+            <table class="status-tabel">
+                <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+                <tbody>
+                    <tr><td>🆕 Nuevo</td><td>Todavía no atendido</td></tr>
+                    <tr><td>🔓 Abierto</td><td>Activo y pendiente</td></tr>
+                    <tr><td>🔄 En curso</td><td>Alguien está trabajando en ello</td></tr>
+                    <tr><td>✅ Cerrado</td><td>Resuelto</td></tr>
+                </tbody>
+            </table>
+            <h3>Publicar una propuesta de cambio (Editor/Owner)</h3>
+            <ul class="stappen">
+                <li>Haz clic en <strong>"📝 Proponer cambio"</strong> en el formulario de mensaje.</li>
+                <li>Describe el cambio propuesto en el campo de texto amarillo.</li>
+                <li>Envía el mensaje — la propuesta aparece como un bloque amarillo separado.</li>
+            </ul>
+            <h3>Eliminar un mensaje</h3>
+            <p>Los Owners pueden eliminar cualquier mensaje mediante <strong>✕</strong>. Los Viewers y Editors solo pueden eliminar sus propios mensajes.</p>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="steun">
+            <h2>16. Apoyar este proyecto</h2>
+            <p>MyFamTreeCollab es de uso gratuito. Si encuentras útil la aplicación, puedes apoyar el desarrollo a través de Ko-fi.</p>
+            <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
+               style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#FF5E5B; color:#fff; text-decoration:none; border-radius:6px; font-size:0.95rem; font-weight:bold;">
+                <img src="/MyFamTreeCollab/img/Coffee.png" alt="Ko-fi" style="height:50px;">
+                Apoyar este proyecto
+            </a>
+            <a href="#" class="terug-top" style="display:block; margin-top:16px;">↑ Volver arriba</a>
+        </div>
+
+    </div>
+</main>
+
+<div id="footer-placeholder"></div>
+
+<!-- =============================================================
+     SCRIPTS — orden de carga obligatorio (sessie 27):
+     1. Supabase SDK        — requerido por auth.js
+     2. utils.js            — requerido por todos los demás módulos
+     3. auth.js             — requerido por topbar.js
+     4. siteAnalytics.js    — seguimiento de visitas, después de auth.js
+     5. i18next CDN + plugins — requerido por i18n.js
+     6. i18n.js             — envuelve i18next, expone window.i18nModule
+     7. Script de inicio    — init() → componentes → redirect-handler → seguimiento
+     ============================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+<script src="/MyFamTreeCollab/js/i18n.js"></script>
+
+<script>
+    // Mapa de redirección: código de idioma → página de guía correspondiente
+    var HANDLEIDING_REDIRECT = {
+        'nl': '/MyFamTreeCollab/bronnen/handleiding-nl.html',              // Neerlandés
+        'en': '/MyFamTreeCollab/bronnen/handleiding-en.html',              // Inglés
+        'es': '/MyFamTreeCollab/bronnen/handleiding-es.html'               // Español — página actual
+    };
+
+    i18nModule.init()
+        .then(function () {
+            return i18nModule.loadNamespace('bronnen');                    // cargar namespace para traducción de TopBar/Navbar
+        })
+        .then(function () {
+            document.title = 'Guía de usuario — MyFamTreeCollab';         // Título fijo en ES
+
+            return fetch('/MyFamTreeCollab/Layout/TopBar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                    var s = document.createElement('script');
+                    s.src = '../js/topbar.js';
+                    document.body.appendChild(s);
+                });
+        })
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+                });
+        })
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/Footer.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+                });
+        })
+        .then(function () {
+            // Manejador de redirección — intercepta el selector de idioma y navega a la página de guía correcta
+            document.addEventListener('change', function (e) {
+                if (e.target.id !== 'languageSwitcher') { return; }        // Solo el selector de idioma
+                var doel = HANDLEIDING_REDIRECT[e.target.value];           // Buscar página correspondiente
+                if (doel) { window.location.href = doel; }                 // Redirigir
+            });
+
+            SiteAnalytics.trackPage('handleiding-es');                     // Registrar visita
+        });
+</script>
+
+</body>
+</html>
