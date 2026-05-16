@@ -1,0 +1,23 @@
+{
+  "extern": {
+    "paginaTitel": "External — MyFamTreeCollab",
+    "titel": "External",
+    "beschrijving": "The external page is currently under development. Soon you will be able to view external family tree suggestions here.",
+    "knopHome": "Back to Home"
+  },
+  "artikelen": {
+    "paginaTitel": "Articles — MyFamTreeCollab",
+    "titel": "Articles",
+    "beschrijving": "The articles page is currently under development. Soon you will be able to view family tree articles here.",
+    "knopHome": "Back to Home"
+  },
+  "instructies": {
+    "paginaTitel": "Instructions — MyFamTreeCollab",
+    "titel": "Instructions",
+    "beschrijving": "The instructions page is currently under development. Soon you will be able to view your family tree instructions here.",
+    "knopHome": "Back to Home"
+  },
+  "handleiding": {
+    "paginaTitel": "User Guide — MyFamTreeCollab"
+  }
+}
