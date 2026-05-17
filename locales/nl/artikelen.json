@@ -1,23 +1,6 @@
 {
-  "extern": {
-    "paginaTitel": "Extern — MyFamTreeCollab",
-    "titel": "Extern",
-    "beschrijving": "De extern pagina is momenteel in ontwikkeling. Binnenkort kun je hier de stamboom extern suggesties bekijken.",
-    "knopHome": "Terug naar Home"
-  },
-  "artikelen": {
-    "paginaTitel": "Artikelen — MyFamTreeCollab",
-    "titel": "Artikelen",
-    "beschrijving": "De artikelen pagina is momenteel in ontwikkeling. Binnenkort kun je hier de stamboom artikelen bekijken.",
-    "knopHome": "Terug naar Home"
-  },
-  "instructies": {
-    "paginaTitel": "Instructies — MyFamTreeCollab",
-    "titel": "Instructies",
-    "beschrijving": "De instructie pagina is momenteel in ontwikkeling. Binnenkort kun je hier je stamboom instructies bekijken.",
-    "knopHome": "Terug naar Home"
-  },
-  "handleiding": {
-    "paginaTitel": "Handleiding — MyFamTreeCollab"
-  }
+  "paginaTitel": "Artikelen — MyFamTreeCollab",
+  "titel": "Artikelen",
+  "beschrijving": "De artikelen pagina is momenteel in ontwikkeling. Binnenkort kun je hier de stamboom artikelen bekijken.",
+  "knopHome": "Terug naar Home"
 }
