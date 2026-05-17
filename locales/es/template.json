@@ -1,0 +1,32 @@
+{
+  "paginaTitel": "Plantilla CSV — MyFamTreeCollab",
+  "welkom.titel": "Bienvenido a la plantilla CSV",
+  "welkom.tekst": "Descarga aquí una plantilla CSV vacía con los nombres de columna correctos para MyFamTreeCollab. Rellena la plantilla con los datos de tu familia e impórtala desde la página de importación.",
+  "preview.titel": "Vista previa de la estructura de columnas",
+  "preview.subtitel": "La primera fila muestra los nombres de columna en tu idioma. La segunda fila contiene los nombres técnicos necesarios para la importación — no los elimines.",
+  "knopDownload": "Descargar plantilla CSV",
+  "prompt.bestandsnaam": "Introduce el nombre del archivo (sin .csv):",
+  "status.succes": "✅ Plantilla descargada como {{naam}} — rellena las filas e impórtalas desde la página de importación.",
+  "info.titel": "Consejos para rellenar la plantilla",
+  "info.tip1": "No elimines las dos primeras filas (nombres de columna) — la importación las necesita.",
+  "info.tip2": "Usa el formato de fecha AAAA-MM-DD (p. ej. 1954-03-12).",
+  "info.tip3": "Para Género usa: M (hombre), V (mujer) o X (otro).",
+  "info.tip4": "Separa varias parejas en ParejaID con un | (barra vertical).",
+  "info.tip5": "Guarda el archivo como .csv desde Excel con \"Guardar como → CSV\".",
+  "velden": {
+    "ID": "ID",
+    "Doopnaam": "Nombre de pila",
+    "Roepnaam": "Nombre",
+    "Prefix": "Prefijo",
+    "Achternaam": "Apellido",
+    "Geslacht": "Género",
+    "Geboortedatum": "Fecha de nacimiento",
+    "Geboorteplaats": "Lugar de nacimiento",
+    "Overlijdensdatum": "Fecha de fallecimiento",
+    "Overlijdensplaats": "Lugar de fallecimiento",
+    "VaderID": "IDPadre",
+    "MoederID": "IDMadre",
+    "PartnerID": "IDPareja",
+    "Opmerkingen": "Observaciones"
+  }
+}
