@@ -1,7 +1,7 @@
 <!-- ======================= bronnen/artikelen.html v0.3.0 =======================
      Wijziging v0.3.0 (sessie 27):
      - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
-     - Namespace 'bronnen' geladen via i18nModule.init() promise-keten
+     - Namespace 'artikelen' geladen via i18nModule.init() promise-keten
      - data-i18n attributen toegevoegd op alle zichtbare teksten
      - Components geladen via i18nModule.onComponentLoaded() (i.p.v. innerHTML)
      - document.title via i18nModule.t()
@@ -53,13 +53,13 @@
 <main>
     <div class="binnenkort-blok">
         <div class="icoon">📰</div>
-        <h1 data-i18n="bronnen:artikelen.titel">Artikelen</h1>           <!-- i18n: paginatitel -->
-        <p data-i18n="bronnen:artikelen.beschrijving">                   <!-- i18n: omschrijving -->
+        <h1 data-i18n="artikelen:titel">Artikelen</h1>                   <!-- i18n: paginatitel -->
+        <p data-i18n="artikelen:beschrijving">                            <!-- i18n: omschrijving -->
             De artikelen pagina is momenteel in ontwikkeling.<br>
             Binnenkort kun je hier de stamboom artikelen bekijken.
         </p>
         <a href="/MyFamTreeCollab/" class="knop-home"
-           data-i18n="bronnen:artikelen.knopHome">Terug naar Home</a>    <!-- i18n: knoptekst -->
+           data-i18n="artikelen:knopHome">Terug naar Home</a>             <!-- i18n: knoptekst -->
     </div>
 </main>
 
@@ -76,7 +76,7 @@
      6. i18next-http-backend CDN
      7. i18next-browser-languagedetector CDN
      8. i18n.js             — wraps i18next, exposeert window.i18nModule
-     9. Pagina init script  — init() → loadNamespace('bronnen') → render
+     9. Pagina init script  — init() → loadNamespace('artikelen') → render
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
 <script src="../js/utils.js"></script>                                         <!-- Gedeelde hulpfuncties -->
@@ -94,11 +94,11 @@
     // Volgorde: i18n init → namespace laden → components laden → tracking
     i18nModule.init()
         .then(function () {
-            return i18nModule.loadNamespace('bronnen');                    // laad bronnen.json voor actieve taal
+            return i18nModule.loadNamespace('artikelen');                  // laad artikelen.json voor actieve taal
         })
         .then(function () {
             // Paginatitel instellen via i18n (nooit hardcoded)
-            document.title = i18nModule.t('bronnen:artikelen.paginaTitel');
+            document.title = i18nModule.t('artikelen:paginaTitel');
 
             // TopBar laden en vertalen via onComponentLoaded()
             // Dit garandeert #top-auth in de DOM vóór topbar.js initialiseert
