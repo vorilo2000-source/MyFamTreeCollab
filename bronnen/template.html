@@ -1,18 +1,21 @@
-<!-- ======================= bronnen/template.html v2.1.0 =======================
+<!-- ======================= bronnen/template.html v2.2.0 =======================
      CSV Template pagina: visueel voorbeeld + download van lege CSV-template
 
-     Wijziging v2.1.0 (sessie 20):
-     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
-     - SiteAnalytics.trackPage("template") toegevoegd in fetch-scriptblok
-     - Versnipperde inline fetch-blokken geconsolideerd naar één script-blok
-     - topbar.js injectie hersteld (was ontbrekend in origineel)
-     - Navbar placeholder ID gecorrigeerd naar navbar-placeholder (was Navbar-placeholder)
-     - supabase-js + utils.js + auth.js toegevoegd aan laadvolgorde (waren ontbrekend)
+     Wijziging v2.2.0 (sessie 27):
+     - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
+     - Namespace 'template' geladen via i18nModule.init() promise-keten
+     - data-i18n attributen toegevoegd op alle statische UI-teksten
+     - Tabel toont vertaalde kolomnamen (rij 1) + NL technische namen (rij 2)
+     - CSV-download bevat beide rijen: vertaald + technisch
+     - JS-strings (prompt, status) via i18nModule.t()
+     - Components geladen via i18nModule.onComponentLoaded()
+     - eruda debug-script verwijderd
+     - Laadvolgorde: supabase → utils → auth → siteAnalytics → schema.js →
+                     i18next CDN → i18n.js → pagina init
 
-     Wijziging v2.0.0 / v1.0.0: facelift — welkomstblok, paginatitel div verwijderd,
-                       inline stijlen naar <style>, uitleg herschreven naar
-                       template-context (was per abuis export-uitleg)
-     Scripts: schema.js (voor dynamische kolomnamen)
+     Wijziging v2.1.0 (sessie 20):
+     - siteAnalytics.js toegevoegd, topbar.js injectie hersteld,
+       Navbar placeholder ID gecorrigeerd, supabase/utils/auth toegevoegd
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -21,11 +24,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSV Template</title>
 
-     <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= Favicon ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
 
@@ -36,71 +39,30 @@
         .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
 
         /* ======================= TEMPLATE SECTIE ======================= */
-        .template-sectie {                                                 /* Kader rondom de tabelpreview en download */
-            border: 1px solid #ddd;                                        /* Subtiele rand */
-            border-radius: 6px;                                            /* Afgeronde hoeken */
-            padding: 24px;                                                 /* Ruimte binnen het kader */
-            margin-bottom: 20px;                                           /* Ruimte onder de sectie */
-            background: #fafafa;                                           /* Lichtgrijze achtergrond */
-        }
+        .template-sectie { border: 1px solid #ddd; border-radius: 6px; padding: 24px; margin-bottom: 20px; background: #fafafa; }
         .template-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 6px 0; color: #333; }
         .template-sectie .subtitel { font-size: 0.88rem; color: #888; margin: 0 0 16px 0; }
 
         /* ======================= CSV TABEL PREVIEW ======================= */
-        .csv-tabel-wrapper {                                               /* Wrapper zodat de brede tabel horizontaal scrollt */
-            overflow-x: auto;                                              /* Scrollbaar als de tabel breder is dan de pagina */
-            margin-bottom: 16px;                                           /* Ruimte onder de tabel */
-        }
-        table {                                                            /* De CSV-previewtabel */
-            border-collapse: collapse;                                     /* Geen dubbele randen */
-            font-size: 0.85rem;                                            /* Klein zodat alle kolommen passen */
-            white-space: nowrap;                                           /* Kolomnamen niet afbreken */
-        }
-        th, td {                                                           /* Cel opmaak */
-            border: 1px solid #ccc;                                        /* Randen rondom elke cel */
-            padding: 6px 10px;                                             /* Ruimte binnen de cel */
-            text-align: left;                                              /* Links uitlijnen */
-        }
-        th {                                                               /* Kolomkopstijl */
-            background: #f0f0f0;                                           /* Lichtgrijs om koppen te onderscheiden */
-            font-weight: bold;                                             /* Vetgedrukt */
-            color: #333;                                                   /* Donkergrijs */
-        }
-        td { color: #aaa; font-style: italic; }                           /* Lege cellen grijs en cursief zodat duidelijk is dat ze ingevuld moeten worden */
+        .csv-tabel-wrapper { overflow-x: auto; margin-bottom: 16px; }    /* Scrollbaar als tabel te breed is */
+        table { border-collapse: collapse; font-size: 0.85rem; white-space: nowrap; }
+        th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+        th { background: #f0f0f0; font-weight: bold; color: #333; }      /* Vertaalde kolomkoppen */
+        tr.technisch td { color: #aaa; font-style: italic; font-size: 0.8rem; } /* Technische NL namen — grijs */
+        tr.leeg td { color: #ccc; font-style: italic; }                   /* Lege invulrijen */
 
         /* ======================= DOWNLOAD KNOP ======================= */
-        .knop-download {                                                   /* Downloadknop voor de CSV-template */
-            padding: 10px 24px;                                            /* Ruim klikgebied */
-            background: #1E90FF;                                           /* Blauw als primaire actie */
-            color: #fff;                                                   /* Witte tekst */
-            border: none;                                                  /* Geen rand */
-            border-radius: 5px;                                            /* Afgeronde hoeken */
-            font-size: 0.95rem;                                            /* Leesbaar */
-            font-weight: bold;                                             /* Vetgedrukt */
-            cursor: pointer;                                               /* Handje bij hover */
-        }
-        .knop-download:hover { background: #1278d4; }                     /* Donkerder blauw bij hover */
-        #status { font-size: 0.9rem; margin-top: 10px; }                  /* Statusmelding na download */
+        .knop-download { padding: 10px 24px; background: #1E90FF; color: #fff; border: none; border-radius: 5px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
+        .knop-download:hover { background: #1278d4; }
+        #status { font-size: 0.9rem; margin-top: 10px; }
 
         /* ======================= INFO BLOK ======================= */
-        .info-blok {                                                       /* Blauw informatieblok met uitleg */
-            background: #eef4fb;                                           /* Lichtblauw achtergrond */
-            border-left: 4px solid #1E90FF;                                /* Blauwe linkerrand als accent */
-            border-radius: 0 6px 6px 0;                                   /* Alleen rechter hoeken afgerond */
-            padding: 14px 18px;                                            /* Ruimte binnen het blok */
-            font-size: 0.88rem;                                            /* Klein informatietekst */
-            color: #333;                                                   /* Donkergrijs */
-            line-height: 1.7;                                              /* Ruime regelafstand */
-        }
-        .info-blok strong { color: #004080; }                             /* Donkerblauw voor vetgedrukte tekst */
+        .info-blok { background: #eef4fb; border-left: 4px solid #1E90FF; border-radius: 0 6px 6px 0; padding: 14px 18px; font-size: 0.88rem; color: #333; line-height: 1.7; }
+        .info-blok strong { color: #004080; }
     </style>
 </head>
 <body>
 
-     <!-- ======================= source view enablement  ======================= -->
-     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-     <script>eruda.init();</script>
-     
 <!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
 
@@ -113,42 +75,41 @@
 
         <!-- ======================= Welkomstblok ======================= -->
         <div class="welkom-blok">
-            <h1>Welkom bij CSV Template</h1>
-            <p>
+            <h1 data-i18n="template:welkom.titel">Welkom bij CSV Template</h1>  <!-- i18n: paginatitel -->
+            <p data-i18n="template:welkom.tekst">                                <!-- i18n: introductietekst -->
                 Download hier een lege CSV-template met de juiste kolomnamen voor MyFamTreeCollab.
-                Vul de template in met je familiegegevens en importeer hem daarna via de
-                <a href="../home/import.html">import-pagina</a>.
             </p>
         </div>
 
         <!-- ======================= Template preview + download ======================= -->
         <div class="template-sectie">
-            <h2>Voorbeeld van de kolomstructuur</h2>
-            <p class="subtitel">
-                De kolom <strong>ID</strong> hoef je niet in te vullen,
-                die wordt automatisch gegenereerd bij import op basis van de naamvelden.
+            <h2 data-i18n="template:preview.titel">Voorbeeld van de kolomstructuur</h2>
+            <p class="subtitel" data-i18n="template:preview.subtitel">           <!-- i18n: uitleg twee rijen -->
+                De eerste rij toont de kolomnamen in jouw taal.
+                De tweede rij bevat de technische namen die vereist zijn voor de import.
             </p>
 
-            <!-- Dynamische tabel gevuld door JS op basis van schema.js -->
+            <!-- Tabel: rij 1 = vertaalde namen, rij 2 = NL technische namen, rij 3-4 = leeg -->
             <div class="csv-tabel-wrapper">
                 <table>
-                    <thead id="csvHeader"></thead>   <!-- Kolomkoppen komen hier via JS -->
-                    <tbody id="csvBody"></tbody>      <!-- Twee lege voorbeeldrijen komen hier via JS -->
+                    <thead id="csvHeader"></thead>                         <!-- Vertaalde kolomkoppen via JS -->
+                    <tbody id="csvBody"></tbody>                            <!-- Technische rij + lege rijen via JS -->
                 </table>
             </div>
 
-            <button id="downloadBtn" class="knop-download">Download CSV template</button> <!-- Start download van lege CSV -->
-            <p id="status"></p>                                           <!-- Statusmelding na download -->
+            <button id="downloadBtn" class="knop-download"
+                    data-i18n="template:knopDownload">Download CSV template</button>
+            <p id="status"></p>                                            <!-- Statusmelding na download -->
         </div>
 
         <!-- ======================= Info blok ======================= -->
         <div class="info-blok">
-            <strong>Tips voor het invullen van de template</strong><br>
-            Laat de <strong>ID</strong>-kolom leeg, die wordt automatisch ingevuld bij import.<br>
-            Gebruik voor datums het formaat <strong>JJJJ-MM-DD</strong> (bijv. 1954-03-12).<br>
-            Voor <strong>Geslacht</strong> gebruik je: M (man), V (vrouw) of X (anders).<br>
-            Meerdere partners in <strong>PartnerID</strong> scheid je met een <strong>|</strong> (pipe).<br>
-            Sla het bestand op als <strong>.csv</strong> vanuit Excel via "Opslaan als → CSV".
+            <strong data-i18n="template:info.titel">Tips voor het invullen van de template</strong><br>
+            <span data-i18n="template:info.tip1">Verwijder de eerste twee rijen niet — de import heeft ze nodig.</span><br>
+            <span data-i18n="template:info.tip2">Gebruik voor datums het formaat JJJJ-MM-DD (bijv. 1954-03-12).</span><br>
+            <span data-i18n="template:info.tip3">Voor Geslacht gebruik je: M (man), V (vrouw) of X (anders).</span><br>
+            <span data-i18n="template:info.tip4">Meerdere partners in PartnerID scheid je met een | (pipe).</span><br>
+            <span data-i18n="template:info.tip5">Sla het bestand op als .csv vanuit Excel via "Opslaan als → CSV".</span>
         </div>
 
     </div>
@@ -158,122 +119,155 @@
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — volgorde is verplicht:
+     SCRIPTS — verplichte laadvolgorde (sessie 27):
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
-     4. siteAnalytics.js   — bezoektracking, na auth.js
+     4. siteAnalytics.js    — bezoektracking, na auth.js
      5. schema.js           — veldnamen voor tabel en CSV-download
-     6. TopBar/Navbar/Footer fetch + trackPage
+     6. i18next CDN + plugins — vereist door i18n.js
+     7. i18n.js             — wraps i18next, exposeert window.i18nModule
+     8. Pagina init         — init() → loadNamespace('template') → components → tabel → tracking
      ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: SiteAnalytics — na auth.js zodat tier beschikbaar is -->
-<script src="../js/schema.js"></script>                       <!-- Schema eerst laden zodat veldnamen beschikbaar zijn bij DOMContentLoaded -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
+<script src="../js/utils.js"></script>                                         <!-- Gedeelde hulpfuncties -->
+<script src="../js/auth.js"></script>                                          <!-- Authenticatie module -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                  <!-- Bezoektracking, na auth.js -->
+<script src="../js/schema.js"></script>                                        <!-- Veldnamen voor tabel en CSV -->
+
+<!-- i18next en plugins — volgorde is verplicht -->
+<script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+<script src="/MyFamTreeCollab/js/i18n.js"></script>                           <!-- i18n module wrapper -->
 
 <script>
-    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
+    // ── Pagina initialisatie ──────────────────────────────────────────────
+    i18nModule.init()
+        .then(function () {
+            return i18nModule.loadNamespace('template');                   // laad template.json voor actieve taal
         })
-        .catch(function(err) { console.error('TopBar laden mislukt:', err); });
+        .then(function () {
+            document.title = i18nModule.t('template:paginaTitel');        // paginatitel via i18n
 
-    // Stap 2: Navbar laden
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            var ph = document.getElementById('navbar-placeholder');
-            if (ph) ph.innerHTML = data;
+            return fetch('/MyFamTreeCollab/Layout/TopBar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                    var s = document.createElement('script');
+                    s.src = '../js/topbar.js';                            // topbar.js na #top-auth in DOM
+                    document.body.appendChild(s);
+                });
         })
-        .catch(function(err) { console.error('Navbar laden mislukt:', err); });
-
-    // Stap 3: Footer laden
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+                });
         })
-        .catch(function(err) { console.error('Footer laden mislukt:', err); });
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/Footer.html')
+                .then(function (resp) { return resp.text(); })
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+                });
+        })
+        .then(function () {
+            // ── Tabel opbouwen na i18n init ──────────────────────────────
+            if (!window.StamboomSchema) {                                  // schema.js check
+                console.error('StamboomSchema niet geladen — tabel blijft leeg.');
+                return;
+            }
 
-    // Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-    SiteAnalytics.trackPage("template"); // Bezoek registreren in Supabase page_visits tabel
-</script>
+            var velden = window.StamboomSchema.fields;                    // NL technische veldnamen
 
-<!-- ======================= Pagina-specifieke JS ======================= -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+            // Rij 1: vertaalde kolomkoppen als <th>
+            var csvHeader = document.getElementById('csvHeader');
+            var headerRij = document.createElement('tr');
+            velden.forEach(function (veld) {
+                var th = document.createElement('th');
+                th.textContent = i18nModule.t('template:velden.' + veld, { defaultValue: veld }); // vertaald, fallback = NL
+                headerRij.appendChild(th);
+            });
+            csvHeader.appendChild(headerRij);
 
-    if (!window.StamboomSchema) {                                         // Controleer of schema.js correct geladen is
-        console.error('StamboomSchema niet geladen — tabel blijft leeg.');
-        return;
-    }
+            // Rij 2: NL technische namen als <td> — grijs, cursief
+            var csvBody = document.getElementById('csvBody');
+            var technischRij = document.createElement('tr');
+            technischRij.className = 'technisch';                         // CSS klasse voor grijze stijl
+            velden.forEach(function (veld) {
+                var td = document.createElement('td');
+                td.textContent = veld;                                    // altijd NL technische naam
+                technischRij.appendChild(td);
+            });
+            csvBody.appendChild(technischRij);
 
-    const velden = window.StamboomSchema.fields;                         // Haal de officiële veldnamen op uit schema.js
+            // Rij 3-4: lege invulrijen
+            for (var i = 0; i < 2; i++) {
+                var leegRij = document.createElement('tr');
+                leegRij.className = 'leeg';
+                velden.forEach(function () {
+                    var td = document.createElement('td');
+                    td.textContent = '...';                               // plaatshouder
+                    leegRij.appendChild(td);
+                });
+                csvBody.appendChild(leegRij);
+            }
 
-    /* ======================= KOLOMKOPPEN INVULLEN ======================= */
-    const csvHeader = document.getElementById('csvHeader');
-    const headerRij = document.createElement('tr');                      // Maak een headerrij
-    velden.forEach(veld => {                                             // Loop door alle veldnamen
-        const th = document.createElement('th');                         // Maak een koptekstcel
-        th.textContent = veld;                                           // Vul de veldnaam in
-        headerRij.appendChild(th);                                       // Voeg de cel toe aan de rij
-    });
-    csvHeader.appendChild(headerRij);                                    // Voeg de rij toe aan de thead
+            // ── Download knop ─────────────────────────────────────────────
+            var downloadBtn = document.getElementById('downloadBtn');
+            var statusEl    = document.getElementById('status');
 
-    /* ======================= LEGE VOORBEELDRIJEN INVULLEN ======================= */
-    const csvBody = document.getElementById('csvBody');
-    for (let i = 0; i < 2; i++) {                                        // Maak twee lege voorbeeldrijen
-        const rij = document.createElement('tr');                        // Maak een tabelrij
-        velden.forEach(() => {                                           // Loop door alle velden
-            const td = document.createElement('td');                     // Maak een cel
-            td.textContent = '...';                                      // Plaatshouder tekst zodat lege cellen zichtbaar zijn
-            rij.appendChild(td);                                         // Voeg cel toe aan de rij
+            downloadBtn.addEventListener('click', function () {
+                var nu           = new Date();
+                var datumStempel = nu.getFullYear() +
+                    String(nu.getMonth() + 1).padStart(2, '0') +          // maand 2 cijfers
+                    String(nu.getDate()).padStart(2, '0');                 // dag 2 cijfers
+
+                var standaardNaam   = 'stamboom_template_' + datumStempel;
+                var gebruikersnaam  = prompt(                              // vraag bestandsnaam via i18n
+                    i18nModule.t('template:prompt.bestandsnaam'),
+                    standaardNaam
+                );
+                if (!gebruikersnaam) { gebruikersnaam = standaardNaam; }  // fallback naar standaardnaam
+                var bestandsnaam = gebruikersnaam + '.csv';
+
+                // Rij 1: vertaalde kolomnamen
+                var vertaaldeKoppen = velden.map(function (veld) {
+                    return '"' + i18nModule.t('template:velden.' + veld, { defaultValue: veld }).replace(/"/g, '""') + '"';
+                }).join(',');
+
+                // Rij 2: NL technische namen — vereist voor import-parser
+                var technischeKoppen = velden.map(function (veld) {
+                    return '"' + veld.replace(/"/g, '""') + '"';
+                }).join(',');
+
+                // Rij 3-4: lege invulrijen
+                var legeRij  = Array(velden.length).fill('""').join(',');
+
+                var csvInhoud = '\uFEFF' +                                // BOM voor Excel UTF-8
+                    vertaaldeKoppen  + '\n' +                             // rij 1: vertaald
+                    technischeKoppen + '\n' +                             // rij 2: technisch NL
+                    legeRij          + '\n' +                             // rij 3: leeg
+                    legeRij;                                              // rij 4: leeg
+
+                var blob = new Blob([csvInhoud], { type: 'text/csv;charset=utf-8;' });
+                var link = document.createElement('a');
+                link.href     = URL.createObjectURL(blob);
+                link.download = bestandsnaam;
+                document.body.appendChild(link);
+                link.click();                                             // start download
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);                           // geheugen vrijgeven
+
+                // Statusmelding via i18n met interpolatie
+                statusEl.textContent = i18nModule.t('template:status.succes', { naam: bestandsnaam });
+                statusEl.style.color = 'green';
+            });
+
+            SiteAnalytics.trackPage('template');                          // bezoek registreren
         });
-        csvBody.appendChild(rij);                                        // Voeg de rij toe aan de tbody
-    }
-
-    /* ======================= DOWNLOAD KNOP ======================= */
-    const downloadBtn = document.getElementById('downloadBtn');
-    const statusEl    = document.getElementById('status');
-
-    downloadBtn.addEventListener('click', () => {                        // Luister naar klik op de downloadknop
-        const nu = new Date();                                           // Haal de huidige datum op
-        const datumStempel =                                             // Bouw een datumstempel voor de bestandsnaam
-            nu.getFullYear() +
-            String(nu.getMonth() + 1).padStart(2, '0') +                // Maand opvullen tot 2 cijfers
-            String(nu.getDate()).padStart(2, '0');                       // Dag opvullen tot 2 cijfers
-
-        const standaardNaam = `stamboom_template_${datumStempel}`;       // Standaard bestandsnaam met datum
-        let gebruikersnaam  = prompt('Voer bestandsnaam in (zonder .csv):', standaardNaam); // Vraag gebruiker om naam
-        if (!gebruikersnaam) gebruikersnaam = standaardNaam;            // Gebruik standaardnaam als gebruiker annuleert
-        const bestandsnaam  = `${gebruikersnaam}.csv`;                   // Voeg extensie toe
-
-        const legeRij    = Array(velden.length).fill('').join(',');      // Een lege CSV-rij met de juiste hoeveelheid komma's
-        const csvInhoud  = '\uFEFF' +                                    // BOM-teken zodat Excel de UTF-8 encoding herkent
-            velden.join(',') + '\n' +                                    // Eerste regel: kolomnamen gescheiden door komma's
-            legeRij + '\n' +                                             // Tweede regel: leeg
-            legeRij;                                                     // Derde regel: leeg
-
-        const blob = new Blob([csvInhoud], { type: 'text/csv;charset=utf-8;' }); // Maak een downloadbaar bestand
-        const link = document.createElement('a');                        // Maak een onzichtbare downloadlink
-        link.href     = URL.createObjectURL(blob);                       // Koppel de blob-URL aan de link
-        link.download = bestandsnaam;                                    // Stel de bestandsnaam in
-        document.body.appendChild(link);                                 // Voeg de link tijdelijk toe aan de pagina
-        link.click();                                                    // Start de download
-        document.body.removeChild(link);                                 // Verwijder de link direct na klikken
-        URL.revokeObjectURL(link.href);                                  // Geef het geheugen van de blob-URL vrij
-
-        statusEl.textContent = `✅ Template gedownload als ${bestandsnaam} — vul de lege rijen in en importeer via de importpagina.`;
-        statusEl.style.color = 'green';                                  // Groene statusmelding bij succes
-    });
-
-});
 </script>
 
 </body>
