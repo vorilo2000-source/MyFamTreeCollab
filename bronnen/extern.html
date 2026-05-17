@@ -1,8 +1,8 @@
 <!-- ======================= bronnen/extern.html v0.3.0 =======================
      Wijziging v0.3.0 (sessie 27):
      - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
-     - Namespace 'bronnen' geladen via i18nModule.init() promise-keten
-     - data-i18n attributen toegevoegd op alle zichtbare teksten
+     - Namespace 'extern' geladen via i18nModule.init() promise-keten
+     - data-i18n attributen gecorrigeerd: bronnen:extern.* → extern:*
      - Components geladen via i18nModule.onComponentLoaded() (i.p.v. innerHTML)
      - document.title via i18nModule.t()
      - Laadvolgorde: supabase → utils → auth → siteAnalytics → i18next CDN → i18n.js
@@ -24,20 +24,11 @@
 
     <style>
         /* ======================= BINNENKORT BLOK ======================= */
-        .binnenkort-blok {                                                 /* Centraal informatieblok */
-            max-width: 520px;                                              /* Niet te breed */
-            margin: 0 auto;                                                /* Horizontaal centreren */
-            text-align: center;                                            /* Tekst centreren */
-            padding: 48px 24px;                                            /* Ruimte rondom de inhoud */
-        }
-        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; } /* Groot icoon boven de tekst */
+        .binnenkort-blok { max-width: 520px; margin: 0 auto; text-align: center; padding: 48px 24px; }
+        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; }
         .binnenkort-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
         .binnenkort-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 24px 0; }
-        .knop-home {                                                       /* Knop terug naar home */
-            display: inline-block; padding: 10px 24px;
-            background: #1E90FF; color: #fff; text-decoration: none;
-            border-radius: 5px; font-size: 0.95rem; font-weight: bold;
-        }
+        .knop-home { display: inline-block; padding: 10px 24px; background: #1E90FF; color: #fff; text-decoration: none; border-radius: 5px; font-size: 0.95rem; font-weight: bold; }
         .knop-home:hover { background: #1278d4; }
     </style>
 </head>
@@ -53,13 +44,13 @@
 <main>
     <div class="binnenkort-blok">
         <div class="icoon">🔗</div>
-        <h1 data-i18n="bronnen:extern.titel">Extern</h1>                 <!-- i18n: paginatitel -->
-        <p data-i18n="bronnen:extern.beschrijving">                       <!-- i18n: omschrijving -->
+        <h1 data-i18n="extern:titel">Extern</h1>                         <!-- i18n: paginatitel -->
+        <p data-i18n="extern:beschrijving">                               <!-- i18n: omschrijving -->
             De extern pagina is momenteel in ontwikkeling.<br>
             Binnenkort kun je hier de stamboom extern suggesties bekijken.
         </p>
         <a href="/MyFamTreeCollab/" class="knop-home"
-           data-i18n="bronnen:extern.knopHome">Terug naar Home</a>        <!-- i18n: knoptekst -->
+           data-i18n="extern:knopHome">Terug naar Home</a>                <!-- i18n: knoptekst -->
     </div>
 </main>
 
@@ -72,11 +63,9 @@
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
      4. siteAnalytics.js    — bezoektracking, na auth.js
-     5. i18next CDN         — vereist door i18n.js
-     6. i18next-http-backend CDN
-     7. i18next-browser-languagedetector CDN
-     8. i18n.js             — wraps i18next, exposeert window.i18nModule
-     9. Pagina init script  — init() → loadNamespace('bronnen') → render
+     5. i18next CDN + plugins — vereist door i18n.js
+     6. i18n.js             — wraps i18next, exposeert window.i18nModule
+     9. Pagina init script  — init() → loadNamespace('extern') → render
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
 <script src="../js/utils.js"></script>                                         <!-- Gedeelde hulpfuncties -->
@@ -90,56 +79,38 @@
 <script src="/MyFamTreeCollab/js/i18n.js"></script>                           <!-- i18n module wrapper -->
 
 <script>
-    // ── Pagina initialisatie ──────────────────────────────────────────────
-    // Volgorde: i18n init → namespace laden → components laden → tracking
     i18nModule.init()
         .then(function () {
-            return i18nModule.loadNamespace('bronnen');                    // laad bronnen.json voor actieve taal
+            return i18nModule.loadNamespace('extern');                     // laad extern.json voor actieve taal
         })
         .then(function () {
-            // Paginatitel instellen via i18n (nooit hardcoded)
-            document.title = i18nModule.t('bronnen:extern.paginaTitel');
+            document.title = i18nModule.t('extern:paginaTitel');          // paginatitel via i18n
 
-            // TopBar laden en vertalen via onComponentLoaded()
-            // Dit garandeert #top-auth in de DOM vóór topbar.js initialiseert
             return fetch('/MyFamTreeCollab/Layout/TopBar.html')
                 .then(function (resp) { return resp.text(); })
                 .then(function (html) {
-                    i18nModule.onComponentLoaded(                          // inject + vertaal component
-                        html,
-                        document.getElementById('topbar-placeholder')
-                    );
-                    // topbar.js injecteren nadat #top-auth in de DOM zit
+                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
                     var s = document.createElement('script');
-                    s.src = '../js/topbar.js';
+                    s.src = '../js/topbar.js';                            // topbar.js na #top-auth in DOM
                     document.body.appendChild(s);
                 });
         })
         .then(function () {
-            // Navbar laden en vertalen
             return fetch('/MyFamTreeCollab/Layout/Navbar.html')
                 .then(function (resp) { return resp.text(); })
                 .then(function (html) {
-                    i18nModule.onComponentLoaded(
-                        html,
-                        document.getElementById('navbar-placeholder')
-                    );
+                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
                 });
         })
         .then(function () {
-            // Footer laden en vertalen
             return fetch('/MyFamTreeCollab/Layout/Footer.html')
                 .then(function (resp) { return resp.text(); })
                 .then(function (html) {
-                    i18nModule.onComponentLoaded(
-                        html,
-                        document.getElementById('footer-placeholder')
-                    );
+                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
                 });
         })
         .then(function () {
-            // Paginabezoek registreren — altijd als laatste stap
-            SiteAnalytics.trackPage('extern');
+            SiteAnalytics.trackPage('extern');                            // bezoek registreren
         });
 </script>
 
