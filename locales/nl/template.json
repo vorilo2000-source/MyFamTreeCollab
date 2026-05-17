@@ -1,0 +1,32 @@
+{
+  "paginaTitel": "CSV Template — MyFamTreeCollab",
+  "welkom.titel": "Welkom bij CSV Template",
+  "welkom.tekst": "Download hier een lege CSV-template met de juiste kolomnamen voor MyFamTreeCollab. Vul de template in met je familiegegevens en importeer hem daarna via de import-pagina.",
+  "preview.titel": "Voorbeeld van de kolomstructuur",
+  "preview.subtitel": "De eerste rij toont de kolomnamen in jouw taal. De tweede rij bevat de technische namen die vereist zijn voor de import — verwijder deze niet.",
+  "knopDownload": "Download CSV template",
+  "prompt.bestandsnaam": "Voer bestandsnaam in (zonder .csv):",
+  "status.succes": "✅ Template gedownload als {{naam}} — vul de lege rijen in en importeer via de importpagina.",
+  "info.titel": "Tips voor het invullen van de template",
+  "info.tip1": "Verwijder de eerste twee rijen (kolomnamen) niet — de import heeft ze nodig.",
+  "info.tip2": "Gebruik voor datums het formaat JJJJ-MM-DD (bijv. 1954-03-12).",
+  "info.tip3": "Voor Geslacht gebruik je: M (man), V (vrouw) of X (anders).",
+  "info.tip4": "Meerdere partners in PartnerID scheid je met een | (pipe).",
+  "info.tip5": "Sla het bestand op als .csv vanuit Excel via \"Opslaan als → CSV\".",
+  "velden": {
+    "ID": "ID",
+    "Doopnaam": "Doopnaam",
+    "Roepnaam": "Roepnaam",
+    "Prefix": "Prefix",
+    "Achternaam": "Achternaam",
+    "Geslacht": "Geslacht",
+    "Geboortedatum": "Geboortedatum",
+    "Geboorteplaats": "Geboorteplaats",
+    "Overlijdensdatum": "Overlijdensdatum",
+    "Overlijdensplaats": "Overlijdensplaats",
+    "VaderID": "VaderID",
+    "MoederID": "MoederID",
+    "PartnerID": "PartnerID",
+    "Opmerkingen": "Opmerkingen"
+  }
+}
