@@ -1,0 +1,32 @@
+{
+  "paginaTitel": "CSV Template — MyFamTreeCollab",
+  "welkom.titel": "Welcome to CSV Template",
+  "welkom.tekst": "Download an empty CSV template with the correct column names for MyFamTreeCollab. Fill in the template with your family data and then import it via the import page.",
+  "preview.titel": "Column structure preview",
+  "preview.subtitel": "The first row shows column names in your language. The second row contains the technical names required for import — do not remove them.",
+  "knopDownload": "Download CSV template",
+  "prompt.bestandsnaam": "Enter file name (without .csv):",
+  "status.succes": "✅ Template downloaded as {{naam}} — fill in the rows and import via the import page.",
+  "info.titel": "Tips for filling in the template",
+  "info.tip1": "Do not remove the first two rows (column names) — the import needs them.",
+  "info.tip2": "Use the date format YYYY-MM-DD (e.g. 1954-03-12).",
+  "info.tip3": "For Gender use: M (male), F (female) or X (other).",
+  "info.tip4": "Separate multiple partners in PartnerID with a | (pipe).",
+  "info.tip5": "Save the file as .csv from Excel via \"Save as → CSV\".",
+  "velden": {
+    "ID": "ID",
+    "Doopnaam": "Baptismal name",
+    "Roepnaam": "First name",
+    "Prefix": "Prefix",
+    "Achternaam": "Last name",
+    "Geslacht": "Gender",
+    "Geboortedatum": "Date of birth",
+    "Geboorteplaats": "Place of birth",
+    "Overlijdensdatum": "Date of death",
+    "Overlijdensplaats": "Place of death",
+    "VaderID": "FatherID",
+    "MoederID": "MotherID",
+    "PartnerID": "PartnerID",
+    "Opmerkingen": "Notes"
+  }
+}
