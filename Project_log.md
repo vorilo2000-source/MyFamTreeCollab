@@ -1,7 +1,153 @@
 MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-05-15
+## Bijgewerkt: 2026-05-19
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 27 — i18n uitrollen op bronnen, gemeenschap en develop pagina's
+
+**Datum:** 2026-05-19
+**Doel:** i18n namespace uitrollen op alle sub-pagina's van bronnen, gemeenschap en develop. Per pagina een aparte namespace JSON (nl/en/es). Handleiding meertalig via aparte HTML-bestanden per taal met redirect-handler.
+
+---
+
+### Uitgevoerde acties
+
+#### Patroon gecorrigeerd t.o.v. eerdere sessie
+- Fout hersteld: alle keys zaten aanvankelijk in één `bronnen.json` — opgesplitst naar losse namespace per pagina (bijv. `artikelen.json`, `extern.json` etc.)
+- Namespace separator correct: `pagina:key` (dubbele punt), niet `pagina.key`
+
+#### bronnen/ — i18n uitgerold
+- `bronnen/artikelen.html` v0.2.0 → v0.3.0: i18n + namespace `artikelen`
+- `bronnen/extern.html` v0.2.0 → v0.3.0: i18n + namespace `extern`
+- `bronnen/instructies.html` v0.2.0 → v0.3.0: i18n + namespace `instructies`
+- `bronnen/handleiding.html` verwijderd → vervangen door drie taalversies:
+  - `bronnen/handleiding-nl.html` v2.4.0: NL handleiding + redirect-handler
+  - `bronnen/handleiding-en.html` v2.4.0: EN volledige vertaling + redirect-handler
+  - `bronnen/handleiding-es.html` v2.4.0: ES volledige vertaling + redirect-handler
+  - `bronnen/handleiding.html` v2.4.1: redirect-bestand naar handleiding-nl.html (404-fix)
+- `bronnen/template.html` v2.1.0 → v2.2.0: i18n + namespace `template` + meertalige tabel (vertaalde kolomnamen rij 1, NL technische namen rij 2) + meertalige CSV-download
+
+#### gemeenschap/ — i18n uitgerold + bugs gefixed
+- `gemeenschap/contact.html` v0.2.0 → v0.3.0
+- `gemeenschap/discussies.html` v0.2.0 → v0.3.0
+- `gemeenschap/evenement.html` v0.2.0 → v0.3.0
+- `gemeenschap/forum.html` v0.2.0 → v0.3.0 — ook `trackPage("evenement")` → `trackPage('forum')` gecorrigeerd
+- `gemeenschap/groepen.html` v0.2.0 → v0.3.0
+
+Gemeenschap-bugs gefixed in alle pagina's:
+- Dubbele Supabase/utils/auth script-blokken verwijderd
+- Losse fetch-blokken bovenaan body verwijderd
+- `id="Navbar-placeholder"` → `id="navbar-placeholder"`
+- Favicon paden gecorrigeerd naar `/MyFamTreeCollab/img/`
+- Kapotte `</script>s` verwijderd (contact.html)
+
+#### develop/ — i18n uitgerold + bugs gefixed
+- `develop/blank.html` v0.2.0 → v0.3.0 — content gecorrigeerd (was copy-paste artikelen)
+- `develop/maintenance.html` v0.2.0 → v0.3.0 — countdown-tekst via i18n met interpolatie
+- `develop/sandbox.html` v1.1.0 → v0.3.0 — dubbel bestand samengevoegd, kapotte HTML hersteld
+- `develop/standaardpagina.html` v1.2.0 → v1.3.0
+
+Develop-bugs gefixed in alle pagina's:
+- eruda debug-script verwijderd
+- Dubbele script-blokken verwijderd
+- `trackPage("evenement")` gecorrigeerd naar correcte paginanaam
+- Kapotte bestandsheaders gecorrigeerd (`<!============` → `<!--`)
+
+#### Navbar bijgewerkt
+- `Layout/Navbar.html` v1.1.0 → v1.2.0: `handleiding.html` → `handleiding-nl.html`, kapotte `</ a>` tag gecorrigeerd
+
+#### Nieuwe locale bestanden aangemaakt (nl/en/es)
+- `locales/*/artikelen.json`
+- `locales/*/extern.json`
+- `locales/*/instructies.json`
+- `locales/*/template.json` — inclusief `velden.*` vertaalmap voor kolomnamen
+- `locales/*/contact.json`
+- `locales/*/discussies.json`
+- `locales/*/evenement.json`
+- `locales/*/forum.json`
+- `locales/*/groepen.json`
+- `locales/*/blank.json`
+- `locales/*/maintenance.json` — inclusief countdown interpolatie
+- `locales/*/sandbox.json`
+- `locales/*/standaardpagina.json`
+
+---
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `bronnen/artikelen.html` | v0.2.0 | v0.3.0 | i18n + namespace artikelen |
+| `bronnen/extern.html` | v0.2.0 | v0.3.0 | i18n + namespace extern |
+| `bronnen/instructies.html` | v0.2.0 | v0.3.0 | i18n + namespace instructies |
+| `bronnen/handleiding.html` | v2.3.0 | v2.4.1 | redirect naar handleiding-nl.html |
+| `bronnen/handleiding-nl.html` | — | v2.4.0 | Nieuw — NL handleiding + redirect-handler |
+| `bronnen/handleiding-en.html` | — | v2.4.0 | Nieuw — EN volledige vertaling |
+| `bronnen/handleiding-es.html` | — | v2.4.0 | Nieuw — ES volledige vertaling |
+| `bronnen/template.html` | v2.1.0 | v2.2.0 | i18n + meertalige tabel + CSV-download |
+| `gemeenschap/contact.html` | v0.2.0 | v0.3.0 | i18n + bugs gefixed |
+| `gemeenschap/discussies.html` | v0.2.0 | v0.3.0 | i18n + bugs gefixed |
+| `gemeenschap/evenement.html` | v0.2.0 | v0.3.0 | i18n + bugs gefixed |
+| `gemeenschap/forum.html` | v0.2.0 | v0.3.0 | i18n + trackPage gecorrigeerd |
+| `gemeenschap/groepen.html` | v0.2.0 | v0.3.0 | i18n + bugs gefixed |
+| `develop/blank.html` | v0.2.0 | v0.3.0 | i18n + content gecorrigeerd |
+| `develop/maintenance.html` | v0.2.0 | v0.3.0 | i18n + countdown via i18n |
+| `develop/sandbox.html` | v1.1.0 | v0.3.0 | i18n + dubbel bestand samengevoegd |
+| `develop/standaardpagina.html` | v1.2.0 | v1.3.0 | i18n + bugs gefixed |
+| `Layout/Navbar.html` | v1.1.0 | v1.2.0 | handleiding link + kapotte tag fix |
+| `locales/nl/artikelen.json` | — | v1.0.0 | Nieuw |
+| `locales/en/artikelen.json` | — | v1.0.0 | Nieuw |
+| `locales/es/artikelen.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/extern.json` | — | v1.0.0 | Nieuw |
+| `locales/en/extern.json` | — | v1.0.0 | Nieuw |
+| `locales/es/extern.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/instructies.json` | — | v1.0.0 | Nieuw |
+| `locales/en/instructies.json` | — | v1.0.0 | Nieuw |
+| `locales/es/instructies.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/template.json` | — | v1.0.0 | Nieuw |
+| `locales/en/template.json` | — | v1.0.0 | Nieuw |
+| `locales/es/template.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/contact.json` | — | v1.0.0 | Nieuw |
+| `locales/en/contact.json` | — | v1.0.0 | Nieuw |
+| `locales/es/contact.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/discussies.json` | — | v1.0.0 | Nieuw |
+| `locales/en/discussies.json` | — | v1.0.0 | Nieuw |
+| `locales/es/discussies.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/evenement.json` | — | v1.0.0 | Nieuw |
+| `locales/en/evenement.json` | — | v1.0.0 | Nieuw |
+| `locales/es/evenement.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/forum.json` | — | v1.0.0 | Nieuw |
+| `locales/en/forum.json` | — | v1.0.0 | Nieuw |
+| `locales/es/forum.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/groepen.json` | — | v1.0.0 | Nieuw |
+| `locales/en/groepen.json` | — | v1.0.0 | Nieuw |
+| `locales/es/groepen.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/blank.json` | — | v1.0.0 | Nieuw |
+| `locales/en/blank.json` | — | v1.0.0 | Nieuw |
+| `locales/es/blank.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/maintenance.json` | — | v1.0.0 | Nieuw |
+| `locales/en/maintenance.json` | — | v1.0.0 | Nieuw |
+| `locales/es/maintenance.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/sandbox.json` | — | v1.0.0 | Nieuw |
+| `locales/en/sandbox.json` | — | v1.0.0 | Nieuw |
+| `locales/es/sandbox.json` | — | v1.0.0 | Nieuw |
+| `locales/nl/standaardpagina.json` | — | v1.0.0 | Nieuw |
+| `locales/en/standaardpagina.json` | — | v1.0.0 | Nieuw |
+| `locales/es/standaardpagina.json` | — | v1.0.0 | Nieuw |
+
+---
+
+### Nog open na sessie 27
+
+| ID | Taak |
+|----|------|
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
+| F8-19 | `Handleiding.html` bijwerken met i18n uitleg (nu handleiding-nl.html) |
+| F9-01 t/m F9-09 | Bronnen-module implementeren (genealogisch onderzoek) |
+| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js |
+| Nieuw | Import-parser aanpassen: rij 2 lezen als technische header (template.html meertalig) |
 
 ---
 
