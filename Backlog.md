@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-19
+## Bijgewerkt: 2026-05-20
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
