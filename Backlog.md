@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-15
+## Bijgewerkt: 2026-05-19
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -129,7 +129,7 @@
 | F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | ✅ Gedaan |
 | F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
-| F8-19 | 🟢 Laag | `Handleiding.html` bijwerken met i18n uitleg | 📋 Open |
+| F8-19 | 🟢 Laag | `Handleiding.html` bijwerken met i18n uitleg (nu handleiding-nl.html) | 📋 Open |
 | F8-20 | 🟡 Middel | `home/import.html` refactoren met `data-i18n` + custom file input | ✅ Gedaan |
 | F8-21 | 🟡 Middel | `home/export.html` refactoren met `data-i18n` | ✅ Gedaan |
 | F8-22 | 🟡 Middel | `home/print.html` refactoren met `data-i18n` | ✅ Gedaan |
@@ -151,6 +151,22 @@
 | F8-38 | 🔴 Hoog | `js/auth.js` foutmeldingen via i18n | ✅ Gedaan |
 | F8-39 | 🔴 Hoog | `js/topbar.js` modal via data-i18n | ✅ Gedaan |
 | F8-40 | 🔴 Hoog | `home/reset.html` + `js/reset.js` i18n | ✅ Gedaan |
+| F8-41 | 🔴 Hoog | `bronnen/artikelen.html` i18n + namespace `artikelen` | ✅ Gedaan |
+| F8-42 | 🔴 Hoog | `bronnen/extern.html` i18n + namespace `extern` | ✅ Gedaan |
+| F8-43 | 🔴 Hoog | `bronnen/instructies.html` i18n + namespace `instructies` | ✅ Gedaan |
+| F8-44 | 🔴 Hoog | `bronnen/handleiding.html` → drie taalversies (nl/en/es) + redirect | ✅ Gedaan |
+| F8-45 | 🔴 Hoog | `bronnen/template.html` i18n + meertalige tabel + CSV-download | ✅ Gedaan |
+| F8-46 | 🟡 Middel | `gemeenschap/contact.html` i18n + bugs gefixed | ✅ Gedaan |
+| F8-47 | 🟡 Middel | `gemeenschap/discussies.html` i18n + bugs gefixed | ✅ Gedaan |
+| F8-48 | 🟡 Middel | `gemeenschap/evenement.html` i18n + bugs gefixed | ✅ Gedaan |
+| F8-49 | 🟡 Middel | `gemeenschap/forum.html` i18n + trackPage gecorrigeerd | ✅ Gedaan |
+| F8-50 | 🟡 Middel | `gemeenschap/groepen.html` i18n + bugs gefixed | ✅ Gedaan |
+| F8-51 | 🟡 Middel | `develop/blank.html` i18n + content gecorrigeerd | ✅ Gedaan |
+| F8-52 | 🟡 Middel | `develop/maintenance.html` i18n + countdown via interpolatie | ✅ Gedaan |
+| F8-53 | 🟡 Middel | `develop/sandbox.html` i18n + dubbel bestand samengevoegd | ✅ Gedaan |
+| F8-54 | 🟡 Middel | `develop/standaardpagina.html` i18n + bugs gefixed | ✅ Gedaan |
+| F8-55 | 🟡 Middel | `Layout/Navbar.html` v1.2.0 — handleiding link bijgewerkt | ✅ Gedaan |
+| F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | 📋 Open |
 
 ---
 
@@ -215,6 +231,19 @@
 
 ## Bugfixes
 
+### Sessie 2026-05-19
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-44 | `gemeenschap/*.html` — dubbele script-blokken, losse fetch-blokken, Navbar-placeholder hoofdletter N | ✅ Opgelost |
+| BF-45 | `gemeenschap/forum.html` — `trackPage("evenement")` i.p.v. `trackPage("forum")` | ✅ Opgelost |
+| BF-46 | `develop/sandbox.html` — bestand volledig gedupliceerd, kapotte HTML | ✅ Opgelost |
+| BF-47 | `develop/*.html` — eruda debug-script aanwezig, `trackPage("evenement")` overal | ✅ Opgelost |
+| BF-48 | `develop/blank.html` — content was copy-paste van artikelen.html | ✅ Opgelost |
+| BF-49 | `bronnen/artikelen.html` — namespace `bronnen:artikelen.*` i.p.v. `artikelen:*` | ✅ Opgelost |
+| BF-50 | `Layout/Navbar.html` — kapotte `</ a>` tag bij handleiding-link | ✅ Opgelost |
+| BF-51 | `bronnen/handleiding.html` verwijderd → 404 → redirect-bestand aangemaakt | ✅ Opgelost |
+
 ### Sessie 2026-05-15
 
 | ID | Omschrijving | Status |
@@ -263,3 +292,4 @@
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
 | TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
 | TD-10 | `page_visits` RLS uitgeschakeld — beveiligd via view | 🟡 Middel |
+| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig | 🔴 Hoog |
