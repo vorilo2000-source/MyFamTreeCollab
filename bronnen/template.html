@@ -1,5 +1,11 @@
-<!-- ======================= bronnen/template.html v2.2.0 =======================
+<!-- ======================= bronnen/template.html v2.3.0 =======================
      CSV Template pagina: visueel voorbeeld + download van lege CSV-template
+
+     Wijziging v2.3.0 (sessie 28):
+     - bouwTabel() functie geëxtraheerd uit init-keten (herbruikbaar)
+     - i18next 'languageChanged' event listener toegevoegd
+     - Tabel wordt nu opnieuw getekend bij elke taalwissel
+     - Fixes: tabelheaders bleven NL na taalwissel naar EN/ES
 
      Wijziging v2.2.0 (sessie 27):
      - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
@@ -119,7 +125,7 @@
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — verplichte laadvolgorde (sessie 27):
+     SCRIPTS — verplichte laadvolgorde:
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
@@ -142,6 +148,57 @@
 <script src="/MyFamTreeCollab/js/i18n.js"></script>                           <!-- i18n module wrapper -->
 
 <script>
+    // ── bouwTabel() ───────────────────────────────────────────────────────
+    // Bouwt de preview-tabel opnieuw op basis van de actieve taal.
+    // Wordt aangeroepen bij pagina-init én bij elke taalwissel.
+    function bouwTabel() {
+        // Guard: schema.js moet geladen zijn
+        if (!window.StamboomSchema) {
+            console.error('StamboomSchema niet geladen — tabel blijft leeg.');
+            return;
+        }
+
+        var velden = window.StamboomSchema.fields;                        // NL technische veldnamen
+
+        // Wis bestaande inhoud zodat hertekenen geen duplicaten geeft
+        var csvHeader = document.getElementById('csvHeader');
+        var csvBody   = document.getElementById('csvBody');
+        csvHeader.innerHTML = '';                                         // verwijder oude header
+        csvBody.innerHTML   = '';                                         // verwijder oude body
+
+        // ── Rij 1: vertaalde kolomkoppen als <th> ────────────────────────
+        var headerRij = document.createElement('tr');
+        velden.forEach(function (veld) {
+            var th = document.createElement('th');
+            // Vertaalde naam via i18n; fallback naar NL technische naam als key ontbreekt
+            th.textContent = i18nModule.t('template:velden.' + veld, { defaultValue: veld });
+            headerRij.appendChild(th);
+        });
+        csvHeader.appendChild(headerRij);
+
+        // ── Rij 2: NL technische namen als <td> — grijs, cursief ─────────
+        var technischRij = document.createElement('tr');
+        technischRij.className = 'technisch';                            // CSS klasse voor grijze stijl
+        velden.forEach(function (veld) {
+            var td = document.createElement('td');
+            td.textContent = veld;                                       // altijd NL technische naam
+            technischRij.appendChild(td);
+        });
+        csvBody.appendChild(technischRij);
+
+        // ── Rij 3-4: lege invulrijen ──────────────────────────────────────
+        for (var i = 0; i < 2; i++) {
+            var leegRij = document.createElement('tr');
+            leegRij.className = 'leeg';
+            velden.forEach(function () {
+                var td = document.createElement('td');
+                td.textContent = '...';                                  // plaatshouder
+                leegRij.appendChild(td);
+            });
+            csvBody.appendChild(leegRij);
+        }
+    }
+
     // ── Pagina initialisatie ──────────────────────────────────────────────
     i18nModule.init()
         .then(function () {
@@ -174,46 +231,17 @@
                 });
         })
         .then(function () {
-            // ── Tabel opbouwen na i18n init ──────────────────────────────
-            if (!window.StamboomSchema) {                                  // schema.js check
-                console.error('StamboomSchema niet geladen — tabel blijft leeg.');
-                return;
-            }
+            // ── Tabel eerste keer opbouwen ────────────────────────────────
+            bouwTabel();
 
-            var velden = window.StamboomSchema.fields;                    // NL technische veldnamen
-
-            // Rij 1: vertaalde kolomkoppen als <th>
-            var csvHeader = document.getElementById('csvHeader');
-            var headerRij = document.createElement('tr');
-            velden.forEach(function (veld) {
-                var th = document.createElement('th');
-                th.textContent = i18nModule.t('template:velden.' + veld, { defaultValue: veld }); // vertaald, fallback = NL
-                headerRij.appendChild(th);
+            // ── Herteken tabel bij elke taalwissel ───────────────────────
+            // i18next vuurt 'languageChanged' nadat changeLanguage() klaar is.
+            // Op dat moment zijn de nieuwe namespace-vertalingen geladen
+            // door handleLanguageChange() in i18n.js, dus t() geeft al
+            // de juiste strings terug.
+            i18next.on('languageChanged', function () {
+                bouwTabel();                                              // wis + herteken tabel
             });
-            csvHeader.appendChild(headerRij);
-
-            // Rij 2: NL technische namen als <td> — grijs, cursief
-            var csvBody = document.getElementById('csvBody');
-            var technischRij = document.createElement('tr');
-            technischRij.className = 'technisch';                         // CSS klasse voor grijze stijl
-            velden.forEach(function (veld) {
-                var td = document.createElement('td');
-                td.textContent = veld;                                    // altijd NL technische naam
-                technischRij.appendChild(td);
-            });
-            csvBody.appendChild(technischRij);
-
-            // Rij 3-4: lege invulrijen
-            for (var i = 0; i < 2; i++) {
-                var leegRij = document.createElement('tr');
-                leegRij.className = 'leeg';
-                velden.forEach(function () {
-                    var td = document.createElement('td');
-                    td.textContent = '...';                               // plaatshouder
-                    leegRij.appendChild(td);
-                });
-                csvBody.appendChild(leegRij);
-            }
 
             // ── Download knop ─────────────────────────────────────────────
             var downloadBtn = document.getElementById('downloadBtn');
@@ -233,7 +261,9 @@
                 if (!gebruikersnaam) { gebruikersnaam = standaardNaam; }  // fallback naar standaardnaam
                 var bestandsnaam = gebruikersnaam + '.csv';
 
-                // Rij 1: vertaalde kolomnamen
+                var velden = window.StamboomSchema.fields;                // NL technische veldnamen
+
+                // Rij 1: vertaalde kolomnamen (actieve taal)
                 var vertaaldeKoppen = velden.map(function (veld) {
                     return '"' + i18nModule.t('template:velden.' + veld, { defaultValue: veld }).replace(/"/g, '""') + '"';
                 }).join(',');
