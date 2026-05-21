@@ -167,6 +167,7 @@
 | F8-54 | 🟡 Middel | `develop/standaardpagina.html` i18n + bugs gefixed | ✅ Gedaan |
 | F8-55 | 🟡 Middel | `Layout/Navbar.html` v1.2.0 — handleiding link bijgewerkt | ✅ Gedaan |
 | F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | 📋 Open |
+| F8-57 | 🔴 Hoog | `bronnen/template.html` v2.3.0 — tabel hertekenen bij taalwissel | ✅ Gedaan |
 
 ---
 
@@ -230,6 +231,12 @@
 ---
 
 ## Bugfixes
+
+### Sessie 2026-05-20
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-52 | `bronnen/template.html` — tabelheaders bleven NL na taalwissel naar EN/ES | ✅ Opgelost |
 
 ### Sessie 2026-05-19
 
