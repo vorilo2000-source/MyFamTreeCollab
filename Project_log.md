@@ -1,7 +1,64 @@
 MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-05-19
+## Bijgewerkt: 2026-05-20
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 28 — Bugfix: tabelheaders vertalen bij taalwissel (template.html)
+
+**Datum:** 2026-05-20
+**Doel:** Tabelheaders in `bronnen/template.html` vertalen bij taalwissel naar EN/ES.
+
+---
+
+### Probleemanalyse
+
+De tabelheaders in `bronnen/template.html` bleven NL na taalwissel naar EN of ES. De rest van de pagina vertaalde correct via `data-i18n` attributen en `updateContent()`. De tabel werd echter volledig dynamisch opgebouwd via JavaScript met `i18nModule.t()` — zonder `data-i18n` attributen. Hierdoor werd de tabel niet meegenomen door `updateContent()` na een taalwissel.
+
+De aanname in het sessie 28-document dat de CSV twee headerrijen genereerde was onjuist — de template genereerde al twee rijen correct, maar de tabelweergave in de browser bleef NL.
+
+**Rootcause:** `handleLanguageChange()` in `i18n.js` roept `updateContent()` aan na een taalwissel. Dit vertaalt alleen elementen met `data-i18n` attributen. De dynamisch gebouwde tabel heeft geen `data-i18n` attributen en werd daardoor niet opnieuw getekend.
+
+---
+
+### Oplossing
+
+`bronnen/template.html` v2.2.0 → v2.3.0:
+
+- Tabellogica geëxtraheerd naar herbruikbare functie `bouwTabel()`
+- `bouwTabel()` wist `csvHeader` en `csvBody` voor hertekenen (geen duplicaten)
+- `i18next.on('languageChanged', bouwTabel)` listener toegevoegd na pagina-init
+- Tabel wordt nu opnieuw getekend bij elke taalwissel met de juiste vertalingen
+
+---
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `bronnen/template.html` | v2.2.0 | v2.3.0 | `bouwTabel()` functie + `languageChanged` listener |
+
+---
+
+### Bugfixes
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-52 | `bronnen/template.html` — tabelheaders bleven NL na taalwissel naar EN/ES | ✅ Opgelost |
+
+---
+
+### Nog open na sessie 28
+
+| ID | Taak |
+|----|------|
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
+| F8-19 | `Handleiding.html` bijwerken met i18n uitleg (nu handleiding-nl.html) |
+| F8-56 | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) |
+| F9-01 t/m F9-09 | Bronnen-module implementeren (genealogisch onderzoek) |
+| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js |
+| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig |
 
 ---
 
