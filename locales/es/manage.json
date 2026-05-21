@@ -1,9 +1,9 @@
 {
   "page": {
-    "title": "Gestionar"
+    "title": "Gestor"
   },
   "welcome": {
-    "heading": "Bienvenido a tu Gestor del árbol",
+    "heading": "Bienvenido al Gestor de tu árbol genealógico",
     "intro": "Busca una persona para gestionar el árbol genealógico."
   },
   "search": {
@@ -14,8 +14,26 @@
     "add": "+ Añadir",
     "save": "Guardar"
   },
+  "table": {
+    "actions":           "Acciones",
+    "relatie":           "Relación",
+    "id":                "ID",
+    "doopnaam":          "Nombre de pila",
+    "roepnaam":          "Nombre usual",
+    "prefix":            "Prefijo",
+    "achternaam":        "Apellido",
+    "geslacht":          "Género",
+    "geboortedatum":     "Fecha de nacimiento",
+    "geboorteplaats":    "Lugar de nacimiento",
+    "overlijdensdatum":  "Fecha de defunción",
+    "overlijdensplaats": "Lugar de defunción",
+    "vaderID":           "ID del padre",
+    "moederID":          "ID de la madre",
+    "partnerID":         "ID de la pareja",
+    "opmerkingen":       "Observaciones"
+  },
   "rel": {
-    "parent":  "Progenitor/a",
+    "parent":  "Progenitor",
     "partner": "Pareja",
     "sibling": "Hermano/a",
     "root":    "Principal",
@@ -28,14 +46,14 @@
     "deleteRowTitle": "Eliminar fila"
   },
   "placeholder": {
-    "select":   "Selecciona una persona usando la búsqueda",
+    "select":   "Selecciona una persona mediante la función de búsqueda",
     "notFound": "No se encontraron personas"
   },
   "confirm": {
     "delete": "¿Estás seguro de que quieres eliminar esta persona?"
   },
   "alert": {
-    "maxRows":    "Se han añadido 10 filas como máximo. Guarda primero.",
+    "maxRows":    "Se han añadido un máximo de 10 filas. Por favor, guarda primero.",
     "saved":      "Conjunto de datos guardado correctamente",
     "saveFailed": "Error al guardar: {{error}}"
   }
