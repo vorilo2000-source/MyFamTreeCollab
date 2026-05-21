@@ -1,6 +1,6 @@
 {
   "page": {
-    "title": "Manage"
+    "title": "Manager"
   },
   "welcome": {
     "heading": "Welcome to your Family Tree Manager",
@@ -13,6 +13,24 @@
     "refresh": "Refresh",
     "add": "+ Add",
     "save": "Save"
+  },
+  "table": {
+    "actions":           "Actions",
+    "relatie":           "Relation",
+    "id":                "ID",
+    "doopnaam":          "Baptismal name",
+    "roepnaam":          "Given name",
+    "prefix":            "Prefix",
+    "achternaam":        "Surname",
+    "geslacht":          "Gender",
+    "geboortedatum":     "Date of birth",
+    "geboorteplaats":    "Place of birth",
+    "overlijdensdatum":  "Date of death",
+    "overlijdensplaats": "Place of death",
+    "vaderID":           "Father ID",
+    "moederID":          "Mother ID",
+    "partnerID":         "Partner ID",
+    "opmerkingen":       "Remarks"
   },
   "rel": {
     "parent":  "Parent",
