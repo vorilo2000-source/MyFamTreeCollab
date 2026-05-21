@@ -14,6 +14,24 @@
     "add": "+ Toevoegen",
     "save": "Opslaan"
   },
+  "table": {
+    "actions":           "Acties",
+    "relatie":           "Relatie",
+    "id":                "ID",
+    "doopnaam":          "Doopnaam",
+    "roepnaam":          "Roepnaam",
+    "prefix":            "Prefix",
+    "achternaam":        "Achternaam",
+    "geslacht":          "Geslacht",
+    "geboortedatum":     "Geboortedatum",
+    "geboorteplaats":    "Geboorteplaats",
+    "overlijdensdatum":  "Overlijdensdatum",
+    "overlijdensplaats": "Overlijdensplaats",
+    "vaderID":           "VaderID",
+    "moederID":          "MoederID",
+    "partnerID":         "PartnerID",
+    "opmerkingen":       "Opmerkingen"
+  },
   "rel": {
     "parent":  "Ouder",
     "partner": "Partner",
