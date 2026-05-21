@@ -1,6 +1,11 @@
-/* ======================= js/manage.js v2.5.0 =======================
+/* ======================= js/manage.js v2.5.1 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Vereist: schema.js, idGenerator.js, storage.js, LiveSearch.js, relatieEngine.js
+
+   Wijziging v2.5.1 (sessie 27):
+   - COLUMNS uitgebreid met i18nKey per kolom
+   - buildHeader() gebruikt i18nModule.t(col.i18nKey) i.p.v. col.key
+   - i18next.on('languageChanged') toegevoegd: headers herladen bij taalwisseling
 
    Wijziging v2.5.0 (sessie 26):
    - Alle hardcoded strings vervangen door i18nModule.t('manage:...')
@@ -35,22 +40,22 @@
 
     /* ======================= KOLOMMEN DEFINITIE ======================= */
     var COLUMNS = [                                                        // Array met alle tabelkolommen en hun bewerkbaarheid
-        { key: 'Acties',            readonly: true  },                    // UI-kolom voor delete-knop
-        { key: 'Relatie',           readonly: true  },                    // Relatie t.o.v. hoofdpersoon, automatisch berekend
-        { key: 'ID',                readonly: true  },                    // Uniek persoons-ID, gegenereerd door idGenerator.js
-        { key: 'Doopnaam',          readonly: false },                    // Officiële voornaam
-        { key: 'Roepnaam',          readonly: false },                    // Roepnaam / gebruikelijke naam
-        { key: 'Prefix',            readonly: false },                    // Tussenvoegsel (van, de, van den)
-        { key: 'Achternaam',        readonly: false },                    // Familienaam
-        { key: 'Geslacht',          readonly: false },                    // M / V / X
-        { key: 'Geboortedatum',     readonly: false },                    // Datum formaat yyyy-mm-dd
-        { key: 'Geboorteplaats',    readonly: false },                    // Stad/gemeente van geboorte
-        { key: 'Overlijdensdatum',  readonly: false },                    // Datum overlijden
-        { key: 'Overlijdensplaats', readonly: false },                    // Stad/gemeente van overlijden
-        { key: 'VaderID',           readonly: false },                    // ID van de vader
-        { key: 'MoederID',          readonly: false },                    // ID van de moeder
-        { key: 'PartnerID',         readonly: false },                    // ID van partner(s), gescheiden door |
-        { key: 'Opmerkingen',       readonly: false }                     // Vrij tekstveld
+        { key: 'Acties',            i18nKey: 'manage:table.actions',           readonly: true  },
+        { key: 'Relatie',           i18nKey: 'manage:table.relatie',           readonly: true  },
+        { key: 'ID',                i18nKey: 'manage:table.id',                readonly: true  },
+        { key: 'Doopnaam',          i18nKey: 'manage:table.doopnaam',          readonly: false },
+        { key: 'Roepnaam',          i18nKey: 'manage:table.roepnaam',          readonly: false },
+        { key: 'Prefix',            i18nKey: 'manage:table.prefix',            readonly: false },
+        { key: 'Achternaam',        i18nKey: 'manage:table.achternaam',        readonly: false },
+        { key: 'Geslacht',          i18nKey: 'manage:table.geslacht',          readonly: false },
+        { key: 'Geboortedatum',     i18nKey: 'manage:table.geboortedatum',     readonly: false },
+        { key: 'Geboorteplaats',    i18nKey: 'manage:table.geboorteplaats',    readonly: false },
+        { key: 'Overlijdensdatum',  i18nKey: 'manage:table.overlijdensdatum',  readonly: false },
+        { key: 'Overlijdensplaats', i18nKey: 'manage:table.overlijdensplaats', readonly: false },
+        { key: 'VaderID',           i18nKey: 'manage:table.vaderID',           readonly: false },
+        { key: 'MoederID',          i18nKey: 'manage:table.moederID',          readonly: false },
+        { key: 'PartnerID',         i18nKey: 'manage:table.partnerID',         readonly: false },
+        { key: 'Opmerkingen',       i18nKey: 'manage:table.opmerkingen',       readonly: false }
     ];
 
     /* ======================= STATE ======================= */
@@ -73,7 +78,7 @@
         theadRow.innerHTML = '';                                          // Verwijder bestaande kolomkoppen
         COLUMNS.forEach(function (col) {                                  // Loop door elke kolom-definitie
             var th = document.createElement('th');                       // Maak een nieuw <th> element
-            th.textContent = col.key;                                    // Kolomnaam als zichtbare tekst
+            th.textContent = i18nModule.t(col.i18nKey);                  // Vertaalde kolomnaam via i18nKey
             theadRow.appendChild(th);                                    // Toevoegen aan header-rij
         });
     }
@@ -412,6 +417,11 @@
     /* ======================= INITIALISATIE ======================= */
     function init() {
         buildHeader();                                                   // Kolomtitels bouwen
+
+        // Herlaad headers automatisch bij taalwisseling
+        i18next.on('languageChanged', function () {
+            buildHeader();
+        });
 
         // Beginmelding — vertaald via i18n
         showPlaceholder(i18nModule.t('manage:placeholder.select'));
