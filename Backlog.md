@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-20
+## Bijgewerkt: 2026-05-22
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -230,7 +230,26 @@
 
 ---
 
+## Beveiliging ✅ AFGEROND
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| SEC-01 | 🔴 Kritiek | `admin_users` view droppen — lekte auth.users via publieke API | ✅ Gedaan |
+| SEC-02 | 🔴 Kritiek | RLS inschakelen op alle publieke tabellen (6 tabellen) | ✅ Gedaan |
+| SEC-03 | 🔴 Kritiek | Anon-rechten intrekken + authenticated grants minimaliseren | ✅ Gedaan |
+| SEC-04 | 🟡 Middel | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` | 📋 Open |
+
+---
+
 ## Bugfixes
+
+### Sessie 2026-05-22
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-53 | Supabase: `auth_users_exposed` — `admin_users` view gedropt | ✅ Opgelost |
+| BF-54 | Supabase: `rls_disabled_in_public` — RLS op 6 tabellen ingeschakeld | ✅ Opgelost |
+| BF-55 | Supabase: `sensitive_columns_exposed` — anon REVOKED, grants minimaal | ✅ Opgelost |
 
 ### Sessie 2026-05-20
 
@@ -298,5 +317,5 @@
 | TD-07 | Resend zonder eigen domein — mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
 | TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
-| TD-10 | `page_visits` RLS uitgeschakeld — beveiligd via view | 🟡 Middel |
+| TD-10 | `page_visits` RLS uitgeschakeld — beveiligd via view | ✅ Opgelost — RLS ingeschakeld sessie 29 |
 | TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig | 🔴 Hoog |
