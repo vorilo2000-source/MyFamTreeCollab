@@ -1,0 +1,94 @@
+{
+  "page": {
+    "title": "Acceso & Colaboración",
+    "intro": "MyFamTreeCollab utiliza tipos de cuenta que determinan lo que puedes hacer. La versión básica es gratuita y completamente local — sin necesidad de cuenta. El almacenamiento en la nube y la colaboración están disponibles mediante una cuenta Owner (donación ~€5/6 meses)."
+  },
+  "hoe": {
+    "title": "⚙️ ¿Cómo funciona el acceso?",
+    "stap1_label": "Comenzar sin iniciar sesión",
+    "stap1_tekst": "cualquiera puede ver inmediatamente un árbol genealógico de demostración sin cuenta.",
+    "stap2_label": "Crear una cuenta básica (guest)",
+    "stap2_tekst": "el registro gratuito da acceso a hasta 60 personas de forma local.",
+    "stap3_label": "Convertirse en Owner mediante donación",
+    "stap3_tekst": "~€5 por 6 meses activa la copia de seguridad en la nube, el compartir y la colaboración.",
+    "stap4_label": "Asignar Viewer / Editor",
+    "stap4_tekst": "un Owner invita a otros y les otorga acceso de lectura o edición a un árbol genealógico específico."
+  },
+  "accountTypes": {
+    "title": "Tipos de cuenta",
+    "bezoeker": {
+      "naam": "No conectado",
+      "badge": "Sin cuenta requerida",
+      "beschrijving": "Visitante sin cuenta. Solo puede ver un árbol genealógico de demostración. Sin almacenamiento ni funciones.",
+      "feat1": "Ver árbol genealógico de demo",
+      "feat2": "Sin árbol genealógico propio",
+      "feat3": "Sin almacenamiento",
+      "feat4": "Sin funciones"
+    },
+    "guest": {
+      "naam": "Cuenta básica",
+      "badge": "Gratis — sin donación requerida",
+      "beschrijving": "Cuenta gratuita. Árbol genealógico local de hasta 60 personas. Sin nube ni colaboración.",
+      "feat1": "Árbol genealógico local (máx. 60 personas)",
+      "feat2": "Línea de tiempo y estadísticas",
+      "feat3": "Exportar a CSV / JSON",
+      "feat4": "Sin copia de seguridad en la nube",
+      "feat5": "Sin compartir árbol genealógico",
+      "feat6": "Sin invitaciones de viewer/editor"
+    },
+    "owner": {
+      "naam": "Cuenta Owner",
+      "badge": "Donación ~€5 / 6 meses",
+      "beschrijving": "Acceso completo. Copia de seguridad en la nube, personas ilimitadas, compartir árbol y colaboración.",
+      "feat1": "Personas ilimitadas de forma local",
+      "feat2": "Copia de seguridad en la nube",
+      "feat3": "Compartir árbol genealógico",
+      "feat4": "Invitar Viewer / Editor",
+      "feat5": "Control de versiones (máx. 5 versiones)",
+      "feat6": "Colaboración (collab)"
+    }
+  },
+  "rechten": {
+    "title": "📋 Derechos del árbol: Viewer & Editor",
+    "intro": "Viewer y Editor <strong>no son tipos de cuenta</strong> — son derechos que un Owner otorga a un árbol genealógico específico. Se almacenan en una tabla separada, no en <code>profiles.tier</code>. Un usuario con tier <em>guest</em> puede ser Viewer o Editor en el árbol de un Owner.",
+    "viewer": {
+      "naam": "Viewer",
+      "beschrijving": "Acceso de lectura a un árbol genealógico compartido. Asignado por el Owner de ese árbol.",
+      "feat1": "Ver árbol genealógico",
+      "feat2": "Línea de tiempo y estadísticas",
+      "feat3": "Mensajes en discusiones",
+      "feat4": "Sin edición"
+    },
+    "editor": {
+      "naam": "Editor",
+      "beschrijving": "Acceso de edición a un árbol genealógico compartido. Asignado por el Owner de ese árbol.",
+      "feat1": "Todo lo de Viewer",
+      "feat2": "Agregar y editar personas",
+      "feat3": "Gestionar relaciones",
+      "feat4": "Enviar propuestas de cambio"
+    }
+  },
+  "donatie": {
+    "title": "☕ Opciones de donación (cuenta Owner)",
+    "intro": "Una cuenta Owner se activa mediante una donación. Las cuentas básicas (guest) son completamente gratuitas.",
+    "th_optie": "Opción",
+    "th_bedrag": "Importe",
+    "th_wat": "Qué obtienes",
+    "periodiek_label": "Periódico",
+    "periodiek_per": "por 6 meses",
+    "periodiek_wat": "Cuenta Owner activa mientras dure la donación. Cancelable cuando quieras.",
+    "eenmalig_label": "Pago único",
+    "eenmalig_per": "pago único",
+    "eenmalig_wat": "Activación Owner permanente para un árbol genealógico. Sin más obligaciones.",
+    "stichtend_label": "Miembro fundador",
+    "stichtend_per": "pago único",
+    "stichtend_wat": "Activación Owner permanente + acceso anticipado a nuevas funciones + mención como miembro fundador.",
+    "noot": "<strong>Transparencia:</strong> aún no hay verificación de pago automática. La cuenta Owner se activa manualmente tras recibir la donación. Esto se automatizará en una fase futura."
+  },
+  "cta": {
+    "title": "¿Listo para empezar?",
+    "tekst": "Empieza gratis con una cuenta básica, o consulta la comparación detallada en la página de precios.",
+    "knop_start": "Empezar gratis",
+    "knop_vergelijk": "Comparar tipos de cuenta"
+  }
+}
