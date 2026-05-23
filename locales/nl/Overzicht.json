@@ -1,0 +1,94 @@
+{
+  "page": {
+    "title": "Toegang & Samenwerken",
+    "intro": "MyFamTreeCollab werkt met account types die bepalen wat je kan doen. De basisversie is gratis en volledig lokaal — geen account nodig. Cloud-opslag en samenwerking zijn beschikbaar via een Owner account (donatie ~€5/6 mnd)."
+  },
+  "hoe": {
+    "title": "⚙️ Hoe werkt toegang?",
+    "stap1_label": "Niet ingelogd starten",
+    "stap1_tekst": "iedereen kan direct een demo-stamboom bekijken zonder account.",
+    "stap2_label": "Basis account (guest) aanmaken",
+    "stap2_tekst": "gratis registreren geeft toegang tot max. 60 personen lokaal.",
+    "stap3_label": "Owner worden via donatie",
+    "stap3_tekst": "~€5 per 6 maanden activeert cloud backup, delen en samenwerken.",
+    "stap4_label": "Viewer / Editor toewijzen",
+    "stap4_tekst": "een Owner nodigt anderen uit en geeft ze lees- of bewerkrecht op een specifieke stamboom."
+  },
+  "accountTypes": {
+    "title": "Account types",
+    "bezoeker": {
+      "naam": "Niet ingelogd",
+      "badge": "Geen account vereist",
+      "beschrijving": "Bezoeker zonder account. Kan alleen een demo-stamboom bekijken. Geen opslag, geen functies.",
+      "feat1": "Demo-stamboom bekijken",
+      "feat2": "Geen eigen stamboom",
+      "feat3": "Geen opslag",
+      "feat4": "Geen functies"
+    },
+    "guest": {
+      "naam": "Basis account",
+      "badge": "Gratis — geen donatie vereist",
+      "beschrijving": "Gratis account. Lokale stamboom tot max. 60 personen. Geen cloud, geen samenwerking.",
+      "feat1": "Lokale stamboom (max. 60 personen)",
+      "feat2": "Tijdlijn & statistieken",
+      "feat3": "Export naar CSV / JSON",
+      "feat4": "Geen cloud backup",
+      "feat5": "Geen stamboom delen",
+      "feat6": "Geen viewer/editor uitnodigen"
+    },
+    "owner": {
+      "naam": "Owner account",
+      "badge": "Donatie ~€5 / 6 maanden",
+      "beschrijving": "Volledige toegang. Cloud backup, onbeperkte personen, stamboom delen en samenwerking activeren.",
+      "feat1": "Onbeperkt personen lokaal",
+      "feat2": "Cloud backup",
+      "feat3": "Stamboom delen",
+      "feat4": "Viewer / Editor uitnodigen",
+      "feat5": "Versiebeheer (max. 5 versies)",
+      "feat6": "Samenwerken (collab)"
+    }
+  },
+  "rechten": {
+    "title": "📋 Stamboom-rechten: Viewer & Editor",
+    "intro": "Viewer en Editor zijn <strong>geen account types</strong> — het zijn rechten die een Owner toekent aan een specifieke stamboom. Ze staan opgeslagen in een aparte tabel, niet in <code>profiles.tier</code>. Een gebruiker met tier <em>guest</em> kan Viewer of Editor zijn op de stamboom van een Owner.",
+    "viewer": {
+      "naam": "Viewer",
+      "beschrijving": "Leesrecht op een gedeelde stamboom. Toegewezen door de Owner van die stamboom.",
+      "feat1": "Stamboom bekijken",
+      "feat2": "Tijdlijn & statistieken",
+      "feat3": "Berichten in discussies",
+      "feat4": "Geen bewerkingen"
+    },
+    "editor": {
+      "naam": "Editor",
+      "beschrijving": "Bewerkrecht op een gedeelde stamboom. Toegewezen door de Owner van die stamboom.",
+      "feat1": "Alles van Viewer",
+      "feat2": "Personen toevoegen & bewerken",
+      "feat3": "Relaties beheren",
+      "feat4": "Wijzigingsvoorstel plaatsen"
+    }
+  },
+  "donatie": {
+    "title": "☕ Donatie-opties (Owner account)",
+    "intro": "Een Owner account wordt geactiveerd via een donatie. Basis accounts (guest) zijn volledig gratis.",
+    "th_optie": "Optie",
+    "th_bedrag": "Bedrag",
+    "th_wat": "Wat je krijgt",
+    "periodiek_label": "Periodiek",
+    "periodiek_per": "per 6 maanden",
+    "periodiek_wat": "Owner account actief zolang de donatie loopt. Opzegbaar wanneer je wilt.",
+    "eenmalig_label": "Eenmalig",
+    "eenmalig_per": "eenmalig",
+    "eenmalig_wat": "Permanente Owner activatie voor één stamboom. Geen verdere verplichtingen.",
+    "stichtend_label": "Stichtend lid",
+    "stichtend_per": "eenmalig",
+    "stichtend_wat": "Permanente Owner activatie + early access tot nieuwe functies + vermelding als stichtend lid.",
+    "noot": "<strong>Transparantie:</strong> er is nog geen automatische betaalverificatie. Het Owner account wordt handmatig geactiveerd na ontvangst van een donatie. Dit wordt in een volgende fase geautomatiseerd."
+  },
+  "cta": {
+    "title": "Klaar om te starten?",
+    "tekst": "Begin gratis met een basis account, of bekijk de gedetailleerde vergelijking op de prijzenpagina.",
+    "knop_start": "Start gratis",
+    "knop_vergelijk": "Vergelijk account types"
+  }
+}
