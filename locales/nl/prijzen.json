@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Vergelijking account types",
+    "intro": "Wat kan elk account type? De tabel hieronder geeft een volledig overzicht per feature. Viewer en Editor zijn geen account types — dat zijn stamboom-rechten die een Owner toekent."
+  },
+  "tabel": {
+    "sectie_title": "Wat kan elk account type?",
+    "col_bezoeker": "Niet ingelogd",
+    "col_guest": "Basis account",
+    "col_owner": "Owner",
+    "col_admin": "Admin",
+    "groep_lokaal": "Lokale stamboom",
+    "groep_cloud": "Cloud & samenwerking",
+    "groep_beheer": "Beheer",
+    "feat_demo": "Demo-stamboom bekijken",
+    "feat_aanmaken": "Eigen stamboom aanmaken",
+    "feat_personen": "Max. personen lokaal",
+    "feat_tijdlijn": "Tijdlijn & statistieken",
+    "feat_export": "Export naar CSV / JSON",
+    "feat_afdrukken": "Afdrukken / print",
+    "feat_cloud": "Cloud backup",
+    "feat_delen": "Stamboom delen",
+    "feat_uitnodigen": "Viewer / Editor uitnodigen",
+    "feat_collab": "Samenwerken (collab)",
+    "feat_versie": "Versiebeheer per persoon",
+    "feat_modereren": "Berichten modereren",
+    "feat_intrekken": "Toegang intrekken",
+    "feat_privacy": "Privacy & zichtbaarheid instellen",
+    "feat_admin": "Admin dashboard",
+    "limiet_60": "60 personen",
+    "limiet_onbeperkt": "Onbeperkt",
+    "limiet_5versies": "Max. 5 versies",
+    "later": "Later"
+  },
+  "donatie": {
+    "title": "☕ Donatie-opties (Owner account)",
+    "intro": "Een Owner account wordt geactiveerd via een donatie. Basis accounts (guest) zijn volledig gratis.",
+    "periodiek_naam": "Periodiek",
+    "periodiek_periode": "per 6 maanden",
+    "periodiek_feat1": "Owner account actief",
+    "periodiek_feat2": "Opzegbaar wanneer je wilt",
+    "periodiek_feat3": "Steunt doorlopende ontwikkeling",
+    "eenmalig_naam": "Eenmalig",
+    "eenmalig_periode": "eenmalig",
+    "eenmalig_feat1": "Permanente Owner activatie",
+    "eenmalig_feat2": "Geldig voor één stamboom",
+    "eenmalig_feat3": "Geen verdere verplichtingen",
+    "stichtend_naam": "Stichtend lid",
+    "stichtend_periode": "eenmalig",
+    "stichtend_badge": "⭐ Stichtend",
+    "stichtend_feat1": "Permanente Owner activatie",
+    "stichtend_feat2": "Early access nieuwe functies",
+    "stichtend_feat3": "Vermelding als stichtend lid",
+    "noot": "<strong>Transparantie:</strong> er is nog geen automatische betaalverificatie. Het Owner account wordt handmatig geactiveerd na ontvangst van een donatie. Dit wordt in een volgende fase geautomatiseerd."
+  },
+  "faq": {
+    "title": "Veelgestelde vragen",
+    "v1_vraag": "Moet ik doneren om de app te gebruiken?",
+    "v1_antwoord": "Nee. Een basis account (guest) is volledig gratis en vereist geen donatie. Je krijgt toegang tot een lokale stamboom met max. 60 personen.",
+    "v2_vraag": "Wat is het verschil tussen een Viewer en een basis account?",
+    "v2_antwoord": "Viewer en Editor zijn stamboom-rechten, geen account types. Een gebruiker met een basis account (guest) kan door een Owner worden uitgenodigd als Viewer of Editor op een specifieke stamboom. De rechten staan in een aparte tabel, niet in het account.",
+    "v3_vraag": "Wat gebeurt er als ik stop met de periodieke donatie?",
+    "v3_antwoord": "Je account zakt terug naar basis (guest). De Owner kan dan geen nieuwe stambomen delen of Viewers/Editors uitnodigen. Er is in de MVP geen automatische blokkering — dit wordt in een latere fase geautomatiseerd.",
+    "v4_vraag": "Is mijn data veilig als ik stop met doneren?",
+    "v4_antwoord": "Jouw lokale data blijft altijd op jouw apparaat. Cloud-backups zijn gebonden aan je Owner status — exporteer je data regelmatig als veiligheidsnet."
+  },
+  "cta": {
+    "title": "Klaar om te starten?",
+    "tekst": "Begin gratis met een basis account, of ga terug naar het overzicht voor meer uitleg.",
+    "knop_start": "Start gratis",
+    "knop_terug": "Terug naar overzicht"
+  }
+}
