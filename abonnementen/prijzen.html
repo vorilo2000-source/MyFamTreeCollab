@@ -3,12 +3,12 @@
      - i18n uitgerold via namespace 'prijzen'
      - Alle zichtbare tekst vervangen door data-i18n attributen
      - i18next CDN scripts toegevoegd aan <head>
-     - i18n.js geladen vóór Supabase (zelfde volgorde als overzicht.html)
+     - i18n.js geladen vóór Supabase (zelfde volgorde als andere pagina's)
      - loadNamespace('prijzen') aangeroepen na i18nModule.init()
-     - donatie-noot (bevat <strong>) via _translateHTML() helper
+     - donatie-noot (bevat <strong>) vertaald via _translateHTML() / innerHTML
      - Versienummer verhoogd van v2.4.0 naar v2.5.0
 
-     v2.4.0 (sessie 21): Admin-kolom toegevoegd, definitief account-model
+     v2.4.0: Vergelijkingstabel herschreven naar definitief account-model
      v2.3.0: Script tag gesloten, paginanaam gecorrigeerd, analytics laadvolgorde
      v2.2.0: site analytics toegevoegd
      v2.1.0: fixes kolomhoofden, CTA-knop kleur, duplicate tabelrij verwijderd
@@ -35,230 +35,68 @@
 
     <style>
         /* ── Pagina layout ─────────────────────────────────────────────── */
-        .prijzen-wrapper {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 40px 20px 64px;
-        }
-
+        .prijzen-wrapper { max-width: 860px; margin: 0 auto; padding: 40px 20px 64px; }
         .prijzen-wrapper h1 { font-size: 1.5rem; font-weight: bold; color: #1a1a1a; margin: 0 0 8px 0; }
-
         .prijzen-intro { font-size: 0.95rem; color: #555; line-height: 1.7; margin: 0 0 40px 0; max-width: 640px; }
-
-        .sectie-titel {
-            font-size: 1.05rem;
-            font-weight: bold;
-            color: #1E90FF;
-            margin: 0 0 16px 0;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e8f4ff;
-        }
+        .sectie-titel { font-size: 1.05rem; font-weight: bold; color: #1E90FF; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #e8f4ff; }
 
         /* ── Vergelijkingstabel ─────────────────────────────────────────── */
-        .vergelijk-wrapper {
-            overflow-x: auto;
-            margin-bottom: 48px;
-            border-radius: 10px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
-
-        .vergelijk-tabel {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.87rem;
-            min-width: 580px;
-        }
-
-        .vergelijk-tabel thead tr th {
-            padding: 14px 16px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.88rem;
-            background: #f4f6f9;
-            border-bottom: 2px solid #e0e0e0;
-            white-space: nowrap;
-            color: #1a1a1a;
-        }
-
-        .vergelijk-tabel thead tr th:first-child {
-            text-align: left;
-            color: #555;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
+        .vergelijk-wrapper { overflow-x: auto; margin-bottom: 48px; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .vergelijk-tabel { width: 100%; border-collapse: collapse; font-size: 0.87rem; min-width: 580px; }
+        .vergelijk-tabel thead tr th { padding: 14px 16px; text-align: center; font-weight: bold; font-size: 0.88rem; background: #f4f6f9; border-bottom: 2px solid #e0e0e0; white-space: nowrap; color: #1a1a1a; }
+        .vergelijk-tabel thead tr th:first-child { text-align: left; color: #555; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
         .th-bezoeker { border-top: 3px solid #999;    color: #444; }
         .th-guest    { border-top: 3px solid #28a745; color: #1a5c2a; }
         .th-owner    { border-top: 3px solid #f39c12; color: #7a4f00; }
         .th-admin    { border-top: 3px solid #dc3545; color: #8b0000; }
-
         .th-rol-icoon { display: block; font-size: 1.3rem; margin-bottom: 4px; }
         .th-rol-naam  { display: block; font-size: 0.9rem; font-weight: bold; }
-
-        .th-tier {
-            display: inline-block;
-            font-size: 0.65rem;
-            font-family: monospace;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-top: 5px;
-            border: 1px solid;
-        }
-
+        .th-tier { display: inline-block; font-size: 0.65rem; font-family: monospace; padding: 1px 6px; border-radius: 4px; font-weight: bold; margin-top: 5px; border: 1px solid; }
         .tier-null  { background: #f0f0f0; color: #888; border-color: #ddd; }
         .tier-guest { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
         .tier-owner { background: #fff3cd; color: #7a4f00; border-color: #f0ad4e; }
         .tier-admin { background: #fdecea; color: #c62828; border-color: #ef9a9a; }
-
-        .vergelijk-tabel tbody tr td {
-            padding: 11px 16px;
-            border-bottom: 1px solid #f0f0f0;
-            text-align: center;
-            color: #444;
-            vertical-align: middle;
-        }
-
+        .vergelijk-tabel tbody tr td { padding: 11px 16px; border-bottom: 1px solid #f0f0f0; text-align: center; color: #444; vertical-align: middle; }
         .vergelijk-tabel tbody tr:last-child td { border-bottom: none; }
         .vergelijk-tabel tbody tr:hover td { background: #fafbff; }
-
-        .vergelijk-tabel tbody tr td:first-child {
-            text-align: left;
-            font-size: 0.86rem;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .vergelijk-tabel tr.sectie-rij td {
-            background: #f8f9fb;
-            font-weight: bold;
-            font-size: 0.78rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 8px 16px;
-            border-bottom: 1px solid #e8e8e8;
-        }
-
+        .vergelijk-tabel tbody tr td:first-child { text-align: left; font-size: 0.86rem; color: #333; font-weight: 500; }
+        .vergelijk-tabel tr.sectie-rij td { background: #f8f9fb; font-weight: bold; font-size: 0.78rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 16px; border-bottom: 1px solid #e8e8e8; }
         .v { color: #28a745; font-size: 1rem; font-weight: bold; }
         .x { color: #bbb;    font-size: 1rem; }
         .s { color: #999;    font-size: 0.8rem; font-style: italic; }
-
         .limiet { font-size: 0.82rem; color: #555; }
 
         /* ── Donatie kaarten ─────────────────────────────────────────────── */
-        .donatie-kaart-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .donatie-kaart {
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px 18px;
-            background: #fff;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .donatie-kaart::before {
-            content: '';
-            display: block;
-            height: 3px;
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            border-radius: 10px 10px 0 0;
-        }
-
+        .donatie-kaart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px; }
+        .donatie-kaart { border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px 18px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+        .donatie-kaart::before { content: ''; display: block; height: 3px; position: absolute; top: 0; left: 0; right: 0; border-radius: 10px 10px 0 0; }
         .donatie-kaart.periodiek::before { background: #1E90FF; }
         .donatie-kaart.eenmalig::before  { background: #28a745; }
         .donatie-kaart.stichtend::before { background: #f39c12; }
-
         .donatie-kaart-naam    { font-weight: bold; font-size: 0.95rem; color: #1a1a1a; margin: 6px 0 4px 0; }
         .donatie-kaart-bedrag  { font-size: 1.6rem; font-weight: bold; color: #1a1a1a; margin: 8px 0 2px 0; line-height: 1; }
         .donatie-kaart-periode { font-size: 0.78rem; color: #999; margin-bottom: 14px; }
-
         .donatie-kaart ul { list-style: none; padding: 0; margin: 0; }
-
-        .donatie-kaart ul li {
-            font-size: 0.84rem;
-            color: #555;
-            padding: 3px 0;
-            display: flex;
-            align-items: flex-start;
-            gap: 7px;
-            line-height: 1.4;
-        }
-
+        .donatie-kaart ul li { font-size: 0.84rem; color: #555; padding: 3px 0; display: flex; align-items: flex-start; gap: 7px; line-height: 1.4; }
         .vink { color: #28a745; font-weight: bold; flex-shrink: 0; }
-
-        .aanbevolen-badge {
-            position: absolute;
-            top: 12px; right: 12px;
-            font-size: 0.68rem;
-            font-weight: bold;
-            background: #f39c12;
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 8px;
-        }
-
-        .donatie-noot {
-            background: #fff8e1;
-            border-left: 4px solid #f39c12;
-            border-radius: 0 6px 6px 0;
-            padding: 13px 16px;
-            font-size: 0.84rem;
-            color: #555;
-            line-height: 1.6;
-            margin-bottom: 40px;
-        }
+        .aanbevolen-badge { position: absolute; top: 12px; right: 12px; font-size: 0.68rem; font-weight: bold; background: #f39c12; color: #fff; padding: 2px 8px; border-radius: 8px; }
+        .donatie-noot { background: #fff8e1; border-left: 4px solid #f39c12; border-radius: 0 6px 6px 0; padding: 13px 16px; font-size: 0.84rem; color: #555; line-height: 1.6; margin-bottom: 40px; }
         .donatie-noot strong { color: #e67e22; }
 
         /* ── FAQ sectie ─────────────────────────────────────────────────── */
         .faq-sectie { margin-bottom: 40px; }
-
         .faq-item { border-bottom: 1px solid #f0f0f0; padding: 14px 0; }
         .faq-item:last-child { border-bottom: none; }
-
         .faq-vraag    { font-size: 0.9rem; font-weight: bold; color: #1a1a1a; margin: 0 0 6px 0; }
         .faq-antwoord { font-size: 0.86rem; color: #555; line-height: 1.6; margin: 0; }
 
         /* ── CTA blok ────────────────────────────────────────────────────── */
-        .cta-blok {
-            text-align: center;
-            padding: 32px 24px;
-            background: #f4f8ff;
-            border-radius: 10px;
-            border: 1px solid #d0e4ff;
-        }
-
+        .cta-blok { text-align: center; padding: 32px 24px; background: #f4f8ff; border-radius: 10px; border: 1px solid #d0e4ff; }
         .cta-blok h2 { font-size: 1.1rem; font-weight: bold; color: #1a1a1a; margin: 0 0 8px 0; }
         .cta-blok p  { font-size: 0.9rem; color: #555; margin: 0 0 20px 0; line-height: 1.6; }
-
-        .knop-cta {
-            display: inline-block;
-            padding: 10px 26px;
-            background: #1E90FF;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.92rem;
-            font-weight: bold;
-        }
+        .knop-cta { display: inline-block; padding: 10px 26px; background: #1E90FF; color: #fff; text-decoration: none; border-radius: 6px; font-size: 0.92rem; font-weight: bold; }
         .knop-cta:hover { background: #1278d4; color: #fff; }
-
-        .knop-cta.secundair {
-            background: #fff;
-            color: #1E90FF;
-            border: 1px solid #1E90FF;
-            margin-left: 8px;
-        }
+        .knop-cta.secundair { background: #fff; color: #1E90FF; border: 1px solid #1E90FF; margin-left: 8px; }
         .knop-cta.secundair:hover { background: #e8f4ff; color: #1E90FF; }
     </style>
 </head>
@@ -274,162 +112,115 @@
     <h1 data-i18n="prijzen:page.title">Vergelijking account types</h1> <!-- Paginatitel — vertaald via namespace prijzen -->
     <p class="prijzen-intro" data-i18n="prijzen:page.intro">
         Wat kan elk account type?
-    </p> <!-- Intro — vertaald -->
+    </p> <!-- Intro — vertaald via namespace prijzen -->
 
     <!-- ===== VERGELIJKINGSTABEL ===== -->
-    <h2 class="sectie-titel" data-i18n="prijzen:tabel.sectie_titel">Wat kan elk account type?</h2> <!-- Sectietitel — vertaald -->
+    <h2 class="sectie-titel" data-i18n="prijzen:tabel.title">Wat kan elk account type?</h2> <!-- Sectietitel tabel — vertaald -->
     <div class="vergelijk-wrapper">
         <table class="vergelijk-tabel">
             <thead>
                 <tr>
-                    <th></th> <!-- Lege cel linksboven — geen label -->
-
-                    <!-- Niet ingelogd — tier: null — naam vertaald, tier-badge nooit vertaald (DB-waarde) -->
+                    <th></th> <!-- Lege cel linksboven — feature-kolom heeft geen eigen label -->
                     <th class="th-bezoeker">
                         <span class="th-rol-icoon">👤</span>
-                        <span class="th-rol-naam" data-i18n="prijzen:tabel.th_bezoeker">Niet ingelogd</span>
-                        <span class="th-tier tier-null">null</span>
+                        <span class="th-rol-naam" data-i18n="prijzen:tabel.col_bezoeker">Niet ingelogd</span> <!-- Kolomhoofd — vertaald -->
+                        <span class="th-tier tier-null">null</span> <!-- DB-waarde: nooit vertaald -->
                     </th>
-
-                    <!-- Basis account — tier: guest -->
                     <th class="th-guest">
                         <span class="th-rol-icoon">🖥️</span>
-                        <span class="th-rol-naam" data-i18n="prijzen:tabel.th_guest">Basis account</span>
-                        <span class="th-tier tier-guest">guest</span>
+                        <span class="th-rol-naam" data-i18n="prijzen:tabel.col_guest">Basis account</span> <!-- Kolomhoofd — vertaald -->
+                        <span class="th-tier tier-guest">guest</span> <!-- DB-waarde: nooit vertaald -->
                     </th>
-
-                    <!-- Owner account — tier: owner -->
                     <th class="th-owner">
                         <span class="th-rol-icoon">👑</span>
-                        <span class="th-rol-naam" data-i18n="prijzen:tabel.th_owner">Owner</span>
-                        <span class="th-tier tier-owner">owner</span>
+                        <span class="th-rol-naam" data-i18n="prijzen:tabel.col_owner">Owner</span> <!-- Kolomhoofd — vertaald -->
+                        <span class="th-tier tier-owner">owner</span> <!-- DB-waarde: nooit vertaald -->
                     </th>
-
-                    <!-- Admin — tier: admin -->
                     <th class="th-admin">
                         <span class="th-rol-icoon">🛡️</span>
-                        <span class="th-rol-naam" data-i18n="prijzen:tabel.th_admin">Admin</span>
-                        <span class="th-tier tier-admin">admin</span>
+                        <span class="th-rol-naam" data-i18n="prijzen:tabel.col_admin">Admin</span> <!-- Kolomhoofd — vertaald -->
+                        <span class="th-tier tier-admin">admin</span> <!-- DB-waarde: nooit vertaald -->
                     </th>
                 </tr>
             </thead>
             <tbody>
 
-                <!-- ── GROEP: LOKALE STAMBOOM ── -->
-                <tr class="sectie-rij"><td colspan="5" data-i18n="prijzen:tabel.groep_lokaal">Lokale stamboom</td></tr>
-
+                <!-- ── GROEP: LOKAAL ── -->
+                <tr class="sectie-rij"><td colspan="5" data-i18n="prijzen:tabel.groep_lokaal">Lokale stamboom</td></tr> <!-- Groepstitel — vertaald -->
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_demo">Demo-stamboom bekijken</td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_demo">Demo-stamboom bekijken</td> <!-- Feature naam — vertaald -->
+                    <td><span class="v">✓</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_eigen">Eigen stamboom aanmaken</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_eigen">Eigen stamboom aanmaken</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_max">Max. personen lokaal</td>
+                    <td data-i18n="prijzen:tabel.feat_max">Max. personen lokaal</td> <!-- Feature naam — vertaald -->
                     <td><span class="x">✗</span></td>
-                    <td><span class="limiet" data-i18n="prijzen:tabel.val_60">60 personen</span></td>
-                    <td><span class="limiet" data-i18n="prijzen:tabel.val_onbeperkt">Onbeperkt</span></td>
-                    <td><span class="limiet" data-i18n="prijzen:tabel.val_onbeperkt">Onbeperkt</span></td>
+                    <td><span class="limiet" data-i18n="prijzen:tabel.val_60">60 personen</span></td>       <!-- Limiet guest — vertaald -->
+                    <td><span class="limiet" data-i18n="prijzen:tabel.val_onbeperkt">Onbeperkt</span></td>  <!-- Limiet owner — vertaald -->
+                    <td><span class="limiet" data-i18n="prijzen:tabel.val_onbeperkt">Onbeperkt</span></td>  <!-- Limiet admin — vertaald -->
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_tijdlijn">Tijdlijn &amp; statistieken</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_tijdlijn">Tijdlijn &amp; statistieken</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_export">Export naar CSV / JSON</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_export">Export naar CSV / JSON</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_print">Afdrukken / print</td>
+                    <td data-i18n="prijzen:tabel.feat_print">Afdrukken / print</td> <!-- Feature naam — vertaald -->
                     <td><span class="x">✗</span></td>
-                    <td><span class="s" data-i18n="prijzen:tabel.val_later">Later</span></td>
-                    <td><span class="s" data-i18n="prijzen:tabel.val_later">Later</span></td>
-                    <td><span class="s" data-i18n="prijzen:tabel.val_later">Later</span></td>
+                    <td><span class="s" data-i18n="prijzen:tabel.val_later">Later</span></td> <!-- Later — vertaald -->
+                    <td><span class="s" data-i18n="prijzen:tabel.val_later">Later</span></td> <!-- Later — vertaald -->
+                    <td><span class="s" data-i18n="prijzen:tabel.val_later">Later</span></td> <!-- Later — vertaald -->
                 </tr>
 
                 <!-- ── GROEP: CLOUD & SAMENWERKING ── -->
-                <tr class="sectie-rij"><td colspan="5" data-i18n="prijzen:tabel.groep_cloud">Cloud &amp; samenwerking</td></tr>
-
+                <tr class="sectie-rij"><td colspan="5" data-i18n="prijzen:tabel.groep_cloud">Cloud &amp; samenwerking</td></tr> <!-- Groepstitel — vertaald -->
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_cloud">Cloud backup</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_cloud">Cloud backup</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_delen">Stamboom delen</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_delen">Stamboom delen</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_uitnodigen">Viewer / Editor uitnodigen</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_uitnodigen">Viewer / Editor uitnodigen</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_collab">Samenwerken (collab)</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_collab">Samenwerken (collab)</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_versie">Versiebeheer per persoon</td>
+                    <td data-i18n="prijzen:tabel.feat_versie">Versiebeheer per persoon</td> <!-- Feature naam — vertaald -->
                     <td><span class="x">✗</span></td>
                     <td><span class="x">✗</span></td>
-                    <td><span class="limiet" data-i18n="prijzen:tabel.val_max5">Max. 5 versies</span></td>
-                    <td><span class="limiet" data-i18n="prijzen:tabel.val_onbeperkt">Onbeperkt</span></td>
+                    <td><span class="limiet" data-i18n="prijzen:tabel.val_max5">Max. 5 versies</span></td>  <!-- Owner: beperkt — vertaald -->
+                    <td><span class="limiet" data-i18n="prijzen:tabel.val_onbeperkt">Onbeperkt</span></td>  <!-- Admin: onbeperkt — vertaald -->
                 </tr>
 
                 <!-- ── GROEP: BEHEER ── -->
-                <tr class="sectie-rij"><td colspan="5" data-i18n="prijzen:tabel.groep_beheer">Beheer</td></tr>
-
+                <tr class="sectie-rij"><td colspan="5" data-i18n="prijzen:tabel.groep_beheer">Beheer</td></tr> <!-- Groepstitel — vertaald -->
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_modereren">Berichten modereren</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_modereren">Berichten modereren</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_intrekken">Toegang intrekken</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_intrekken">Toegang intrekken</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_privacy">Privacy &amp; zichtbaarheid instellen</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_privacy">Privacy &amp; zichtbaarheid instellen</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td><td><span class="v">✓</span></td>
                 </tr>
                 <tr>
-                    <td data-i18n="prijzen:tabel.feat_admin">Admin dashboard</td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="x">✗</span></td>
-                    <td><span class="v">✓</span></td>
+                    <td data-i18n="prijzen:tabel.feat_admin">Admin dashboard</td> <!-- Feature naam — vertaald -->
+                    <td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="x">✗</span></td><td><span class="v">✓</span></td> <!-- Alleen admin -->
                 </tr>
 
             </tbody>
@@ -437,170 +228,174 @@
     </div>
 
     <!-- ===== DONATIE KAARTEN ===== -->
-    <h2 class="sectie-titel" data-i18n="prijzen:donatie.titel">☕ Donatie-opties (Owner account)</h2>
+    <h2 class="sectie-titel" data-i18n="prijzen:donatie.title">☕ Donatie-opties (Owner account)</h2> <!-- Sectietitel — vertaald -->
     <p style="font-size:0.88rem;color:#555;margin:0 0 20px 0;line-height:1.6;" data-i18n="prijzen:donatie.intro">
         Een Owner account wordt geactiveerd via een donatie.
-    </p>
+    </p> <!-- Donatie intro — vertaald -->
 
     <div class="donatie-kaart-grid">
 
-        <!-- PERIODIEK -->
+        <!-- PERIODIEK — hoofdoptie -->
         <div class="donatie-kaart periodiek">
-            <div class="donatie-kaart-naam"    data-i18n="prijzen:donatie.periodiek_naam">Periodiek</div>
-            <div class="donatie-kaart-bedrag">~€5</div>
-            <div class="donatie-kaart-periode" data-i18n="prijzen:donatie.periodiek_periode">per 6 maanden</div>
+            <div class="donatie-kaart-naam"    data-i18n="prijzen:donatie.periodiek_naam">Periodiek</div>       <!-- Naam — vertaald -->
+            <div class="donatie-kaart-bedrag">~€5</div>                                                          <!-- Bedrag — nooit vertaald -->
+            <div class="donatie-kaart-periode" data-i18n="prijzen:donatie.periodiek_per">per 6 maanden</div>    <!-- Periode — vertaald -->
             <ul>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.periodiek_feat1">Owner account actief</span></li>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.periodiek_feat2">Opzegbaar wanneer je wilt</span></li>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.periodiek_feat3">Steunt doorlopende ontwikkeling</span></li>
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.periodiek_feat1">Owner account actief</span></li>          <!-- Feature 1 — vertaald -->
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.periodiek_feat2">Opzegbaar wanneer je wilt</span></li>      <!-- Feature 2 — vertaald -->
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.periodiek_feat3">Steunt doorlopende ontwikkeling</span></li> <!-- Feature 3 — vertaald -->
             </ul>
         </div>
 
         <!-- EENMALIG -->
         <div class="donatie-kaart eenmalig">
-            <div class="donatie-kaart-naam"    data-i18n="prijzen:donatie.eenmalig_naam">Eenmalig</div>
-            <div class="donatie-kaart-bedrag">€10</div>
-            <div class="donatie-kaart-periode" data-i18n="prijzen:donatie.eenmalig_periode">eenmalig</div>
+            <div class="donatie-kaart-naam"    data-i18n="prijzen:donatie.eenmalig_naam">Eenmalig</div>      <!-- Naam — vertaald -->
+            <div class="donatie-kaart-bedrag">€10</div>                                                        <!-- Bedrag — nooit vertaald -->
+            <div class="donatie-kaart-periode" data-i18n="prijzen:donatie.eenmalig_per">eenmalig</div>       <!-- Periode — vertaald -->
             <ul>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.eenmalig_feat1">Permanente Owner activatie</span></li>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.eenmalig_feat2">Geldig voor één stamboom</span></li>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.eenmalig_feat3">Geen verdere verplichtingen</span></li>
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.eenmalig_feat1">Permanente Owner activatie</span></li>  <!-- Feature 1 — vertaald -->
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.eenmalig_feat2">Geldig voor één stamboom</span></li>     <!-- Feature 2 — vertaald -->
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.eenmalig_feat3">Geen verdere verplichtingen</span></li>  <!-- Feature 3 — vertaald -->
             </ul>
         </div>
 
         <!-- STICHTEND LID -->
         <div class="donatie-kaart stichtend">
-            <div class="aanbevolen-badge"       data-i18n="prijzen:donatie.stichtend_badge">⭐ Stichtend</div>
-            <div class="donatie-kaart-naam"     data-i18n="prijzen:donatie.stichtend_naam">Stichtend lid</div>
-            <div class="donatie-kaart-bedrag">€25</div>
-            <div class="donatie-kaart-periode"  data-i18n="prijzen:donatie.stichtend_periode">eenmalig</div>
+            <div class="aanbevolen-badge"      data-i18n="prijzen:donatie.stichtend_badge">⭐ Stichtend</div>   <!-- Badge — vertaald -->
+            <div class="donatie-kaart-naam"    data-i18n="prijzen:donatie.stichtend_naam">Stichtend lid</div>   <!-- Naam — vertaald -->
+            <div class="donatie-kaart-bedrag">€25</div>                                                           <!-- Bedrag — nooit vertaald -->
+            <div class="donatie-kaart-periode" data-i18n="prijzen:donatie.stichtend_per">eenmalig</div>          <!-- Periode — vertaald -->
             <ul>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.stichtend_feat1">Permanente Owner activatie</span></li>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.stichtend_feat2">Early access nieuwe functies</span></li>
-                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.stichtend_feat3">Vermelding als stichtend lid</span></li>
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.stichtend_feat1">Permanente Owner activatie</span></li>   <!-- Feature 1 — vertaald -->
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.stichtend_feat2">Early access nieuwe functies</span></li>  <!-- Feature 2 — vertaald -->
+                <li><span class="vink">✓</span> <span data-i18n="prijzen:donatie.stichtend_feat3">Vermelding als stichtend lid</span></li>  <!-- Feature 3 — vertaald -->
             </ul>
         </div>
 
     </div>
 
-    <!-- Noot bevat <strong> — wordt gezet via _translateHTML() in script -->
+    <!-- Noot bevat <strong> — vertaald via _translateHTML() in script (innerHTML i.p.v. textContent) -->
     <div class="donatie-noot" id="donatie-noot"></div>
 
     <!-- ===== VEELGESTELDE VRAGEN ===== -->
     <div class="faq-sectie">
-        <h2 class="sectie-titel" data-i18n="prijzen:faq.titel">Veelgestelde vragen</h2>
+        <h2 class="sectie-titel" data-i18n="prijzen:faq.title">Veelgestelde vragen</h2> <!-- FAQ sectietitel — vertaald -->
 
         <div class="faq-item">
-            <p class="faq-vraag"    data-i18n="prijzen:faq.v1_vraag">Moet ik doneren om de app te gebruiken?</p>
-            <p class="faq-antwoord" data-i18n="prijzen:faq.v1_antwoord">Nee. Een basis account (guest) is volledig gratis.</p>
+            <p class="faq-vraag"    data-i18n="prijzen:faq.v1_vraag">Moet ik doneren om de app te gebruiken?</p>          <!-- Vraag 1 — vertaald -->
+            <p class="faq-antwoord" data-i18n="prijzen:faq.v1_antwoord">Nee. Een basis account is volledig gratis.</p>     <!-- Antwoord 1 — vertaald -->
         </div>
-
         <div class="faq-item">
-            <p class="faq-vraag"    data-i18n="prijzen:faq.v2_vraag">Wat is het verschil tussen een Viewer en een basis account?</p>
-            <p class="faq-antwoord" data-i18n="prijzen:faq.v2_antwoord">Viewer en Editor zijn stamboom-rechten, geen account types.</p>
+            <p class="faq-vraag"    data-i18n="prijzen:faq.v2_vraag">Wat is het verschil tussen een Viewer en een basis account?</p>  <!-- Vraag 2 — vertaald -->
+            <p class="faq-antwoord" data-i18n="prijzen:faq.v2_antwoord">Viewer en Editor zijn stamboom-rechten, geen account types.</p> <!-- Antwoord 2 — vertaald -->
         </div>
-
         <div class="faq-item">
-            <p class="faq-vraag"    data-i18n="prijzen:faq.v3_vraag">Wat gebeurt er als ik stop met de periodieke donatie?</p>
-            <p class="faq-antwoord" data-i18n="prijzen:faq.v3_antwoord">Je account zakt terug naar basis (guest).</p>
+            <p class="faq-vraag"    data-i18n="prijzen:faq.v3_vraag">Wat gebeurt er als ik stop met de periodieke donatie?</p>  <!-- Vraag 3 — vertaald -->
+            <p class="faq-antwoord" data-i18n="prijzen:faq.v3_antwoord">Je account zakt terug naar basis (guest).</p>            <!-- Antwoord 3 — vertaald -->
         </div>
-
         <div class="faq-item">
-            <p class="faq-vraag"    data-i18n="prijzen:faq.v4_vraag">Is mijn data veilig als ik stop met doneren?</p>
-            <p class="faq-antwoord" data-i18n="prijzen:faq.v4_antwoord">Jouw lokale data blijft altijd op jouw apparaat.</p>
+            <p class="faq-vraag"    data-i18n="prijzen:faq.v4_vraag">Is mijn data veilig als ik stop met doneren?</p>          <!-- Vraag 4 — vertaald -->
+            <p class="faq-antwoord" data-i18n="prijzen:faq.v4_antwoord">Jouw lokale data blijft altijd op jouw apparaat.</p>   <!-- Antwoord 4 — vertaald -->
         </div>
-
     </div>
 
     <!-- ===== CTA ===== -->
     <div class="cta-blok">
-        <h2 data-i18n="prijzen:cta.titel">Klaar om te starten?</h2>
-        <p  data-i18n="prijzen:cta.tekst">Begin gratis met een basis account.</p>
-        <a href="/MyFamTreeCollab/home/create.html" class="knop-cta"         data-i18n="prijzen:cta.knop_start">Start gratis</a>
-        <a href="overzicht.html"                    class="knop-cta secundair" data-i18n="prijzen:cta.knop_terug">Terug naar overzicht</a>
+        <h2 data-i18n="prijzen:cta.title">Klaar om te starten?</h2>                                                                       <!-- CTA titel — vertaald -->
+        <p  data-i18n="prijzen:cta.tekst">Begin gratis met een basis account, of ga terug naar het overzicht voor meer uitleg.</p>        <!-- CTA tekst — vertaald -->
+        <a href="/MyFamTreeCollab/home/create.html" class="knop-cta"           data-i18n="prijzen:cta.knop_start">Start gratis</a>         <!-- Primaire knop — vertaald -->
+        <a href="overzicht.html"                    class="knop-cta secundair" data-i18n="prijzen:cta.knop_terug">Terug naar overzicht</a> <!-- Secundaire knop — vertaald -->
     </div>
 
 </div>
 </main>
 
-<div id="footer-placeholder"></div>
+<div id="footer-placeholder"></div> <!-- Footer wordt geladen via fetch -->
 
 <!-- =============================================================
      SCRIPTS — verplichte laadvolgorde:
-     1. i18next CDN scripts   — in <head> geladen
+     1. i18next CDN scripts   — in <head> geladen (core + backend + detector)
      2. i18n.js               — core i18n module (window.i18nModule)
      3. Supabase SDK          — vereist door auth.js
-     4. utils.js              — vereist door alle modules
+     4. utils.js              — vereist door alle andere modules
      5. auth.js               — vereist door topbar.js en siteAnalytics.js
-     6. siteAnalytics.js      — bezoektracking
-     7. Inline script: init → loadNamespace → HTML-blokken → listeners → fetches
+     6. siteAnalytics.js      — bezoektracking, na auth.js zodat tier beschikbaar is
+     7. Inline script:
+        a. i18nModule.init()      — namespace 'common' laden + DOM vertalen
+        b. loadNamespace('prijzen') — pagina-specifieke teksten laden
+        c. _translateHTMLBlocks() — donatie-noot met <strong> via innerHTML
+        d. i18next listener       — hertalen HTML-blokken bij taalwissel
+        e. TopBar / Navbar / Footer fetch
      ============================================================= -->
-<script src="../js/i18n.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+<script src="../js/i18n.js"></script>                                                  <!-- i18n module — window.i18nModule beschikbaar stellen -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>           <!-- Supabase SDK — vereist door auth.js -->
+<script src="../js/utils.js"></script>                                                  <!-- Utilities — vereist door alle modules -->
+<script src="../js/auth.js"></script>                                                   <!-- Auth module — vereist door topbar.js -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                           <!-- Bezoektracking — na auth.js zodat tier beschikbaar is -->
 
 <script>
     /**
      * _translateHTML(elementId, key)
-     * Vertaalt een element waarvan de inhoud HTML-tags bevat.
-     * Gebruikt innerHTML zodat opmaak (<strong> etc.) behouden blijft.
+     * Vertaalt een element waarvan de inhoud HTML-tags bevat (<strong>).
+     * Gebruikt innerHTML in plaats van textContent om opmaak te behouden.
+     *
+     * @param {string} elementId - ID van het doel-element in de DOM
+     * @param {string} key       - Volledige i18n sleutel incl. namespace
      */
     function _translateHTML(elementId, key) {
         var el = document.getElementById(elementId); // Doelelement ophalen via ID
-        if (el) el.innerHTML = i18next.t(key);       // Vertaling als innerHTML zetten
+        if (el) el.innerHTML = i18next.t(key);       // Vertaling als innerHTML zetten (HTML-opmaak behouden)
     }
 
     /**
      * _translateHTMLBlocks()
      * Vertaalt alle elementen met HTML-inhoud op deze pagina.
-     * Herbruikbaar bij taalwissel via i18next listener.
+     * Herbruikbaar bij taalwissel via i18next languageChanged listener.
      */
     function _translateHTMLBlocks() {
         _translateHTML('donatie-noot', 'prijzen:donatie.noot'); // Donatie-noot: bevat <strong>
     }
 
-    // Stap 1: i18n initialiseren
+    // Stap 1: i18n initialiseren — laadt 'common' namespace en detecteert taal
     i18nModule.init().then(function() {
 
-        // Stap 2: pagina-specifieke namespace laden
+        // Stap 2: pagina-specifieke namespace laden en DOM hertalen
         return i18nModule.loadNamespace('prijzen');
 
     }).then(function() {
 
-        // Stap 3: HTML-blokken vullen via innerHTML
+        // Stap 3: elementen met HTML-inhoud vullen (data-i18n gebruikt textContent, niet innerHTML)
         _translateHTMLBlocks();
 
-        // Stap 4: listener — hertaal HTML-blokken bij taalwissel
+        // Stap 4: listener — hertaal HTML-blokken ook bij elke taalwissel
         i18next.on('languageChanged', _translateHTMLBlocks);
 
-        // Stap 5: TopBar laden, daarna topbar.js injecteren
+        // Stap 5: TopBar laden, daarna PAS topbar.js injecteren
         fetch('/MyFamTreeCollab/Layout/TopBar.html')
-            .then(function(resp) { return resp.text(); })
+            .then(function(resp) { return resp.text(); })                                    // HTML ophalen als tekst
             .then(function(data) {
                 i18nModule.onComponentLoaded(data, document.getElementById('topbar-placeholder')); // TopBar injecteren + vertalen
-                var s = document.createElement('script');
-                s.src = '../js/topbar.js';
-                document.body.appendChild(s);
+                var s = document.createElement('script');                                    // Script element aanmaken
+                s.src = '../js/topbar.js';                                                   // Pad naar topbar.js
+                document.body.appendChild(s);                                                // Script laden
             });
 
-        // Stap 6: Navbar laden — mag parallel
+        // Stap 6: Navbar laden — geen auth-afhankelijkheid, mag parallel
         fetch('/MyFamTreeCollab/Layout/Navbar.html')
-            .then(function(resp) { return resp.text(); })
+            .then(function(resp) { return resp.text(); })                                    // HTML ophalen
             .then(function(data) {
                 i18nModule.onComponentLoaded(data, document.getElementById('navbar-placeholder')); // Navbar injecteren + vertalen
             });
 
-        // Stap 7: Footer laden — mag parallel
+        // Stap 7: Footer laden — geen afhankelijkheden, mag parallel
         fetch('/MyFamTreeCollab/Layout/Footer.html')
-            .then(function(resp) { return resp.text(); })
+            .then(function(resp) { return resp.text(); })                                    // HTML ophalen
             .then(function(data) {
-                var ph = document.getElementById('footer-placeholder');
-                if (ph) ph.innerHTML = data;
+                var ph = document.getElementById('footer-placeholder');                      // Placeholder ophalen
+                if (ph) ph.innerHTML = data;                                                 // Footer in DOM plaatsen
             });
 
-        // Stap 8: Pagina tracking
+        // Stap 8: Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
         SiteAnalytics.trackPage("prijzen"); // Bezoek registreren in Supabase page_visits tabel
     });
 </script>
