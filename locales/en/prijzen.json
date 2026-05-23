@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Account type comparison",
+    "intro": "What can each account type do? The table below gives a complete overview per feature. Viewer and Editor are not account types — they are family tree rights granted by an Owner."
+  },
+  "tabel": {
+    "sectie_title": "What can each account type do?",
+    "col_bezoeker": "Not logged in",
+    "col_guest": "Basic account",
+    "col_owner": "Owner",
+    "col_admin": "Admin",
+    "groep_lokaal": "Local family tree",
+    "groep_cloud": "Cloud & collaboration",
+    "groep_beheer": "Management",
+    "feat_demo": "View demo family tree",
+    "feat_aanmaken": "Create own family tree",
+    "feat_personen": "Max. persons locally",
+    "feat_tijdlijn": "Timeline & statistics",
+    "feat_export": "Export to CSV / JSON",
+    "feat_afdrukken": "Print",
+    "feat_cloud": "Cloud backup",
+    "feat_delen": "Share family tree",
+    "feat_uitnodigen": "Invite Viewer / Editor",
+    "feat_collab": "Collaboration (collab)",
+    "feat_versie": "Version history per person",
+    "feat_modereren": "Moderate messages",
+    "feat_intrekken": "Revoke access",
+    "feat_privacy": "Set privacy & visibility",
+    "feat_admin": "Admin dashboard",
+    "limiet_60": "60 persons",
+    "limiet_onbeperkt": "Unlimited",
+    "limiet_5versies": "Max. 5 versions",
+    "later": "Later"
+  },
+  "donatie": {
+    "title": "☕ Donation options (Owner account)",
+    "intro": "An Owner account is activated via a donation. Basic accounts (guest) are completely free.",
+    "periodiek_naam": "Recurring",
+    "periodiek_periode": "per 6 months",
+    "periodiek_feat1": "Owner account active",
+    "periodiek_feat2": "Cancel anytime",
+    "periodiek_feat3": "Supports ongoing development",
+    "eenmalig_naam": "One-time",
+    "eenmalig_periode": "one-time",
+    "eenmalig_feat1": "Permanent Owner activation",
+    "eenmalig_feat2": "Valid for one family tree",
+    "eenmalig_feat3": "No further obligations",
+    "stichtend_naam": "Founding member",
+    "stichtend_periode": "one-time",
+    "stichtend_badge": "⭐ Founding",
+    "stichtend_feat1": "Permanent Owner activation",
+    "stichtend_feat2": "Early access to new features",
+    "stichtend_feat3": "Listed as founding member",
+    "noot": "<strong>Transparency:</strong> there is no automatic payment verification yet. The Owner account is activated manually after receipt of a donation. This will be automated in a future phase."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "v1_vraag": "Do I need to donate to use the app?",
+    "v1_antwoord": "No. A basic account (guest) is completely free and requires no donation. You get access to a local family tree with up to 60 persons.",
+    "v2_vraag": "What is the difference between a Viewer and a basic account?",
+    "v2_antwoord": "Viewer and Editor are family tree rights, not account types. A user with a basic account (guest) can be invited by an Owner as Viewer or Editor on a specific family tree. The rights are stored in a separate table, not in the account.",
+    "v3_vraag": "What happens if I stop the recurring donation?",
+    "v3_antwoord": "Your account reverts to basic (guest). The Owner can then no longer share new family trees or invite Viewers/Editors. There is no automatic blocking in the MVP — this will be automated in a later phase.",
+    "v4_vraag": "Is my data safe if I stop donating?",
+    "v4_antwoord": "Your local data always stays on your device. Cloud backups are tied to your Owner status — export your data regularly as a safety net."
+  },
+  "cta": {
+    "title": "Ready to get started?",
+    "tekst": "Start for free with a basic account, or go back to the overview for more explanation.",
+    "knop_start": "Start for free",
+    "knop_terug": "Back to overview"
+  }
+}
