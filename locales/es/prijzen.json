@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Comparación de tipos de cuenta",
+    "intro": "¿Qué puede hacer cada tipo de cuenta? La tabla a continuación ofrece una descripción completa por función. Viewer y Editor no son tipos de cuenta — son derechos del árbol genealógico que otorga un Owner."
+  },
+  "tabel": {
+    "sectie_titel": "¿Qué puede hacer cada tipo de cuenta?",
+    "th_bezoeker": "No conectado",
+    "th_guest": "Cuenta básica",
+    "th_owner": "Owner",
+    "th_admin": "Admin",
+    "groep_lokaal": "Árbol genealógico local",
+    "groep_cloud": "Nube y colaboración",
+    "groep_beheer": "Gestión",
+    "feat_demo": "Ver árbol genealógico de demo",
+    "feat_eigen": "Crear árbol genealógico propio",
+    "feat_max": "Máx. personas de forma local",
+    "feat_tijdlijn": "Línea de tiempo y estadísticas",
+    "feat_export": "Exportar a CSV / JSON",
+    "feat_print": "Imprimir / vista de impresión",
+    "feat_cloud": "Copia de seguridad en la nube",
+    "feat_delen": "Compartir árbol genealógico",
+    "feat_uitnodigen": "Invitar Viewer / Editor",
+    "feat_collab": "Colaboración (collab)",
+    "feat_versie": "Historial de versiones por persona",
+    "feat_modereren": "Moderar mensajes",
+    "feat_intrekken": "Revocar acceso",
+    "feat_privacy": "Configurar privacidad y visibilidad",
+    "feat_admin": "Panel de administración",
+    "val_60": "60 personas",
+    "val_onbeperkt": "Ilimitado",
+    "val_later": "Más adelante",
+    "val_max5": "Máx. 5 versiones"
+  },
+  "donatie": {
+    "titel": "☕ Opciones de donación (cuenta Owner)",
+    "intro": "Una cuenta Owner se activa mediante una donación. Las cuentas básicas (guest) son completamente gratuitas.",
+    "periodiek_naam": "Periódico",
+    "periodiek_periode": "por 6 meses",
+    "periodiek_feat1": "Cuenta Owner activa",
+    "periodiek_feat2": "Cancelable cuando quieras",
+    "periodiek_feat3": "Apoya el desarrollo continuo",
+    "eenmalig_naam": "Pago único",
+    "eenmalig_periode": "pago único",
+    "eenmalig_feat1": "Activación Owner permanente",
+    "eenmalig_feat2": "Válido para un árbol genealógico",
+    "eenmalig_feat3": "Sin más obligaciones",
+    "stichtend_naam": "Miembro fundador",
+    "stichtend_badge": "⭐ Fundador",
+    "stichtend_periode": "pago único",
+    "stichtend_feat1": "Activación Owner permanente",
+    "stichtend_feat2": "Acceso anticipado a nuevas funciones",
+    "stichtend_feat3": "Mención como miembro fundador",
+    "noot": "<strong>Transparencia:</strong> aún no hay verificación de pago automática. La cuenta Owner se activa manualmente tras recibir la donación. Esto se automatizará en una fase futura."
+  },
+  "faq": {
+    "titel": "Preguntas frecuentes",
+    "v1_vraag": "¿Necesito donar para usar la aplicación?",
+    "v1_antwoord": "No. Una cuenta básica (guest) es completamente gratuita y no requiere donación. Obtienes acceso a un árbol genealógico local con hasta 60 personas.",
+    "v2_vraag": "¿Cuál es la diferencia entre un Viewer y una cuenta básica?",
+    "v2_antwoord": "Viewer y Editor son derechos del árbol genealógico, no tipos de cuenta. Un usuario con una cuenta básica (guest) puede ser invitado por un Owner como Viewer o Editor en un árbol genealógico específico. Los derechos se almacenan en una tabla separada, no en la cuenta.",
+    "v3_vraag": "¿Qué pasa si dejo de hacer la donación periódica?",
+    "v3_antwoord": "Tu cuenta vuelve a ser básica (guest). El Owner ya no podrá compartir nuevos árboles genealógicos ni invitar Viewers/Editors. No hay bloqueo automático en el MVP — esto se automatizará en una fase posterior.",
+    "v4_vraag": "¿Están mis datos seguros si dejo de donar?",
+    "v4_antwoord": "Tus datos locales siempre permanecen en tu dispositivo. Las copias de seguridad en la nube están vinculadas a tu estado de Owner — exporta tus datos regularmente como medida de seguridad."
+  },
+  "cta": {
+    "titel": "¿Listo para empezar?",
+    "tekst": "Empieza gratis con una cuenta básica, o vuelve al resumen para más información.",
+    "knop_start": "Empezar gratis",
+    "knop_terug": "Volver al resumen"
+  }
+}
