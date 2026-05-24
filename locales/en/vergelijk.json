@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Account type comparison",
+    "intro": "What can each account type do exactly? The table below gives a complete overview per feature."
+  },
+  "info": "💡 <strong>Viewer and Editor are not in this table</strong> — they are not account types but <strong>family tree rights</strong> granted by an Owner to a specific family tree. See the <a href=\"overzicht.html\">overview</a> for more information.",
+  "tabel": {
+    "title": "What can each account type do?",
+    "col_bezoeker": "Not logged in",
+    "col_guest": "Basic account",
+    "col_owner": "Owner",
+    "col_admin": "Admin",
+    "groep_lokaal": "Local family tree",
+    "groep_cloud": "Cloud & collaboration",
+    "groep_beheer": "Management",
+    "feat_demo": "View demo family tree",
+    "feat_eigen": "Create own family tree",
+    "feat_max": "Max. persons locally",
+    "feat_tijdlijn": "Timeline & statistics",
+    "feat_export": "Export to CSV / JSON",
+    "feat_print": "Print",
+    "feat_cloud": "Cloud backup",
+    "feat_delen": "Share family tree",
+    "feat_uitnodigen": "Invite Viewer / Editor",
+    "feat_collab": "Collaboration (collab)",
+    "feat_versie": "Version history per person",
+    "feat_modereren": "Moderate messages",
+    "feat_intrekken": "Revoke access",
+    "feat_privacy": "Privacy & visibility",
+    "feat_admin": "Admin dashboard",
+    "val_60": "60 persons",
+    "val_onbeperkt": "Unlimited",
+    "val_later": "Later",
+    "val_max5": "Max. 5 versions"
+  },
+  "cta": {
+    "title": "Ready to get started?",
+    "tekst": "Start for free with a basic account or view the full overview of account types.",
+    "knop_start": "Start for free",
+    "knop_terug": "Back to overview"
+  }
+}
