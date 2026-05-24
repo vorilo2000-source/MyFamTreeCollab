@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-22
+## Bijgewerkt: 2026-05-25
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -129,7 +129,7 @@
 | F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | ✅ Gedaan |
 | F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
-| F8-19 | 🟢 Laag | `Handleiding.html` bijwerken met i18n uitleg (nu handleiding-nl.html) | 📋 Open |
+| F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | 📋 Open |
 | F8-20 | 🟡 Middel | `home/import.html` refactoren met `data-i18n` + custom file input | ✅ Gedaan |
 | F8-21 | 🟡 Middel | `home/export.html` refactoren met `data-i18n` | ✅ Gedaan |
 | F8-22 | 🟡 Middel | `home/print.html` refactoren met `data-i18n` | ✅ Gedaan |
@@ -168,6 +168,10 @@
 | F8-55 | 🟡 Middel | `Layout/Navbar.html` v1.2.0 — handleiding link bijgewerkt | ✅ Gedaan |
 | F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | 📋 Open |
 | F8-57 | 🔴 Hoog | `bronnen/template.html` v2.3.0 — tabel hertekenen bij taalwissel | ✅ Gedaan |
+| F8-58 | 🔴 Hoog | `abonnementen/overzicht.html` i18n + namespace `overzicht` + `js/overzicht.js` | ✅ Gedaan |
+| F8-59 | 🔴 Hoog | `abonnementen/prijzen.html` i18n + namespace `prijzen` + `js/prijzen.js` | ✅ Gedaan |
+| F8-60 | 🔴 Hoog | `abonnementen/vergelijk.html` i18n + namespace `vergelijk` + `js/vergelijk.js` | ✅ Gedaan |
+| F8-61 | 🔴 Hoog | `abonnementen/voordelen.html` i18n + namespace `voordelen` + `js/voordelen.js` | ✅ Gedaan |
 
 ---
 
@@ -242,6 +246,12 @@
 ---
 
 ## Bugfixes
+
+### Sessie 2026-05-25 (sessie 30)
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-56 | Race condition — i18n keys toonden als key-naam op abonnementen-pagina's. Init() roept updateContent() aan vóór loadNamespace() klaar is. Opgelost via dynamische JS-injectie na init() resolve. | ✅ Opgelost |
 
 ### Sessie 2026-05-22
 
