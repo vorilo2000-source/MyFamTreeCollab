@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Vergelijking account types",
+    "intro": "Wat kan elk account type precies? De tabel hieronder geeft een volledig overzicht per feature."
+  },
+  "info": "💡 <strong>Viewer en Editor staan niet in deze tabel</strong> — dat zijn geen account types maar <strong>stamboom-rechten</strong> die een Owner toekent aan een specifieke stamboom. Bekijk het <a href=\"overzicht.html\">overzicht</a> voor meer uitleg.",
+  "tabel": {
+    "title": "Wat kan elk account type?",
+    "col_bezoeker": "Niet ingelogd",
+    "col_guest": "Basis account",
+    "col_owner": "Owner",
+    "col_admin": "Admin",
+    "groep_lokaal": "Lokale stamboom",
+    "groep_cloud": "Cloud & samenwerking",
+    "groep_beheer": "Beheer",
+    "feat_demo": "Demo-stamboom bekijken",
+    "feat_eigen": "Eigen stamboom aanmaken",
+    "feat_max": "Max. personen lokaal",
+    "feat_tijdlijn": "Tijdlijn & statistieken",
+    "feat_export": "Export naar CSV / JSON",
+    "feat_print": "Afdrukken / print",
+    "feat_cloud": "Cloud backup",
+    "feat_delen": "Stamboom delen",
+    "feat_uitnodigen": "Viewer / Editor uitnodigen",
+    "feat_collab": "Samenwerken (collab)",
+    "feat_versie": "Versiebeheer per persoon",
+    "feat_modereren": "Berichten modereren",
+    "feat_intrekken": "Toegang intrekken",
+    "feat_privacy": "Privacy & zichtbaarheid",
+    "feat_admin": "Admin dashboard",
+    "val_60": "60 personen",
+    "val_onbeperkt": "Onbeperkt",
+    "val_later": "Later",
+    "val_max5": "Max. 5 versies"
+  },
+  "cta": {
+    "title": "Klaar om te starten?",
+    "tekst": "Begin gratis met een basis account of bekijk het volledige overzicht van de account types.",
+    "knop_start": "Start gratis",
+    "knop_terug": "Terug naar overzicht"
+  }
+}
