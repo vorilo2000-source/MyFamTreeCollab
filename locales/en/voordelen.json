@@ -1,0 +1,50 @@
+{
+  "page": {
+    "title": "Why MyFamTreeCollab?",
+    "intro": "A modern, privacy-first family tree tool that grows with your needs. From free local management (basic account) to cloud collaboration (Owner account), you decide when and how."
+  },
+  "grid": {
+    "title": "Our advantages",
+    "privacy": {
+      "titel": "Full control over your data",
+      "tekst": "Your family tree stays local in your browser by default. No required account, no tracking, no cloud unless you want it.",
+      "feat1": "Data stored locally",
+      "feat2": "No account required",
+      "feat3": "You decide what gets shared"
+    },
+    "export": {
+      "titel": "Always exportable",
+      "tekst": "Your data is never locked in the system. Export anytime in open formats, even with a free basic account.",
+      "feat1": "CSV export",
+      "feat2": "JSON export",
+      "feat3": "GEDCOM prepared (future)"
+    },
+    "visualisatie": {
+      "titel": "Clear family tree view",
+      "tekst": "Build and view your family history visually. Available for every account type.",
+      "feat1": "Family tree view",
+      "feat2": "Timeline view",
+      "feat3": "Statistics dashboard"
+    },
+    "account": {
+      "titel": "Flexible account model",
+      "tekst": "Start free as a basic account (guest) and grow to an Owner account via a small donation (~€6 per 6 months) when you want to collaborate.",
+      "feat1": "Basic account (free), local, 60 persons",
+      "feat2": "Owner account (cloud), unlimited, collaborate",
+      "feat3": "Invite by email as viewer/editor"
+    },
+    "samenwerking": {
+      "titel": "Build together",
+      "tekst": "Collaborate with family members on one shared family tree. Only available for Owner accounts — you decide who has access.",
+      "feat1": "Shared family trees (Owner)",
+      "feat2": "Message board per person",
+      "feat3": "Version history per person"
+    }
+  },
+  "cta": {
+    "title": "Ready to get started?",
+    "tekst": "Start for free with a basic account or view the account types in detail.",
+    "knop_start": "Start for free",
+    "knop_types": "View account types"
+  }
+}
