@@ -28,9 +28,9 @@
     },
     "account": {
       "titel": "Flexible account model",
-      "tekst": "Start free as a basic account (guest) and grow to an Owner account via a small donation (~€6 per 6 months) when you want to collaborate.",
+      "tekst": "Start free as a basic account (guest) and grow to an Owner account via a small donation when you want to collaborate.",
       "feat1": "Basic account (free), local, 60 persons",
-      "feat2": "Owner account (cloud), unlimited, collaborate",
+      "feat2": "Owner account (donation), cloud, collaborate",
       "feat3": "Invite by email as viewer/editor"
     },
     "samenwerking": {
