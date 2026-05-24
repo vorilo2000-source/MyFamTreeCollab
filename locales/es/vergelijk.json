@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Comparación de tipos de cuenta",
+    "intro": "¿Qué puede hacer exactamente cada tipo de cuenta? La tabla a continuación ofrece una visión completa por función."
+  },
+  "info": "💡 <strong>Viewer y Editor no están en esta tabla</strong> — no son tipos de cuenta sino <strong>derechos de árbol genealógico</strong> que otorga un Owner a un árbol específico. Consulta el <a href=\"overzicht.html\">resumen</a> para más información.",
+  "tabel": {
+    "title": "¿Qué puede hacer cada tipo de cuenta?",
+    "col_bezoeker": "No conectado",
+    "col_guest": "Cuenta básica",
+    "col_owner": "Owner",
+    "col_admin": "Admin",
+    "groep_lokaal": "Árbol genealógico local",
+    "groep_cloud": "Nube y colaboración",
+    "groep_beheer": "Administración",
+    "feat_demo": "Ver árbol genealógico de demo",
+    "feat_eigen": "Crear árbol genealógico propio",
+    "feat_max": "Máx. personas de forma local",
+    "feat_tijdlijn": "Línea de tiempo y estadísticas",
+    "feat_export": "Exportar a CSV / JSON",
+    "feat_print": "Imprimir",
+    "feat_cloud": "Copia de seguridad en la nube",
+    "feat_delen": "Compartir árbol genealógico",
+    "feat_uitnodigen": "Invitar Viewer / Editor",
+    "feat_collab": "Colaboración (collab)",
+    "feat_versie": "Control de versiones por persona",
+    "feat_modereren": "Moderar mensajes",
+    "feat_intrekken": "Revocar acceso",
+    "feat_privacy": "Privacidad y visibilidad",
+    "feat_admin": "Panel de administración",
+    "val_60": "60 personas",
+    "val_onbeperkt": "Ilimitado",
+    "val_later": "Próximamente",
+    "val_max5": "Máx. 5 versiones"
+  },
+  "cta": {
+    "title": "¿Listo para empezar?",
+    "tekst": "Empieza gratis con una cuenta básica o consulta el resumen completo de los tipos de cuenta.",
+    "knop_start": "Empezar gratis",
+    "knop_terug": "Volver al resumen"
+  }
+}
