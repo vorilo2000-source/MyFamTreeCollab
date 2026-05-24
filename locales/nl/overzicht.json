@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Toegang & Samenwerken",
-    "intro": "MyFamTreeCollab werkt met account types die bepalen wat je kan doen. De basisversie is gratis en volledig lokaal — geen account nodig. Cloud-opslag en samenwerking zijn beschikbaar via een Owner account (donatie ~€5/6 mnd)."
+    "intro": "MyFamTreeCollab werkt met account types die bepalen wat je kan doen. De basisversie is gratis en volledig lokaal, geen account nodig. Cloud-opslag en samenwerking zijn beschikbaar via een Owner account (donatie ~€5/6 mnd)."
   },
   "hoe": {
     "title": "⚙️ Hoe werkt toegang?",
@@ -10,7 +10,7 @@
     "stap2_label": "Basis account (guest) aanmaken",
     "stap2_tekst": "gratis registreren geeft toegang tot max. 60 personen lokaal.",
     "stap3_label": "Owner worden via donatie",
-    "stap3_tekst": "~€5 per 6 maanden activeert cloud backup, delen en samenwerken.",
+    "stap3_tekst": "~€6 per 6 maanden activeert cloud backup, delen en samenwerken.",
     "stap4_label": "Viewer / Editor toewijzen",
     "stap4_tekst": "een Owner nodigt anderen uit en geeft ze lees- of bewerkrecht op een specifieke stamboom."
   },
@@ -38,13 +38,13 @@
     },
     "owner": {
       "naam": "Owner account",
-      "badge": "Donatie ~€5 / 6 maanden",
+      "badge": "Donatie ~€6 / 6 maanden",
       "beschrijving": "Volledige toegang. Cloud backup, onbeperkte personen, stamboom delen en samenwerking activeren.",
       "feat1": "Onbeperkt personen lokaal",
       "feat2": "Cloud backup",
       "feat3": "Stamboom delen",
       "feat4": "Viewer / Editor uitnodigen",
-      "feat5": "Versiebeheer (max. 5 versies)",
+      "feat5": "Versiebeheer (max. 2 versies)",
       "feat6": "Samenwerken (collab)"
     }
   },
