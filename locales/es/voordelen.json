@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "¿Por qué MyFamTreeCollab?",
-    "intro": "Una herramienta de árbol genealógico moderna y centrada en la privacidad que crece con tus necesidades. Desde la gestión local gratuita (cuenta básica) hasta la colaboración en la nube (cuenta Owner) — tú decides cuándo y cómo."
+    "intro": "Una herramienta de árbol genealógico moderna y centrada en la privacidad que crece con tus necesidades. Desde la gestión local gratuita (cuenta básica) hasta la colaboración en la nube (cuenta Owner), tú decides cuándo y cómo."
   },
   "grid": {
     "title": "Nuestras ventajas",
@@ -29,13 +29,13 @@
     "account": {
       "titel": "Modelo de cuenta flexible",
       "tekst": "Empieza gratis como cuenta básica (guest) y crece a una cuenta Owner mediante una pequeña donación (~€5 por 6 meses) cuando quieras colaborar.",
-      "feat1": "Cuenta básica — gratis, local, 60 personas",
-      "feat2": "Cuenta Owner — nube, ilimitado, colaborar",
+      "feat1": "Cuenta básica (gratis), local, 60 personas",
+      "feat2": "Cuenta Owner (nube), ilimitado, colaborar",
       "feat3": "Invitar por correo como viewer/editor"
     },
     "samenwerking": {
       "titel": "Construir juntos",
-      "tekst": "Colabora con familiares en un árbol genealógico compartido. Solo disponible para cuentas Owner — tú decides quién tiene acceso.",
+      "tekst": "Colabora con familiares en un árbol genealógico compartido. Solo disponible para cuentas Owner   — tú decides quién tiene acceso.",
       "feat1": "Árboles genealógicos compartidos (Owner)",
       "feat2": "Tablón de mensajes por persona",
       "feat3": "Control de versiones por persona"
