@@ -1,7 +1,110 @@
 # MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-05-22
+## Bijgewerkt: 2026-05-25
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 30 — i18n uitgerold op abonnementen-pagina's
+
+**Datum:** 2026-05-25
+**Doel:** Namespaces `overzicht` / `prijzen` / `vergelijk` / `voordelen` implementeren (nl/en/es). Race condition bugfix voor alle abonnementen-pagina's.
+
+---
+
+### Aanleiding
+
+Vervolg op sessie 27–28 (i18n bronnen/gemeenschap/develop). De vier pagina's onder `abonnementen/` hadden nog geen i18n. Daarnaast werd tijdens implementatie een structurele bug ontdekt die alle i18n-pagina's zonder eigen `.js` bestand treft.
+
+---
+
+### Bugfix — Race condition (BF-56)
+
+**Symptoom:** Keys toonden als key-naam (bijv. `tabel.title`, `donatie.periodiek_per`) in alle talen.
+
+**Rootcause:** `i18nModule.init()` roept intern `updateContent()` aan vóór `loadNamespace()` klaar is. Op dat moment is de pagina-namespace nog niet geladen → i18next geeft de key-naam terug als fallback. Pagina's zónder eigen `.js` bestand (inline `loadNamespace()` in script-blok) leden hier het meest onder.
+
+**Oplossing:** Tweestaps-aanpak — zelfde patroon als `stats.js`, `collab.js`, `view.js` (sessie 26):
+1. Inline script roept **alleen** `i18nModule.init()` aan
+2. Na resolve wordt het pagina-specifieke `.js` bestand dynamisch geïnjecteerd
+3. Dat bestand roept `loadNamespace()` aan — nu is i18next volledig klaar
+
+---
+
+### Uitgevoerde acties
+
+#### abonnementen/ — i18n uitgerold
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `abonnementen/overzicht.html` | v2.3.0 | v2.4.0 | i18n + namespace `overzicht` + inject `overzicht.js` |
+| `abonnementen/prijzen.html` | v2.4.0 | v2.5.0 | i18n + namespace `prijzen` + inject `prijzen.js` |
+| `abonnementen/vergelijk.html` | v2.2.0 | v2.3.0 | i18n + namespace `vergelijk` + inject `vergelijk.js` |
+| `abonnementen/voordelen.html` | v2.2.0 | v2.3.0 | i18n + namespace `voordelen` + inject `voordelen.js` |
+
+#### JS bestanden aangemaakt
+
+| Bestand | Versie | HTML-blokken via innerHTML |
+|---------|--------|---------------------------|
+| `js/overzicht.js` | v1.0.0 | `rechten-intro` (strong/code/em), `donatie-noot` (strong) |
+| `js/prijzen.js` | v1.0.0 | `donatie-noot` (strong) |
+| `js/vergelijk.js` | v1.0.0 | `info-blok` (strong, a) |
+| `js/voordelen.js` | v1.0.0 | geen (alle tekst plain) |
+
+#### Nieuwe locale bestanden aangemaakt (nl/en/es)
+
+- `locales/*/overzicht.json` — page, hoe (4 stappen), accountTypes (3 kaarten), rechten (viewer/editor), donatie (3 opties + noot), cta
+- `locales/*/prijzen.json` — page, tabel (kolomhoofden + 14 features + 4 waarden), donatie (3 kaarten + noot), faq (4 vragen), cta
+- `locales/*/vergelijk.json` — page, info (innerHTML), tabel (kolomhoofden + 14 features + 4 waarden), cta
+- `locales/*/voordelen.json` — page, grid (5 kaarten × titel + tekst + 3 features), cta
+
+#### HTML-blokken met innerHTML
+
+Elementen die HTML-opmaak bevatten (`<strong>`, `<code>`, `<em>`, `<a>`) kunnen niet via `data-i18n` vertaald worden — dat gebruikt `textContent` en strips opmaak. Oplossing: element krijgt een `id`, pagina-JS vult het via `_translateHTML(id, key)` met `innerHTML`. Listener op `languageChanged` hertaalt bij taalwissel.
+
+---
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar |
+|---------|-----|------|
+| `abonnementen/overzicht.html` | v2.3.0 | v2.4.0 |
+| `abonnementen/prijzen.html` | v2.4.0 | v2.5.0 |
+| `abonnementen/vergelijk.html` | v2.2.0 | v2.3.0 |
+| `abonnementen/voordelen.html` | v2.2.0 | v2.3.0 |
+| `js/overzicht.js` | — | v1.0.0 (nieuw) |
+| `js/prijzen.js` | — | v1.0.0 (nieuw) |
+| `js/vergelijk.js` | — | v1.0.0 (nieuw) |
+| `js/voordelen.js` | — | v1.0.0 (nieuw) |
+| `locales/{nl,en,es}/overzicht.json` | — | v1.0.0 (nieuw) |
+| `locales/{nl,en,es}/prijzen.json` | — | v1.0.0 (nieuw) |
+| `locales/{nl,en,es}/vergelijk.json` | — | v1.0.0 (nieuw) |
+| `locales/{nl,en,es}/voordelen.json` | — | v1.0.0 (nieuw) |
+| `BACKLOG.md` | — | F8-58/59/60/61 ✅, BF-56 ✅ toegevoegd |
+| `PROJECT_LOG.md` | — | Sessie 30 toegevoegd |
+
+---
+
+### Bugfixes
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-56 | Race condition — i18n keys toonden als key-naam op abonnementen-pagina's. Init() roept updateContent() aan vóór loadNamespace() klaar is. Opgelost via dynamische JS-injectie na init() resolve. | ✅ Opgelost |
+
+---
+
+### Open na sessie 30
+
+| ID | Taak |
+|----|------|
+| SEC-04 | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` |
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
+| F8-19 | `handleiding-nl.html` bijwerken met i18n uitleg |
+| F8-56 | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) |
+| F9-01 t/m F9-09 | Bronnen-module implementeren (genealogisch onderzoek) |
+| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js |
+| TD-11 | Import-parser leest rij 1 als header |
+| AN-21 | `stamboom/account.html` — tracking toevoegen |
 
 ---
 
@@ -109,8 +212,6 @@ Supabase Security Advisor na uitvoering: **geen meldingen**.
 
 De tabelheaders in `bronnen/template.html` bleven NL na taalwissel naar EN of ES. De rest van de pagina vertaalde correct via `data-i18n` attributen en `updateContent()`. De tabel werd echter volledig dynamisch opgebouwd via JavaScript met `i18nModule.t()` — zonder `data-i18n` attributen. Hierdoor werd de tabel niet meegenomen door `updateContent()` na een taalwissel.
 
-De aanname in het sessie 28-document dat de CSV twee headerrijen genereerde was onjuist — de template genereerde al twee rijen correct, maar de tabelweergave in de browser bleef NL.
-
 **Rootcause:** `handleLanguageChange()` in `i18n.js` roept `updateContent()` aan na een taalwissel. Dit vertaalt alleen elementen met `data-i18n` attributen. De dynamisch gebouwde tabel heeft geen `data-i18n` attributen en werd daardoor niet opnieuw getekend.
 
 ---
@@ -165,67 +266,22 @@ De aanname in het sessie 28-document dat de CSV twee headerrijen genereerde was 
 ### Uitgevoerde acties
 
 #### Patroon gecorrigeerd t.o.v. eerdere sessie
-- Fout hersteld: alle keys zaten aanvankelijk in één `bronnen.json` — opgesplitst naar losse namespace per pagina (bijv. `artikelen.json`, `extern.json` etc.)
+- Fout hersteld: alle keys zaten aanvankelijk in één `bronnen.json` — opgesplitst naar losse namespace per pagina
 - Namespace separator correct: `pagina:key` (dubbele punt), niet `pagina.key`
 
 #### bronnen/ — i18n uitgerold
-- `bronnen/artikelen.html` v0.2.0 → v0.3.0: i18n + namespace `artikelen`
-- `bronnen/extern.html` v0.2.0 → v0.3.0: i18n + namespace `extern`
-- `bronnen/instructies.html` v0.2.0 → v0.3.0: i18n + namespace `instructies`
-- `bronnen/handleiding.html` verwijderd → vervangen door drie taalversies:
-  - `bronnen/handleiding-nl.html` v2.4.0: NL handleiding + redirect-handler
-  - `bronnen/handleiding-en.html` v2.4.0: EN volledige vertaling + redirect-handler
-  - `bronnen/handleiding-es.html` v2.4.0: ES volledige vertaling + redirect-handler
-  - `bronnen/handleiding.html` v2.4.1: redirect-bestand naar handleiding-nl.html (404-fix)
-- `bronnen/template.html` v2.1.0 → v2.2.0: i18n + namespace `template` + meertalige tabel (vertaalde kolomnamen rij 1, NL technische namen rij 2) + meertalige CSV-download
+- `bronnen/artikelen.html` v0.2.0 → v0.3.0, `bronnen/extern.html` v0.2.0 → v0.3.0, `bronnen/instructies.html` v0.2.0 → v0.3.0
+- `bronnen/handleiding.html` → drie taalversies (nl/en/es) + redirect-bestand (404-fix)
+- `bronnen/template.html` v2.1.0 → v2.2.0: i18n + meertalige tabel + meertalige CSV-download
 
 #### gemeenschap/ — i18n uitgerold + bugs gefixed
-- `gemeenschap/contact.html` v0.2.0 → v0.3.0
-- `gemeenschap/discussies.html` v0.2.0 → v0.3.0
-- `gemeenschap/evenement.html` v0.2.0 → v0.3.0
-- `gemeenschap/forum.html` v0.2.0 → v0.3.0 — ook `trackPage("evenement")` → `trackPage('forum')` gecorrigeerd
-- `gemeenschap/groepen.html` v0.2.0 → v0.3.0
-
-Gemeenschap-bugs gefixed in alle pagina's:
-- Dubbele Supabase/utils/auth script-blokken verwijderd
-- Losse fetch-blokken bovenaan body verwijderd
-- `id="Navbar-placeholder"` → `id="navbar-placeholder"`
-- Favicon paden gecorrigeerd naar `/MyFamTreeCollab/img/`
-- Kapotte `</script>s` verwijderd (contact.html)
+- contact, discussies, evenement, forum, groepen: v0.2.0 → v0.3.0 + dubbele scripts/blokken verwijderd
 
 #### develop/ — i18n uitgerold + bugs gefixed
-- `develop/blank.html` v0.2.0 → v0.3.0 — content gecorrigeerd (was copy-paste artikelen)
-- `develop/maintenance.html` v0.2.0 → v0.3.0 — countdown-tekst via i18n met interpolatie
-- `develop/sandbox.html` v1.1.0 → v0.3.0 — dubbel bestand samengevoegd, kapotte HTML hersteld
-- `develop/standaardpagina.html` v1.2.0 → v1.3.0
-
-Develop-bugs gefixed in alle pagina's:
-- eruda debug-script verwijderd
-- Dubbele script-blokken verwijderd
-- `trackPage("evenement")` gecorrigeerd naar correcte paginanaam
-- Kapotte bestandsheaders gecorrigeerd (`<!============` → `<!--`)
+- blank, maintenance, sandbox, standaardpagina: versies bijgewerkt + eruda verwijderd
 
 #### Navbar bijgewerkt
-- `Layout/Navbar.html` v1.1.0 → v1.2.0: `handleiding.html` → `handleiding-nl.html`, kapotte `</ a>` tag gecorrigeerd
-
-#### Nieuwe locale bestanden aangemaakt (nl/en/es)
-- `locales/*/artikelen.json`, `locales/*/extern.json`, `locales/*/instructies.json`
-- `locales/*/template.json` — inclusief `velden.*` vertaalmap voor kolomnamen
-- `locales/*/contact.json`, `locales/*/discussies.json`, `locales/*/evenement.json`
-- `locales/*/forum.json`, `locales/*/groepen.json`
-- `locales/*/blank.json`, `locales/*/maintenance.json`, `locales/*/sandbox.json`, `locales/*/standaardpagina.json`
-
----
-
-### Nog open na sessie 27
-
-| ID | Taak |
-|----|------|
-| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
-| F8-19 | `Handleiding.html` bijwerken met i18n uitleg (nu handleiding-nl.html) |
-| F9-01 t/m F9-09 | Bronnen-module implementeren (genealogisch onderzoek) |
-| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js |
-| Nieuw | Import-parser aanpassen: rij 2 lezen als technische header (template.html meertalig) |
+- `Layout/Navbar.html` v1.1.0 → v1.2.0: handleiding link + kapotte tag gecorrigeerd
 
 ---
 
@@ -238,55 +294,25 @@ Develop-bugs gefixed in alle pagina's:
 
 ### Uitgevoerde acties
 
-#### Stamboom-menu pagina's gerefactord
-- `stamboom/stats.html` v2.1.0 → v2.2.1, `stamboom/collab.html` v2.3.0 → v2.4.0
-- `stamboom/storage.html` v2.8.0 → v2.9.0, `stamboom/view.html` v2.1.0 → v2.2.0
-- `stamboom/timeline.html` v2.3.0 → v2.4.0, `stamboom/manage.html` v2.4.0 → v2.5.0
-
-#### JS bestanden bijgewerkt
-- `js/collab.js`, `js/view.js`, `js/timeline.js`, `js/manage.js`, `js/auth.js`, `js/topbar.js`, `js/reset.js`
-
-#### Auth namespace aangemaakt + bugfixes
-- stats.html timing bugfix, topbar.js modal omgebouwd naar data-i18n + _translateModal()
-
-#### Nieuwe namespace JSON (nl/en/es)
-- `stats`, `collab`, `storage`, `view`, `timeline`, `manage`, `auth`
-
----
-
-### Nog open na sessie 26
-
-| ID | Taak |
-|----|------|
-| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
-| F8-19 | `Handleiding.html` bijwerken met i18n uitleg |
+- `stamboom/stats.html`, `collab.html`, `storage.html`, `view.html`, `timeline.html`, `manage.html` gerefactord
+- `js/collab.js`, `js/view.js`, `js/timeline.js`, `js/manage.js`, `js/auth.js`, `js/topbar.js`, `js/reset.js` bijgewerkt
+- Auth namespace aangemaakt + bugfixes stats.html timing + topbar modal
 
 ---
 
 ## Sessie 25 — i18n uitrollen op Start-menu pagina's + docs vertaling
 
 **Datum:** 2026-05-12
-**Doel:** i18next namespace setup uitrollen op alle pagina's onder het Start-menu. Navbar en Footer meertalig maken. Docs vertalen naar Engels en drietalig opzetten.
-
----
-
-### Uitgevoerde acties
 
 - Navbar, Footer, about, print, import, export, create gerefactord met data-i18n
 - `js/import.js`, `js/export.js`, `js/create.js` statusmeldingen via i18n
 - `Docs/disclaimer.html`, `privacy.html`, `terms.html` drietalig (EN/NL/ES)
-- Bugfix: Navbar keys niet vertaald — trailing comma in common.json + ontbrekende nav.sub.* keys
 
 ---
 
 ## Sessie 24 — i18next meertalige architectuur (index.html)
 
 **Datum:** 2026-05-10
-**Doel:** Schaalbare i18n namespace setup implementeren op index.html. Nederlands, Engels en Spaans (LatAm).
-
----
-
-### Uitgevoerde acties
 
 - `js/i18n.js` v1.0.0 aangemaakt — core i18n module
 - `locales/{nl,en,es}/{common,home}.json` aangemaakt
