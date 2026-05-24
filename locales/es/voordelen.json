@@ -1,0 +1,50 @@
+{
+  "page": {
+    "title": "¿Por qué MyFamTreeCollab?",
+    "intro": "Una herramienta de árbol genealógico moderna y centrada en la privacidad que crece con tus necesidades. Desde la gestión local gratuita (cuenta básica) hasta la colaboración en la nube (cuenta Owner) — tú decides cuándo y cómo."
+  },
+  "grid": {
+    "title": "Nuestras ventajas",
+    "privacy": {
+      "titel": "Control total sobre tus datos",
+      "tekst": "Tu árbol genealógico permanece por defecto en tu navegador de forma local. Sin cuenta obligatoria, sin seguimiento, sin nube a menos que tú lo quieras.",
+      "feat1": "Datos almacenados localmente",
+      "feat2": "Sin cuenta obligatoria",
+      "feat3": "Tú decides qué se comparte"
+    },
+    "export": {
+      "titel": "Siempre exportable",
+      "tekst": "Tus datos nunca quedan atrapados en el sistema. Exporta en cualquier momento en formatos abiertos, incluso con una cuenta básica gratuita.",
+      "feat1": "Exportación CSV",
+      "feat2": "Exportación JSON",
+      "feat3": "GEDCOM preparado (futuro)"
+    },
+    "visualisatie": {
+      "titel": "Vista clara del árbol genealógico",
+      "tekst": "Construye y visualiza tu historia familiar de forma visual. Disponible para todos los tipos de cuenta.",
+      "feat1": "Vista de árbol genealógico",
+      "feat2": "Vista de línea de tiempo",
+      "feat3": "Panel de estadísticas"
+    },
+    "account": {
+      "titel": "Modelo de cuenta flexible",
+      "tekst": "Empieza gratis como cuenta básica (guest) y crece a una cuenta Owner mediante una pequeña donación (~€5 por 6 meses) cuando quieras colaborar.",
+      "feat1": "Cuenta básica — gratis, local, 60 personas",
+      "feat2": "Cuenta Owner — nube, ilimitado, colaborar",
+      "feat3": "Invitar por correo como viewer/editor"
+    },
+    "samenwerking": {
+      "titel": "Construir juntos",
+      "tekst": "Colabora con familiares en un árbol genealógico compartido. Solo disponible para cuentas Owner — tú decides quién tiene acceso.",
+      "feat1": "Árboles genealógicos compartidos (Owner)",
+      "feat2": "Tablón de mensajes por persona",
+      "feat3": "Control de versiones por persona"
+    }
+  },
+  "cta": {
+    "title": "¿Listo para empezar?",
+    "tekst": "Empieza gratis con una cuenta básica o consulta los tipos de cuenta en detalle.",
+    "knop_start": "Empezar gratis",
+    "knop_types": "Ver tipos de cuenta"
+  }
+}
