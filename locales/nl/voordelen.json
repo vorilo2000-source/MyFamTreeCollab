@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Waarom MyFamTreeCollab?",
-    "intro": "Een moderne, privacy-first stamboomtool die groeit met jouw behoeften. Van gratis lokaal beheer (basis account) tot cloud-samenwerking (Owner account) — jij bepaalt wanneer en hoe."
+    "intro": "Een moderne, privacy-first stamboomtool die groeit met jouw behoeften. Van gratis lokaal beheer (basis account) tot cloud-samenwerking (Owner account), jij bepaalt wanneer en hoe."
   },
   "grid": {
     "title": "Onze voordelen",
@@ -29,8 +29,8 @@
     "account": {
       "titel": "Flexibel account model",
       "tekst": "Start gratis als basis account (guest) en groei naar een Owner account via een kleine donatie (~€5 per 6 maanden) wanneer je wilt samenwerken.",
-      "feat1": "Basis account — gratis, lokaal, 60 personen",
-      "feat2": "Owner account — cloud, onbeperkt, samenwerken",
+      "feat1": "Basis account (gratis), lokaal, 60 personen",
+      "feat2": "Owner account ( loud), onbeperkt, samenwerken",
       "feat3": "Uitnodigen via e-mail als viewer/editor"
     },
     "samenwerking": {
