@@ -1,0 +1,50 @@
+{
+  "page": {
+    "title": "Waarom MyFamTreeCollab?",
+    "intro": "Een moderne, privacy-first stamboomtool die groeit met jouw behoeften. Van gratis lokaal beheer (basis account) tot cloud-samenwerking (Owner account) — jij bepaalt wanneer en hoe."
+  },
+  "grid": {
+    "title": "Onze voordelen",
+    "privacy": {
+      "titel": "Volledige controle over je data",
+      "tekst": "Jouw stamboom blijft standaard lokaal in je browser. Geen verplicht account, geen tracking, geen cloud tenzij jij dat wilt.",
+      "feat1": "Data lokaal opgeslagen",
+      "feat2": "Geen verplicht account",
+      "feat3": "Jij bepaalt wat gedeeld wordt"
+    },
+    "export": {
+      "titel": "Altijd exporteerbaar",
+      "tekst": "Je data zit nooit vast in het systeem. Exporteren kan altijd in open formaten, ook met een gratis basis account.",
+      "feat1": "CSV export",
+      "feat2": "JSON export",
+      "feat3": "GEDCOM voorbereid (toekomst)"
+    },
+    "visualisatie": {
+      "titel": "Heldere stamboomweergave",
+      "tekst": "Bouw en bekijk je familiegeschiedenis op een visuele manier. Beschikbaar voor elk account type.",
+      "feat1": "Stamboom view",
+      "feat2": "Tijdlijn weergave",
+      "feat3": "Statistieken dashboard"
+    },
+    "account": {
+      "titel": "Flexibel account model",
+      "tekst": "Start gratis als basis account (guest) en groei naar een Owner account via een kleine donatie (~€5 per 6 maanden) wanneer je wilt samenwerken.",
+      "feat1": "Basis account — gratis, lokaal, 60 personen",
+      "feat2": "Owner account — cloud, onbeperkt, samenwerken",
+      "feat3": "Uitnodigen via e-mail als viewer/editor"
+    },
+    "samenwerking": {
+      "titel": "Samen bouwen",
+      "tekst": "Werk samen met familieleden aan één gedeelde stamboom. Alleen beschikbaar voor Owner accounts — jij bepaalt wie toegang heeft.",
+      "feat1": "Gedeelde stambomen (Owner)",
+      "feat2": "Berichtenboard per persoon",
+      "feat3": "Versiebeheer per persoon"
+    }
+  },
+  "cta": {
+    "title": "Klaar om te starten?",
+    "tekst": "Begin gratis met een basis account of bekijk de account types in detail.",
+    "knop_start": "Start gratis",
+    "knop_types": "Bekijk account types"
+  }
+}
