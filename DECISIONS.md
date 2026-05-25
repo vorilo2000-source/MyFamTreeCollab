@@ -93,13 +93,13 @@ voor vrijwel alle functies.
 
 ### Beslissing
 De volgende functies zijn en blijven gratis voor guest accounts:
-- Stamboom aanmaken en beheren (tot max. 60 personen lokaal)
+- Stamboom aanmaken en beheren (tot max. 60 personen lokaal en 600 personen in de cloud)
 - Tijdlijn en statistieken bekijken
 - Export naar CSV en JSON
 - Meertalige interface (NL/EN/ES)
 
 Cloud backup, onbeperkt personen, delen en samenwerken vereisen een Owner account
-(donatie ~€5 per 6 maanden).
+(donatie ~€6 per 6 maanden, 1 stamboom en €10 per jaar, 3 stambomen) bij toevoegen van amdere functionaliteiten als events en files wordt de donatie herzien in een cafetariea model.
 
 ### Consequenties
 - Feature-gating mag nooit basisfunctionaliteit blokkeren voor guest accounts
