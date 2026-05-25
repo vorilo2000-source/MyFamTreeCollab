@@ -129,7 +129,7 @@
 | F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | ✅ Gedaan |
 | F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
-| F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | 📋 Open |
+| F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | ❌ Geannuleerd — taalwisselaar vanzelfsprekend, geen uitleg nodig |
 | F8-20 | 🟡 Middel | `home/import.html` refactoren met `data-i18n` + custom file input | ✅ Gedaan |
 | F8-21 | 🟡 Middel | `home/export.html` refactoren met `data-i18n` | ✅ Gedaan |
 | F8-22 | 🟡 Middel | `home/print.html` refactoren met `data-i18n` | ✅ Gedaan |
@@ -323,7 +323,7 @@
 | TD-03 | `js/LSD.js` — dubbele DOMContentLoaded | 🟢 Laag |
 | TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// | 🟡 Middel |
 | TD-05 | Popup-stijlen in LiveSearch.js hardcoded inline | 🟢 Laag |
-| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js | 🔴 Hoog |
+| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js | ✅ Opgelost — alle `-en` bestanden verwijderd na i18n meertalig (sessie 30) |
 | TD-07 | Resend zonder eigen domein — mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
 | TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
