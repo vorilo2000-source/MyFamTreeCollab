@@ -1,0 +1,106 @@
+# Sessie 31 — Voorbereiding
+## Datum: 2026-05-25 (opgesteld einde sessie 30)
+
+---
+
+## Status na sessie 30
+
+### Afgerond deze sessie
+- ✅ i18n uitgerold op alle 4 abonnementen-pagina's (overzicht/prijzen/vergelijk/voordelen)
+- ✅ Race condition BF-56 opgelost — pagina-JS patroon vastgelegd in ADR-007
+- ✅ DECISIONS.md aangemaakt (13 ADRs)
+- ✅ TD-06 gesloten (`-en` bestanden verwijderd)
+- ✅ F8-19 geannuleerd (taalwisselaar vanzelfsprekend)
+- ✅ ADR-001 vastgelegd (Admin niet publiek)
+
+### Fase 8 i18n — resterende open taken
+| ID | Taak | Opmerking |
+|----|------|-----------|
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` | Klein, snel gedaan |
+| F8-56 | Import-parser: rij 2 lezen als technische header | Koppelt aan TD-11 |
+
+> **Fase 8 is vrijwel afgerond.** Na F8-15 en F8-56 kan de fase op ✅ AFGEROND.
+
+---
+
+## Aanbevolen prioriteiten sessie 31
+
+### Optie A — Fase 8 afronden + abonnementen Admin-kolom verwijderen
+
+Snel, weinig bestanden, fase 8 netjes afsluiten.
+
+| Stap | Taak | Bestanden |
+|------|------|-----------|
+| 1 | F8-15: `lang-link` handlers verwijderen uit `topbar.js` | `js/topbar.js` |
+| 2 | TD-11 / F8-56: import-parser rij 2 als header | `js/import.js` of `schema.js` |
+| 3 | ADR-001 uitvoeren: Admin-kolom verwijderen uit `vergelijk.html` en `prijzen.html` | 2 HTML + 2×3 JSON |
+| 4 | Project.md + BACKLOG.md verwijzing naar `DECISIONS.md` toevoegen | 2 docs |
+
+**Resultaat:** Fase 8 ✅ AFGEROND, abonnementen-pagina's correct zonder Admin.
+
+---
+
+### Optie B — SEC-04 + abonnementen Admin-kolom
+
+Beveiliging afronden zodat editors daadwerkelijk kunnen schrijven.
+
+| Stap | Taak | Bestanden |
+|------|------|-----------|
+| 1 | SEC-04: Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` | Supabase SQL |
+| 2 | ADR-001 uitvoeren: Admin-kolom verwijderen | 2 HTML + JSON |
+
+---
+
+### Optie C — Fase 9 starten (bronnen-module)
+
+Grotere sessie, nieuwe functionaliteit.
+
+| Stap | Taak |
+|------|------|
+| F9-01 | Datamodel ontwerpen (`bronnen` tabel in Supabase) |
+| F9-02/03 | `stamboom/bronnen.html` + `js/bronnen.js` aanmaken |
+| F9-07 | `locales/{nl,en,es}/bronnen.json` aanmaken |
+
+**Vereiste input:** keuze over brontypen (F9-06) vóór start.
+
+---
+
+## Bestanden die de volgende sessie nodig heeft
+
+Afhankelijk van gekozen optie — geef deze bestanden aan Claude:
+
+### Voor Optie A (aanbevolen)
+- `js/topbar.js` — voor F8-15
+- `js/import.js` of `schema.js` — voor TD-11/F8-56
+- `abonnementen/vergelijk.html` + `abonnementen/prijzen.html` — voor ADR-001
+
+### Voor Optie B
+- Huidige Supabase RLS policies voor `stambomen` en `stamboom_gedeeld`
+
+### Voor Optie C
+- Niets extra — start met datamodel-ontwerp op basis van Project.md
+
+---
+
+## Openstaande beslissingen die aandacht vragen
+
+| Vraag | Context | Urgentie |
+|-------|---------|----------|
+| Wanneer wordt de 60-personenlimiet voor guest gehandhaafd? | ADR-004 noemt het als "zachte limiet" — nog niet geïmplementeerd | 🟡 Middel |
+| Aparte `admin/handleiding.html` aanmaken? | ADR-001 stelt voor, maar bestaat nog niet | 🟢 Laag |
+| DECISIONS.md toevoegen aan Definitie of Done? | Nieuwe ADRs aanmaken bij nieuwe ontwerpbeslissingen | 🟡 Middel |
+| Marketing: zijn de Facebook-groepen al gejoind? (Week 2 taak) | Marketing.md fase 1 | 🟡 Middel |
+
+---
+
+## Snelle referentie — Kritieke regels (ADRs)
+
+```
+✅ data-i18n="namespace:pad.key"    ← dubbele punt (ADR-006)
+✅ i18nModule.init() → inject [pagina].js  ← apart bestand (ADR-007)
+✅ tier-badge hardcoded: guest/owner/admin  ← nooit vertalen (ADR-008)
+✅ <span>MyFamTreeCollab</span>     ← hardcoded merknaam (ADR-009)
+✅ RLS + REVOKE anon bij nieuwe tabel  ← altijd (ADR-012)
+❌ Admin in publieke abonnementen-pagina's  ← verboden (ADR-001)
+❌ Viewer/Editor als account type  ← zijn stamboom-rechten (ADR-005)
+```
