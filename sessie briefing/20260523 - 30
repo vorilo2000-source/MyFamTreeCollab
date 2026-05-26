@@ -1,0 +1,226 @@
+# Sessie 30 — i18n abonnementen + DECISIONS.md
+## Datum: 2026-05-23
+
+---
+
+## Doel
+i18n uitrollen op de vier pagina's onder `abonnementen/`. Race condition bugfix.
+DECISIONS.md aanmaken als permanent architectuur-geheugen voor het project.
+
+---
+
+## Bestanden nodig bij start sessie
+
+- `abonnementen/overzicht.html` (v2.3.0)
+- `abonnementen/prijzen.html` (v2.4.0)
+- `abonnementen/vergelijk.html` (v2.2.0)
+- `abonnementen/voordelen.html` (v2.2.0)
+- `js/i18n.js` (referentie patroon)
+- `PROJECT_LOG.md` (sessie-context)
+- `BACKLOG.md`
+- `Project.md`
+- `Marketing.md`
+
+---
+
+## Uitgevoerde taken
+
+### 1. i18n uitgerold — overzicht.html
+
+`abonnementen/overzicht.html` v2.3.0 → v2.4.0
+
+- Alle zichtbare tekst vervangen door `data-i18n="overzicht:..."` attributen
+- i18next CDN scripts toegevoegd aan `<head>`
+- Inline script: alleen `i18nModule.init()` → injecteert `overzicht.js`
+- `rechten-intro` en `donatie-noot` krijgen `id` — bevatten HTML-opmaak (`<strong>`, `<code>`, `<em>`)
+- `locales/{nl,en,es}/overzicht.json` aangemaakt
+
+**Speciale gevallen:**
+- `tier-badge` elementen (`tier: null`, `guest`, `owner`) — hardcoded, geen `data-i18n` (ADR-008)
+- Stap-labels gesplitst in `stap1_label` (strong) + `stap1_tekst` (span) — opmaak blijft in HTML
+
+---
+
+### 2. i18n uitgerold — prijzen.html
+
+`abonnementen/prijzen.html` v2.4.0 → v2.5.0
+
+- Alle tekst vervangen door `data-i18n` attributen
+- Tabelwaarden als herbruikbare keys: `val_60`, `val_onbeperkt`, `val_later`, `val_max5`
+- Valutabedragen (`~€5`, `€10`, `€25`) hardcoded — nooit vertaald
+- `donatie-noot` via `_translateHTML()` / innerHTML
+- `locales/{nl,en,es}/prijzen.json` aangemaakt
+
+**Bug ontdekt:** keys toonden als key-naam (`tabel.title`, `donatie.periodiek_per`) → zie bugfix hieronder.
+
+---
+
+### 3. Bugfix BF-56 — Race condition i18n
+
+**Symptoom:** Keys toonden letterlijk als key-naam op alle abonnementen-pagina's in alle talen.
+
+**Rootcause:** `i18nModule.init()` roept intern `updateContent()` aan vóór `loadNamespace()` klaar is. Op dat moment is de pagina-namespace nog niet geladen → i18next geeft de key-naam terug als fallback.
+
+**Oplossing:** Tweestaps-aanpak — zelfde patroon als `stats.js`, `collab.js` (sessie 26):
+
+```javascript
+// Inline script — ALLEEN init()
+i18nModule.init().then(function() {
+    var s = document.createElement('script');
+    s.src = '../js/[pagina].js';   // pagina-JS dynamisch injecteren
+    document.body.appendChild(s);
+});
+
+// [pagina].js — loadNamespace() hier, NADAT init() klaar is
+i18nModule.loadNamespace('[pagina]').then(function() {
+    _translateHTMLBlocks();
+    // TopBar / Navbar / Footer fetchen
+    // SiteAnalytics.trackPage()
+});
+```
+
+**Vastgelegd als ADR-007** — geldt voor alle toekomstige pagina's met een eigen namespace.
+
+---
+
+### 4. JS bestanden aangemaakt
+
+| Bestand | HTML-blokken via innerHTML |
+|---------|---------------------------|
+| `js/overzicht.js` v1.0.0 | `rechten-intro`, `donatie-noot` |
+| `js/prijzen.js` v1.0.0 | `donatie-noot` |
+| `js/vergelijk.js` v1.0.0 | `info-blok` |
+| `js/voordelen.js` v1.0.0 | geen |
+
+Elk bestand volgt hetzelfde patroon:
+1. `_translateHTML(id, key)` helper voor HTML-bevattende elementen
+2. `_translateHTMLBlocks()` — herbruikbaar bij taalwissel
+3. `i18nModule.loadNamespace()` → then: HTMLBlocks + listener + TopBar/Navbar/Footer + trackPage
+
+---
+
+### 5. i18n uitgerold — vergelijk.html
+
+`abonnementen/vergelijk.html` v2.2.0 → v2.3.0
+
+- `info-blok` bevat `<strong>` en `<a>` — vertaald via `_translateHTML()` in `vergelijk.js`
+- `locales/{nl,en,es}/vergelijk.json` aangemaakt
+
+---
+
+### 6. i18n uitgerold — voordelen.html
+
+`abonnementen/voordelen.html` v2.2.0 → v2.3.0
+
+- Eenvoudigste pagina — alle tekst plain, geen HTML-blokken via innerHTML nodig
+- `locales/{nl,en,es}/voordelen.json` aangemaakt
+- `voordelen.js` heeft geen `_translateHTML()` helper (gedocumenteerd in JSDoc)
+
+---
+
+### 7. DECISIONS.md aangemaakt
+
+13 Architecture Decision Records vastgelegd:
+
+| ADR | Beslissing |
+|-----|-----------|
+| 001 | Admin is geen publiek account type |
+| 002 | Vanilla JS, geen frameworks |
+| 003 | Privacy first — data lokaal tenzij gebruiker kiest voor cloud |
+| 004 | Geen betaalde account vereist voor basisfunctionaliteit |
+| 005 | Viewer/Editor zijn stamboom-rechten, geen account types |
+| 006 | i18n namespace separator is `:`, niet `.` |
+| 007 | Pagina-JS als apart bestand, niet inline |
+| 008 | DB-waarden nooit vertalen in de UI |
+| 009 | Merknaam altijd hardcoded, nooit via i18n |
+| 010 | Meertaligheid via namespaces, niet via aparte HTML-bestanden per taal |
+| 011 | Open standaarden voor export — altijd gratis |
+| 012 | RLS verplicht op alle publieke Supabase tabellen |
+| 013 | Marketingstrategie is volledig organisch |
+
+---
+
+### 8. BACKLOG.md bijgewerkt
+
+- F8-58 t/m F8-61 toegevoegd en op ✅ gezet
+- BF-56 toegevoegd en opgelost
+- TD-06 gesloten (`-en` bestanden verwijderd na i18n)
+- F8-19 geannuleerd (taalwisselaar vanzelfsprekend)
+- Datum bijgewerkt naar 2026-05-25
+
+---
+
+### 9. PROJECT_LOG.md bijgewerkt
+
+Sessie 30 bovenaan ingevoegd met volledige beschrijving.
+
+---
+
+### 10. Sessie 31 voorbereiding aangemaakt
+
+`SESSIE_31_VOORBEREIDING.md` — drie opties, benodigde bestanden, openstaande beslissingen.
+
+---
+
+## Gewijzigde bestanden
+
+| Bestand | Van | Naar |
+|---------|-----|------|
+| `abonnementen/overzicht.html` | v2.3.0 | v2.4.0 |
+| `abonnementen/prijzen.html` | v2.4.0 | v2.5.0 |
+| `abonnementen/vergelijk.html` | v2.2.0 | v2.3.0 |
+| `abonnementen/voordelen.html` | v2.2.0 | v2.3.0 |
+| `js/overzicht.js` | — | v1.0.0 (nieuw) |
+| `js/prijzen.js` | — | v1.0.0 (nieuw) |
+| `js/vergelijk.js` | — | v1.0.0 (nieuw) |
+| `js/voordelen.js` | — | v1.0.0 (nieuw) |
+| `locales/nl/overzicht.json` | — | v1.0.0 (nieuw) |
+| `locales/en/overzicht.json` | — | v1.0.0 (nieuw) |
+| `locales/es/overzicht.json` | — | v1.0.0 (nieuw) |
+| `locales/nl/prijzen.json` | — | v1.0.0 (nieuw) |
+| `locales/en/prijzen.json` | — | v1.0.0 (nieuw) |
+| `locales/es/prijzen.json` | — | v1.0.0 (nieuw) |
+| `locales/nl/vergelijk.json` | — | v1.0.0 (nieuw) |
+| `locales/en/vergelijk.json` | — | v1.0.0 (nieuw) |
+| `locales/es/vergelijk.json` | — | v1.0.0 (nieuw) |
+| `locales/nl/voordelen.json` | — | v1.0.0 (nieuw) |
+| `locales/en/voordelen.json` | — | v1.0.0 (nieuw) |
+| `locales/es/voordelen.json` | — | v1.0.0 (nieuw) |
+| `DECISIONS.md` | — | v1.0.0 (nieuw) |
+| `BACKLOG.md` | — | bijgewerkt |
+| `PROJECT_LOG.md` | — | sessie 30 toegevoegd |
+| `SESSIE_31_VOORBEREIDING.md` | — | nieuw |
+
+---
+
+## Bugfixes
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-56 | Race condition — i18n keys toonden als key-naam op abonnementen-pagina's. Rootcause: init() roept updateContent() aan vóór loadNamespace() klaar is. Opgelost via dynamische JS-injectie na init() resolve. Vastgelegd als ADR-007. | ✅ Opgelost |
+
+---
+
+## Beslissingen
+
+| ID | Beslissing | Aanleiding |
+|----|-----------|-----------|
+| ADR-001 | Admin niet in publieke abonnementen-pagina's | Gebruikersvraag sessie 30 |
+| ADR-007 | Pagina-JS als apart bestand — nooit inline loadNamespace() | BF-56 |
+| ADR-010 | Meertaligheid via namespaces, `-en`/`-es` bestanden niet aanmaken | TD-06 afsluiting |
+
+---
+
+## Open na sessie 30
+
+| ID | Taak | Prioriteit |
+|----|------|-----------|
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` | 🟢 Laag |
+| F8-56 | Import-parser: rij 2 lezen als technische header | 🔴 Hoog |
+| SEC-04 | Editor-rol schrijfrecht op `stambomen` | 🟡 Middel |
+| TD-09 | `lang-link` handlers in `topbar.js` verwijderen | 🟡 Middel |
+| TD-11 | Import-parser leest rij 1 als header | 🔴 Hoog |
+| AN-21 | `stamboom/account.html` tracking toevoegen | 📋 Open |
+| F9-01 t/m F9-09 | Bronnen-module implementeren | 🔴 Hoog |
+| ADR-001 uitvoeren | Admin-kolom verwijderen uit `vergelijk.html` en `prijzen.html` | 🟡 Middel |
+| — | DECISIONS.md verwijzing toevoegen aan `Project.md` en BACKLOG.md | 🟢 Laag |
