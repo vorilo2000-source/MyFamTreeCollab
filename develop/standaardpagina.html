@@ -1,4 +1,12 @@
-<!-- ======================= develop/standaardpagina.html v1.3.0 =======================
+<!-- ======================= develop/standaardpagina.html v1.4.0 =======================
+     Wijziging v1.4.0 (sessie 28):
+     - loadScript() helper toegevoegd: laadt een JS-bestand als echte Promise
+       zodat de .then()-keten WACHT tot het script volledig geladen én uitgevoerd is.
+     - topbar.js wordt nu via loadScript() geladen i.p.v. appendChild(s) zonder await
+     - Navbar-fetch start pas NADAT topbar.js geladen én init() uitgevoerd heeft
+     - Dit lost de race condition op waarbij _showAdminDropdown() de adminDropdown/
+       developDropdown niet kon vinden omdat de Navbar-HTML nog niet geïnjecteerd was.
+
      Wijziging v1.3.0 (sessie 27):
      - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
      - Namespace 'standaardpagina' geladen via i18nModule.init() promise-keten
@@ -65,14 +73,16 @@
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — verplichte laadvolgorde (sessie 27):
+     SCRIPTS — verplichte laadvolgorde (sessie 28):
      1. Supabase SDK        — vereist door auth.js
      2. utils.js            — vereist door alle andere modules
      3. auth.js             — vereist door topbar.js
      4. siteAnalytics.js    — bezoektracking, na auth.js
      5. i18next CDN + plugins — vereist door i18n.js
      6. i18n.js             — wraps i18next, exposeert window.i18nModule
-     7. Pagina init script  — init() → loadNamespace('standaardpagina') → render
+     7. Pagina init script  — init() → loadNamespace → TopBar → topbar.js
+                              → Navbar → Footer → analytics
+                              (elke stap wacht op de vorige via Promise-keten)
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
 <script src="../js/utils.js"></script>                                         <!-- Gedeelde hulpfuncties -->
@@ -86,38 +96,96 @@
 <script src="/MyFamTreeCollab/js/i18n.js"></script>                           <!-- i18n module wrapper -->
 
 <script>
-    i18nModule.init()
-        .then(function () {
-            return i18nModule.loadNamespace('standaardpagina');            // laad standaardpagina.json voor actieve taal
-        })
-        .then(function () {
-            document.title = i18nModule.t('standaardpagina:paginaTitel'); // paginatitel via i18n
+    // -------------------------------------------------------------------------
+    // loadScript(src)
+    // Laadt een extern JS-bestand en geeft een Promise terug die pas resolved
+    // wanneer het script volledig geladen én uitgevoerd is (onload).
+    // Zo kan de .then()-keten WACHTEN op topbar.js voordat de Navbar-fetch
+    // start — dit voorkomt de race condition waarbij _showAdminDropdown()
+    // de adminDropdown/developDropdown nog niet in de DOM kon vinden.
+    // -------------------------------------------------------------------------
+    function loadScript(src) {
+        return new Promise(function (resolve, reject) {
+            var s    = document.createElement('script');  // Nieuw script-element aanmaken
+            s.src    = src;                               // Bronpad instellen
+            s.onload  = resolve;                          // Resolve als script geladen is
+            s.onerror = reject;                           // Reject bij laadfouten
+            document.body.appendChild(s);                 // Aan DOM toevoegen om laden te starten
+        });
+    }
 
-            return fetch('/MyFamTreeCollab/Layout/TopBar.html')
-                .then(function (resp) { return resp.text(); })
+    // -------------------------------------------------------------------------
+    // Hoofdketen — elke stap wacht op de vorige via Promise-chaining.
+    // Volgorde is kritisch: topbar.js MOET geladen en uitgevoerd zijn
+    // voordat de Navbar-HTML geïnjecteerd wordt, anders vindt
+    // _showAdminDropdown() de adminDropdown/developDropdown niet.
+    // -------------------------------------------------------------------------
+    i18nModule.init()
+
+        // Stap 1: laad de paginaspecifieke vertaalnamespace
+        .then(function () {
+            return i18nModule.loadNamespace('standaardpagina');            // standaardpagina.json laden
+        })
+
+        // Stap 2: paginatitel vertalen
+        .then(function () {
+            document.title = i18nModule.t('standaardpagina:paginaTitel'); // Titel via i18n instellen
+        })
+
+        // Stap 3: TopBar HTML ophalen en injecteren
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/TopBar.html')            // TopBar HTML ophalen
+                .then(function (resp) { return resp.text(); })             // Tekst uitpakken
                 .then(function (html) {
-                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
-                    var s = document.createElement('script');
-                    s.src = '../js/topbar.js';                            // topbar.js na #top-auth in DOM
-                    document.body.appendChild(s);
+                    i18nModule.onComponentLoaded(                          // HTML injecteren + vertalen
+                        html,
+                        document.getElementById('topbar-placeholder')
+                    );
                 });
         })
+
+        // Stap 4: topbar.js laden via loadScript() — WACHT tot script uitgevoerd is
+        // Dit is de kritische fix: pas als topbar.js klaar is (incl. init() en
+        // _showAdminDropdown), mag de Navbar-HTML geïnjecteerd worden.
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
-                .then(function (resp) { return resp.text(); })
+            return loadScript('/MyFamTreeCollab/js/topbar.js');            // topbar.js laden als Promise
+        })
+
+        // Stap 5: Navbar HTML ophalen en injecteren
+        // Op dit punt zijn adminDropdown en developDropdown nog NIET in de DOM,
+        // maar _showAdminDropdown() gebruikt nu een MutationObserver (v2.3.2)
+        // die exact reageert zodra ze verschijnen — geen timing-probleem meer.
+        .then(function () {
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html')            // Navbar HTML ophalen
+                .then(function (resp) { return resp.text(); })             // Tekst uitpakken
                 .then(function (html) {
-                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+                    i18nModule.onComponentLoaded(                          // HTML injecteren + vertalen
+                        html,
+                        document.getElementById('navbar-placeholder')
+                    );
                 });
         })
+
+        // Stap 6: Footer HTML ophalen en injecteren
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/Footer.html')
-                .then(function (resp) { return resp.text(); })
+            return fetch('/MyFamTreeCollab/Layout/Footer.html')            // Footer HTML ophalen
+                .then(function (resp) { return resp.text(); })             // Tekst uitpakken
                 .then(function (html) {
-                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+                    i18nModule.onComponentLoaded(                          // HTML injecteren + vertalen
+                        html,
+                        document.getElementById('footer-placeholder')
+                    );
                 });
         })
+
+        // Stap 7: bezoek registreren (na alle UI-renders)
         .then(function () {
-            SiteAnalytics.trackPage('standaardpagina');                   // bezoek registreren
+            SiteAnalytics.trackPage('standaardpagina');                    // Paginabezoek loggen
+        })
+
+        // Foutafhandeling voor de volledige keten
+        .catch(function (err) {
+            console.error('[standaardpagina] Initialisatiefout:', err);    // Fout loggen
         });
 </script>
 
