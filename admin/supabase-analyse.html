@@ -1,12 +1,14 @@
-<!-- ======================= admin/supabase-analyse.html v2.0.0 =======================
+<!-- ======================= admin/supabase-analyse.html v3.0.0 =======================
      Admin Supabase analyse pagina
+     Wijziging v3.0.0:
+     - Storage buckets sectie verwijderd (app gebruikt geen Supabase Storage)
+     - "Opslag per gebruiker" vervangen door "Data per gebruiker"
+     - Nieuwe RPC get_user_data_summary() toont per gebruiker:
+       stambomen, personen (uit JSONB), laatste update, DB-grootte
+     - Stat cards: Storage vervangen door Stambomen + Personen
      Wijziging v2.0.0:
-     - Verbindingsformulier + Service Role Key volledig verwijderd
-     - Gebruikt AuthModule.getClient() (anon key, bestaande sessie)
-     - Admin-check via AuthModule.getTier() — toont foutscherm als niet admin
-     - SQL-functies draaien met SECURITY DEFINER (elevated rechten server-side)
-     - get_user_storage_summary() joinet nu auth.users voor e-mail (geen admin.listUsers meer)
-     - GRANT gewijzigd van service_role naar anon + authenticated
+     - Verbindingsformulier verwijderd, gebruikt AuthModule.getClient()
+     - Admin-check via AuthModule.getTier()
      Wijziging v1.1.0:
      - Hernoemd van storage-analyse.html naar supabase-analyse.html
      ======================================================================= -->
@@ -22,6 +24,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
     <link rel="stylesheet" href="../css/style.css">
     <style>
+        /* ─── Kleurvariabelen — zelfde als accountbeheer.html ─── */
         :root {
             --bg-page:        #565656;
             --bg-card:        #4a4a4a;
@@ -36,33 +39,43 @@
             --text-secondary: #c0c0c0;
             --text-muted:     #999;
             --accent:         #00d4aa;
-            --color-db:       #60a0e0;
-            --color-storage:  #f0c040;
-            --color-users:    #a0e080;
-            --color-danger:   #f08080;
-            --color-ok:       #00d4aa;
+            --color-db:       #60a0e0;   /* blauw — database tabellen */
+            --color-trees:    #f0c040;   /* goud — stambomen */
+            --color-users:    #a0e080;   /* groen — per gebruiker */
+            --color-danger:   #f08080;   /* rood — limiet / fout */
+            --color-ok:       #00d4aa;   /* teal — binnen limiet */
         }
+
+        /* ─── Layout ─── */
         main { background-color: var(--bg-page); min-height: 100vh; }
         .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
         .admin-wrap h1 { font-size: 1.6rem; font-weight: bold; color: var(--text-primary); margin-bottom: 8px; }
         .subtitel { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 28px; }
+
+        /* ─── Geen toegang scherm ─── */
         .access-denied { background: var(--bg-card); border: 1px solid var(--color-danger); border-radius: 8px; padding: 32px; text-align: center; max-width: 480px; margin: 60px auto; }
         .access-denied h2 { font-size: 1.2rem; color: var(--color-danger); margin-bottom: 10px; }
         .access-denied p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+        /* ─── Sectie koppen ─── */
         .section-title { font-size: 1.05rem; font-weight: bold; color: var(--text-primary); margin: 32px 0 14px; display: flex; align-items: center; gap: 10px; }
         .section-title .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .dot-db      { background: var(--color-db); }
-        .dot-storage { background: var(--color-storage); }
-        .dot-users   { background: var(--color-users); }
+        .dot-db    { background: var(--color-db); }
+        .dot-trees { background: var(--color-trees); }
+        .dot-users { background: var(--color-users); }
+
+        /* ─── Stat cards ─── */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
         .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
         .stat-card.db-card    { border-top: 3px solid var(--color-db); }
-        .stat-card.stor-card  { border-top: 3px solid var(--color-storage); }
-        .stat-card.files-card { border-top: 3px solid var(--color-users); }
+        .stat-card.trees-card { border-top: 3px solid var(--color-trees); }
+        .stat-card.pers-card  { border-top: 3px solid var(--color-users); }
         .stat-card.users-card { border-top: 3px solid var(--accent); }
         .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; }
         .stat-value { font-size: 1.7rem; font-weight: bold; color: var(--text-primary); }
         .stat-sub   { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* ─── Voortgangsbalken ─── */
         .progress-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 22px; margin-bottom: 28px; }
         .progress-item { margin-bottom: 18px; }
         .progress-item:last-child { margin-bottom: 0; }
@@ -72,8 +85,10 @@
         .progress-bar-bg { background: #3a3a3a; border-radius: 4px; height: 8px; overflow: hidden; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
         .fill-ok     { background: var(--color-ok); }
-        .fill-warn   { background: var(--color-storage); }
+        .fill-warn   { background: var(--color-trees); }
         .fill-danger { background: var(--color-danger); }
+
+        /* ─── Tabellen ─── */
         .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: #6e6e6e; margin-bottom: 8px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
         thead { background: var(--bg-thead); }
@@ -83,16 +98,25 @@
         tbody tr:hover { background: var(--bg-row-hover); }
         tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); }
         .loading-row td, .empty-row td { text-align: center; color: var(--text-muted); padding: 40px; }
+
+        /* ─── Badges ─── */
         .size-badge { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 0.78rem; font-weight: 600; background: #3a3a3a; color: var(--text-secondary); }
+        .num-badge  { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 0.78rem; font-weight: 600; background: #2a3a2a; color: var(--color-users); }
+
+        /* ─── Toolbar ─── */
         .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
         .toolbar button { padding: 8px 14px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; background: var(--bg-input); color: var(--text-primary); cursor: pointer; transition: background 0.15s; }
         .toolbar button:hover { background: var(--bg-card-hover); }
         .toolbar button.accent-btn { border-color: var(--accent); color: var(--accent); }
         .toolbar button.accent-btn:hover { background: var(--accent); color: #1a1a1a; }
+
+        /* ─── Toast ─── */
         #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg-toast); color: var(--text-primary); font-size: 0.88rem; padding: 10px 18px; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 999; max-width: 320px; }
         #toast.show  { opacity: 1; transform: translateY(0); }
         #toast.error { background: #3a1a1a; color: var(--color-danger); border: 1px solid var(--color-danger); }
-        #lastRefresh { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
+
+        /* ─── Timestamp + verberg tot auth klaar ─── */
+        #lastRefresh  { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
         #dashboard    { display: none; }
         #accessDenied { display: none; }
     </style>
@@ -108,7 +132,7 @@
 <main>
   <div class="admin-wrap">
     <h1>Supabase Analyse</h1>
-    <p id="lastRefresh" class="subtitel">Toegang controleren…</p>
+    <p id="lastRefresh" class="subtitel">Toegang controleren&#x2026;</p>
 
     <!-- Geen toegang scherm -->
     <div id="accessDenied" class="access-denied">
@@ -119,25 +143,28 @@
 
     <!-- Dashboard -->
     <div id="dashboard">
+
+      <!-- Toolbar -->
       <div class="toolbar">
         <button class="accent-btn" id="btnRefresh">&#8635; Vernieuwen</button>
       </div>
 
+      <!-- Stat cards: Database | Stambomen | Personen | Gebruikers -->
       <div class="stats-grid">
         <div class="stat-card db-card">
           <div class="stat-label">Database</div>
           <div class="stat-value" id="statDb">&#8212;</div>
           <div class="stat-sub">van 500 MB Free</div>
         </div>
-        <div class="stat-card stor-card">
-          <div class="stat-label">Storage bestanden</div>
-          <div class="stat-value" id="statStor">&#8212;</div>
-          <div class="stat-sub">van 1 GB Free</div>
+        <div class="stat-card trees-card">
+          <div class="stat-label">Stambomen</div>
+          <div class="stat-value" id="statTrees">&#8212;</div>
+          <div class="stat-sub">aangemaakt</div>
         </div>
-        <div class="stat-card files-card">
-          <div class="stat-label">Totaal bestanden</div>
-          <div class="stat-value" id="statFiles">&#8212;</div>
-          <div class="stat-sub">in alle buckets</div>
+        <div class="stat-card pers-card">
+          <div class="stat-label">Personen</div>
+          <div class="stat-value" id="statPersons">&#8212;</div>
+          <div class="stat-sub">totaal in alle bomen</div>
         </div>
         <div class="stat-card users-card">
           <div class="stat-label">Gebruikers</div>
@@ -146,47 +173,87 @@
         </div>
       </div>
 
+      <!-- Voortgangsbalk database -->
       <div class="progress-wrap">
         <div class="progress-item">
           <div class="progress-header">
             <span class="progress-name">Database gebruik</span>
             <span class="progress-nums" id="progDbNums">&#8212; / 500 MB</span>
           </div>
-          <div class="progress-bar-bg"><div class="progress-bar-fill fill-ok" id="progDbBar" style="width:0%"></div></div>
-        </div>
-        <div class="progress-item">
-          <div class="progress-header">
-            <span class="progress-name">Storage gebruik</span>
-            <span class="progress-nums" id="progStorNums">&#8212; / 1 GB</span>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-ok" id="progDbBar" style="width:0%"></div>
           </div>
-          <div class="progress-bar-bg"><div class="progress-bar-fill fill-ok" id="progStorBar" style="width:0%"></div></div>
         </div>
       </div>
 
-      <div class="section-title"><span class="dot dot-db"></span>Database &mdash; grootte per tabel</div>
+      <!-- Database tabellen -->
+      <div class="section-title">
+        <span class="dot dot-db"></span>
+        Database &#8212; grootte per tabel
+      </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Schema</th><th>Tabel</th><th>Totale grootte</th><th>Tabeldata</th><th>Indexen</th><th>Rijen (schatting)</th></tr></thead>
-          <tbody id="dbTbody"><tr class="loading-row"><td colspan="6">Laden&hellip;</td></tr></tbody>
+          <thead>
+            <tr>
+              <th>Schema</th>
+              <th>Tabel</th>
+              <th>Totale grootte</th>
+              <th>Tabeldata</th>
+              <th>Indexen</th>
+              <th>Rijen (schatting)</th>
+            </tr>
+          </thead>
+          <tbody id="dbTbody">
+            <tr class="loading-row"><td colspan="6">Laden&#x2026;</td></tr>
+          </tbody>
         </table>
       </div>
 
-      <div class="section-title"><span class="dot dot-storage"></span>Storage &mdash; buckets &amp; bestanden</div>
+      <!-- Stambomen per gebruiker -->
+      <div class="section-title">
+        <span class="dot dot-trees"></span>
+        Stambomen &#8212; overzicht per gebruiker
+      </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Bucket</th><th>Zichtbaarheid</th><th>Aantal bestanden</th><th>Totale grootte</th><th>Aangemaakt op</th></tr></thead>
-          <tbody id="bucketTbody"><tr class="loading-row"><td colspan="5">Laden&hellip;</td></tr></tbody>
+          <thead>
+            <tr>
+              <th>Gebruiker (e-mail)</th>
+              <th>Stambomen</th>
+              <th>Personen (totaal)</th>
+              <th>Grootte data</th>
+              <th>Laatste update</th>
+            </tr>
+          </thead>
+          <tbody id="treesTbody">
+            <tr class="loading-row"><td colspan="5">Laden&#x2026;</td></tr>
+          </tbody>
         </table>
       </div>
 
-      <div class="section-title"><span class="dot dot-users"></span>Opslag per gebruiker</div>
+      <!-- Stamboom detail -->
+      <div class="section-title">
+        <span class="dot dot-users"></span>
+        Stambomen &#8212; detail per boom
+      </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Gebruiker (e-mail / ID)</th><th>Bucket</th><th>Bestanden</th><th>Totale grootte</th><th>Laatste upload</th></tr></thead>
-          <tbody id="usersTbody"><tr class="loading-row"><td colspan="5">Laden&hellip;</td></tr></tbody>
+          <thead>
+            <tr>
+              <th>Naam</th>
+              <th>Eigenaar (e-mail)</th>
+              <th>Personen</th>
+              <th>Grootte data</th>
+              <th>Laatste update</th>
+            </tr>
+          </thead>
+          <tbody id="treeDetailTbody">
+            <tr class="loading-row"><td colspan="5">Laden&#x2026;</td></tr>
+          </tbody>
         </table>
       </div>
-    </div>
+
+    </div><!-- /dashboard -->
   </div>
 </main>
 
@@ -204,11 +271,10 @@
             document.getElementById('topbar-placeholder').innerHTML = html;  // inject TopBar markup
             var s = document.createElement('script');                        // create script element
             s.src    = '/MyFamTreeCollab/js/topbar.js';                     // path to topbar.js
-            s.onload = initPage;                                             // call initPage after load
+            s.onload = initPage;                                             // run initPage when ready
             document.body.appendChild(s);                                    // attach to DOM
         });
 
-    // Navbar and Footer load independently
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
         .then(function(r) { return r.text(); })
         .then(function(html) { document.getElementById('navbar-placeholder').innerHTML = html; });
@@ -218,7 +284,7 @@
         .then(function(html) { document.getElementById('footer-placeholder').innerHTML = html; });
 
     // ─────────────────────────────────────────────────────────────
-    // initPage — entry point, runs after topbar.js is ready
+    // initPage — entry point na topbar.js
     // ─────────────────────────────────────────────────────────────
     async function initPage() {
 
@@ -226,172 +292,162 @@
         var accessDenied = document.getElementById('accessDenied');          // access denied div
         var lastRefresh  = document.getElementById('lastRefresh');           // subtitle / timestamp
         var btnRefresh   = document.getElementById('btnRefresh');            // refresh button
+        var LIMIT_DB     = 500 * 1024 * 1024;                               // 500 MB free plan db limit
 
-        var LIMIT_DB   = 500  * 1024 * 1024;                                // 500 MB free plan db limit
-        var LIMIT_STOR = 1024 * 1024 * 1024;                                // 1 GB free plan storage limit
-
-        // ── Admin check via AuthModule (uses existing session from auth.js) ──
-        var tier = await AuthModule.getTier();                               // fetch tier from profiles table
+        // ── Admin check via bestaande sessie ──
+        var tier = await AuthModule.getTier();                               // haal tier op uit profiles
 
         if (tier !== 'admin') {
-            accessDenied.style.display = 'block';                           // show access denied message
+            accessDenied.style.display = 'block';                           // toon geen-toegang scherm
             lastRefresh.textContent    = 'Geen toegang.';                   // update subtitle
-            return;                                                          // stop — no data loading
+            return;                                                          // stop verdere uitvoering
         }
 
-        // ── Admin confirmed: show dashboard ──
-        dashboard.style.display = 'block';                                  // reveal the dashboard
-        btnRefresh.addEventListener('click', loadAll);                      // wire the refresh button
-        loadAll();                                                           // initial load
+        // ── Admin bevestigd: toon dashboard ──
+        dashboard.style.display = 'block';                                  // maak dashboard zichtbaar
+        btnRefresh.addEventListener('click', loadAll);                      // koppel refresh knop
+        loadAll();                                                           // initieel laden
 
         // ─────────────────────────────────────────────────────────
-        // loadAll
+        // loadAll — roept alle loaders parallel aan
         // ─────────────────────────────────────────────────────────
         function loadAll() {
-            lastRefresh.textContent = 'Laden\u2026';                        // show loading state
-            setTableLoading('dbTbody',     6);                              // db table loading row
-            setTableLoading('bucketTbody', 5);                              // bucket table loading row
-            setTableLoading('usersTbody',  5);                              // users table loading row
+            lastRefresh.textContent = 'Laden\u2026';                        // toon laadstatus
+            setTableLoading('dbTbody',         6);                          // laadplaceholder db tabel
+            setTableLoading('treesTbody',      5);                          // laadplaceholder bomen per gebruiker
+            setTableLoading('treeDetailTbody', 5);                          // laadplaceholder boom detail
 
-            Promise.all([ loadDbTables(), loadBuckets(), loadUserStorage() ])
+            Promise.all([ loadDbTables(), loadTreeStats() ])
                 .then(function() {
-                    var now = new Date();
+                    var now = new Date();                                    // huidige tijd
                     lastRefresh.textContent = 'Laatste update: ' +
                         now.toLocaleDateString('nl-BE') + ' ' +
-                        now.toLocaleTimeString('nl-BE');                     // format timestamp nl-BE
+                        now.toLocaleTimeString('nl-BE');                     // toon timestamp nl-BE
                 })
                 .catch(function(err) {
-                    showToast('Fout bij laden: ' + err.message, true);      // show error toast
+                    showToast('Fout bij laden: ' + err.message, true);      // toon fout toast
                     lastRefresh.textContent = 'Fout bij laden.';            // update subtitle
                 });
         }
 
         // ─────────────────────────────────────────────────────────
-        // loadDbTables — calls RPC get_table_sizes() (SECURITY DEFINER)
+        // loadDbTables — RPC get_table_sizes() (SECURITY DEFINER)
         // ─────────────────────────────────────────────────────────
         function loadDbTables() {
-            return AuthModule.getClient().rpc('get_table_sizes')            // call RPC via anon client
+            return AuthModule.getClient().rpc('get_table_sizes')            // aanroep via anon client
                 .then(function(res) {
-                    if (res.error) throw new Error(res.error.message);      // propagate error
-                    var rows  = res.data || [];                              // table size rows
-                    var tbody = document.getElementById('dbTbody');
+                    if (res.error) throw new Error(res.error.message);      // fout doorgeven
+                    var rows  = res.data || [];                              // tabelgrootte rijen
+                    var tbody = document.getElementById('dbTbody');         // doel tbody
 
-                    if (!rows.length) { tbody.innerHTML = emptyRow(6, 'Geen tabellen gevonden.'); return; }
+                    if (!rows.length) {
+                        tbody.innerHTML = emptyRow(6, 'Geen tabellen gevonden.');
+                        return;
+                    }
 
-                    var totalBytes = rows.reduce(function(s, r) { return s + (r.total_bytes || 0); }, 0); // sum all sizes
-                    document.getElementById('statDb').textContent = formatBytes(totalBytes);
-                    updateProgress('progDbBar', 'progDbNums', totalBytes, LIMIT_DB, '500 MB');
+                    // Bereken totaal voor stat card en voortgangsbalk
+                    var totalBytes = rows.reduce(function(s, r) { return s + (r.total_bytes || 0); }, 0);
+                    document.getElementById('statDb').textContent = formatBytes(totalBytes);          // stat card
+                    updateProgress('progDbBar', 'progDbNums', totalBytes, LIMIT_DB, '500 MB');        // balk
 
+                    // Render tabelrijen
                     tbody.innerHTML = rows.map(function(r) {
                         return '<tr>' +
-                            '<td><span class="size-badge">' + esc(r.schema_name) + '</span></td>' +
-                            '<td>' + esc(r.table_name) + '</td>' +
-                            '<td>' + formatBytes(r.total_bytes) + '</td>' +
-                            '<td>' + formatBytes(r.table_bytes) + '</td>' +
-                            '<td>' + formatBytes(r.index_bytes) + '</td>' +
-                            '<td style="color:var(--text-muted)">' + (r.row_estimate || 0).toLocaleString('nl-BE') + '</td>' +
+                            '<td><span class="size-badge">' + esc(r.schema_name) + '</span></td>' +   // schema
+                            '<td>' + esc(r.table_name) + '</td>' +                                    // tabel
+                            '<td>' + formatBytes(r.total_bytes) + '</td>' +                           // totaal
+                            '<td>' + formatBytes(r.table_bytes) + '</td>' +                           // data
+                            '<td>' + formatBytes(r.index_bytes) + '</td>' +                           // indexen
+                            '<td style="color:var(--text-muted)">' + (r.row_estimate || 0).toLocaleString('nl-BE') + '</td>' + // rijen
                         '</tr>';
                     }).join('');
                 });
         }
 
         // ─────────────────────────────────────────────────────────
-        // loadBuckets — lists buckets and recursively counts files
+        // loadTreeStats — RPC get_tree_stats() (SECURITY DEFINER)
+        // Haalt per gebruiker en per boom: aantal personen + grootte
         // ─────────────────────────────────────────────────────────
-        function loadBuckets() {
-            var client = AuthModule.getClient();                             // anon client
-            return client.storage.listBuckets()
+        function loadTreeStats() {
+            return AuthModule.getClient().rpc('get_tree_stats')             // aanroep via anon client
                 .then(function(res) {
-                    if (res.error) throw new Error(res.error.message);
-                    return Promise.all((res.data || []).map(function(bucket) {
-                        return listAllFiles(bucket.id).then(function(files) {
-                            var totalSize = files.reduce(function(s, f) {
-                                return s + (f.metadata && f.metadata.size ? f.metadata.size : 0); // sum file sizes
-                            }, 0);
-                            return { bucket: bucket, fileCount: files.length, totalSize: totalSize };
-                        });
-                    }));
-                })
-                .then(function(bucketData) {
-                    var tbody      = document.getElementById('bucketTbody');
-                    var totalStor  = bucketData.reduce(function(s, b) { return s + b.totalSize;  }, 0);
-                    var totalFiles = bucketData.reduce(function(s, b) { return s + b.fileCount;  }, 0);
+                    if (res.error) throw new Error(res.error.message);      // fout doorgeven
+                    var rows = res.data || [];                               // stamboom rijen
 
-                    document.getElementById('statStor').textContent  = formatBytes(totalStor);
-                    document.getElementById('statFiles').textContent = totalFiles.toString();
-                    updateProgress('progStorBar', 'progStorNums', totalStor, LIMIT_STOR, '1 GB');
+                    // ── Globale totalen voor stat cards ──
+                    var totalTrees   = rows.length;                                                   // totaal stambomen
+                    var totalPersons = rows.reduce(function(s, r) { return s + (r.person_count || 0); }, 0); // totaal personen
 
-                    if (!bucketData.length) { tbody.innerHTML = emptyRow(5, 'Geen buckets gevonden.'); return; }
+                    document.getElementById('statTrees').textContent   = totalTrees.toString();       // stat card
+                    document.getElementById('statPersons').textContent = totalPersons.toLocaleString('nl-BE'); // stat card
 
-                    tbody.innerHTML = bucketData.map(function(b) {
-                        var created = b.bucket.created_at ? new Date(b.bucket.created_at).toLocaleDateString('nl-BE') : '\u2014';
-                        var pub = b.bucket.public
-                            ? '<span style="color:var(--color-danger);font-size:0.8rem;">Publiek</span>'
-                            : '<span style="color:var(--accent);font-size:0.8rem;">Priv\u00e9</span>';
-                        return '<tr>' +
-                            '<td><strong>' + esc(b.bucket.id) + '</strong></td>' +
-                            '<td>' + pub + '</td>' +
-                            '<td>' + b.fileCount.toLocaleString('nl-BE') + '</td>' +
-                            '<td>' + formatBytes(b.totalSize) + '</td>' +
-                            '<td style="color:var(--text-muted)">' + created + '</td>' +
-                        '</tr>';
-                    }).join('');
-                });
-        }
-
-        // ─────────────────────────────────────────────────────────
-        // loadUserStorage — calls RPC get_user_storage_summary()
-        // Email is joined server-side via auth.users (SECURITY DEFINER)
-        // ─────────────────────────────────────────────────────────
-        function loadUserStorage() {
-            var client = AuthModule.getClient();                             // anon client
-            return client.rpc('get_user_storage_summary')
-                .then(function(res) {
-                    if (res.error) throw new Error(res.error.message);
-                    var rows  = res.data || [];
-                    var tbody = document.getElementById('usersTbody');
-
-                    // User count from profiles table
-                    client.from('profiles').select('id', { count: 'exact', head: true })
+                    // ── Gebruikersaantal uit profiles ──
+                    AuthModule.getClient().from('profiles').select('id', { count: 'exact', head: true })
                         .then(function(c) {
                             if (!c.error) document.getElementById('statUsers').textContent = (c.count || 0).toString();
                         });
 
-                    if (!rows.length) { tbody.innerHTML = emptyRow(5, 'Geen gebruikersdata gevonden in storage.'); return; }
-
-                    tbody.innerHTML = rows.map(function(r) {
-                        var label  = r.email || r.owner_id || '(geen eigenaar)'; // email joined server-side
-                        var lastUp = r.last_upload ? new Date(r.last_upload).toLocaleDateString('nl-BE') : '\u2014';
-                        return '<tr>' +
-                            '<td style="font-size:0.82rem;">' + esc(label) + '</td>' +
-                            '<td><span class="size-badge">' + esc(r.bucket_id) + '</span></td>' +
-                            '<td>' + Number(r.file_count).toLocaleString('nl-BE') + '</td>' +
-                            '<td>' + formatBytes(r.total_size) + '</td>' +
-                            '<td style="color:var(--text-muted)">' + lastUp + '</td>' +
-                        '</tr>';
-                    }).join('');
-                });
-        }
-
-        // ─────────────────────────────────────────────────────────
-        // listAllFiles — recursive paginated file listing per bucket
-        // ─────────────────────────────────────────────────────────
-        function listAllFiles(bucketId, folder, accumulated) {
-            folder      = folder      || '';
-            accumulated = accumulated || [];
-            return AuthModule.getClient().storage.from(bucketId).list(folder, { limit: 1000, offset: 0 })
-                .then(function(res) {
-                    if (res.error) return accumulated;                       // on error return collected so far
-                    var items      = res.data || [];
-                    var files      = items.filter(function(i) { return  i.id; }); // files have an id
-                    var subFolders = items.filter(function(i) { return !i.id; }); // folders have no id
-                    accumulated = accumulated.concat(files);                 // add files to collection
-                    return Promise.all(subFolders.map(function(sf) {
-                        return listAllFiles(bucketId, folder ? folder + '/' + sf.name : sf.name, []);
-                    })).then(function(results) {
-                        results.forEach(function(r) { accumulated = accumulated.concat(r); });
-                        return accumulated;                                   // return all files
+                    // ── Tabel 1: per gebruiker samengevat ──
+                    var byUser = {};                                                                   // groepeer per user_id
+                    rows.forEach(function(r) {
+                        if (!byUser[r.user_id]) {
+                            byUser[r.user_id] = {
+                                email:        r.email || r.user_id,                                   // e-mail of id als fallback
+                                tree_count:   0,                                                      // aantal bomen
+                                person_count: 0,                                                      // totaal personen
+                                total_size:   0,                                                      // totale grootte bytes
+                                last_update:  null                                                    // laatste update
+                            };
+                        }
+                        byUser[r.user_id].tree_count++;                                               // tel boom op
+                        byUser[r.user_id].person_count += (r.person_count || 0);                     // tel personen op
+                        byUser[r.user_id].total_size   += (r.data_size_bytes || 0);                  // tel grootte op
+                        // Bewaar meest recente update
+                        if (!byUser[r.user_id].last_update || r.updated_at > byUser[r.user_id].last_update) {
+                            byUser[r.user_id].last_update = r.updated_at;                            // update timestamp
+                        }
                     });
+
+                    var userRows = Object.values(byUser).sort(function(a, b) {
+                        return b.total_size - a.total_size;                                           // sorteer op grootte desc
+                    });
+
+                    var treesTbody = document.getElementById('treesTbody');
+                    if (!userRows.length) {
+                        treesTbody.innerHTML = emptyRow(5, 'Geen stambomen gevonden.');
+                    } else {
+                        treesTbody.innerHTML = userRows.map(function(u) {
+                            var lastUp = u.last_update ? new Date(u.last_update).toLocaleDateString('nl-BE') : '\u2014';
+                            return '<tr>' +
+                                '<td style="font-size:0.82rem;">' + esc(u.email) + '</td>' +          // e-mail
+                                '<td><span class="num-badge">' + u.tree_count + '</span></td>' +      // aantal bomen
+                                '<td>' + u.person_count.toLocaleString('nl-BE') + '</td>' +           // personen
+                                '<td>' + formatBytes(u.total_size) + '</td>' +                        // grootte
+                                '<td style="color:var(--text-muted)">' + lastUp + '</td>' +           // laatste update
+                            '</tr>';
+                        }).join('');
+                    }
+
+                    // ── Tabel 2: detail per individuele stamboom ──
+                    var detailTbody = document.getElementById('treeDetailTbody');
+                    var sortedRows  = rows.slice().sort(function(a, b) {
+                        return (b.data_size_bytes || 0) - (a.data_size_bytes || 0);                  // sorteer op grootte desc
+                    });
+
+                    if (!sortedRows.length) {
+                        detailTbody.innerHTML = emptyRow(5, 'Geen stambomen gevonden.');
+                    } else {
+                        detailTbody.innerHTML = sortedRows.map(function(r) {
+                            var lastUp = r.updated_at ? new Date(r.updated_at).toLocaleDateString('nl-BE') : '\u2014';
+                            return '<tr>' +
+                                '<td><strong>' + esc(r.naam) + '</strong></td>' +                     // naam stamboom
+                                '<td style="font-size:0.82rem;">' + esc(r.email || r.user_id) + '</td>' + // eigenaar
+                                '<td><span class="num-badge">' + (r.person_count || 0).toLocaleString('nl-BE') + '</span></td>' + // personen
+                                '<td>' + formatBytes(r.data_size_bytes || 0) + '</td>' +              // grootte JSONB
+                                '<td style="color:var(--text-muted)">' + lastUp + '</td>' +           // laatste update
+                            '</tr>';
+                        }).join('');
+                    }
                 });
         }
 
@@ -399,7 +455,7 @@
         // Helpers
         // ─────────────────────────────────────────────────────────
         function updateProgress(barId, numsId, usedBytes, limitBytes, limitLabel) {
-            var pct = Math.min((usedBytes / limitBytes) * 100, 100);        // cap at 100%
+            var pct = Math.min((usedBytes / limitBytes) * 100, 100);        // percentage max 100
             var bar = document.getElementById(barId);
             document.getElementById(numsId).textContent = formatBytes(usedBytes) + ' / ' + limitLabel;
             bar.style.width = pct.toFixed(1) + '%';
@@ -407,10 +463,10 @@
         }
 
         function formatBytes(bytes) {
-            if (!bytes || bytes === 0) return '0 B';
+            if (!bytes || bytes === 0) return '0 B';                        // nul of leeg
             var units = ['B', 'KB', 'MB', 'GB'];
             var i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + units[i]; // e.g. "12.34 MB"
+            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + units[i]; // bijv. "12.34 MB"
         }
 
         function esc(str) {
@@ -432,7 +488,7 @@
             t.textContent = msg;
             t.className   = 'show' + (isError ? ' error' : '');
             clearTimeout(t._timer);
-            t._timer = setTimeout(function() { t.className = ''; }, 3500); // auto-hide after 3.5s
+            t._timer = setTimeout(function() { t.className = ''; }, 3500); // verberg na 3.5s
         }
 
     } // end initPage
@@ -443,61 +499,45 @@
   VEREISTE SQL — eenmalig uitvoeren in Supabase SQL Editor
   Dashboard -> SQL Editor -> New query -> Run
 
-  v2.0.0: SECURITY DEFINER + GRANT aan anon/authenticated
-  (geen service_role key meer nodig op de client)
+  Voeg toe naast de bestaande get_table_sizes() functie.
+  get_tree_stats() leest de stambomen tabel en joins met auth.users
+  voor e-mailadressen. person_count telt het aantal personen in de
+  JSONB data kolom (verwacht: data->>'personen' als array).
+  Pas de JSONB-path aan als jullie structuur anders is.
 =====================================================================
 
-CREATE OR REPLACE FUNCTION get_table_sizes()
+CREATE OR REPLACE FUNCTION get_tree_stats()
 RETURNS TABLE (
-    schema_name  TEXT,
-    table_name   TEXT,
-    total_bytes  BIGINT,
-    table_bytes  BIGINT,
-    index_bytes  BIGINT,
-    row_estimate BIGINT
+    tree_id         UUID,
+    naam            TEXT,
+    user_id         UUID,
+    email           TEXT,
+    person_count    BIGINT,
+    data_size_bytes BIGINT,
+    updated_at      TIMESTAMPTZ
 )
 LANGUAGE sql SECURITY DEFINER AS $$
     SELECT
-        n.nspname                        AS schema_name,
-        c.relname                        AS table_name,
-        pg_total_relation_size(c.oid)    AS total_bytes,
-        pg_relation_size(c.oid)          AS table_bytes,
-        pg_indexes_size(c.oid)           AS index_bytes,
-        c.reltuples::BIGINT              AS row_estimate
-    FROM pg_class c
-    JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE c.relkind = 'r'
-      AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
-    ORDER BY total_bytes DESC;
+        s.id                                                AS tree_id,
+        s.naam,
+        s.user_id,
+        u.email,
+        COALESCE(
+            jsonb_array_length(s.data->'personen'), 0
+        )::BIGINT                                           AS person_count,
+        octet_length(s.data::text)::BIGINT                 AS data_size_bytes,
+        s.updated_at
+    FROM public.stambomen s
+    LEFT JOIN auth.users u ON u.id = s.user_id
+    ORDER BY data_size_bytes DESC;
 $$;
 
-CREATE OR REPLACE FUNCTION get_user_storage_summary()
-RETURNS TABLE (
-    owner_id    UUID,
-    email       TEXT,
-    bucket_id   TEXT,
-    file_count  BIGINT,
-    total_size  BIGINT,
-    last_upload TIMESTAMPTZ
-)
-LANGUAGE sql SECURITY DEFINER AS $$
-    SELECT
-        o.owner                                            AS owner_id,
-        u.email                                            AS email,
-        o.bucket_id,
-        COUNT(*)                                           AS file_count,
-        COALESCE(SUM((o.metadata->>'size')::BIGINT), 0)   AS total_size,
-        MAX(o.created_at)                                  AS last_upload
-    FROM storage.objects o
-    LEFT JOIN auth.users u ON u.id = o.owner
-    WHERE o.owner IS NOT NULL
-    GROUP BY o.owner, u.email, o.bucket_id
-    ORDER BY total_size DESC;
-$$;
+GRANT EXECUTE ON FUNCTION get_tree_stats() TO anon, authenticated;
 
-GRANT EXECUTE ON FUNCTION get_table_sizes()          TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION get_user_storage_summary() TO anon, authenticated;
-
+=====================================================================
+  LET OP: pas de JSONB-path aan als nodig.
+  Controleer met: SELECT jsonb_object_keys(data) FROM stambomen LIMIT 1;
+  om te zien welke sleutels jouw data-kolom heeft.
 =====================================================================
 -->
 </body>
