@@ -1,32 +1,27 @@
-<!-- ======================= admin/supabase-analyse.html v1.1.0 =======================
+<!-- ======================= admin/supabase-analyse.html v2.0.0 =======================
      Admin Supabase analyse pagina
-     Wijziging t.o.v. v1.0.0:
+     Wijziging v2.0.0:
+     - Verbindingsformulier + Service Role Key volledig verwijderd
+     - Gebruikt AuthModule.getClient() (anon key, bestaande sessie)
+     - Admin-check via AuthModule.getTier() — toont foutscherm als niet admin
+     - SQL-functies draaien met SECURITY DEFINER (elevated rechten server-side)
+     - get_user_storage_summary() joinet nu auth.users voor e-mail (geen admin.listUsers meer)
+     - GRANT gewijzigd van service_role naar anon + authenticated
+     Wijziging v1.1.0:
      - Hernoemd van storage-analyse.html naar supabase-analyse.html
-     - Paginatitel bijgewerkt naar "Supabase Analyse"
-     Toont via Supabase Service Role Key:
-       - Totaal opslaggebruik vs Free plan limieten
-       - Database grootte per tabel (via pg_catalog)
-       - Storage buckets: bestanden + grootte per bucket
-       - Per gebruiker: aantal bestanden + totale grootte
      ======================================================================= -->
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supabase Analyse</title>
-
-    <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
-
     <link rel="stylesheet" href="../css/style.css">
-
     <style>
-        /* ─── Kleurvariabelen — zelfde als accountbeheer.html ─── */
         :root {
             --bg-page:        #565656;
             --bg-card:        #4a4a4a;
@@ -34,7 +29,6 @@
             --bg-thead:       #3e3e3e;
             --bg-row-hover:   #4e4e4e;
             --bg-input:       #3e3e3e;
-            --bg-modal:       #3e3e3e;
             --bg-toast:       #2a2a2a;
             --border:         #6a6a6a;
             --border-light:   #5a5a5a;
@@ -42,889 +36,403 @@
             --text-secondary: #c0c0c0;
             --text-muted:     #999;
             --accent:         #00d4aa;
-
-            /* ─── Kleuraccenten per sectie ─── */
-            --color-db:       #60a0e0;   /* blauw — database tabellen */
-            --color-storage:  #f0c040;   /* goud — storage buckets */
-            --color-users:    #a0e080;   /* groen — per gebruiker */
-            --color-danger:   #f08080;   /* rood — limiet overschrijding */
-            --color-ok:       #00d4aa;   /* teal — binnen limiet */
+            --color-db:       #60a0e0;
+            --color-storage:  #f0c040;
+            --color-users:    #a0e080;
+            --color-danger:   #f08080;
+            --color-ok:       #00d4aa;
         }
-
-        /* ─── Main achtergrond ─── */
-        main {
-            background-color: var(--bg-page);
-            min-height: 100vh;
-        }
-
-        /* ─── Pagina wrapper ─── */
-        .admin-wrap {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 32px 24px;
-        }
-
-        .admin-wrap h1 {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .subtitel {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 28px;
-        }
-
-        /* ─── Verbindingsformulier — zichtbaar als geen key is ingevuld ─── */
-        .connect-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 28px;
-            max-width: 560px;
-            margin-bottom: 32px;
-        }
-
-        .connect-box h2 {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-        }
-
-        .connect-box p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 18px;
-            line-height: 1.6;
-        }
-
-        .form-row {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .form-row label {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-        }
-
-        .form-row input {
-            padding: 9px 12px;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            font-size: 0.9rem;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .form-row input::placeholder { color: var(--text-muted); }
-
-        .btn-connect {
-            padding: 9px 22px;
-            border: 1px solid var(--accent);
-            border-radius: 5px;
-            background: transparent;
-            color: var(--accent);
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-
-        .btn-connect:hover {
-            background: var(--accent);
-            color: #1a1a1a;
-        }
-
-        /* ─── Sectie koppen ─── */
-        .section-title {
-            font-size: 1.05rem;
-            font-weight: bold;
-            color: var(--text-primary);
-            margin: 32px 0 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
+        main { background-color: var(--bg-page); min-height: 100vh; }
+        .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+        .admin-wrap h1 { font-size: 1.6rem; font-weight: bold; color: var(--text-primary); margin-bottom: 8px; }
+        .subtitel { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 28px; }
+        .access-denied { background: var(--bg-card); border: 1px solid var(--color-danger); border-radius: 8px; padding: 32px; text-align: center; max-width: 480px; margin: 60px auto; }
+        .access-denied h2 { font-size: 1.2rem; color: var(--color-danger); margin-bottom: 10px; }
+        .access-denied p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+        .section-title { font-size: 1.05rem; font-weight: bold; color: var(--text-primary); margin: 32px 0 14px; display: flex; align-items: center; gap: 10px; }
+        .section-title .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
         .dot-db      { background: var(--color-db); }
         .dot-storage { background: var(--color-storage); }
         .dot-users   { background: var(--color-users); }
-
-        /* ─── Limiet overzicht — stat cards bovenaan ─── */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
-            margin-bottom: 28px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .stat-card.db-card     { border-top: 3px solid var(--color-db); }
-        .stat-card.stor-card   { border-top: 3px solid var(--color-storage); }
-        .stat-card.files-card  { border-top: 3px solid var(--color-users); }
-        .stat-card.users-card  { border-top: 3px solid var(--accent); }
-
-        .stat-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .stat-value {
-            font-size: 1.7rem;
-            font-weight: bold;
-            color: var(--text-primary);
-        }
-
-        .stat-sub {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* ─── Voortgangsbalk voor limiet gebruik ─── */
-        .progress-wrap {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 18px 22px;
-            margin-bottom: 28px;
-        }
-
-        .progress-item {
-            margin-bottom: 18px;
-        }
-
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+        .stat-card.db-card    { border-top: 3px solid var(--color-db); }
+        .stat-card.stor-card  { border-top: 3px solid var(--color-storage); }
+        .stat-card.files-card { border-top: 3px solid var(--color-users); }
+        .stat-card.users-card { border-top: 3px solid var(--accent); }
+        .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; }
+        .stat-value { font-size: 1.7rem; font-weight: bold; color: var(--text-primary); }
+        .stat-sub   { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+        .progress-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 22px; margin-bottom: 28px; }
+        .progress-item { margin-bottom: 18px; }
         .progress-item:last-child { margin-bottom: 0; }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 7px;
-        }
-
-        .progress-name {
-            font-size: 0.88rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        .progress-nums {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-        }
-
-        .progress-bar-bg {
-            background: #3a3a3a;
-            border-radius: 4px;
-            height: 8px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.6s ease;
-        }
-
+        .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+        .progress-name { font-size: 0.88rem; color: var(--text-secondary); font-weight: 600; }
+        .progress-nums { font-size: 0.82rem; color: var(--text-muted); }
+        .progress-bar-bg { background: #3a3a3a; border-radius: 4px; height: 8px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
         .fill-ok     { background: var(--color-ok); }
         .fill-warn   { background: var(--color-storage); }
         .fill-danger { background: var(--color-danger); }
-
-        /* ─── Tabellen — zelfde stijl als accountbeheer ─── */
-        .table-wrap {
-            overflow-x: auto;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #6e6e6e;
-            margin-bottom: 8px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }
-
+        .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: #6e6e6e; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
         thead { background: var(--bg-thead); }
-
-        thead th {
-            padding: 10px 14px;
-            text-align: left;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-secondary);
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap;
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--border-light);
-            background: #6e6e6e;
-        }
-
+        thead th { padding: 10px 14px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid var(--border-light); background: #6e6e6e; }
         tbody tr:last-child { border-bottom: none; }
         tbody tr:hover { background: var(--bg-row-hover); }
-
-        tbody td {
-            padding: 10px 14px;
-            vertical-align: middle;
-            color: var(--text-primary);
-        }
-
-        .loading-row td, .empty-row td {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 40px;
-        }
-
-        /* ─── Grootte badges ─── */
-        .size-badge {
-            display: inline-block;
-            padding: 2px 9px;
-            border-radius: 10px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            background: #3a3a3a;
-            color: var(--text-secondary);
-        }
-
-        /* ─── Toolbar ─── */
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .toolbar button {
-            padding: 8px 14px;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            font-size: 0.9rem;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-
+        tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); }
+        .loading-row td, .empty-row td { text-align: center; color: var(--text-muted); padding: 40px; }
+        .size-badge { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 0.78rem; font-weight: 600; background: #3a3a3a; color: var(--text-secondary); }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .toolbar button { padding: 8px 14px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; background: var(--bg-input); color: var(--text-primary); cursor: pointer; transition: background 0.15s; }
         .toolbar button:hover { background: var(--bg-card-hover); }
-
-        .toolbar button.accent-btn {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .toolbar button.accent-btn:hover {
-            background: var(--accent);
-            color: #1a1a1a;
-        }
-
-        /* ─── Toast ─── */
-        #toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: var(--bg-toast);
-            color: var(--text-primary);
-            font-size: 0.88rem;
-            padding: 10px 18px;
-            border-radius: 6px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity 0.2s, transform 0.2s;
-            pointer-events: none;
-            z-index: 999;
-            max-width: 320px;
-        }
-
+        .toolbar button.accent-btn { border-color: var(--accent); color: var(--accent); }
+        .toolbar button.accent-btn:hover { background: var(--accent); color: #1a1a1a; }
+        #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg-toast); color: var(--text-primary); font-size: 0.88rem; padding: 10px 18px; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 999; max-width: 320px; }
         #toast.show  { opacity: 1; transform: translateY(0); }
         #toast.error { background: #3a1a1a; color: var(--color-danger); border: 1px solid var(--color-danger); }
-
-        /* ─── Timestamp ─── */
         #lastRefresh { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
-
-        /* ─── Verberg dashboard zolang niet verbonden ─── */
-        #dashboard { display: none; }
+        #dashboard    { display: none; }
+        #accessDenied { display: none; }
     </style>
 </head>
 <body>
 
-<!-- ======================= Source view / debug ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 
-<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-
-<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
-<!-- ======================= Hoofd content ======================= -->
 <main>
   <div class="admin-wrap">
-
     <h1>Supabase Analyse</h1>
-    <p id="lastRefresh" class="subtitel">Voer je Supabase gegevens in om te beginnen.</p>
+    <p id="lastRefresh" class="subtitel">Toegang controleren…</p>
 
-    <!-- ─── Verbindingsformulier ─── -->
-    <div class="connect-box" id="connectBox">
-      <h2>Supabase verbinding</h2>
-      <p>
-        Vul je project-URL en <strong>Service Role Key</strong> in.<br>
-        De Service Role Key vind je in Supabase Dashboard → Project Settings → API → <em>service_role</em>.<br>
-        <span style="color: var(--color-danger); font-size:0.82rem;">⚠ Gebruik deze pagina nooit op een publieke omgeving — de Service Role Key geeft volledige toegang.</span>
-      </p>
-      <div class="form-row">
-        <label>Supabase Project URL</label>
-        <input type="text" id="inputUrl" placeholder="https://xxxxxxxxxxxx.supabase.co" />
-      </div>
-      <div class="form-row">
-        <label>Service Role Key</label>
-        <input type="password" id="inputKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
-      </div>
-      <button class="btn-connect" id="btnConnect">Verbinden &amp; Laden</button>
+    <!-- Geen toegang scherm -->
+    <div id="accessDenied" class="access-denied">
+      <h2>Geen toegang</h2>
+      <p>Deze pagina is alleen toegankelijk voor administrators.<br>
+         Log in met een admin-account om verder te gaan.</p>
     </div>
 
-    <!-- ─── Dashboard — zichtbaar na succesvolle verbinding ─── -->
+    <!-- Dashboard -->
     <div id="dashboard">
-
-      <!-- Toolbar -->
       <div class="toolbar">
-        <button class="accent-btn" id="btnRefresh">↻ Vernieuwen</button>
-        <button id="btnDisconnect">✕ Verbinding verbreken</button>
+        <button class="accent-btn" id="btnRefresh">&#8635; Vernieuwen</button>
       </div>
 
-      <!-- Overzicht stat cards -->
-      <div class="stats-grid" id="statsGrid">
+      <div class="stats-grid">
         <div class="stat-card db-card">
           <div class="stat-label">Database</div>
-          <div class="stat-value" id="statDb">—</div>
+          <div class="stat-value" id="statDb">&#8212;</div>
           <div class="stat-sub">van 500 MB Free</div>
         </div>
         <div class="stat-card stor-card">
           <div class="stat-label">Storage bestanden</div>
-          <div class="stat-value" id="statStor">—</div>
+          <div class="stat-value" id="statStor">&#8212;</div>
           <div class="stat-sub">van 1 GB Free</div>
         </div>
         <div class="stat-card files-card">
           <div class="stat-label">Totaal bestanden</div>
-          <div class="stat-value" id="statFiles">—</div>
+          <div class="stat-value" id="statFiles">&#8212;</div>
           <div class="stat-sub">in alle buckets</div>
         </div>
         <div class="stat-card users-card">
           <div class="stat-label">Gebruikers</div>
-          <div class="stat-value" id="statUsers">—</div>
+          <div class="stat-value" id="statUsers">&#8212;</div>
           <div class="stat-sub">geregistreerd</div>
         </div>
       </div>
 
-      <!-- Voortgangsbalken limieten -->
       <div class="progress-wrap">
         <div class="progress-item">
           <div class="progress-header">
             <span class="progress-name">Database gebruik</span>
-            <span class="progress-nums" id="progDbNums">— / 500 MB</span>
+            <span class="progress-nums" id="progDbNums">&#8212; / 500 MB</span>
           </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-ok" id="progDbBar" style="width:0%"></div>
-          </div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill fill-ok" id="progDbBar" style="width:0%"></div></div>
         </div>
         <div class="progress-item">
           <div class="progress-header">
             <span class="progress-name">Storage gebruik</span>
-            <span class="progress-nums" id="progStorNums">— / 1 GB</span>
+            <span class="progress-nums" id="progStorNums">&#8212; / 1 GB</span>
           </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-ok" id="progStorBar" style="width:0%"></div>
-          </div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill fill-ok" id="progStorBar" style="width:0%"></div></div>
         </div>
       </div>
 
-      <!-- ─── Database tabellen ─── -->
-      <div class="section-title">
-        <span class="dot dot-db"></span>
-        Database — grootte per tabel
-      </div>
-
+      <div class="section-title"><span class="dot dot-db"></span>Database &mdash; grootte per tabel</div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>Schema</th>
-              <th>Tabel</th>
-              <th>Totale grootte</th>
-              <th>Tabeldata</th>
-              <th>Indexen</th>
-              <th>Rijen (schatting)</th>
-            </tr>
-          </thead>
-          <tbody id="dbTbody">
-            <tr class="loading-row"><td colspan="6">Laden…</td></tr>
-          </tbody>
+          <thead><tr><th>Schema</th><th>Tabel</th><th>Totale grootte</th><th>Tabeldata</th><th>Indexen</th><th>Rijen (schatting)</th></tr></thead>
+          <tbody id="dbTbody"><tr class="loading-row"><td colspan="6">Laden&hellip;</td></tr></tbody>
         </table>
       </div>
 
-      <!-- ─── Storage buckets ─── -->
-      <div class="section-title">
-        <span class="dot dot-storage"></span>
-        Storage — buckets &amp; bestanden
-      </div>
-
+      <div class="section-title"><span class="dot dot-storage"></span>Storage &mdash; buckets &amp; bestanden</div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>Bucket</th>
-              <th>Zichtbaarheid</th>
-              <th>Aantal bestanden</th>
-              <th>Totale grootte</th>
-              <th>Aangemaakt op</th>
-            </tr>
-          </thead>
-          <tbody id="bucketTbody">
-            <tr class="loading-row"><td colspan="5">Laden…</td></tr>
-          </tbody>
+          <thead><tr><th>Bucket</th><th>Zichtbaarheid</th><th>Aantal bestanden</th><th>Totale grootte</th><th>Aangemaakt op</th></tr></thead>
+          <tbody id="bucketTbody"><tr class="loading-row"><td colspan="5">Laden&hellip;</td></tr></tbody>
         </table>
       </div>
 
-      <!-- ─── Per gebruiker ─── -->
-      <div class="section-title">
-        <span class="dot dot-users"></span>
-        Opslag per gebruiker
-      </div>
-
+      <div class="section-title"><span class="dot dot-users"></span>Opslag per gebruiker</div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>Gebruiker (e-mail / ID)</th>
-              <th>Bucket</th>
-              <th>Bestanden</th>
-              <th>Totale grootte</th>
-              <th>Laatste upload</th>
-            </tr>
-          </thead>
-          <tbody id="usersTbody">
-            <tr class="loading-row"><td colspan="5">Laden…</td></tr>
-          </tbody>
+          <thead><tr><th>Gebruiker (e-mail / ID)</th><th>Bucket</th><th>Bestanden</th><th>Totale grootte</th><th>Laatste upload</th></tr></thead>
+          <tbody id="usersTbody"><tr class="loading-row"><td colspan="5">Laden&hellip;</td></tr></tbody>
         </table>
       </div>
-
-    </div><!-- /dashboard -->
-
+    </div>
   </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
-
-<!-- ─── Toast ─── -->
 <div id="toast"></div>
 
-<!-- =============================================================
-     SCRIPTS
-     ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/MyFamTreeCollab/js/utils.js"></script>
 <script src="/MyFamTreeCollab/js/auth.js"></script>
-
 <script>
-    // Load TopBar HTML, then topbar.js, then our page script
+    // Load TopBar, then topbar.js, then initPage
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(r => r.text())
+        .then(function(r) { return r.text(); })
         .then(function(html) {
-            document.getElementById('topbar-placeholder').innerHTML = html;   // inject TopBar markup
-            var s = document.createElement('script');                         // create script element
-            s.src = '/MyFamTreeCollab/js/topbar.js';                         // point to topbar.js
-            s.onload = initPage;                                              // init page after topbar ready
-            document.body.appendChild(s);                                     // attach to DOM
+            document.getElementById('topbar-placeholder').innerHTML = html;  // inject TopBar markup
+            var s = document.createElement('script');                        // create script element
+            s.src    = '/MyFamTreeCollab/js/topbar.js';                     // path to topbar.js
+            s.onload = initPage;                                             // call initPage after load
+            document.body.appendChild(s);                                    // attach to DOM
         });
 
-    // Load Navbar independently (no dependency on auth)
+    // Navbar and Footer load independently
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(r => r.text())
-        .then(function(html) {
-            document.getElementById('navbar-placeholder').innerHTML = html;   // inject Navbar markup
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('navbar-placeholder').innerHTML = html; });
 
-    // Load Footer independently
     fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(r => r.text())
-        .then(function(html) {
-            document.getElementById('footer-placeholder').innerHTML = html;   // inject Footer markup
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('footer-placeholder').innerHTML = html; });
 
     // ─────────────────────────────────────────────────────────────
-    // Page logic — runs after topbar.js is loaded
+    // initPage — entry point, runs after topbar.js is ready
     // ─────────────────────────────────────────────────────────────
-    function initPage() {
+    async function initPage() {
 
-        // ── DOM references ──
-        var connectBox   = document.getElementById('connectBox');             // connection form wrapper
-        var dashboard    = document.getElementById('dashboard');              // main dashboard
-        var inputUrl     = document.getElementById('inputUrl');               // project URL input
-        var inputKey     = document.getElementById('inputKey');               // service role key input
-        var btnConnect   = document.getElementById('btnConnect');             // connect button
-        var btnRefresh   = document.getElementById('btnRefresh');             // refresh button
-        var btnDisconnect= document.getElementById('btnDisconnect');          // disconnect button
-        var lastRefresh  = document.getElementById('lastRefresh');            // timestamp label
+        var dashboard    = document.getElementById('dashboard');             // main dashboard div
+        var accessDenied = document.getElementById('accessDenied');          // access denied div
+        var lastRefresh  = document.getElementById('lastRefresh');           // subtitle / timestamp
+        var btnRefresh   = document.getElementById('btnRefresh');            // refresh button
 
-        // ── Supabase admin client (created on connect) ──
-        var adminClient = null;                                               // will hold supabase client
-        var projectUrl  = '';                                                 // will hold project URL
-        var serviceKey  = '';                                                 // will hold service key
+        var LIMIT_DB   = 500  * 1024 * 1024;                                // 500 MB free plan db limit
+        var LIMIT_STOR = 1024 * 1024 * 1024;                                // 1 GB free plan storage limit
 
-        // ── Free plan limits (bytes) ──
-        var LIMIT_DB   = 500  * 1024 * 1024;                                 // 500 MB database limit
-        var LIMIT_STOR = 1024 * 1024 * 1024;                                 // 1 GB storage limit
+        // ── Admin check via AuthModule (uses existing session from auth.js) ──
+        var tier = await AuthModule.getTier();                               // fetch tier from profiles table
 
-        // ── Restore saved credentials from sessionStorage (tab-only, not persisted) ──
-        var savedUrl = sessionStorage.getItem('sb_admin_url');                // retrieve saved URL
-        var savedKey = sessionStorage.getItem('sb_admin_key');                // retrieve saved key
-        if (savedUrl && savedKey) {
-            inputUrl.value = savedUrl;                                        // prefill URL field
-            inputKey.value = savedKey;                                        // prefill key field
+        if (tier !== 'admin') {
+            accessDenied.style.display = 'block';                           // show access denied message
+            lastRefresh.textContent    = 'Geen toegang.';                   // update subtitle
+            return;                                                          // stop — no data loading
         }
 
-        // ── Connect button ──
-        btnConnect.addEventListener('click', function() {
-            projectUrl = inputUrl.value.trim().replace(/\/$/, '');            // trim trailing slash
-            serviceKey = inputKey.value.trim();                               // trim whitespace
-            if (!projectUrl || !serviceKey) {                                 // validate inputs
-                showToast('Vul beide velden in.', true);                      // show error toast
-                return;
-            }
-            sessionStorage.setItem('sb_admin_url', projectUrl);              // save URL in session
-            sessionStorage.setItem('sb_admin_key', serviceKey);              // save key in session
+        // ── Admin confirmed: show dashboard ──
+        dashboard.style.display = 'block';                                  // reveal the dashboard
+        btnRefresh.addEventListener('click', loadAll);                      // wire the refresh button
+        loadAll();                                                           // initial load
 
-            // Create Supabase client with service role key (bypasses RLS)
-            adminClient = supabase.createClient(projectUrl, serviceKey, {
-                auth: { autoRefreshToken: false, persistSession: false }      // no session persistence
-            });
-
-            connectBox.style.display  = 'none';                              // hide connection form
-            dashboard.style.display   = 'block';                             // show dashboard
-            loadAll();                                                        // start loading data
-        });
-
-        // ── Refresh button ──
-        btnRefresh.addEventListener('click', loadAll);                        // reload all data
-
-        // ── Disconnect button ──
-        btnDisconnect.addEventListener('click', function() {
-            sessionStorage.removeItem('sb_admin_url');                        // clear saved URL
-            sessionStorage.removeItem('sb_admin_key');                        // clear saved key
-            adminClient  = null;                                              // clear client
-            dashboard.style.display  = 'none';                               // hide dashboard
-            connectBox.style.display = 'block';                              // show form again
-            inputKey.value = '';                                              // clear key field
-            lastRefresh.textContent  = 'Voer je Supabase gegevens in om te beginnen.'; // reset label
-        });
-
-        // ── Auto-connect if credentials were saved ──
-        if (savedUrl && savedKey) {
-            btnConnect.click();                                               // trigger connect automatically
-        }
-
-        // ────────────────────────────────────────────────────────
-        // loadAll — master loader that calls all sub-loaders
-        // ────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────
+        // loadAll
+        // ─────────────────────────────────────────────────────────
         function loadAll() {
-            lastRefresh.textContent = 'Laden…';                              // show loading state
-            setTableLoading('dbTbody', 6);                                   // show loading in db table
-            setTableLoading('bucketTbody', 5);                               // show loading in bucket table
-            setTableLoading('usersTbody', 5);                                // show loading in users table
+            lastRefresh.textContent = 'Laden\u2026';                        // show loading state
+            setTableLoading('dbTbody',     6);                              // db table loading row
+            setTableLoading('bucketTbody', 5);                              // bucket table loading row
+            setTableLoading('usersTbody',  5);                              // users table loading row
 
-            Promise.all([
-                loadDbTables(),                                               // load database table sizes
-                loadBuckets(),                                                // load storage bucket data
-                loadUserStorage()                                             // load per-user storage
-            ]).then(function() {
-                var now = new Date();                                         // current timestamp
-                lastRefresh.textContent = 'Laatste update: ' +
-                    now.toLocaleDateString('nl-BE') + ' ' +
-                    now.toLocaleTimeString('nl-BE');                          // format as nl-BE date
-            }).catch(function(err) {
-                showToast('Fout bij laden: ' + err.message, true);           // show error toast
-                lastRefresh.textContent = 'Fout bij laden.';                 // update label
-            });
+            Promise.all([ loadDbTables(), loadBuckets(), loadUserStorage() ])
+                .then(function() {
+                    var now = new Date();
+                    lastRefresh.textContent = 'Laatste update: ' +
+                        now.toLocaleDateString('nl-BE') + ' ' +
+                        now.toLocaleTimeString('nl-BE');                     // format timestamp nl-BE
+                })
+                .catch(function(err) {
+                    showToast('Fout bij laden: ' + err.message, true);      // show error toast
+                    lastRefresh.textContent = 'Fout bij laden.';            // update subtitle
+                });
         }
 
-        // ────────────────────────────────────────────────────────
-        // loadDbTables — haalt tabelgroottes op via RPC
-        // Vereist: de SQL-functie get_table_sizes() in Supabase
-        // (zie onderaan dit bestand voor de CREATE FUNCTION query)
-        // ────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────
+        // loadDbTables — calls RPC get_table_sizes() (SECURITY DEFINER)
+        // ─────────────────────────────────────────────────────────
         function loadDbTables() {
-            // Call the custom RPC function that reads pg_catalog sizes
-            return adminClient.rpc('get_table_sizes')
+            return AuthModule.getClient().rpc('get_table_sizes')            // call RPC via anon client
                 .then(function(res) {
-                    if (res.error) throw new Error(res.error.message);       // propagate error
-                    var rows = res.data || [];                                // table size rows
-                    var tbody = document.getElementById('dbTbody');          // target tbody
-                    if (!rows.length) {
-                        tbody.innerHTML = emptyRow(6, 'Geen tabellen gevonden.');
-                        return;
-                    }
+                    if (res.error) throw new Error(res.error.message);      // propagate error
+                    var rows  = res.data || [];                              // table size rows
+                    var tbody = document.getElementById('dbTbody');
 
-                    // Calculate total database size for stat card + progress bar
-                    var totalBytes = rows.reduce(function(sum, r) {
-                        return sum + (r.total_bytes || 0);                   // sum all table sizes
-                    }, 0);
+                    if (!rows.length) { tbody.innerHTML = emptyRow(6, 'Geen tabellen gevonden.'); return; }
 
-                    document.getElementById('statDb').textContent = formatBytes(totalBytes);  // stat card
-                    updateProgress('progDbBar', 'progDbNums', totalBytes, LIMIT_DB, '500 MB'); // progress bar
+                    var totalBytes = rows.reduce(function(s, r) { return s + (r.total_bytes || 0); }, 0); // sum all sizes
+                    document.getElementById('statDb').textContent = formatBytes(totalBytes);
+                    updateProgress('progDbBar', 'progDbNums', totalBytes, LIMIT_DB, '500 MB');
 
-                    // Render table rows
                     tbody.innerHTML = rows.map(function(r) {
                         return '<tr>' +
-                            '<td><span class="size-badge">' + esc(r.schema_name) + '</span></td>' +  // schema
-                            '<td>' + esc(r.table_name) + '</td>' +                                   // table name
-                            '<td>' + formatBytes(r.total_bytes) + '</td>' +                          // total size
-                            '<td>' + formatBytes(r.table_bytes) + '</td>' +                          // table data
-                            '<td>' + formatBytes(r.index_bytes) + '</td>' +                          // indexes
-                            '<td style="color:var(--text-muted)">' + (r.row_estimate || 0).toLocaleString('nl-BE') + '</td>' + // row count
+                            '<td><span class="size-badge">' + esc(r.schema_name) + '</span></td>' +
+                            '<td>' + esc(r.table_name) + '</td>' +
+                            '<td>' + formatBytes(r.total_bytes) + '</td>' +
+                            '<td>' + formatBytes(r.table_bytes) + '</td>' +
+                            '<td>' + formatBytes(r.index_bytes) + '</td>' +
+                            '<td style="color:var(--text-muted)">' + (r.row_estimate || 0).toLocaleString('nl-BE') + '</td>' +
                         '</tr>';
                     }).join('');
                 });
         }
 
-        // ────────────────────────────────────────────────────────
-        // loadBuckets — haalt alle buckets en hun bestanden op
-        // ────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────
+        // loadBuckets — lists buckets and recursively counts files
+        // ─────────────────────────────────────────────────────────
         function loadBuckets() {
-            // Step 1: list all buckets
-            return adminClient.storage.listBuckets()
+            var client = AuthModule.getClient();                             // anon client
+            return client.storage.listBuckets()
                 .then(function(res) {
-                    if (res.error) throw new Error(res.error.message);       // propagate error
-                    var buckets = res.data || [];                             // array of bucket objects
-
-                    // Step 2: for each bucket, count files and sum sizes
-                    var promises = buckets.map(function(bucket) {
-                        return listAllFiles(bucket.id)                       // recursive file listing
-                            .then(function(files) {
-                                var totalSize = files.reduce(function(s, f) {
-                                    return s + (f.metadata && f.metadata.size ? f.metadata.size : 0); // sum sizes
-                                }, 0);
-                                return {
-                                    bucket:    bucket,                       // bucket object
-                                    files:     files,                        // all files in bucket
-                                    fileCount: files.length,                 // total file count
-                                    totalSize: totalSize                     // total bytes
-                                };
-                            });
-                    });
-
-                    return Promise.all(promises);
+                    if (res.error) throw new Error(res.error.message);
+                    return Promise.all((res.data || []).map(function(bucket) {
+                        return listAllFiles(bucket.id).then(function(files) {
+                            var totalSize = files.reduce(function(s, f) {
+                                return s + (f.metadata && f.metadata.size ? f.metadata.size : 0); // sum file sizes
+                            }, 0);
+                            return { bucket: bucket, fileCount: files.length, totalSize: totalSize };
+                        });
+                    }));
                 })
                 .then(function(bucketData) {
-                    var tbody     = document.getElementById('bucketTbody');  // target tbody
-                    var totalStor = bucketData.reduce(function(s, b) { return s + b.totalSize; }, 0); // grand total
-                    var totalFiles= bucketData.reduce(function(s, b) { return s + b.fileCount; }, 0); // file count
+                    var tbody      = document.getElementById('bucketTbody');
+                    var totalStor  = bucketData.reduce(function(s, b) { return s + b.totalSize;  }, 0);
+                    var totalFiles = bucketData.reduce(function(s, b) { return s + b.fileCount;  }, 0);
 
-                    document.getElementById('statStor').textContent  = formatBytes(totalStor);   // stat card
-                    document.getElementById('statFiles').textContent = totalFiles.toString();    // stat card
-                    updateProgress('progStorBar', 'progStorNums', totalStor, LIMIT_STOR, '1 GB'); // progress bar
+                    document.getElementById('statStor').textContent  = formatBytes(totalStor);
+                    document.getElementById('statFiles').textContent = totalFiles.toString();
+                    updateProgress('progStorBar', 'progStorNums', totalStor, LIMIT_STOR, '1 GB');
 
-                    if (!bucketData.length) {
-                        tbody.innerHTML = emptyRow(5, 'Geen buckets gevonden.');
-                        return bucketData;
-                    }
+                    if (!bucketData.length) { tbody.innerHTML = emptyRow(5, 'Geen buckets gevonden.'); return; }
 
                     tbody.innerHTML = bucketData.map(function(b) {
-                        var created = b.bucket.created_at
-                            ? new Date(b.bucket.created_at).toLocaleDateString('nl-BE')
-                            : '—';                                           // format creation date
+                        var created = b.bucket.created_at ? new Date(b.bucket.created_at).toLocaleDateString('nl-BE') : '\u2014';
                         var pub = b.bucket.public
                             ? '<span style="color:var(--color-danger);font-size:0.8rem;">Publiek</span>'
-                            : '<span style="color:var(--accent);font-size:0.8rem;">Privé</span>';    // visibility badge
+                            : '<span style="color:var(--accent);font-size:0.8rem;">Priv\u00e9</span>';
                         return '<tr>' +
-                            '<td><strong>' + esc(b.bucket.id) + '</strong></td>' +                   // bucket name
-                            '<td>' + pub + '</td>' +                                                  // public/private
-                            '<td>' + b.fileCount.toLocaleString('nl-BE') + '</td>' +                 // file count
-                            '<td>' + formatBytes(b.totalSize) + '</td>' +                            // total size
-                            '<td style="color:var(--text-muted)">' + created + '</td>' +             // created at
+                            '<td><strong>' + esc(b.bucket.id) + '</strong></td>' +
+                            '<td>' + pub + '</td>' +
+                            '<td>' + b.fileCount.toLocaleString('nl-BE') + '</td>' +
+                            '<td>' + formatBytes(b.totalSize) + '</td>' +
+                            '<td style="color:var(--text-muted)">' + created + '</td>' +
                         '</tr>';
                     }).join('');
-
-                    return bucketData;                                        // pass data downstream
                 });
         }
 
-        // ────────────────────────────────────────────────────────
-        // loadUserStorage — groepeert storage.objects per owner_id
-        // en koppelt aan auth.users voor de e-mail
-        // ────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────
+        // loadUserStorage — calls RPC get_user_storage_summary()
+        // Email is joined server-side via auth.users (SECURITY DEFINER)
+        // ─────────────────────────────────────────────────────────
         function loadUserStorage() {
-            // Query storage.objects grouped by owner via RPC function
-            // (uses the get_user_storage_summary() function — see bottom of file)
-            return adminClient.rpc('get_user_storage_summary')
+            var client = AuthModule.getClient();                             // anon client
+            return client.rpc('get_user_storage_summary')
                 .then(function(res) {
-                    if (res.error) throw new Error(res.error.message);       // propagate error
-                    var rows = res.data || [];                                // user storage rows
+                    if (res.error) throw new Error(res.error.message);
+                    var rows  = res.data || [];
+                    var tbody = document.getElementById('usersTbody');
 
-                    // Fetch auth users list to map id → email
-                    return adminClient.auth.admin.listUsers({ perPage: 1000 })
-                        .then(function(authRes) {
-                            if (authRes.error) throw new Error(authRes.error.message);
-                            var users = (authRes.data && authRes.data.users) || [];  // user list
-                            var emailMap = {};                                // id → email map
-                            users.forEach(function(u) {
-                                emailMap[u.id] = u.email || u.id;            // fallback to id if no email
-                            });
-
-                            document.getElementById('statUsers').textContent = users.length.toString(); // stat card
-
-                            var tbody = document.getElementById('usersTbody');  // target tbody
-                            if (!rows.length) {
-                                tbody.innerHTML = emptyRow(5, 'Geen gebruikersdata gevonden in storage.');
-                                return;
-                            }
-
-                            tbody.innerHTML = rows.map(function(r) {
-                                var email   = r.owner_id ? (emailMap[r.owner_id] || r.owner_id) : '(geen eigenaar)'; // email or id
-                                var lastUp  = r.last_upload
-                                    ? new Date(r.last_upload).toLocaleDateString('nl-BE')
-                                    : '—';                                   // format last upload date
-                                return '<tr>' +
-                                    '<td style="font-size:0.82rem;">' + esc(email) + '</td>' +           // email
-                                    '<td><span class="size-badge">' + esc(r.bucket_id) + '</span></td>' + // bucket
-                                    '<td>' + r.file_count.toLocaleString('nl-BE') + '</td>' +             // file count
-                                    '<td>' + formatBytes(r.total_size) + '</td>' +                        // total size
-                                    '<td style="color:var(--text-muted)">' + lastUp + '</td>' +           // last upload
-                                '</tr>';
-                            }).join('');
+                    // User count from profiles table
+                    client.from('profiles').select('id', { count: 'exact', head: true })
+                        .then(function(c) {
+                            if (!c.error) document.getElementById('statUsers').textContent = (c.count || 0).toString();
                         });
+
+                    if (!rows.length) { tbody.innerHTML = emptyRow(5, 'Geen gebruikersdata gevonden in storage.'); return; }
+
+                    tbody.innerHTML = rows.map(function(r) {
+                        var label  = r.email || r.owner_id || '(geen eigenaar)'; // email joined server-side
+                        var lastUp = r.last_upload ? new Date(r.last_upload).toLocaleDateString('nl-BE') : '\u2014';
+                        return '<tr>' +
+                            '<td style="font-size:0.82rem;">' + esc(label) + '</td>' +
+                            '<td><span class="size-badge">' + esc(r.bucket_id) + '</span></td>' +
+                            '<td>' + Number(r.file_count).toLocaleString('nl-BE') + '</td>' +
+                            '<td>' + formatBytes(r.total_size) + '</td>' +
+                            '<td style="color:var(--text-muted)">' + lastUp + '</td>' +
+                        '</tr>';
+                    }).join('');
                 });
         }
 
-        // ────────────────────────────────────────────────────────
-        // listAllFiles — recursive paginated file listing for a bucket
-        // Supabase Storage list() returns max 100 items per call
-        // ────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────
+        // listAllFiles — recursive paginated file listing per bucket
+        // ─────────────────────────────────────────────────────────
         function listAllFiles(bucketId, folder, accumulated) {
-            folder      = folder      || '';                                  // start at root
-            accumulated = accumulated || [];                                  // collected files so far
-
-            return adminClient.storage.from(bucketId).list(folder, {
-                limit:  1000,                                                 // max per page
-                offset: 0                                                     // start from beginning
-            }).then(function(res) {
-                if (res.error) return accumulated;                            // on error return what we have
-                var items = res.data || [];                                   // items in current folder
-
-                var files      = items.filter(function(i) { return i.id; }); // files have an id
-                var subFolders = items.filter(function(i) { return !i.id; }); // folders have no id
-
-                accumulated = accumulated.concat(files);                      // add files to collection
-
-                // Recurse into sub-folders
-                var subPromises = subFolders.map(function(sf) {
-                    var subPath = folder ? folder + '/' + sf.name : sf.name; // build sub-path
-                    return listAllFiles(bucketId, subPath, []);               // recurse
-                });
-
-                return Promise.all(subPromises).then(function(subResults) {
-                    subResults.forEach(function(sr) {
-                        accumulated = accumulated.concat(sr);                 // merge sub-folder files
+            folder      = folder      || '';
+            accumulated = accumulated || [];
+            return AuthModule.getClient().storage.from(bucketId).list(folder, { limit: 1000, offset: 0 })
+                .then(function(res) {
+                    if (res.error) return accumulated;                       // on error return collected so far
+                    var items      = res.data || [];
+                    var files      = items.filter(function(i) { return  i.id; }); // files have an id
+                    var subFolders = items.filter(function(i) { return !i.id; }); // folders have no id
+                    accumulated = accumulated.concat(files);                 // add files to collection
+                    return Promise.all(subFolders.map(function(sf) {
+                        return listAllFiles(bucketId, folder ? folder + '/' + sf.name : sf.name, []);
+                    })).then(function(results) {
+                        results.forEach(function(r) { accumulated = accumulated.concat(r); });
+                        return accumulated;                                   // return all files
                     });
-                    return accumulated;                                       // return all files
                 });
-            });
         }
 
-        // ────────────────────────────────────────────────────────
-        // updateProgress — updates a progress bar and its label
-        // ────────────────────────────────────────────────────────
-        function updateProgress(barId, numsId, usedBytes, limitBytes, limitLabel) {
-            var pct  = Math.min((usedBytes / limitBytes) * 100, 100);        // percentage capped at 100
-            var bar  = document.getElementById(barId);                       // progress bar element
-            var nums = document.getElementById(numsId);                      // label element
-            bar.style.width = pct.toFixed(1) + '%';                         // set bar width
-            nums.textContent = formatBytes(usedBytes) + ' / ' + limitLabel; // set label text
-
-            // Color the bar based on usage level
-            bar.className = 'progress-bar-fill ' + (
-                pct >= 90 ? 'fill-danger' :                                  // red above 90%
-                pct >= 70 ? 'fill-warn'   :                                  // amber above 70%
-                            'fill-ok'                                         // teal otherwise
-            );
-        }
-
-        // ────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────
         // Helpers
-        // ────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────
+        function updateProgress(barId, numsId, usedBytes, limitBytes, limitLabel) {
+            var pct = Math.min((usedBytes / limitBytes) * 100, 100);        // cap at 100%
+            var bar = document.getElementById(barId);
+            document.getElementById(numsId).textContent = formatBytes(usedBytes) + ' / ' + limitLabel;
+            bar.style.width = pct.toFixed(1) + '%';
+            bar.className = 'progress-bar-fill ' + (pct >= 90 ? 'fill-danger' : pct >= 70 ? 'fill-warn' : 'fill-ok');
+        }
 
-        // formatBytes — converts bytes to human-readable string
         function formatBytes(bytes) {
-            if (!bytes || bytes === 0) return '0 B';                         // handle zero/null
-            var units = ['B', 'KB', 'MB', 'GB'];                            // unit labels
-            var i = Math.floor(Math.log(bytes) / Math.log(1024));           // determine unit index
-            i = Math.min(i, units.length - 1);                              // cap at GB
-            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + units[i]; // format with 2 decimals
+            if (!bytes || bytes === 0) return '0 B';
+            var units = ['B', 'KB', 'MB', 'GB'];
+            var i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + units[i]; // e.g. "12.34 MB"
         }
 
-        // esc — escapes HTML special characters to prevent XSS
         function esc(str) {
-            if (!str) return '';                                             // handle null/undefined
-            return String(str)
-                .replace(/&/g,  '&amp;')                                    // escape ampersands
-                .replace(/</g,  '&lt;')                                     // escape less-than
-                .replace(/>/g,  '&gt;')                                     // escape greater-than
-                .replace(/"/g,  '&quot;');                                  // escape quotes
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        // setTableLoading — places a loading row in a tbody
         function setTableLoading(tbodyId, cols) {
             document.getElementById(tbodyId).innerHTML =
-                '<tr class="loading-row"><td colspan="' + cols + '">Laden…</td></tr>'; // loading placeholder
+                '<tr class="loading-row"><td colspan="' + cols + '">Laden\u2026</td></tr>';
         }
 
-        // emptyRow — returns empty state HTML for a tbody
         function emptyRow(cols, msg) {
-            return '<tr class="empty-row"><td colspan="' + cols + '">' + msg + '</td></tr>'; // empty state
+            return '<tr class="empty-row"><td colspan="' + cols + '">' + msg + '</td></tr>';
         }
 
-        // showToast — displays a temporary notification
         function showToast(msg, isError) {
-            var t = document.getElementById('toast');                        // toast element
-            t.textContent = msg;                                             // set message
-            t.className   = 'show' + (isError ? ' error' : '');             // add error class if needed
-            clearTimeout(t._timer);                                          // clear existing timer
-            t._timer = setTimeout(function() {
-                t.className = '';                                            // hide after 3.5s
-            }, 3500);
+            var t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className   = 'show' + (isError ? ' error' : '');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(function() { t.className = ''; }, 3500); // auto-hide after 3.5s
         }
 
     } // end initPage
@@ -932,63 +440,65 @@
 
 <!--
 =====================================================================
-  VEREISTE SQL-FUNCTIES — eenmalig uitvoeren in Supabase SQL Editor
-  Dashboard → SQL Editor → New query → plak onderstaande code → Run
+  VEREISTE SQL — eenmalig uitvoeren in Supabase SQL Editor
+  Dashboard -> SQL Editor -> New query -> Run
+
+  v2.0.0: SECURITY DEFINER + GRANT aan anon/authenticated
+  (geen service_role key meer nodig op de client)
 =====================================================================
 
--- 1. Tabelgroottes ophalen (database analyse)
 CREATE OR REPLACE FUNCTION get_table_sizes()
 RETURNS TABLE (
-    schema_name   TEXT,
-    table_name    TEXT,
-    total_bytes   BIGINT,
-    table_bytes   BIGINT,
-    index_bytes   BIGINT,
-    row_estimate  BIGINT
+    schema_name  TEXT,
+    table_name   TEXT,
+    total_bytes  BIGINT,
+    table_bytes  BIGINT,
+    index_bytes  BIGINT,
+    row_estimate BIGINT
 )
 LANGUAGE sql SECURITY DEFINER AS $$
     SELECT
-        n.nspname                                        AS schema_name,
-        c.relname                                        AS table_name,
-        pg_total_relation_size(c.oid)                    AS total_bytes,
-        pg_relation_size(c.oid)                          AS table_bytes,
-        pg_indexes_size(c.oid)                           AS index_bytes,
-        c.reltuples::BIGINT                              AS row_estimate
+        n.nspname                        AS schema_name,
+        c.relname                        AS table_name,
+        pg_total_relation_size(c.oid)    AS total_bytes,
+        pg_relation_size(c.oid)          AS table_bytes,
+        pg_indexes_size(c.oid)           AS index_bytes,
+        c.reltuples::BIGINT              AS row_estimate
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE c.relkind = 'r'
-      AND n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+      AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
     ORDER BY total_bytes DESC;
 $$;
 
--- 2. Opslaggebruik per gebruiker (storage analyse)
 CREATE OR REPLACE FUNCTION get_user_storage_summary()
 RETURNS TABLE (
-    owner_id     UUID,
-    bucket_id    TEXT,
-    file_count   BIGINT,
-    total_size   BIGINT,
-    last_upload  TIMESTAMPTZ
+    owner_id    UUID,
+    email       TEXT,
+    bucket_id   TEXT,
+    file_count  BIGINT,
+    total_size  BIGINT,
+    last_upload TIMESTAMPTZ
 )
 LANGUAGE sql SECURITY DEFINER AS $$
     SELECT
-        owner                                            AS owner_id,
-        bucket_id,
-        COUNT(*)                                         AS file_count,
-        COALESCE(SUM((metadata->>'size')::BIGINT), 0)   AS total_size,
-        MAX(created_at)                                  AS last_upload
-    FROM storage.objects
-    WHERE owner IS NOT NULL
-    GROUP BY owner, bucket_id
+        o.owner                                            AS owner_id,
+        u.email                                            AS email,
+        o.bucket_id,
+        COUNT(*)                                           AS file_count,
+        COALESCE(SUM((o.metadata->>'size')::BIGINT), 0)   AS total_size,
+        MAX(o.created_at)                                  AS last_upload
+    FROM storage.objects o
+    LEFT JOIN auth.users u ON u.id = o.owner
+    WHERE o.owner IS NOT NULL
+    GROUP BY o.owner, u.email, o.bucket_id
     ORDER BY total_size DESC;
 $$;
 
--- Geef de anon role leesrechten op deze functies
-GRANT EXECUTE ON FUNCTION get_table_sizes()          TO service_role;
-GRANT EXECUTE ON FUNCTION get_user_storage_summary() TO service_role;
+GRANT EXECUTE ON FUNCTION get_table_sizes()          TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_user_storage_summary() TO anon, authenticated;
 
 =====================================================================
 -->
-
 </body>
 </html>
