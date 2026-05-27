@@ -1,7 +1,139 @@
 # MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-05-25
+## Bijgewerkt: 2026-05-26
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 31 — Bugfix: admin/developer menu verdwenen na Supabase security-fix
+
+**Datum:** 2026-05-26
+**Doel:** Admin- en developer-navigatiemenu herstellen na uitvoering van Supabase security-fix (sessie 29).
+
+---
+
+### Aanleiding
+
+Na de security-fix van sessie 29 waren de `Administrator` en `Developer` dropdowns in de navigatie niet meer zichtbaar voor de admin-gebruiker (Vorilo). De pagina's zelf bestonden nog, maar de menu-items bleven verborgen (`style="display:none;"`).
+
+---
+
+### Analyse
+
+De oorzaak lag in drie samenhangende problemen:
+
+**Probleem 1 — Recursieve RLS-policy op `profiles`:**
+De security-fix had nieuwe RLS-policies aangemaakt zonder de oude te verwijderen. De policy `profiles: admin leest alles` bevatte een subquery op dezelfde tabel:
+```sql
+EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.is_admin = true)
+```
+Dit veroorzaakte infinite recursion, waardoor `getProfile()` in `auth.js` faalde en `_showAdminDropdown(false)` werd aangeroepen.
+
+**Probleem 2 — `admin_users` view verwijderd:**
+De security-fix had `DROP VIEW public.admin_users` uitgevoerd (sessie 29). `accountbeheer.js` deed een query op deze view → `PGRST205: Could not find table 'public.admin_users'`.
+
+**Probleem 3 — View joinde op `auth.users`:**
+De herstelde `admin_users` view deed een `LEFT JOIN auth.users` — de `authenticated` rol heeft geen toegang tot `auth.users` → `42501: permission denied for table users`.
+
+---
+
+### Uitgevoerde acties
+
+#### Fix 1 — RLS-policies `profiles` herschreven
+
+Alle bestaande policies verwijderd via `DO $$` loop, daarna `SECURITY DEFINER` hulpfunctie aangemaakt:
+
+```sql
+CREATE OR REPLACE FUNCTION public.is_admin_check()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT coalesce((SELECT is_admin FROM public.profiles WHERE id = auth.uid()), false);
+$$;
+```
+
+Nieuwe schone policies aangemaakt zonder recursie:
+
+| Policy | Operatie | Conditie |
+|--------|----------|----------|
+| `profiel: eigen rij lezen` | SELECT | `auth.uid() = id` |
+| `profiel: admin leest alles` | SELECT | `public.is_admin_check()` |
+| `profiel: tier leesbaar voor uitnodigen` | SELECT | `auth.uid() IS NOT NULL` |
+| `profiel: eigen rij aanmaken` | INSERT | `auth.uid() = id` |
+| `profiel: eigen rij bijwerken` | UPDATE | `auth.uid() = id` |
+| `profiel: admin bijwerkt alles` | UPDATE | `public.is_admin_check()` |
+
+#### Fix 2 — `email_confirmed_at` naar `profiles` verplaatst
+
+Kolom toegevoegd aan `profiles` zodat join op `auth.users` niet meer nodig is:
+
+```sql
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email_confirmed_at timestamp with time zone;
+```
+
+Synchronisatiefunctie + trigger aangemaakt:
+- `public.sync_email_confirmed_at()` — eenmalige backfill via SECURITY DEFINER
+- `public.trg_sync_email_confirmed_at()` — trigger op `auth.users.email_confirmed_at` UPDATE
+
+#### Fix 3 — `admin_users` view hersteld zonder `auth.users` join
+
+```sql
+CREATE VIEW public.admin_users WITH (security_invoker = true) AS
+SELECT id, username, email, tier, is_admin, is_premium, created_at, tier_until, email_confirmed_at
+FROM public.profiles;
+
+GRANT SELECT ON public.admin_users TO authenticated;
+REVOKE SELECT ON public.admin_users FROM anon;
+```
+
+---
+
+### Gewijzigde bestanden
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `js/topbar.js` | v2.3.1 | v2.3.2 | `_showAdminDropdown()` herschreven van `setInterval`-poll naar `MutationObserver` — race condition fix |
+| `develop/standaardpagina.html` | v1.3.0 | v1.4.0 | `loadScript()` helper toegevoegd — `topbar.js` via Promise geladen zodat Navbar-fetch pas start na volledige uitvoering |
+
+> Opmerking: `topbar.js` v2.3.2 en `standaardpagina.html` v1.4.0 lossen een aparte race condition op die bij trage i18n-initialisatie kan optreden. De RLS-fix was de primaire oplossing voor het admin-menu probleem.
+
+---
+
+### Database wijzigingen
+
+| Object | Type | Wijziging |
+|--------|------|-----------|
+| `public.is_admin_check()` | Functie | Nieuw aangemaakt — SECURITY DEFINER, geen recursie |
+| `public.profiles` | Tabel | Kolom `email_confirmed_at` toegevoegd |
+| `public.sync_email_confirmed_at()` | Functie | Nieuw — eenmalige backfill vanuit `auth.users` |
+| `public.trg_sync_email_confirmed_at()` | Trigger-functie | Nieuw — auto-sync bij update `auth.users` |
+| `sync_confirmed_at` | Trigger | Nieuw — op `auth.users` AFTER UPDATE OF `email_confirmed_at` |
+| `public.admin_users` | View | Hersteld — `security_invoker=true`, geen `auth.users` join |
+| RLS policies `profiles` | Policies | Alle oude verwijderd, 6 nieuwe aangemaakt via `is_admin_check()` |
+
+---
+
+### Bugfixes
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-57 | Admin/developer menu verborgen na security-fix — recursieve RLS op `profiles` veroorzaakte `getProfile()` fout. Opgelost via `SECURITY DEFINER` functie `is_admin_check()`. | ✅ Opgelost |
+| BF-58 | `accountbeheer.html` — `admin_users` view ontbrak na security-fix. View hersteld zonder `auth.users` join. | ✅ Opgelost |
+| BF-59 | `admin_users` view — `permission denied for table users`. `email_confirmed_at` naar `profiles` verplaatst via trigger. | ✅ Opgelost |
+
+---
+
+### Open na sessie 31
+
+| ID | Taak |
+|----|------|
+| SEC-04 | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` |
+| F8-15 | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |
+| F8-19 | `handleiding-nl.html` bijwerken met i18n uitleg |
+| F8-56 | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) |
+| F9-01 t/m F9-09 | Bronnen-module implementeren (genealogisch onderzoek) |
+| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js |
+| TD-11 | Import-parser leest rij 1 als header |
+| AN-21 | `stamboom/account.html` — tracking toevoegen |
 
 ---
 
