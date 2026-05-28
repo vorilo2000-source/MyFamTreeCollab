@@ -76,13 +76,13 @@
     "th_wat": "Wat je krijgt",
     "periodiek_label": "Donatie 1",
     "periodiek_per": "per 6 maanden",
-    "periodiek_wat": "Owner account actief zolang de donatie loopt. Opzegbaar wanneer je wilt.",
+    "periodiek_wat": "Owner account actief zolang de donatie loopt voor twee stambomen (Cloud backup). Stambomen delen en samenwerking. Geen verdere verplichtingen.",
     "eenmalig_label": "Donatie 2",
     "eenmalig_per": "Jaarlijks",
-    "eenmalig_wat": "Permanente Owner activatie voor één stamboom. Geen verdere verplichtingen.",
+    "eenmalig_wat": "Owner account actief zolang de donatie loopt voor drie stambomen (Cloud backup). Stambomen delen en samenwerking. Geen verdere verplichtingen.",
     "stichtend_label": "Stichtend lid",
     "stichtend_per": "jaarlijks",
-    "stichtend_wat": "Permanente Owner activatie + early access tot nieuwe functies + vermelding als stichtend lid.",
+    "stichtend_wat": "Owner activatie + early access tot nieuwe functies + vermelding als stichtend lid.",
     "noot": "<strong>Transparantie:</strong> er is nog geen automatische betaalverificatie. Het Owner account wordt handmatig geactiveerd na ontvangst van een donatie. Dit wordt in een volgende fase geautomatiseerd."
   },
   "cta": {
