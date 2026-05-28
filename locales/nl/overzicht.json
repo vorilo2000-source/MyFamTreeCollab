@@ -10,7 +10,7 @@
     "stap2_label": "Basis account (guest) aanmaken",
     "stap2_tekst": "gratis registreren geeft toegang tot max. 60 personen lokaal.",
     "stap3_label": "Owner worden via donatie",
-    "stap3_tekst": "~€6 per 6 maanden activeert cloud backup, delen en samenwerken.",
+    "stap3_tekst": "de donatie activeert cloud backup, delen en samenwerken.",
     "stap4_label": "Viewer / Editor toewijzen",
     "stap4_tekst": "een Owner nodigt anderen uit en geeft ze lees- of bewerkrecht op een specifieke stamboom."
   },
@@ -38,7 +38,7 @@
     },
     "owner": {
       "naam": "Owner account",
-      "badge": "Donatie ~€6 / 6 maanden",
+      "badge": "Donatie",
       "beschrijving": "Volledige toegang. Cloud backup, onbeperkte personen, stamboom delen en samenwerking activeren.",
       "feat1": "Onbeperkt personen lokaal",
       "feat2": "Cloud backup",
