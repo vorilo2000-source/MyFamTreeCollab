@@ -1,6 +1,14 @@
-<!-- ======================= Admin/analyse.html v0.1.0  =======================
-  consistente opmaak — Navbar + TopBar + 'komt binnenkort' blok, geen aparte header meer, 
-    script.js verwijderd. Login + Favicon / App-icoon toegevoegd
+<!-- ======================= admin/analyse.html v0.2.0 =======================
+     Wijziging v0.2.0 (sessie 33):
+     - AdminGuard.protect('admin') toegevoegd — niet-admins zien foutscherm
+     - AuthModule.onAuthChange uitlog-redirect via adminGuard.js
+     - #page-content wrapper toegevoegd rond pagina-inhoud
+     - #accessDenied blok toegevoegd (standaard display:none)
+     - adminGuard.js toegevoegd aan laadvolgorde (na auth.js)
+     - Dubbele Supabase/utils/auth script-blokken verwijderd
+     - Navbar placeholder id gecorrigeerd: Navbar-placeholder → navbar-placeholder
+     Wijziging v0.1.0:
+     - Consistente opmaak — Navbar + TopBar + komt binnenkort blok
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -8,123 +16,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analyse</title>
-        
-       <!-- ======================= Favicon ======================= -->
-     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Verwijst naar ico in img map -->
-     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- 32x32 variant -->
-     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Apple icon -->
-     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
     <link rel="stylesheet" href="../css/style.css">
-  
+
     <style>
-        /* ======================= BINNENKORT BLOK ======================= */
-        .binnenkort-blok {                                                 /* Centraal informatieblok */
-            max-width: 520px;                                              /* Niet te breed */
-            margin: 0 auto;                                                /* Horizontaal centreren */
-            text-align: center;                                            /* Tekst centreren */
-            padding: 48px 24px;                                            /* Ruimte rondom de inhoud */
+        /* ======================= TOEGANG GEWEIGERD ======================= */
+        :root {
+            --bg-page:      #565656;
+            --bg-card:      #4a4a4a;
+            --border:       #6a6a6a;
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0c0c0;
+            --color-danger: #f08080;
         }
-        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; } /* Groot icoon boven de tekst */
+
+        main { background-color: var(--bg-page); min-height: 100vh; }
+
+        .access-denied {
+            background: var(--bg-card);
+            border: 1px solid var(--color-danger);
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            max-width: 480px;
+            margin: 60px auto;
+        }
+        .access-denied h2 { font-size: 1.2rem; color: var(--color-danger); margin-bottom: 10px; color: var(--color-danger); }
+        .access-denied p  { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+        /* ======================= BINNENKORT BLOK ======================= */
+        .binnenkort-blok { max-width: 520px; margin: 0 auto; text-align: center; padding: 48px 24px; }
+        .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; }
         .binnenkort-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 12px 0; color: #222; }
         .binnenkort-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 24px 0; }
-        .knop-home {                                                       /* Knop terug naar home */
-            display: inline-block; padding: 10px 24px;
-            background: #1E90FF; color: #fff; text-decoration: none;
-            border-radius: 5px; font-size: 0.95rem; font-weight: bold;
-        }
+        .knop-home { display: inline-block; padding: 10px 24px; background: #1E90FF; color: #fff; text-decoration: none; border-radius: 5px; font-size: 0.95rem; font-weight: bold; }
         .knop-home:hover { background: #1278d4; }
+
+        /* ─── Verberg tot auth-check klaar ─── */
+        #accessDenied { display: none; }
+        #page-content  { display: none; }
     </style>
 </head>
 <body>
 
-  <!-- ======================= source view enablement  ======================= -->
-     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-     <script>eruda.init();</script>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 
-<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-     
-<!-- Scripts: Supabase + auth ALTIJD vóór topbar.js -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/auth.js"></script>
-     
-<script>
-fetch('/MyFamTreeCollab/Layout/TopBar.html')
-    .then(resp => resp.text())
-    .then(data => document.getElementById('topbar-placeholder').innerHTML = data);
-</script>
+<div id="navbar-placeholder"></div>
 
-<!-- ======================= Navbar ======================= -->
-<div id="Navbar-placeholder"></div>
-<script>
-fetch('/MyFamTreeCollab/Layout/Navbar.html')
-    .then(resp => resp.text())
-    .then(data => {
-        const placeholder = document.getElementById('Navbar-placeholder');
-        if (placeholder) placeholder.innerHTML = data;
-    });
-</script>
-
-<!-- ======================= Hoofd content ======================= -->
 <main>
-    <div class="binnenkort-blok">
-        <div class="icoon">📰</div>                                        <!-- Printer icoon passend bij afdrukfunctie -->
+    <!-- Toegang geweigerd scherm -->
+    <div id="accessDenied" class="access-denied">
+      <h2>Geen toegang</h2>
+      <p>Deze pagina is alleen toegankelijk voor administrators.<br>
+         Log in met een admin-account om verder te gaan.</p>
+    </div>
+
+    <!-- Pagina inhoud — zichtbaar na geslaagde admin-check -->
+    <div id="page-content">
+      <div class="binnenkort-blok">
+        <div class="icoon">&#x1F4F0;</div>
         <h1>Analyse</h1>
-        <p>
-            De analyse pagina is momenteel in ontwikkeling.<br>
-            Binnenkort kan ik hier de stamboom analyses bekijken.
-        </p>
+        <p>De analyse pagina is momenteel in ontwikkeling.<br>
+           Binnenkort kan ik hier de stamboom analyses bekijken.</p>
         <a href="/MyFamTreeCollab/" class="knop-home">Terug naar Home</a>
+      </div>
     </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — volgorde is verplicht:
-     1. Supabase SDK        — vereist door auth.js
-     2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. TopBar fetch        — laadt TopBar HTML, daarna topbar.js
-     5. Navbar fetch        — onafhankelijk, mag parallel
-     6. Pagina-scripts      — altijd als laatste
+     SCRIPTS — verplichte volgorde:
+     supabase → utils.js → auth.js → adminGuard.js → TopBar fetch
+     → topbar.js → admin-check
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/utils.js"></script>
+<script src="/MyFamTreeCollab/js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/adminGuard.js"></script>      <!-- Admin toegangsbeveiliging -->
 
 <script>
-    // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
-    // Dit garandeert dat #top-auth in de DOM zit vóór topbar.js initialiseert
+    // TopBar laden → topbar.js → admin-check
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;
-            // #top-auth bestaat nu — veilig om topbar.js te laden
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            document.getElementById('topbar-placeholder').innerHTML = html;  // TopBar injecteren
+            var s = document.createElement('script');                        // topbar script
+            s.src = '../js/topbar.js';                                       // pad topbar.js
+            s.onload = function() {
+                AdminGuard.protect('admin');                                  // admin-check — geen pagina-script na check
+            };
+            document.body.appendChild(s);                                    // topbar.js toevoegen
         });
 
-    // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('navbar-placeholder').innerHTML = html; });
 
-    // Stap 3: Footer laden
     fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('footer-placeholder').innerHTML = html; });
 </script>
-
-<!-- Pagina-specifieke scripts: ... → ... → -->
 
 </body>
 </html>
