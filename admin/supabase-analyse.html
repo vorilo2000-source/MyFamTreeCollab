@@ -1,5 +1,12 @@
-<!-- ======================= admin/supabase-analyse.html v3.2.0 =======================
+<!-- ======================= admin/supabase-analyse.html v3.3.0 =======================
      Admin Supabase analyse pagina
+     Wijziging v3.3.0 (sessie 33):
+     - Inline AuthModule.getTier() check vervangen door AdminGuard.protect()
+     - adminGuard.js toegevoegd aan laadvolgorde (na auth.js)
+     - #dashboard hernoemd naar #page-content (consistent met andere admin-pagina's)
+     - onAuthChange uitlog-redirect via adminGuard.js
+     Wijziging v3.2.0:
+     - Voortgangsbalk verplaatst naar voor stambomen secties
      Wijziging v3.1.0:
      - Volgorde secties aangepast: stambomen per gebruiker → detail per boom → database tabellen
      Wijziging v3.0.0:
@@ -119,7 +126,7 @@
 
         /* ─── Timestamp + verberg tot auth klaar ─── */
         #lastRefresh  { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
-        #dashboard    { display: none; }
+        #page-content  { display: none; }
         #accessDenied { display: none; }
     </style>
 </head>
@@ -144,7 +151,7 @@
     </div>
 
     <!-- Dashboard -->
-    <div id="dashboard">
+    <div id="page-content">
 
       <!-- Toolbar -->
       <div class="toolbar">
@@ -256,7 +263,7 @@
         </table>
       </div>
 
-    </div><!-- /dashboard -->
+    </div><!-- /page-content -->
   </div>
 </main>
 
@@ -266,6 +273,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/MyFamTreeCollab/js/utils.js"></script>
 <script src="/MyFamTreeCollab/js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/adminGuard.js"></script>      <!-- Admin toegangsbeveiliging -->
 <script>
     // Load TopBar, then topbar.js, then initPage
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
@@ -274,7 +282,12 @@
             document.getElementById('topbar-placeholder').innerHTML = html;  // inject TopBar markup
             var s = document.createElement('script');                        // create script element
             s.src    = '/MyFamTreeCollab/js/topbar.js';                     // path to topbar.js
-            s.onload = initPage;                                             // run initPage when ready
+            s.onload = function() {
+                AdminGuard.protect('admin').then(function(granted) {         // admin-check via guard
+                    if (!granted) return;                                     // stop als geen toegang
+                    initPage();                                               // laad dashboard na check
+                });
+            };
             document.body.appendChild(s);                                    // attach to DOM
         });
 
@@ -289,24 +302,14 @@
     // ─────────────────────────────────────────────────────────────
     // initPage — entry point na topbar.js
     // ─────────────────────────────────────────────────────────────
-    async function initPage() {
+    function initPage() {
 
-        var dashboard    = document.getElementById('dashboard');             // main dashboard div
-        var accessDenied = document.getElementById('accessDenied');          // access denied div
+        var dashboard    = document.getElementById('page-content');          // main dashboard div
         var lastRefresh  = document.getElementById('lastRefresh');           // subtitle / timestamp
         var btnRefresh   = document.getElementById('btnRefresh');            // refresh button
         var LIMIT_DB     = 500 * 1024 * 1024;                               // 500 MB free plan db limit
 
-        // ── Admin check via bestaande sessie ──
-        var tier = await AuthModule.getTier();                               // haal tier op uit profiles
-
-        if (tier !== 'admin') {
-            accessDenied.style.display = 'block';                           // toon geen-toegang scherm
-            lastRefresh.textContent    = 'Geen toegang.';                   // update subtitle
-            return;                                                          // stop verdere uitvoering
-        }
-
-        // ── Admin bevestigd: toon dashboard ──
+        // ── Admin bevestigd door AdminGuard — toon dashboard direct ──
         dashboard.style.display = 'block';                                  // maak dashboard zichtbaar
         btnRefresh.addEventListener('click', loadAll);                      // koppel refresh knop
         loadAll();                                                           // initieel laden
