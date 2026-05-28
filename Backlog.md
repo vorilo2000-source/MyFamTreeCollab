@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-25
+## Bijgewerkt: 2026-05-28
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -111,67 +111,15 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F8-01 | 🔴 Hoog | `js/i18n.js` v1.0.0 — core module aanmaken | ✅ Gedaan |
-| F8-02 | 🔴 Hoog | `locales/{nl,en,es}/common.json` aanmaken | ✅ Gedaan |
-| F8-03 | 🔴 Hoog | `locales/{nl,en,es}/home.json` aanmaken | ✅ Gedaan |
-| F8-04 | 🔴 Hoog | `index.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-05 | 🔴 Hoog | `Layout/TopBar.html` — language switcher `<select>` | ✅ Gedaan |
-| F8-06 | 🔴 Hoog | `Layout/Navbar.html` — `data-i18n="common:nav.*"` | ✅ Gedaan |
-| F8-07 | 🔴 Hoog | `Layout/Footer.html` — `data-i18n="common:footer.supportVia"` | ✅ Gedaan |
-| F8-08 | 🔴 Hoog | `locales/{nl,en,es}/create.json` aanmaken | ✅ Gedaan |
-| F8-09 | 🔴 Hoog | `locales/{nl,en,es}/manage.json` aanmaken | ✅ Gedaan |
-| F8-10 | 🔴 Hoog | `locales/{nl,en,es}/auth.json` aanmaken | ✅ Gedaan |
-| F8-11 | 🟡 Middel | `home/create.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-12 | 🟡 Middel | `home/about.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-13 | 🟡 Middel | `stamboom/manage.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-14 | 🟡 Middel | `home/confirm.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | 📋 Open |
-| F8-16 | 🟢 Laag | `common.meta.appName` opruimen uit `common.json` | ✅ Gedaan |
+| F8-01 t/m F8-16 | Core i18n module, common/home/create/manage/auth locales | ✅ Gedaan |
 | F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
-| F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | ❌ Geannuleerd — taalwisselaar vanzelfsprekend, geen uitleg nodig |
-| F8-20 | 🟡 Middel | `home/import.html` refactoren met `data-i18n` + custom file input | ✅ Gedaan |
-| F8-21 | 🟡 Middel | `home/export.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-22 | 🟡 Middel | `home/print.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-23 | 🟡 Middel | `locales/{nl,en,es}/about.json` aanmaken | ✅ Gedaan |
-| F8-24 | 🟡 Middel | `locales/{nl,en,es}/print.json` aanmaken | ✅ Gedaan |
-| F8-25 | 🟡 Middel | `locales/{nl,en,es}/import.json` aanmaken | ✅ Gedaan |
-| F8-26 | 🟡 Middel | `locales/{nl,en,es}/export.json` aanmaken | ✅ Gedaan |
-| F8-27 | 🟡 Middel | `js/import.js` statusmeldingen i18n | ✅ Gedaan |
-| F8-28 | 🟡 Middel | `js/export.js` statusmeldingen i18n | ✅ Gedaan |
-| F8-29 | 🟡 Middel | `js/create.js` statusmeldingen i18n | ✅ Gedaan |
-| F8-30 | 🟡 Middel | `Docs/disclaimer.html` drietalig EN/NL/ES | ✅ Gedaan |
-| F8-31 | 🟡 Middel | `Docs/privacy.html` drietalig EN/NL/ES | ✅ Gedaan |
-| F8-32 | 🟡 Middel | `Docs/terms.html` drietalig EN/NL/ES | ✅ Gedaan |
-| F8-33 | 🔴 Hoog | `stamboom/stats.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-34 | 🔴 Hoog | `stamboom/collab.html` + `js/collab.js` i18n | ✅ Gedaan |
-| F8-35 | 🔴 Hoog | `stamboom/storage.html` refactoren met `data-i18n` | ✅ Gedaan |
-| F8-36 | 🔴 Hoog | `stamboom/view.html` + `js/view.js` i18n | ✅ Gedaan |
-| F8-37 | 🔴 Hoog | `stamboom/timeline.html` + `js/timeline.js` i18n | ✅ Gedaan |
-| F8-38 | 🔴 Hoog | `js/auth.js` foutmeldingen via i18n | ✅ Gedaan |
-| F8-39 | 🔴 Hoog | `js/topbar.js` modal via data-i18n | ✅ Gedaan |
-| F8-40 | 🔴 Hoog | `home/reset.html` + `js/reset.js` i18n | ✅ Gedaan |
-| F8-41 | 🔴 Hoog | `bronnen/artikelen.html` i18n + namespace `artikelen` | ✅ Gedaan |
-| F8-42 | 🔴 Hoog | `bronnen/extern.html` i18n + namespace `extern` | ✅ Gedaan |
-| F8-43 | 🔴 Hoog | `bronnen/instructies.html` i18n + namespace `instructies` | ✅ Gedaan |
-| F8-44 | 🔴 Hoog | `bronnen/handleiding.html` → drie taalversies (nl/en/es) + redirect | ✅ Gedaan |
-| F8-45 | 🔴 Hoog | `bronnen/template.html` i18n + meertalige tabel + CSV-download | ✅ Gedaan |
-| F8-46 | 🟡 Middel | `gemeenschap/contact.html` i18n + bugs gefixed | ✅ Gedaan |
-| F8-47 | 🟡 Middel | `gemeenschap/discussies.html` i18n + bugs gefixed | ✅ Gedaan |
-| F8-48 | 🟡 Middel | `gemeenschap/evenement.html` i18n + bugs gefixed | ✅ Gedaan |
-| F8-49 | 🟡 Middel | `gemeenschap/forum.html` i18n + trackPage gecorrigeerd | ✅ Gedaan |
-| F8-50 | 🟡 Middel | `gemeenschap/groepen.html` i18n + bugs gefixed | ✅ Gedaan |
-| F8-51 | 🟡 Middel | `develop/blank.html` i18n + content gecorrigeerd | ✅ Gedaan |
-| F8-52 | 🟡 Middel | `develop/maintenance.html` i18n + countdown via interpolatie | ✅ Gedaan |
-| F8-53 | 🟡 Middel | `develop/sandbox.html` i18n + dubbel bestand samengevoegd | ✅ Gedaan |
-| F8-54 | 🟡 Middel | `develop/standaardpagina.html` i18n + bugs gefixed | ✅ Gedaan |
-| F8-55 | 🟡 Middel | `Layout/Navbar.html` v1.2.0 — handleiding link bijgewerkt | ✅ Gedaan |
+| F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | ❌ Geannuleerd |
+| F8-20 t/m F8-55 | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n | ✅ Gedaan |
 | F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | 📋 Open |
-| F8-57 | 🔴 Hoog | `bronnen/template.html` v2.3.0 — tabel hertekenen bij taalwissel | ✅ Gedaan |
-| F8-58 | 🔴 Hoog | `abonnementen/overzicht.html` i18n + namespace `overzicht` + `js/overzicht.js` | ✅ Gedaan |
-| F8-59 | 🔴 Hoog | `abonnementen/prijzen.html` i18n + namespace `prijzen` + `js/prijzen.js` | ✅ Gedaan |
-| F8-60 | 🔴 Hoog | `abonnementen/vergelijk.html` i18n + namespace `vergelijk` + `js/vergelijk.js` | ✅ Gedaan |
-| F8-61 | 🔴 Hoog | `abonnementen/voordelen.html` i18n + namespace `voordelen` + `js/voordelen.js` | ✅ Gedaan |
+| F8-57 t/m F8-61 | template.html taalwissel + abonnementen namespaces | ✅ Gedaan |
+| F8-62 | 🟡 Middel | `locales/{nl,en,es}/common.json` — `nav.sub.supabaseAnalyse` toegevoegd | ✅ Gedaan |
+| F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | 📋 Open |
 
 ---
 
@@ -188,6 +136,27 @@
 | F9-07 | 🟡 Middel | `locales/{nl,en,es}/bronnen.json` aanmaken | 📋 Open |
 | F9-08 | 🟢 Laag | Extern archieflink valideren (URL check) | 📋 Open |
 | F9-09 | 🟢 Laag | Bron exporteren als onderdeel van GEDCOM | 📋 Open |
+
+---
+
+## Fase 10 — Admin toegangsbeveiliging 🔄 VOLGENDE SESSIE
+
+> Referentie-implementatie: `admin/supabase-analyse.html` — bevat het patroon dat uitgerold wordt.
+>
+> **Patroon:**
+> 1. `AuthModule.getTier()` check bij `initPage()`
+> 2. Tier !== 'admin' → toon rood foutscherm (`#accessDenied`), stop uitvoering
+> 3. `AuthModule.onAuthChange()` listener → bij uitloggen automatisch redirect naar `index.html`
+> 4. Pagina-inhoud (`#dashboard` of equivalent) standaard `display:none`, alleen zichtbaar na geslaagde admin-check
+
+| ID | Prioriteit | Taak | Status |
+|----|-----------|------|--------|
+| F10-01 | 🔴 Hoog | `admin/accountbeheer.html` — admin-check + uitlog-redirect toevoegen | 📋 Open |
+| F10-02 | 🔴 Hoog | `admin/analytics.html` — admin-check + uitlog-redirect toevoegen | 📋 Open |
+| F10-03 | 🔴 Hoog | `admin/analyse.html` — admin-check + uitlog-redirect toevoegen | 📋 Open |
+| F10-04 | 🟡 Middel | `admin/supabase-analyse.html` — `onAuthChange` uitlog-redirect toevoegen (check zit er al in) | 📋 Open |
+| F10-05 | 🟡 Middel | Gedeeld `js/adminGuard.js` module aanmaken — herbruikbare guard functie voor alle admin-pagina's | 📋 Open |
+| F10-06 | 🟢 Laag | Developer-pagina's (`develop/*.html`) — zelfde patroon voor developer-only toegang | 📋 Open |
 
 ---
 
@@ -234,7 +203,7 @@
 
 ---
 
-## Beveiliging ✅ AFGEROND
+## Beveiliging
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
@@ -247,13 +216,27 @@
 
 ## Bugfixes
 
+### Sessie 2026-05-28 (sessie 32)
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-60 | `supabase-analyse.html` — Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt. Vervangen door stamboom-analyse secties. | ✅ Opgelost |
+
+### Sessie 2026-05-26 (sessie 31)
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-57 | Admin/developer menu verborgen na security-fix — recursieve RLS op `profiles` | ✅ Opgelost |
+| BF-58 | `accountbeheer.html` — `admin_users` view ontbrak na security-fix | ✅ Opgelost |
+| BF-59 | `admin_users` view — `permission denied for table users` | ✅ Opgelost |
+
 ### Sessie 2026-05-25 (sessie 30)
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-56 | Race condition — i18n keys toonden als key-naam op abonnementen-pagina's. Init() roept updateContent() aan vóór loadNamespace() klaar is. Opgelost via dynamische JS-injectie na init() resolve. | ✅ Opgelost |
+| BF-56 | Race condition — i18n keys toonden als key-naam op abonnementen-pagina's | ✅ Opgelost |
 
-### Sessie 2026-05-22
+### Sessie 2026-05-22 (sessie 29)
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
@@ -261,47 +244,11 @@
 | BF-54 | Supabase: `rls_disabled_in_public` — RLS op 6 tabellen ingeschakeld | ✅ Opgelost |
 | BF-55 | Supabase: `sensitive_columns_exposed` — anon REVOKED, grants minimaal | ✅ Opgelost |
 
-### Sessie 2026-05-20
+### Sessie 2026-05-20 (sessie 28)
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
 | BF-52 | `bronnen/template.html` — tabelheaders bleven NL na taalwissel naar EN/ES | ✅ Opgelost |
-
-### Sessie 2026-05-19
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-44 | `gemeenschap/*.html` — dubbele script-blokken, losse fetch-blokken, Navbar-placeholder hoofdletter N | ✅ Opgelost |
-| BF-45 | `gemeenschap/forum.html` — `trackPage("evenement")` i.p.v. `trackPage("forum")` | ✅ Opgelost |
-| BF-46 | `develop/sandbox.html` — bestand volledig gedupliceerd, kapotte HTML | ✅ Opgelost |
-| BF-47 | `develop/*.html` — eruda debug-script aanwezig, `trackPage("evenement")` overal | ✅ Opgelost |
-| BF-48 | `develop/blank.html` — content was copy-paste van artikelen.html | ✅ Opgelost |
-| BF-49 | `bronnen/artikelen.html` — namespace `bronnen:artikelen.*` i.p.v. `artikelen:*` | ✅ Opgelost |
-| BF-50 | `Layout/Navbar.html` — kapotte `</ a>` tag bij handleiding-link | ✅ Opgelost |
-| BF-51 | `bronnen/handleiding.html` verwijderd → 404 → redirect-bestand aangemaakt | ✅ Opgelost |
-
-### Sessie 2026-05-15
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-41 | stats.html: KPI labels toonden raw keys — namespace niet ge-await'ed + DOM-timing | ✅ Opgelost |
-| BF-42 | topbar.js: modal toonde raw keys — _injectModal() gebruikte _t() vóór namespace geladen was | ✅ Opgelost |
-| BF-43 | topbar.js: loadNamespace('auth') in init() veroorzaakte updateContent() op hele DOM → pagina-keys overschreven | ✅ Opgelost |
-
-### Sessie 2026-05-12
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-39 | Navbar toonde `nav.sub.*` als tekst — trailing comma in `common.json` + ontbrekende keys | ✅ Opgelost |
-| BF-40 | Taalwissel werkte niet op Navbar — zelfde oorzaak als BF-39 | ✅ Opgelost |
-
-### Sessie 2026-05-10
-
-| ID | Omschrijving | Status |
-|----|-------------|--------|
-| BF-36 | i18n keys toonden letterlijk — dot i.p.v. colon als namespace separator | ✅ Opgelost |
-| BF-37 | Taalwissel resette switcher | ✅ Opgelost |
-| BF-38 | Namespace niet herladen na taalwissel | ✅ Opgelost |
 
 ---
 
@@ -323,9 +270,7 @@
 | TD-03 | `js/LSD.js` — dubbele DOMContentLoaded | 🟢 Laag |
 | TD-04 | `Layout/*.html` via fetch() — werkt niet op file:// | 🟡 Middel |
 | TD-05 | Popup-stijlen in LiveSearch.js hardcoded inline | 🟢 Laag |
-| TD-06 | `home/import-en.html` laadt import.js zonder schema.js + storage.js | ✅ Opgelost — alle `-en` bestanden verwijderd na i18n meertalig (sessie 30) |
 | TD-07 | Resend zonder eigen domein — mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
 | TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
-| TD-10 | `page_visits` RLS uitgeschakeld — beveiligd via view | ✅ Opgelost — RLS ingeschakeld sessie 29 |
 | TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig | 🔴 Hoog |
