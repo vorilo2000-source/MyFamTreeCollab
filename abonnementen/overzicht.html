@@ -1,5 +1,5 @@
-<!-- ======================= abonnementen/overzicht.html v2.4.0 =======================
-     Wijziging v2.4.0 (sessie 30):
+<!-- ======================= abonnementen/overzicht.html v2.4.1 =======================
+     Wijziging v2.4.1 (sessie 30 — bugfix):
      - i18n uitgerold via namespace 'overzicht'
      - Alle zichtbare tekst vervangen door data-i18n attributen
      - i18next CDN scripts toegevoegd aan <head>
@@ -341,8 +341,8 @@
             <div class="stap">
                 <div class="stap-nummer">3</div>
                 <div class="stap-tekst">
-                    <strong data-i18n="overzicht:hoe.stap3_label">Owner account </strong> <!-- Stap 3 label -->
-                    — <span data-i18n="overzicht:hoe.stap3_tekst">Basis account + donatie, activeert cloud backup, delen en samenwerken.</span> <!-- Stap 3 tekst -->
+                    <strong data-i18n="overzicht:hoe.stap3_label">Owner worden via donatie</strong> <!-- Stap 3 label -->
+                    — <span data-i18n="overzicht:hoe.stap3_tekst">~€5 per 6 maanden activeert cloud backup, delen en samenwerken.</span> <!-- Stap 3 tekst -->
                 </div>
             </div>
 
@@ -405,7 +405,7 @@
                 <span class="account-naam" data-i18n="overzicht:accountTypes.owner.naam">Owner account</span> <!-- Kaart naam — vertaald -->
             </div>
             <span class="tier-badge tier-owner">tier: owner</span><br> <!-- DB-waarde: altijd letterlijk, nooit vertaald -->
-            <span class="activatie-badge badge-donatie" data-i18n="overzicht:accountTypes.owner.badge">Donatie vereist</span> <!-- Activatiebadge — vertaald -->
+            <span class="activatie-badge badge-donatie" data-i18n="overzicht:accountTypes.owner.badge">Donatie ~€5 / 6 maanden</span> <!-- Activatiebadge — vertaald -->
             <p class="account-beschrijving" data-i18n="overzicht:accountTypes.owner.beschrijving">Volledige toegang. Cloud backup, onbeperkte personen, stamboom delen en samenwerking activeren.</p> <!-- Beschrijving — vertaald -->
             <ul class="account-features">
                 <li><span class="vink">✓</span> <span data-i18n="overzicht:accountTypes.owner.feat1">Onbeperkt personen lokaal</span></li>           <!-- Feature 1 — vertaald -->
@@ -475,22 +475,22 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Rij 1: donatie 1 - 6 mnd-->
+                <!-- Rij 1: periodieke donatie -->
                 <tr>
                     <td><strong data-i18n="overzicht:donatie.periodiek_label">Periodiek</strong></td> <!-- Rij label — vertaald -->
-                    <td class="donatie-bedrag">~€6span class="donatie-of" data-i18n="overzicht:donatie.periodiek_per">per 6 maanden</span></td> <!-- Bedrag + periode — vertaald -->
+                    <td class="donatie-bedrag">~€5<span class="donatie-of" data-i18n="overzicht:donatie.periodiek_per">per 6 maanden</span></td> <!-- Bedrag + periode — vertaald -->
                     <td data-i18n="overzicht:donatie.periodiek_wat">Owner account actief zolang de donatie loopt. Opzegbaar wanneer je wilt.</td> <!-- Voordelen — vertaald -->
                 </tr>
-                <!-- Rij 2: donatie 2 - 1 jaar-->
+                <!-- Rij 2: eenmalige donatie -->
                 <tr>
                     <td><strong data-i18n="overzicht:donatie.eenmalig_label">Eenmalig</strong></td> <!-- Rij label — vertaald -->
-                    <td class="donatie-bedrag">€10<span class="donatie-of" data-i18n="overzicht:donatie.eenmalig_per">jaarlijks</span></td> <!-- Bedrag + periode — vertaald -->
+                    <td class="donatie-bedrag">€10<span class="donatie-of" data-i18n="overzicht:donatie.eenmalig_per">eenmalig</span></td> <!-- Bedrag + periode — vertaald -->
                     <td data-i18n="overzicht:donatie.eenmalig_wat">Permanente Owner activatie voor één stamboom. Geen verdere verplichtingen.</td> <!-- Voordelen — vertaald -->
                 </tr>
-                <!-- Rij 3: stichtend lid  (TOEKOMST) -->
+                <!-- Rij 3: stichtend lid -->
                 <tr>
                     <td><strong data-i18n="overzicht:donatie.stichtend_label">Stichtend lid</strong></td> <!-- Rij label — vertaald -->
-                    <td class="donatie-bedrag">TOEKOMST <span class="donatie-of" data-i18n="overzicht:donatie.stichtend_per">jaarlijks</span></td> <!-- Bedrag + periode — vertaald -->
+                    <td class="donatie-bedrag">€25<span class="donatie-of" data-i18n="overzicht:donatie.stichtend_per">eenmalig</span></td> <!-- Bedrag + periode — vertaald -->
                     <td data-i18n="overzicht:donatie.stichtend_wat">Permanente Owner activatie + early access tot nieuwe functies + vermelding als stichtend lid.</td> <!-- Voordelen — vertaald -->
                 </tr>
             </tbody>
@@ -520,13 +520,14 @@
      4. utils.js              — vereist door alle andere modules
      5. auth.js               — vereist door topbar.js en siteAnalytics.js
      6. siteAnalytics.js      — bezoektracking, na auth.js zodat tier beschikbaar is
-     7. Inline script:
-        a. i18nModule.init()  → namespace 'common' laden + DOM vertalen
-        b. loadNamespace('overzicht') → pagina-specifieke teksten laden
-        c. _translateHTML()   → elementen met HTML-inhoud (innerHTML) vertalen
-        d. i18next listener   → hertalen bij taalwissel
-        e. TopBar fetch       → na init() zodat switcher correct opgebouwd wordt
-        f. Navbar + Footer    → parallel laden
+     7. Inline init-script    — roept i18nModule.init() aan (laadt 'common' + DOM)
+     8. overzicht.js          — wordt dynamisch geïnjecteerd na init() resolve;
+                                laadt namespace 'overzicht', vertaalt DOM opnieuw,
+                                regelt TopBar / Navbar / Footer en trackPage.
+                                REDEN: init() roept intern updateContent() aan vóór
+                                loadNamespace() klaar is → keys worden als key-naam
+                                weergegeven. Dynamische injectie na resolve garandeert
+                                juiste volgorde. Patroon: zelfde als stats.js (sessie 26).
      ============================================================= -->
 <script src="../js/i18n.js"></script>                                                  <!-- i18n module — window.i18nModule beschikbaar stellen -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>           <!-- Supabase SDK — vereist door auth.js -->
@@ -535,72 +536,13 @@
 <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                           <!-- Bezoektracking — na auth.js zodat tier beschikbaar is -->
 
 <script>
-    /**
-     * _translateHTML(elementId, key)
-     * Vertaalt een element waarvan de inhoud HTML-tags bevat (<strong>, <code>, <em>).
-     * Gebruikt innerHTML in plaats van textContent om opmaak te behouden.
-     * Wordt aangeroepen na loadNamespace() en bij elke taalwissel.
-     *
-     * @param {string} elementId - ID van het doel-element in de DOM
-     * @param {string} key       - Volledige i18n sleutel incl. namespace, bijv. 'overzicht:rechten.intro'
-     */
-    function _translateHTML(elementId, key) {
-        var el = document.getElementById(elementId); // Doelelement ophalen via ID
-        if (el) el.innerHTML = i18next.t(key);       // Vertaling als innerHTML zetten (HTML-opmaak behouden)
-    }
-
-    /**
-     * _translateHTMLBlocks()
-     * Vertaalt alle elementen met HTML-inhoud op deze pagina.
-     * Aparte functie zodat hij herbruikbaar is bij taalwissel via listener.
-     */
-    function _translateHTMLBlocks() {
-        _translateHTML('rechten-intro', 'overzicht:rechten.intro');  // Rechten-intro: bevat <strong>, <code>, <em>
-        _translateHTML('donatie-noot',  'overzicht:donatie.noot');   // Donatie-noot: bevat <strong>
-    }
-
-    // Stap 1: i18n initialiseren — laadt 'common' namespace en detecteert taal
+    // i18nModule initialiseren — laadt 'common' namespace voor nl/en/es en detecteert taal.
+    // Na resolve wordt overzicht.js dynamisch geïnjecteerd zodat loadNamespace('overzicht')
+    // pas aanroept nadat i18next volledig geïnitialiseerd is (race condition vermeden).
     i18nModule.init().then(function() {
-
-        // Stap 2: pagina-specifieke namespace laden en DOM hertalen
-        return i18nModule.loadNamespace('overzicht');
-
-    }).then(function() {
-
-        // Stap 3: elementen met HTML-inhoud vullen (niet via data-i18n, die gebruikt textContent)
-        _translateHTMLBlocks();
-
-        // Stap 4: listener — hertaal HTML-blokken ook bij elke taalwissel
-        i18next.on('languageChanged', _translateHTMLBlocks);
-
-        // Stap 5: TopBar HTML laden, daarna PAS topbar.js injecteren
-        // Garandeert dat #top-auth in DOM aanwezig is vóór topbar.js initialiseert
-        fetch('/MyFamTreeCollab/Layout/TopBar.html')
-            .then(function(resp) { return resp.text(); })                                    // HTML ophalen als tekst
-            .then(function(data) {
-                i18nModule.onComponentLoaded(data, document.getElementById('topbar-placeholder')); // TopBar injecteren + vertalen
-                var s = document.createElement('script');                                    // Nieuw script element aanmaken
-                s.src = '../js/topbar.js';                                                   // Pad naar topbar.js
-                document.body.appendChild(s);                                                // Script aan body toevoegen en laden
-            });
-
-        // Stap 6: Navbar laden — geen auth-afhankelijkheid, mag parallel
-        fetch('/MyFamTreeCollab/Layout/Navbar.html')
-            .then(function(resp) { return resp.text(); })                                    // HTML ophalen
-            .then(function(data) {
-                i18nModule.onComponentLoaded(data, document.getElementById('navbar-placeholder')); // Navbar injecteren + vertalen
-            });
-
-        // Stap 7: Footer laden — geen afhankelijkheden, mag parallel
-        fetch('/MyFamTreeCollab/Layout/Footer.html')
-            .then(function(resp) { return resp.text(); })                                    // HTML ophalen
-            .then(function(data) {
-                var ph = document.getElementById('footer-placeholder');                      // Placeholder ophalen
-                if (ph) ph.innerHTML = data;                                                 // Footer in DOM plaatsen
-            });
-
-        // Stap 8: Pagina tracking — na fetch-calls zodat een fout hier niets blokkeert
-        SiteAnalytics.trackPage("overzicht"); // Bezoek registreren in Supabase page_visits tabel
+        var s = document.createElement('script');  // Script element aanmaken
+        s.src = '../js/overzicht.js';              // Pad naar pagina-script
+        document.body.appendChild(s);              // Injecteren — start na init() resolve
     });
 </script>
 
