@@ -1,599 +1,235 @@
-<!-- ======================= admin/analytics.html v2.7.0 =======================
-     Wijziging v2.7.0: CSS toegevoegd voor uitklapbare e-maillijst per tier in tier verdeling
-     Analytics Dashboard — interne gebruiksstatistieken van MyFamTreeCollab
-     Toont: paginabezoeken, tier-verdeling, verblijfsduur, recente sessies
-     Data bron: Supabase (page_visits tabel) via analytics-dashboard.js
-     Achtergrond main: #565656
-     Laadvolgorde: Supabase SDK → utils.js → auth.js → analytics-dashboard.js
+<!-- ======================= admin/analytics.html v2.8.0 =======================
+     Wijziging v2.8.0 (sessie 33):
+     - AdminGuard.protect('admin') toegevoegd — niet-admins zien foutscherm
+     - AuthModule.onAuthChange uitlog-redirect via adminGuard.js
+     - #page-content wrapper toegevoegd rond dashboard inhoud
+     - #accessDenied blok toegevoegd (standaard display:none)
+     - adminGuard.js toegevoegd aan laadvolgorde (na auth.js)
+     Wijziging v2.7.0:
+     - CSS toegevoegd voor uitklapbare e-maillijst per tier in tier verdeling
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">                                                 <!-- UTF-8 tekenset -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive viewport -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Dashboard — MyFamTreeCollab</title>
 
-    <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
 
-    <link rel="stylesheet" href="../css/style.css">                        <!-- Globale stijlen -->
-
-    <!-- IBM Plex Mono + Sans — monospace geeft dashboard een terminal-karakter -->
+    <link rel="stylesheet" href="../css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
         /* ======================= CSS VARIABELEN ======================= */
         :root {
-            --bg-main:      #565656;                                       /* Achtergrond main */
-            --bg-card:      #3a3a3a;                                       /* Donkere kaart achtergrond */
-            --bg-card-alt:  #444444;                                       /* Lichtere kaart variant */
-            --accent:       #00d4aa;                                       /* Teal accent */
-            --accent-dim:   rgba(0, 212, 170, 0.15);                      /* Transparante accent tint */
-            --text-primary: #f0f0f0;                                       /* Hoofdtekst licht */
-            --text-muted:   #aaa;                                          /* Gedimde labels */
-            --border:       rgba(255,255,255,0.08);                        /* Subtiele border */
-            --font-mono:    'IBM Plex Mono', monospace;                    /* Data / getallen */
-            --font-sans:    'IBM Plex Sans', sans-serif;                   /* Labels / titels */
-            --radius:       8px;                                           /* Consistente afronding */
-            --shadow:       0 4px 20px rgba(0,0,0,0.35);                  /* Kaart schaduw */
+            --bg-main:      #565656;
+            --bg-card:      #3a3a3a;
+            --bg-card-alt:  #444444;
+            --accent:       #00d4aa;
+            --accent-dim:   rgba(0, 212, 170, 0.15);
+            --text-primary: #f0f0f0;
+            --text-muted:   #aaa;
+            --border:       rgba(255,255,255,0.08);
+            --font-mono:    'IBM Plex Mono', monospace;
+            --font-sans:    'IBM Plex Sans', sans-serif;
+            --radius:       8px;
+            --shadow:       0 4px 20px rgba(0,0,0,0.35);
+            --color-danger: #f08080;
         }
 
-        /* ======================= MAIN ACHTERGROND ======================= */
-        main {
-            background-color: var(--bg-main);                             /* #565656 */
-            min-height: 100vh;                                             /* Volledige hoogte */
-            padding: 32px 20px 64px;                                       /* Ruimte rondom content */
-            font-family: var(--font-sans);                                 /* Basislettertype */
-        }
+        main { background-color: var(--bg-main); min-height: 100vh; padding: 32px 20px 64px; font-family: var(--font-sans); }
 
-        /* ======================= DASHBOARD WRAPPER ======================= */
-        .dash-wrap {
-            max-width: 1100px;                                             /* Maximale breedte */
-            margin: 0 auto;                                                /* Horizontaal centreren */
-        }
-
-        /* ======================= DASHBOARD HEADER ======================= */
-        .dash-header {
-            display: flex;                                                 /* Flex layout */
-            align-items: baseline;                                         /* Uitlijnen op tekst baseline */
-            justify-content: space-between;                                /* Titel links, knop rechts */
-            flex-wrap: wrap;                                               /* Wrappen op smal scherm */
-            gap: 12px;                                                     /* Ruimte tussen elementen */
-            margin-bottom: 32px;                                           /* Afstand tot kaarten */
-            border-bottom: 1px solid var(--border);                        /* Subtiele scheiding */
-            padding-bottom: 16px;                                          /* Ruimte onder scheiding */
-        }
-
-        .dash-header h1 {
-            font-family: var(--font-mono);                                 /* Monospace voor dashboard-gevoel */
-            font-size: 1.3rem;                                             /* Niet te groot */
-            font-weight: 600;                                              /* Halfvet */
-            color: var(--accent);                                          /* Teal accent kleur */
-            margin: 0;                                                     /* Geen standaard margin */
-            letter-spacing: -0.5px;                                        /* Licht samengetrokken */
-        }
-
-        .dash-header h1 span {
-            color: var(--text-muted);                                      /* "Dashboard" gedimed */
-            font-weight: 400;                                              /* Normaal gewicht */
-        }
-
-        /* ======================= REFRESH KNOP ======================= */
-        .btn-refresh {
-            font-family: var(--font-mono);                                 /* Monospace stijl */
-            font-size: 0.8rem;                                             /* Klein */
-            background: var(--accent-dim);                                 /* Transparante teal */
-            color: var(--accent);                                          /* Teal tekst */
-            border: 1px solid var(--accent);                               /* Teal rand */
-            border-radius: var(--radius);                                  /* Afgeronde hoeken */
-            padding: 6px 14px;                                             /* Compacte knop */
-            cursor: pointer;                                               /* Klikbaar uiterlijk */
-            transition: background 0.2s;                                   /* Vloeiende hover */
-        }
-        .btn-refresh:hover { background: rgba(0,212,170,0.28); }          /* Iets meer teal bij hover */
-
-        /* ======================= WIS KNOP ======================= */
-        .btn-clear {
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            background: rgba(255,80,80,0.12);                             /* Rode tint */
-            color: #ff6b6b;                                                /* Rode tekst */
-            border: 1px solid #ff6b6b;                                     /* Rode rand */
-            border-radius: var(--radius);
-            padding: 6px 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-left: 8px;                                              /* Afstand naast refresh */
-        }
-        .btn-clear:hover { background: rgba(255,80,80,0.25); }
-
-        /* ======================= STAT KAARTEN GRID ======================= */
-        .stat-grid {
-            display: grid;                                                 /* CSS Grid */
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));   /* Responsief */
-            gap: 16px;                                                     /* Ruimte tussen kaarten */
-            margin-bottom: 28px;
-        }
-
-        /* ======================= INDIVIDUELE STAT KAART ======================= */
-        .stat-card {
+        /* ─── Toegang geweigerd blok ─── */
+        .access-denied {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px 20px 16px;
-            box-shadow: var(--shadow);
-            position: relative;                                            /* Voor accent-lijn */
-            overflow: hidden;                                              /* Accent-lijn afkappen */
-            animation: fadeUp 0.4s ease both;
-        }
-
-        .stat-card::before {                                               /* Teal streep bovenaan */
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--accent);
-        }
-
-        .stat-card .label {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            font-family: var(--font-sans);
-        }
-
-        .stat-card .value {
-            font-family: var(--font-mono);
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
-        .stat-card .unit {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-left: 4px;
-            font-family: var(--font-sans);
-        }
-
-        /* ======================= SECTIE TITELS ======================= */
-        .section-title {
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--accent);
-            margin: 0 0 12px 0;
-        }
-
-        /* ======================= TWEE-KOLOM LAYOUT ======================= */
-        .bottom-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;                               /* Twee kolommen */
-            gap: 20px;
-            margin-bottom: 28px;
-        }
-
-        @media (max-width: 700px) {
-            .bottom-grid { grid-template-columns: 1fr; }                  /* Eén kolom op mobiel */
-        }
-
-        /* ======================= PANELEN ======================= */
-        .panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: var(--shadow);
-            animation: fadeUp 0.4s ease both;
-        }
-
-        /* ======================= EVENT BAR RIJEN ======================= */
-        .event-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .event-row:last-child { margin-bottom: 0; }
-
-        .event-label {
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: var(--text-primary);
-            min-width: 160px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .event-bar-wrap {
-            flex: 1;
-            background: rgba(255,255,255,0.06);
-            border-radius: 3px;
-            height: 8px;
-            overflow: hidden;
-        }
-
-        .event-bar {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 3px;
-            transition: width 0.6s cubic-bezier(0.16,1,0.3,1);           /* Animatie */
-            width: 0%;                                                     /* Startbreedte — JS zet echte waarde */
-        }
-
-        .event-count {
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: var(--accent);
-            min-width: 28px;
-            text-align: right;
-        }
-
-        /* ======================= DEVICE PILLS ======================= */
-        .device-grid {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-
-        .device-pill {
-            background: var(--bg-card-alt);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* ======================= LEEG STATUS ======================= */
-        .empty-msg {
-            font-family: var(--font-mono);
-            font-size: 0.82rem;
-            color: var(--text-muted);
+            border: 1px solid var(--color-danger);
+            border-radius: 8px;
+            padding: 32px;
             text-align: center;
-            padding: 24px 0;
-            letter-spacing: 0.5px;
+            max-width: 480px;
+            margin: 60px auto;
         }
+        .access-denied h2 { font-size: 1.2rem; color: var(--color-danger); margin-bottom: 10px; font-family: var(--font-sans); }
+        .access-denied p  { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
 
-        /* ======================= RECENTE SESSIES TABEL ======================= */
-        .sessions-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: var(--shadow);
-            margin-bottom: 28px;
-            animation: fadeUp 0.4s ease both;
-            overflow-x: auto;                                              /* Horizontaal scrollen op mobiel */
-            overflow-y: auto;                                              /* Verticaal scrollen voor sticky header */
-            max-height: 480px;                                             /* Maximale hoogte — header blijft zichtbaar */
-        }
+        /* ─── Verberg tot auth-check klaar ─── */
+        #accessDenied { display: none; }
+        #page-content  { display: none; }
 
-        table {
-            width: 100%;
-            border-collapse: separate;                                     /* Vereist voor sticky header — collapse breekt position:sticky */
-            border-spacing: 0;                                             /* Visueel zelfde als collapse — geen extra ruimte */
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-        }
-
-        thead th {
-            position: sticky;                                              /* Header blijft zichtbaar bij scrollen */
-            top: 0;                                                        /* Plakt aan bovenkant van scrollcontainer */
-            z-index: 1;                                                    /* Boven tabelrijen — voorkomt doorschijnen */
-            background: #1a7a4a;                                           /* Groen header achtergrond */
-            text-align: left;
-            color: #ffffff;                                                /* Witte tekst op groen */
-            padding: 10px 12px 10px 10px;
-            border-bottom: 2px solid #0f5c35;                              /* Donkerdere groene lijn */
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.68rem;
-        }
-
-        tbody td {
-            padding: 9px 12px 9px 10px;
-            color: #1a1a1a;                                                /* Donkere tekst op lichte achtergrond */
-            background: #c8c8c8;                                           /* Lichtgrijze rijen */
-            border-bottom: 1px solid #aaaaaa;                              /* Zichtbare rijscheiding */
-            vertical-align: middle;
-        }
-
+        /* ======================= DASHBOARD STIJLEN (ongewijzigd) ======================= */
+        .dash-wrap { max-width: 1100px; margin: 0 auto; }
+        .dash-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+        .dash-header h1 { font-family: var(--font-mono); font-size: 1.3rem; font-weight: 600; color: var(--accent); margin: 0; letter-spacing: -0.5px; }
+        .dash-header h1 span { color: var(--text-muted); font-weight: 400; }
+        .btn-refresh { font-family: var(--font-mono); font-size: 0.8rem; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); border-radius: var(--radius); padding: 6px 14px; cursor: pointer; transition: background 0.2s; }
+        .btn-refresh:hover { background: rgba(0,212,170,0.28); }
+        .btn-clear { font-family: var(--font-mono); font-size: 0.8rem; background: rgba(255,80,80,0.12); color: #ff6b6b; border: 1px solid #ff6b6b; border-radius: var(--radius); padding: 6px 14px; cursor: pointer; transition: background 0.2s; margin-left: 8px; }
+        .btn-clear:hover { background: rgba(255,80,80,0.25); }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 20px 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; animation: fadeUp 0.4s ease both; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+        .stat-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; font-family: var(--font-sans); }
+        .stat-card .value { font-family: var(--font-mono); font-size: 2rem; font-weight: 600; color: var(--text-primary); line-height: 1; }
+        .stat-card .unit  { font-size: 0.8rem; color: var(--text-muted); margin-left: 4px; font-family: var(--font-sans); }
+        .section-title { font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin: 0 0 12px 0; }
+        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+        @media (max-width: 700px) { .bottom-grid { grid-template-columns: 1fr; } }
+        .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); animation: fadeUp 0.4s ease both; }
+        .event-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .event-row:last-child { margin-bottom: 0; }
+        .event-label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-primary); min-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .event-bar-wrap { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 8px; overflow: hidden; }
+        .event-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.6s cubic-bezier(0.16,1,0.3,1); width: 0%; }
+        .event-count { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); min-width: 28px; text-align: right; }
+        .device-grid { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+        .device-pill { background: var(--bg-card-alt); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+        .empty-msg { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 24px 0; letter-spacing: 0.5px; }
+        .sessions-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 28px; animation: fadeUp 0.4s ease both; overflow-x: auto; overflow-y: auto; max-height: 480px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-family: var(--font-mono); font-size: 0.78rem; }
+        thead th { position: sticky; top: 0; z-index: 1; background: #1a7a4a; text-align: left; color: #ffffff; padding: 10px 12px 10px 10px; border-bottom: 2px solid #0f5c35; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.68rem; }
+        tbody td { padding: 9px 12px 9px 10px; color: #1a1a1a; background: #c8c8c8; border-bottom: 1px solid #aaaaaa; vertical-align: middle; }
         tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover td { background: #d8d8d8; }                         /* Iets lichter bij hover */
-
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            background: var(--accent-dim);
-            color: var(--accent);
-        }
-
-        /* ======================= GLOBALE FILTER BAR ======================= */
-        .filter-bar {
-            display: flex;                                                 /* Flex: label links, knoppen rechts */
-            align-items: center;                                           /* Verticaal uitlijnen */
-            flex-wrap: wrap;                                               /* Wrappen op smal scherm */
-            gap: 12px;                                                     /* Ruimte tussen label en knoppen */
-            background: var(--bg-card);                                    /* Donkere achtergrond */
-            border: 1px solid var(--border);                               /* Subtiele rand */
-            border-radius: var(--radius);                                  /* Afronding */
-            padding: 12px 16px;                                            /* Interne ruimte */
-            margin-bottom: 24px;                                           /* Afstand tot stat kaarten */
-        }
-
-        .filter-label {
-            font-family: var(--font-mono);                                 /* Monospace */
-            font-size: 0.72rem;                                            /* Klein */
-            text-transform: uppercase;                                     /* Hoofdletters */
-            letter-spacing: 1px;                                           /* Gespatieerd */
-            color: var(--text-muted);                                      /* Gedimde kleur */
-            white-space: nowrap;                                           /* Niet afbreken */
-        }
-
-        .tier-filter {
-            display: flex;                                                 /* Horizontale rij knoppen */
-            flex-wrap: wrap;                                               /* Wrappen op smal scherm */
-            gap: 8px;                                                      /* Ruimte tussen knoppen */
-        }
-
-        .tier-btn {
-            font-family: var(--font-mono);                                 /* Monospace stijl */
-            font-size: 0.75rem;                                            /* Klein */
-            padding: 5px 14px;                                             /* Compacte knop */
-            border-radius: 20px;                                           /* Pill-vorm */
-            border: 1px solid transparent;                                 /* Standaard geen zichtbare rand */
-            cursor: pointer;                                               /* Klikbaar */
-            font-weight: 600;                                              /* Halfvet */
-            transition: opacity 0.15s, transform 0.1s;                    /* Vloeiende hover */
-            opacity: 0.45;                                                 /* Inactief = gedimed */
-        }
-
-        .tier-btn:hover  { opacity: 0.75; transform: translateY(-1px); }  /* Hover: iets zichtbaarder */
-        .tier-btn.active { opacity: 1;    transform: translateY(-1px); }  /* Actief: volledig zichtbaar */
-
-        /* Kleur per account type */
-        .tier-btn[data-tier="all"]      { background: #555;    color: #fff;    border-color: #777;    } /* Alles */
-        .tier-btn[data-tier="anoniem"]  { background: #2a2a2a; color: #888888; border-color: #888888; } /* Niet ingelogd */
-        .tier-btn[data-tier="guest"]    { background: #3a3a4a; color: #aaaacc; border-color: #aaaacc; } /* Guest */
-        .tier-btn[data-tier="owner"]    { background: #3a2e0a; color: #f0c040; border-color: #f0c040; } /* Owner */
-        .tier-btn[data-tier="admin"]    { background: #3a1a1a; color: #f08080; border-color: #f08080; } /* Admin */
-
-        /* ======================= TIER E-MAIL LIJST ======================= */
-        .tier-row {
-            display: flex;                                                 /* Flex rij */
-            align-items: center;                                           /* Verticaal uitlijnen */
-            gap: 10px;                                                     /* Ruimte tussen elementen */
-            margin-bottom: 6px;                                            /* Ruimte onder rij */
-            cursor: pointer;                                               /* Klikbaar */
-            user-select: none;                                             /* Geen tekst selectie bij klikken */
-        }
-        .tier-row:hover { opacity: 0.85; }                                /* Subtiele hover */
-
-        .tier-toggle {
-            font-size: 0.8rem;                                             /* Klein pijltje */
-            transition: transform 0.2s;                                    /* Vloeiende rotatie */
-        }
-
-        .tier-email-list {
-            display: none;                                                 /* Standaard verborgen */
-            margin: 0 0 12px 8px;                                         /* Inspringing */
-            border-left: 2px solid rgba(255,255,255,0.08);                /* Subtiele lijn links */
-            padding-left: 12px;                                            /* Ruimte na lijn */
-        }
-
-        .tier-email-list.open {
-            display: block;                                                /* Zichtbaar na klik */
-        }
-
-        .tier-email-list.open ~ .tier-row .tier-toggle {
-            transform: rotate(180deg);                                     /* Pijltje omdraaien */
-        }
-
-        .tier-email {
-            font-family: var(--font-mono);                                 /* Monospace */
-            font-size: 0.72rem;                                            /* Klein */
-            color: var(--text-muted);                                      /* Gedimde kleur */
-            padding: 3px 0;                                                /* Kleine ruimte */
-            border-bottom: 1px solid rgba(255,255,255,0.04);               /* Subtiele scheiding */
-        }
-
-        .tier-email:last-child { border-bottom: none; }                   /* Geen lijn na laatste */
-
-        .tier-email-leeg {
-            color: rgba(255,255,255,0.2);                                  /* Zeer gedimde kleur */
-            font-style: italic;                                            /* Cursief */
-        }
-
-        /* ======================= TIER E-MAIL LIJST ======================= */
-        .tier-row {
-            cursor: pointer;                                               /* Klikbaar */
-            user-select: none;                                             /* Tekst niet selecteerbaar bij klikken */
-        }
-        .tier-row:hover { opacity: 0.85; }                                 /* Subtiele hover */
-
-        .tier-toggle {
-            font-size: 0.85rem;                                            /* Klein icoon */
-            margin-left: 6px;                                              /* Afstand na count */
-            transition: transform 0.2s;                                    /* Vloeiende rotatie */
-        }
-
-        .tier-email-list {
-            display: none;                                                 /* Standaard verborgen */
-            padding: 6px 0 10px 8px;                                       /* Inspringing */
-            border-left: 2px solid rgba(255,255,255,0.08);                 /* Subtiele lijn links */
-            margin: 2px 0 8px 0;                                           /* Ruimte rondom */
-        }
-
-        .tier-email-list.open {
-            display: block;                                                /* Zichtbaar na klik */
-        }
-
-        .tier-email-list.open ~ .tier-row .tier-toggle {
-            transform: rotate(180deg);                                     /* Pijl omhoog als open */
-        }
-
-        .tier-email {
-            font-family: var(--font-mono);                                 /* Monospace */
-            font-size: 0.72rem;                                            /* Klein */
-            color: var(--text-primary);                                    /* Zelfde als pagina bezoeken labels */
-            padding: 2px 0;                                                /* Kleine ruimte */
-        }
-
-        .tier-email-leeg {
-            font-style: italic;                                            /* Cursief voor leeg bericht */
-            font-size: 0.7rem;                                             /* Iets kleiner */
-        }
-
-        /* ======================= FADE-UP ANIMATIE ======================= */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(14px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
+        tbody tr:hover td { background: #d8d8d8; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; background: var(--accent-dim); color: var(--accent); }
+        .filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 24px; }
+        .filter-label { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); white-space: nowrap; }
+        .tier-filter { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tier-btn { font-family: var(--font-mono); font-size: 0.75rem; padding: 5px 14px; border-radius: 20px; border: 1px solid transparent; cursor: pointer; font-weight: 600; transition: opacity 0.15s, transform 0.1s; opacity: 0.45; }
+        .tier-btn:hover  { opacity: 0.75; transform: translateY(-1px); }
+        .tier-btn.active { opacity: 1;    transform: translateY(-1px); }
+        .tier-btn[data-tier="all"]      { background: #555;    color: #fff;    border-color: #777;    }
+        .tier-btn[data-tier="anoniem"]  { background: #2a2a2a; color: #888888; border-color: #888888; }
+        .tier-btn[data-tier="guest"]    { background: #3a3a4a; color: #aaaacc; border-color: #aaaacc; }
+        .tier-btn[data-tier="owner"]    { background: #3a2e0a; color: #f0c040; border-color: #f0c040; }
+        .tier-btn[data-tier="admin"]    { background: #3a1a1a; color: #f08080; border-color: #f08080; }
+        .tier-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; cursor: pointer; user-select: none; }
+        .tier-row:hover { opacity: 0.85; }
+        .tier-toggle { font-size: 0.8rem; margin-left: 6px; transition: transform 0.2s; }
+        .tier-email-list { display: none; margin: 0 0 12px 8px; border-left: 2px solid rgba(255,255,255,0.08); padding-left: 12px; }
+        .tier-email-list.open { display: block; }
+        .tier-email { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-primary); padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .tier-email:last-child { border-bottom: none; }
+        .tier-email-leeg { color: rgba(255,255,255,0.2); font-style: italic; }
+        .dash-footer { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-align: right; margin-top: 8px; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         .stat-card:nth-child(1) { animation-delay: 0.05s; }
         .stat-card:nth-child(2) { animation-delay: 0.10s; }
         .stat-card:nth-child(3) { animation-delay: 0.15s; }
         .stat-card:nth-child(4) { animation-delay: 0.20s; }
         .panel:nth-child(1)     { animation-delay: 0.25s; }
         .panel:nth-child(2)     { animation-delay: 0.30s; }
-
-        /* ======================= TIMESTAMP FOOTER ======================= */
-        .dash-footer {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            text-align: right;
-            margin-top: 8px;
-        }
     </style>
 </head>
 <body>
 
-<!-- Eruda dev console — alleen tijdens development -->
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 
-<!-- Layout placeholders -->
 <div id="topbar-placeholder"></div>
 <div id="navbar-placeholder"></div>
 
-<!-- ======================= Hoofd content ======================= -->
 <main>
     <div class="dash-wrap">
 
-        <!-- Header: titel + knoppen -->
+      <!-- Toegang geweigerd scherm -->
+      <div id="accessDenied" class="access-denied">
+        <h2>Geen toegang</h2>
+        <p>Deze pagina is alleen toegankelijk voor administrators.<br>
+           Log in met een admin-account om verder te gaan.</p>
+      </div>
+
+      <!-- Dashboard inhoud — zichtbaar na geslaagde admin-check -->
+      <div id="page-content">
         <div class="dash-header">
-            <h1>Analytics <span>Dashboard</span></h1>
-            <div>
-                <button class="btn-refresh" id="btn-refresh">↻ Vernieuwen</button>
-                <button class="btn-clear"   id="btn-clear">✕ Data wissen</button>
-            </div>
+          <h1>Analytics <span>Dashboard</span></h1>
+          <div>
+            <button class="btn-refresh" id="btn-refresh">&#8635; Vernieuwen</button>
+            <button class="btn-clear"   id="btn-clear">&#x2715; Data wissen</button>
+          </div>
         </div>
 
-        <!-- Globale filter — filtert alle secties tegelijk -->
         <div class="filter-bar">
-            <span class="filter-label">Filter op account</span>
-            <div class="tier-filter">
-                <button class="tier-btn active" data-tier="all">Alle</button>
-                <button class="tier-btn" data-tier="anoniem">Niet ingelogd</button>
-                <button class="tier-btn" data-tier="guest">Guest</button>
-                <button class="tier-btn" data-tier="owner">Owner</button>
-                <button class="tier-btn" data-tier="admin">Admin</button>
-            </div>
+          <span class="filter-label">Filter op account</span>
+          <div class="tier-filter">
+            <button class="tier-btn active" data-tier="all">Alle</button>
+            <button class="tier-btn" data-tier="anoniem">Niet ingelogd</button>
+            <button class="tier-btn" data-tier="guest">Guest</button>
+            <button class="tier-btn" data-tier="owner">Owner</button>
+            <button class="tier-btn" data-tier="admin">Admin</button>
+          </div>
         </div>
 
-        <!-- Stat kaarten — gevuld door analytics-dashboard.js -->
         <div class="stat-grid" id="stat-grid"></div>
 
-        <!-- Pagina stats + tier verdeling -->
         <div class="bottom-grid">
-            <div class="panel" id="panel-events">
-                <p class="section-title">Pagina bezoeken</p>
-                <div id="events-chart"></div>
-            </div>
-            <div class="panel" id="panel-pages">
-                <p class="section-title">Tier verdeling</p>
-                <div id="pages-chart" style="margin-bottom:20px;"></div>
-                <p class="section-title">Sessies</p>
-                <div class="device-grid" id="device-grid"></div>
-            </div>
+          <div class="panel" id="panel-events">
+            <p class="section-title">Pagina bezoeken</p>
+            <div id="events-chart"></div>
+          </div>
+          <div class="panel" id="panel-pages">
+            <p class="section-title">Tier verdeling</p>
+            <div id="pages-chart" style="margin-bottom:20px;"></div>
+            <p class="section-title">Sessies</p>
+            <div class="device-grid" id="device-grid"></div>
+          </div>
         </div>
 
-        <!-- Recente bezoeken tabel -->
         <div class="sessions-panel">
-            <p class="section-title">Recente bezoeken</p>
-            <div id="sessions-table"></div>
+          <p class="section-title">Recente bezoeken</p>
+          <div id="sessions-table"></div>
         </div>
 
-        <!-- Timestamp laatste update -->
         <div class="dash-footer" id="dash-footer"></div>
+      </div><!-- /page-content -->
 
     </div>
 </main>
 
-<!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — verplichte laadvolgorde:
-     1. Supabase SDK        — vereist door auth.js + analytics-dashboard.js
-     2. utils.js            — vereist door alle modules
-     3. auth.js             — vereist door topbar.js + analytics-dashboard.js
-     4. Layout fetch        — TopBar, Navbar, Footer
-     5. analytics-dashboard.js — alles-in-één: tracker + dashboard
+     SCRIPTS — verplichte volgorde:
+     supabase → utils.js → auth.js → adminGuard.js → siteAnalytics.js
+     → TopBar fetch → topbar.js → admin-check → analytics-dashboard.js
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>      <!-- Tracker — vereist voor SiteAnalytics.trackPage() -->
+<script src="/MyFamTreeCollab/js/adminGuard.js"></script>       <!-- Admin toegangsbeveiliging -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>   <!-- Bezoektracking -->
 
 <script>
-    // TopBar laden — daarna topbar.js injecteren (vereist auth.js geladen)
+    // TopBar laden → topbar.js → admin-check → analytics-dashboard.js
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(function(resp) { return resp.text(); })
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data; // HTML injecteren
-            var s = document.createElement('script');                       // script-element aanmaken
-            s.src = '../js/topbar.js';                                     // bron instellen
-            document.body.appendChild(s);                                   // toevoegen aan DOM
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            document.getElementById('topbar-placeholder').innerHTML = html;  // TopBar injecteren
+            var s = document.createElement('script');                        // topbar script
+            s.src = '../js/topbar.js';                                       // pad topbar.js
+            s.onload = function() {
+                AdminGuard.protect('admin').then(function(granted) {         // admin-check
+                    if (!granted) return;                                     // stop als geen toegang
+                    var p = document.createElement('script');                // analytics script
+                    p.src = 'analytics-dashboard.js';                       // pad analytics
+                    document.body.appendChild(p);                            // toevoegen aan DOM
+                });
+            };
+            document.body.appendChild(s);                                    // topbar.js toevoegen
         });
 
-    // Navbar laden
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(function(resp) { return resp.text(); })
-        .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('navbar-placeholder').innerHTML = html; });
 
-    // Footer laden
     fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(function(resp) { return resp.text(); })
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('footer-placeholder').innerHTML = html; });
 </script>
-
-<!-- Alles-in-één analytics script — tracker + dashboard + admin-check -->
-<script src="analytics-dashboard.js"></script>
 
 </body>
 </html>
