@@ -1,20 +1,13 @@
-<!-- ======================= develop/sandbox.html v0.3.0 =======================
+<!-- ======================= develop/sandbox.html v0.4.0 =======================
+     Wijziging v0.4.0 (sessie 33):
+     - AdminGuard.protect('developer') toegevoegd — niet-admins zien foutscherm
+     - adminGuard.js toegevoegd aan laadvolgorde (na auth.js, voor i18next)
+     - #accessDenied blok toegevoegd (standaard display:none)
+     - #page-content wrapper toegevoegd rond pagina-inhoud
+     - topbar.js geladen via loadScript() zodat guard pas daarna loopt
      Wijziging v0.3.0 (sessie 27):
-     - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
-     - Namespace 'sandbox' geladen via i18nModule.init() promise-keten
-     - data-i18n attributen toegevoegd op alle zichtbare teksten
-     - Components geladen via i18nModule.onComponentLoaded() (i.p.v. innerHTML)
-     - document.title via i18nModule.t()
-     - Dubbel bestand samengevoegd tot één correct bestand
-     - Kapotte HTML hersteld: ongesloten tags, losse </section> verwijderd
-     - Dubbele Supabase/utils/auth script-blokken verwijderd
-     - Losse fetch-blokken bovenaan verwijderd
-     - Navbar-placeholder hoofdletter N gecorrigeerd naar navbar-placeholder
-     - eruda debug-script verwijderd
-     - siteAnalytics.js toegevoegd (ontbrak in tweede kopie)
-     - Laadvolgorde: supabase → utils → auth → siteAnalytics → i18next CDN → i18n.js
-
-     Wijziging v1.1.0 / v0.2.0 (sessie 20):
+     - i18n toegevoegd, namespace 'sandbox', data-i18n attributen
+     Wijziging v0.2.0 (sessie 20):
      - siteAnalytics.js toegevoegd, trackPage toegevoegd
      ======================================================================= -->
 <!DOCTYPE html>
@@ -24,7 +17,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sandbox</title>
 
-    <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
@@ -33,6 +25,19 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <style>
+        /* ======================= TOEGANG GEWEIGERD ======================= */
+        .access-denied {
+            background: #4a4a4a;
+            border: 1px solid #f08080;
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            max-width: 480px;
+            margin: 60px auto;
+        }
+        .access-denied h2 { font-size: 1.2rem; color: #f08080; margin-bottom: 10px; }
+        .access-denied p  { font-size: 0.9rem; color: #c0c0c0; line-height: 1.6; }
+
         /* ======================= SANDBOX BLOK ======================= */
         .binnenkort-blok { max-width: 520px; margin: 0 auto; text-align: center; padding: 48px 24px; }
         .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; }
@@ -41,89 +46,114 @@
         .binnenkort-blok ul { text-align: left; margin: 0 0 16px 20px; font-size: 0.95rem; color: #555; line-height: 1.6; }
         .knop-home { display: inline-block; padding: 10px 24px; background: #1E90FF; color: #fff; text-decoration: none; border-radius: 5px; font-size: 0.95rem; font-weight: bold; }
         .knop-home:hover { background: #1278d4; }
+
+        /* ─── Verberg tot auth-check klaar ─── */
+        #accessDenied { display: none; }
+        #page-content  { display: none; }
     </style>
 </head>
 <body>
 
-<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-
-<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
-<!-- ======================= Hoofd content ======================= -->
 <main>
-    <div class="binnenkort-blok">
-        <div class="icoon">🚀</div>                                        <!-- Sandbox icoon -->
-        <h1 data-i18n="sandbox:titel">Welkom in de Sandbox</h1>           <!-- i18n: titel -->
-        <p data-i18n="sandbox:beschrijving">                               <!-- i18n: intro -->
-            De sandbox is een pagina waar we nieuwe functionaliteiten testen.
-        </p>
-        <ul>
-            <li data-i18n="sandbox:li1">Personen toevoegen met Live Search en popup selectie</li>
-            <li data-i18n="sandbox:li2">Visualisatie van personen in een familie op een tijdslijn met verschillende niveaus</li>
-        </ul>
-        <p data-i18n="sandbox:gescheiden">                                 <!-- i18n: disclaimer -->
-            Alles wat je hier doet, blijft volledig gescheiden van de echte stamboomdata.
-        </p>
-        <a href="/MyFamTreeCollab/" class="knop-home"
-           data-i18n="sandbox:knopHome">Terug naar Home</a>                <!-- i18n: knoptekst -->
+    <!-- Toegang geweigerd scherm -->
+    <div id="accessDenied" class="access-denied">
+      <h2>Geen toegang</h2>
+      <p>Deze pagina is alleen toegankelijk voor developers.<br>
+         Log in met een admin-account om verder te gaan.</p>
+    </div>
+
+    <!-- Pagina inhoud — zichtbaar na geslaagde check -->
+    <div id="page-content">
+        <div class="binnenkort-blok">
+            <div class="icoon">🚀</div>
+            <h1 data-i18n="sandbox:titel">Welkom in de Sandbox</h1>
+            <p data-i18n="sandbox:beschrijving">
+                De sandbox is een pagina waar we nieuwe functionaliteiten testen.
+            </p>
+            <ul>
+                <li data-i18n="sandbox:li1">Personen toevoegen met Live Search en popup selectie</li>
+                <li data-i18n="sandbox:li2">Visualisatie van personen in een familie op een tijdslijn met verschillende niveaus</li>
+            </ul>
+            <p data-i18n="sandbox:gescheiden">
+                Alles wat je hier doet, blijft volledig gescheiden van de echte stamboomdata.
+            </p>
+            <a href="/MyFamTreeCollab/" class="knop-home"
+               data-i18n="sandbox:knopHome">Terug naar Home</a>
+        </div>
     </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — verplichte laadvolgorde (sessie 27):
-     1. Supabase SDK        — vereist door auth.js
-     2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. siteAnalytics.js    — bezoektracking, na auth.js
-     5. i18next CDN + plugins — vereist door i18n.js
-     6. i18n.js             — wraps i18next, exposeert window.i18nModule
-     7. Pagina init script  — init() → loadNamespace('sandbox') → render
+     SCRIPTS — verplichte laadvolgorde (sessie 33):
+     1. Supabase SDK
+     2. utils.js
+     3. auth.js
+     4. adminGuard.js    — toegangsbeveiliging, na auth.js
+     5. siteAnalytics.js
+     6. i18next CDN + plugins
+     7. i18n.js
+     8. Pagina init      — init() → loadNamespace → TopBar → loadScript(topbar.js)
+                           → AdminGuard.protect() → Navbar → Footer → trackPage
      ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
-<script src="../js/utils.js"></script>                                         <!-- Gedeelde hulpfuncties -->
-<script src="../js/auth.js"></script>                                          <!-- Authenticatie module -->
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                  <!-- Bezoektracking, na auth.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/adminGuard.js"></script>                     <!-- Toegangsbeveiliging -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
-<!-- i18next en plugins — volgorde is verplicht -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
-<script src="/MyFamTreeCollab/js/i18n.js"></script>                           <!-- i18n module wrapper -->
+<script src="/MyFamTreeCollab/js/i18n.js"></script>
 
 <script>
+    // loadScript — laadt extern JS als Promise, wacht op volledige uitvoering
+    function loadScript(src) {
+        return new Promise(function(resolve, reject) {
+            var s = document.createElement('script');  // nieuw script element
+            s.src = src;                               // bronpad instellen
+            s.onload  = resolve;                       // resolve na laden
+            s.onerror = reject;                        // reject bij fout
+            document.body.appendChild(s);              // toevoegen aan DOM
+        });
+    }
+
     i18nModule.init()
         .then(function () {
-            return i18nModule.loadNamespace('sandbox');                    // laad sandbox.json voor actieve taal
+            return i18nModule.loadNamespace('sandbox');                    // sandbox.json laden
         })
         .then(function () {
             document.title = i18nModule.t('sandbox:paginaTitel');         // paginatitel via i18n
-
             return fetch('/MyFamTreeCollab/Layout/TopBar.html')
-                .then(function (resp) { return resp.text(); })
-                .then(function (html) {
-                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
-                    var s = document.createElement('script');
-                    s.src = '../js/topbar.js';                            // topbar.js na #top-auth in DOM
-                    document.body.appendChild(s);
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder')); // TopBar injecteren
                 });
         })
         .then(function () {
+            return loadScript('/MyFamTreeCollab/js/topbar.js');            // topbar.js laden als Promise
+        })
+        .then(function () {
+            return AdminGuard.protect('developer');                        // developer-check via guard
+        })
+        .then(function (granted) {
+            if (!granted) return;                                          // stop als geen toegang
             return fetch('/MyFamTreeCollab/Layout/Navbar.html')
-                .then(function (resp) { return resp.text(); })
-                .then(function (html) {
-                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder')); // Navbar injecteren
                 });
         })
         .then(function () {
             return fetch('/MyFamTreeCollab/Layout/Footer.html')
-                .then(function (resp) { return resp.text(); })
-                .then(function (html) {
-                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder')); // Footer injecteren
                 });
         })
         .then(function () {
