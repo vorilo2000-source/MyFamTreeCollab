@@ -1,4 +1,4 @@
-<!-- ======================= admin/supabase-analyse.html v3.1.0 =======================
+<!-- ======================= admin/supabase-analyse.html v3.2.0 =======================
      Admin Supabase analyse pagina
      Wijziging v3.1.0:
      - Volgorde secties aangepast: stambomen per gebruiker → detail per boom → database tabellen
@@ -175,11 +175,25 @@
         </div>
       </div>
 
+      <!-- Voortgangsbalk database -->
+      <div class="progress-wrap">
+        <div class="progress-item">
+          <div class="progress-header">
+            <span class="progress-name">Database gebruik</span>
+            <span class="progress-nums" id="progDbNums">&#8212; / 500 MB</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-ok" id="progDbBar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Stambomen per gebruiker -->
       <div class="section-title">
         <span class="dot dot-trees"></span>
         Stambomen &#8212; overzicht per gebruiker
       </div>
+
       <div class="table-wrap">
         <table>
           <thead>
@@ -217,19 +231,6 @@
             <tr class="loading-row"><td colspan="5">Laden&#x2026;</td></tr>
           </tbody>
         </table>
-      </div>
-
-      <!-- Voortgangsbalk database -->
-      <div class="progress-wrap">
-        <div class="progress-item">
-          <div class="progress-header">
-            <span class="progress-name">Database gebruik</span>
-            <span class="progress-nums" id="progDbNums">&#8212; / 500 MB</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-ok" id="progDbBar" style="width:0%"></div>
-          </div>
-        </div>
       </div>
 
       <!-- Database tabellen -->
