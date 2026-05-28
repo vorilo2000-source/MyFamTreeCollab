@@ -72,9 +72,9 @@ Volledig nieuwe admin-pagina die live Supabase-data toont via de bestaande `Auth
 Alle pagina's die alleen voor admins bedoeld zijn krijgen dezelfde beveiligingslaag als `supabase-analyse.html`:
 - `AuthModule.getTier()` check bij laden
 - Niet-admin → rood foutscherm, geen data geladen
-- Admin logt uit → automatisch doorsturen naar home of loginscherm
+- Admin logt uit → automatisch doorsturen naar home
 
-**Betrokken pagina's:** `admin/accountbeheer.html`, `admin/analytics.html`, `admin/analyse.html`, `admin/supabase-analyse.html`
+**Betrokken pagina's:** `admin/accountbeheer.html`, `admin/analytics.html`, `admin/analyse.html`, `admin/supabase-analyse.html`, `develop/blank.html`, `develop/standaardpagina.html`, `develop/sandbox.html`
 
 ---
 
