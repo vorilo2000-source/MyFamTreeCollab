@@ -50,7 +50,7 @@
   },
   "rechten": {
     "title": "📋 Stamboom-rechten: Viewer & Editor",
-    "intro": "Viewer en Editor zijn <strong>geen account types</strong> — het zijn rechten die een Owner toekent aan een specifieke stamboom. Ze staan opgeslagen in een aparte tabel, niet in <code>profiles.tier</code>. Een gebruiker met tier <em>guest</em> kan Viewer of Editor zijn op de stamboom van een Owner.",
+    "intro": "Viewer en Editor zijn <strong>geen account types</strong> — het zijn rechten die een Owner toekent aan een specifieke stamboom. Een gebruiker <em>'guest'</em> met rechten kan Viewer of Editor zijn op de stamboom van een Owner.",
     "viewer": {
       "naam": "Viewer",
       "beschrijving": "Leesrecht op een gedeelde stamboom. Toegewezen door de Owner van die stamboom.",
