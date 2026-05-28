@@ -1,25 +1,14 @@
-<!-- ======================= develop/standaardpagina.html v1.4.0 =======================
+<!-- ======================= develop/standaardpagina.html v1.5.0 =======================
+     Wijziging v1.5.0 (sessie 33):
+     - AdminGuard.protect('developer') toegevoegd — niet-admins zien foutscherm
+     - adminGuard.js toegevoegd aan laadvolgorde (na auth.js, voor i18next)
+     - #accessDenied blok toegevoegd (standaard display:none)
+     - #page-content wrapper toegevoegd rond pagina-inhoud
+     - AdminGuard.protect() aangeroepen na loadScript(topbar.js), voor Navbar
      Wijziging v1.4.0 (sessie 28):
-     - loadScript() helper toegevoegd: laadt een JS-bestand als echte Promise
-       zodat de .then()-keten WACHT tot het script volledig geladen én uitgevoerd is.
-     - topbar.js wordt nu via loadScript() geladen i.p.v. appendChild(s) zonder await
-     - Navbar-fetch start pas NADAT topbar.js geladen én init() uitgevoerd heeft
-     - Dit lost de race condition op waarbij _showAdminDropdown() de adminDropdown/
-       developDropdown niet kon vinden omdat de Navbar-HTML nog niet geïnjecteerd was.
-
+     - loadScript() helper toegevoegd — race condition fix
      Wijziging v1.3.0 (sessie 27):
-     - i18n toegevoegd: i18next CDN + i18n.js in laadvolgorde
-     - Namespace 'standaardpagina' geladen via i18nModule.init() promise-keten
-     - data-i18n attributen toegevoegd op alle zichtbare teksten
-     - Components geladen via i18nModule.onComponentLoaded() (i.p.v. innerHTML)
-     - document.title via i18nModule.t()
-     - Dubbele Supabase/utils/auth script-blokken verwijderd
-     - Losse fetch-blokken bovenaan verwijderd
-     - Navbar-placeholder hoofdletter N gecorrigeerd naar navbar-placeholder
-     - eruda debug-script verwijderd
-     - trackPage gecorrigeerd: was "evenement", nu "standaardpagina"
-     - Laadvolgorde: supabase → utils → auth → siteAnalytics → i18next CDN → i18n.js
-
+     - i18n toegevoegd, namespace 'standaardpagina', data-i18n attributen
      Wijziging v1.2.0 / v0.2.0 (sessie 20):
      - siteAnalytics.js toegevoegd, trackPage toegevoegd
      ======================================================================= -->
@@ -30,7 +19,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Standaardpagina</title>
 
-    <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
@@ -39,6 +27,19 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <style>
+        /* ======================= TOEGANG GEWEIGERD ======================= */
+        .access-denied {
+            background: #4a4a4a;
+            border: 1px solid #f08080;
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            max-width: 480px;
+            margin: 60px auto;
+        }
+        .access-denied h2 { font-size: 1.2rem; color: #f08080; margin-bottom: 10px; }
+        .access-denied p  { font-size: 0.9rem; color: #c0c0c0; line-height: 1.6; }
+
         /* ======================= BINNENKORT BLOK ======================= */
         .binnenkort-blok { max-width: 520px; margin: 0 auto; text-align: center; padding: 48px 24px; }
         .binnenkort-blok .icoon { font-size: 3rem; margin-bottom: 16px; }
@@ -46,66 +47,72 @@
         .binnenkort-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 24px 0; }
         .knop-home { display: inline-block; padding: 10px 24px; background: #1E90FF; color: #fff; text-decoration: none; border-radius: 5px; font-size: 0.95rem; font-weight: bold; }
         .knop-home:hover { background: #1278d4; }
+
+        /* ─── Verberg tot auth-check klaar ─── */
+        #accessDenied { display: none; }
+        #page-content  { display: none; }
     </style>
 </head>
 <body>
 
-<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-
-<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
-<!-- ======================= Hoofd content ======================= -->
 <main>
-    <div class="binnenkort-blok">
-        <div class="icoon">🖼️</div>                                        <!-- Standaardpagina icoon -->
-        <h1 data-i18n="standaardpagina:titel">Standaard Pagina</h1>       <!-- i18n: titel -->
-        <p data-i18n="standaardpagina:beschrijving">                       <!-- i18n: omschrijving -->
-            De standaard pagina is een weergave van een standaard pagina opmaak.
-        </p>
-        <a href="/MyFamTreeCollab/" class="knop-home"
-           data-i18n="standaardpagina:knopHome">Terug naar Home</a>        <!-- i18n: knoptekst -->
+    <!-- Toegang geweigerd scherm -->
+    <div id="accessDenied" class="access-denied">
+      <h2>Geen toegang</h2>
+      <p>Deze pagina is alleen toegankelijk voor developers.<br>
+         Log in met een admin-account om verder te gaan.</p>
+    </div>
+
+    <!-- Pagina inhoud — zichtbaar na geslaagde check -->
+    <div id="page-content">
+        <div class="binnenkort-blok">
+            <div class="icoon">🖼️</div>
+            <h1 data-i18n="standaardpagina:titel">Standaard Pagina</h1>
+            <p data-i18n="standaardpagina:beschrijving">
+                De standaard pagina is een weergave van een standaard pagina opmaak.
+            </p>
+            <a href="/MyFamTreeCollab/" class="knop-home"
+               data-i18n="standaardpagina:knopHome">Terug naar Home</a>
+        </div>
     </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
 
 <!-- =============================================================
-     SCRIPTS — verplichte laadvolgorde (sessie 28):
-     1. Supabase SDK        — vereist door auth.js
-     2. utils.js            — vereist door alle andere modules
-     3. auth.js             — vereist door topbar.js
-     4. siteAnalytics.js    — bezoektracking, na auth.js
-     5. i18next CDN + plugins — vereist door i18n.js
-     6. i18n.js             — wraps i18next, exposeert window.i18nModule
-     7. Pagina init script  — init() → loadNamespace → TopBar → topbar.js
-                              → Navbar → Footer → analytics
-                              (elke stap wacht op de vorige via Promise-keten)
+     SCRIPTS — verplichte laadvolgorde (sessie 33):
+     1. Supabase SDK
+     2. utils.js
+     3. auth.js
+     4. adminGuard.js    — toegangsbeveiliging, na auth.js
+     5. siteAnalytics.js
+     6. i18next CDN + plugins
+     7. i18n.js
+     8. Pagina init      — init() → loadNamespace → TopBar → loadScript(topbar.js)
+                           → AdminGuard.protect() → Navbar → Footer → trackPage
      ============================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <!-- Supabase SDK -->
-<script src="../js/utils.js"></script>                                         <!-- Gedeelde hulpfuncties -->
-<script src="../js/auth.js"></script>                                          <!-- Authenticatie module -->
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                  <!-- Bezoektracking, na auth.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/adminGuard.js"></script>                     <!-- Toegangsbeveiliging -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
-<!-- i18next en plugins — volgorde is verplicht -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
-<script src="/MyFamTreeCollab/js/i18n.js"></script>                           <!-- i18n module wrapper -->
+<script src="/MyFamTreeCollab/js/i18n.js"></script>
 
 <script>
     // -------------------------------------------------------------------------
     // loadScript(src)
     // Laadt een extern JS-bestand en geeft een Promise terug die pas resolved
     // wanneer het script volledig geladen én uitgevoerd is (onload).
-    // Zo kan de .then()-keten WACHTEN op topbar.js voordat de Navbar-fetch
-    // start — dit voorkomt de race condition waarbij _showAdminDropdown()
-    // de adminDropdown/developDropdown nog niet in de DOM kon vinden.
     // -------------------------------------------------------------------------
     function loadScript(src) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             var s    = document.createElement('script');  // Nieuw script-element aanmaken
             s.src    = src;                               // Bronpad instellen
             s.onload  = resolve;                          // Resolve als script geladen is
@@ -114,15 +121,9 @@
         });
     }
 
-    // -------------------------------------------------------------------------
-    // Hoofdketen — elke stap wacht op de vorige via Promise-chaining.
-    // Volgorde is kritisch: topbar.js MOET geladen en uitgevoerd zijn
-    // voordat de Navbar-HTML geïnjecteerd wordt, anders vindt
-    // _showAdminDropdown() de adminDropdown/developDropdown niet.
-    // -------------------------------------------------------------------------
     i18nModule.init()
 
-        // Stap 1: laad de paginaspecifieke vertaalnamespace
+        // Stap 1: paginaspecifieke namespace laden
         .then(function () {
             return i18nModule.loadNamespace('standaardpagina');            // standaardpagina.json laden
         })
@@ -134,57 +135,48 @@
 
         // Stap 3: TopBar HTML ophalen en injecteren
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/TopBar.html')            // TopBar HTML ophalen
-                .then(function (resp) { return resp.text(); })             // Tekst uitpakken
-                .then(function (html) {
-                    i18nModule.onComponentLoaded(                          // HTML injecteren + vertalen
-                        html,
-                        document.getElementById('topbar-placeholder')
-                    );
+            return fetch('/MyFamTreeCollab/Layout/TopBar.html')
+                .then(function(resp) { return resp.text(); })
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder')); // TopBar injecteren
                 });
         })
 
-        // Stap 4: topbar.js laden via loadScript() — WACHT tot script uitgevoerd is
-        // Dit is de kritische fix: pas als topbar.js klaar is (incl. init() en
-        // _showAdminDropdown), mag de Navbar-HTML geïnjecteerd worden.
+        // Stap 4: topbar.js laden via loadScript() — wacht op volledige uitvoering
         .then(function () {
-            return loadScript('/MyFamTreeCollab/js/topbar.js');            // topbar.js laden als Promise
+            return loadScript('/MyFamTreeCollab/js/topbar.js');            // topbar.js als Promise
         })
 
-        // Stap 5: Navbar HTML ophalen en injecteren
-        // Op dit punt zijn adminDropdown en developDropdown nog NIET in de DOM,
-        // maar _showAdminDropdown() gebruikt nu een MutationObserver (v2.3.2)
-        // die exact reageert zodra ze verschijnen — geen timing-probleem meer.
+        // Stap 5: admin-check via AdminGuard — stopt keten als geen toegang
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/Navbar.html')            // Navbar HTML ophalen
-                .then(function (resp) { return resp.text(); })             // Tekst uitpakken
-                .then(function (html) {
-                    i18nModule.onComponentLoaded(                          // HTML injecteren + vertalen
-                        html,
-                        document.getElementById('navbar-placeholder')
-                    );
+            return AdminGuard.protect('developer');                        // developer-check
+        })
+
+        // Stap 6: Navbar laden — alleen als toegang verleend
+        .then(function (granted) {
+            if (!granted) return;                                          // stop als geen toegang
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+                .then(function(resp) { return resp.text(); })
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder')); // Navbar injecteren
                 });
         })
 
-        // Stap 6: Footer HTML ophalen en injecteren
+        // Stap 7: Footer laden
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/Footer.html')            // Footer HTML ophalen
-                .then(function (resp) { return resp.text(); })             // Tekst uitpakken
-                .then(function (html) {
-                    i18nModule.onComponentLoaded(                          // HTML injecteren + vertalen
-                        html,
-                        document.getElementById('footer-placeholder')
-                    );
+            return fetch('/MyFamTreeCollab/Layout/Footer.html')
+                .then(function(resp) { return resp.text(); })
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder')); // Footer injecteren
                 });
         })
 
-        // Stap 7: bezoek registreren (na alle UI-renders)
+        // Stap 8: bezoek registreren
         .then(function () {
             SiteAnalytics.trackPage('standaardpagina');                    // Paginabezoek loggen
         })
 
-        // Foutafhandeling voor de volledige keten
-        .catch(function (err) {
+        .catch(function(err) {
             console.error('[standaardpagina] Initialisatiefout:', err);    // Fout loggen
         });
 </script>
