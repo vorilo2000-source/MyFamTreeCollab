@@ -1,7 +1,9 @@
 {
   "page": {
     "title": "Access & Collaboration",
-    "intro": "MyFamTreeCollab uses account types that determine what you can do. The basic version is free and fully local — no account required. Cloud storage and collaboration are available via an Owner account (donation ~€5/6 months)."
+    "intro": "MyFamTreeCollab uses account types that determine what you can do. The basic version is free and fully local,
+  no account required. Cloud storage and collaboration are available via an Owner account (donation)."
+    
   },
   "hoe": {
     "title": "⚙️ How does access work?",
@@ -10,7 +12,7 @@
     "stap2_label": "Create a basic account (guest)",
     "stap2_tekst": "free registration gives access to up to 60 persons locally.",
     "stap3_label": "Become an Owner via donation",
-    "stap3_tekst": "~€5 per 6 months activates cloud backup, sharing and collaboration.",
+    "stap3_tekst": "a donation activates cloud backup, sharing and collaboration.",
     "stap4_label": "Assign Viewer / Editor",
     "stap4_tekst": "an Owner invites others and grants them read or edit access to a specific family tree."
   },
@@ -38,7 +40,7 @@
     },
     "owner": {
       "naam": "Owner account",
-      "badge": "Donation ~€5 / 6 months",
+      "badge": "Donation required",
       "beschrijving": "Full access. Cloud backup, unlimited persons, family tree sharing and collaboration.",
       "feat1": "Unlimited persons locally",
       "feat2": "Cloud backup",
@@ -50,7 +52,7 @@
   },
   "rechten": {
     "title": "📋 Family tree rights: Viewer & Editor",
-    "intro": "Viewer and Editor are <strong>not account types</strong> — they are rights granted by an Owner to a specific family tree. They are stored in a separate table, not in <code>profiles.tier</code>. A user with tier <em>guest</em> can be Viewer or Editor on an Owner's family tree.",
+    "intro": "Viewer and Editor are <strong>not account types</strong> — they are rights granted by an Owner to a specific family tree. A user <em>guest</em> with access gcan be Viewer or Editor on an Owner's family tree.",
     "viewer": {
       "naam": "Viewer",
       "beschrijving": "Read access to a shared family tree. Assigned by the Owner of that tree.",
@@ -74,15 +76,15 @@
     "th_optie": "Option",
     "th_bedrag": "Amount",
     "th_wat": "What you get",
-    "periodiek_label": "Recurring",
+    "periodiek_label": "Donation 1",
     "periodiek_per": "per 6 months",
-    "periodiek_wat": "Owner account active as long as the donation continues. Cancel anytime.",
-    "eenmalig_label": "One-time",
-    "eenmalig_per": "one-time",
-    "eenmalig_wat": "Permanent Owner activation for one family tree. No further obligations.",
+    "periodiek_wat": "Owner account active as long as the donation is running for two family trees (Cloud backup). Family tree sharing and collaboration. No further obligations.",
+    "eenmalig_label": "Donation 2",
+    "eenmalig_per": "Yearly",
+    "eenmalig_wat": "Owner account active for the duration of the donation for three family trees (Cloud backup). Family tree sharing and collaboration. No further obligations.",
     "stichtend_label": "Founding member",
-    "stichtend_per": "one-time",
-    "stichtend_wat": "Permanent Owner activation + early access to new features + listed as founding member."  ,
+    "stichtend_per": "Yearly",
+    "stichtend_wat": "Owner activation + early access to new features + listed as founding member."  ,
     "noot": "<strong>Transparency:</strong> there is no automatic payment verification yet. The Owner account is activated manually after receipt of a donation. This will be automated in a future phase."
   },
   "cta": {
