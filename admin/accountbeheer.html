@@ -1,13 +1,13 @@
-<!-- ======================= admin/accountbeheer.html v2.3.0 =======================
-     Admin accountbeheer pagina
-     Wijziging t.o.v. v2.2.0:
+<!-- ======================= admin/accountbeheer.html v2.4.0 =======================
+     Wijziging v2.4.0 (sessie 33):
+     - AdminGuard.protect('admin') toegevoegd — niet-admins zien foutscherm
+     - AuthModule.onAuthChange uitlog-redirect via adminGuard.js
+     - #page-content wrapper toegevoegd rond alle pagina-inhoud
+     - #accessDenied blok toegevoegd (standaard display:none)
+     - adminGuard.js toegevoegd aan laadvolgorde (na auth.js, voor topbar.js)
+     Wijziging v2.3.0:
      - Tier filter: viewer/editor vervangen door guest (account types)
-     - Stat-cards: viewer/editor vervangen door guest
-     - CSS tier-badge: guest toegevoegd, viewer/editor verwijderd
-     - Stat IDs: statViewer/statEditor vervangen door statGuest
-     - tierFilter opties aangepast: guest | owner | admin
      ======================================================================= -->
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -15,7 +15,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accountbeheer</title>
 
-    <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
@@ -24,376 +23,167 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <style>
-        /* ─── Kleurvariabelen — centrale definitie voor heel de pagina ─── */
+        /* ─── Kleurvariabelen ─── */
         :root {
-            --bg-page:        #565656;    /* hoofdachtergrond van <main> */
-            --bg-card:        #4a4a4a;    /* kaart achtergrond */
-            --bg-card-hover:  #505050;    /* kaart hover */
-            --bg-thead:       #3e3e3e;    /* tabelkop achtergrond */
-            --bg-row-hover:   #4e4e4e;    /* rij hover */
-            --bg-input:       #3e3e3e;    /* invoervelden en dropdowns */
-            --bg-modal:       #3e3e3e;    /* modal achtergrond */
-            --bg-toast:       #2a2a2a;    /* toast achtergrond */
-            --border:         #6a6a6a;    /* standaard rand kleur */
-            --border-light:   #5a5a5a;    /* lichtere rand variant */
-            --text-primary:   #f0f0f0;    /* hoofdtekst */
-            --text-secondary: #c0c0c0;    /* subtitel / labels */
-            --text-muted:     #999;       /* gedimde tekst */
-            --accent:         #00d4aa;    /* teal accent (zelfde als analytics) */
-
-            /* ─── Tier kleuren — account types: guest | owner | admin ─── */
-            --tier-totaal-bg:  #4a4a5a;   /* grijsblauw — neutraal totaal */
-            --tier-totaal-fg:  #c8c8ff;   /* lichtpaars op grijsblauw */
-            --tier-guest-bg:   #2a2a2a;   /* donkergrijs — guest */
-            --tier-guest-fg:   #aaaaaa;   /* grijs — guest */
-            --tier-owner-bg:   #3a2e0a;   /* donkergoud */
-            --tier-owner-fg:   #f0c040;   /* helder goud */
-            --tier-admin-bg:   #3a1a1a;   /* donkerrood */
-            --tier-admin-fg:   #f08080;   /* helder rood */
+            --bg-page:        #565656;
+            --bg-card:        #4a4a4a;
+            --bg-card-hover:  #505050;
+            --bg-thead:       #3e3e3e;
+            --bg-row-hover:   #4e4e4e;
+            --bg-input:       #3e3e3e;
+            --bg-modal:       #3e3e3e;
+            --bg-toast:       #2a2a2a;
+            --border:         #6a6a6a;
+            --border-light:   #5a5a5a;
+            --text-primary:   #f0f0f0;
+            --text-secondary: #c0c0c0;
+            --text-muted:     #999;
+            --accent:         #00d4aa;
+            --tier-totaal-bg: #4a4a5a; --tier-totaal-fg: #c8c8ff;
+            --tier-guest-bg:  #2a2a2a; --tier-guest-fg:  #aaaaaa;
+            --tier-owner-bg:  #3a2e0a; --tier-owner-fg:  #f0c040;
+            --tier-admin-bg:  #3a1a1a; --tier-admin-fg:  #f08080;
         }
 
-        /* ─── Main achtergrond ─── */
-        main {
-            background-color: var(--bg-page);            /* #565656 — zoals afgesproken */
-            min-height: 100vh;                           /* volledige hoogte */
-        }
+        main { background-color: var(--bg-page); min-height: 100vh; }
 
-        /* ─── Accountbeheer pagina stijlen ─── */
-        .admin-wrap {
-            max-width: 1100px;                           /* maximale breedte van de content */
-            margin: 0 auto;                              /* horizontaal centreren */
-            padding: 32px 24px;                         /* ruimte rondom de content */
-        }
-
-        .admin-wrap h1 {
-            font-size: 1.6rem;                           /* paginatitel grootte */
-            font-weight: bold;                           /* vetgedrukt */
-            color: var(--text-primary);                  /* lichte tekst op donkere achtergrond */
-            margin-bottom: 8px;                          /* ruimte onder de titel */
-        }
-
-        .admin-wrap .subtitel {
-            font-size: 0.9rem;                           /* kleinere tekst voor subtitel */
-            color: var(--text-secondary);                /* gedimde lichte tekst */
-            margin-bottom: 28px;                         /* ruimte onder de subtitel */
-        }
-
-        /* ─── Statistieken ─── */
-        .stats-grid {
-            display: grid;                               /* grid layout voor de kaarten */
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* responsief */
-            gap: 12px;                                   /* ruimte tussen de kaarten */
-            margin-bottom: 28px;                         /* ruimte onder het grid */
-        }
-
-        .stat-card {
-            background: var(--bg-card);                  /* donkere kaart achtergrond */
-            border: 1px solid var(--border);             /* subtiele rand */
-            border-radius: 8px;                          /* afgeronde hoeken */
-            padding: 16px;                               /* ruimte binnen de kaart */
-            text-align: center;                          /* tekst centreren */
-            border-top: 3px solid var(--accent);         /* accent streep bovenaan */
-        }
-
-        /* Tier-specifieke accentkleur bovenaan elke stat-kaart */
-        .stat-card:nth-child(1) { border-top-color: var(--tier-totaal-fg); } /* totaal — paars */
-        .stat-card:nth-child(2) { border-top-color: var(--tier-guest-fg);  } /* guest — grijs */
-        .stat-card:nth-child(3) { border-top-color: var(--tier-owner-fg);  } /* owner — goud */
-        .stat-card:nth-child(4) { border-top-color: var(--tier-admin-fg);  } /* admin — rood */
-
-        .stat-label {
-            font-size: 0.75rem;                          /* kleine label tekst */
-            text-transform: uppercase;                   /* hoofdletters */
-            letter-spacing: 0.08em;                      /* ruimte tussen letters */
-            color: var(--text-muted);                    /* gedimde tekst */
-            margin-bottom: 6px;                          /* ruimte onder het label */
-        }
-
-        .stat-value {
-            font-size: 2rem;                             /* groot getal */
-            font-weight: bold;                           /* vetgedrukt */
-            color: var(--text-primary);                  /* lichte tekst */
-        }
-
-        /* Tier-specifieke kleur voor het getal zelf */
-        #statTotal { color: var(--tier-totaal-fg); }    /* totaal — paars */
-        #statGuest { color: var(--tier-guest-fg);  }    /* guest — grijs */
-        #statOwner { color: var(--tier-owner-fg);  }    /* owner — goud */
-        #statAdmin { color: var(--tier-admin-fg);  }    /* admin — rood */
-
-        /* ─── Toolbar (zoekbalk + filter + knop) ─── */
-        .toolbar {
-            display: flex;                               /* horizontale rij */
-            gap: 10px;                                   /* ruimte tussen elementen */
-            margin-bottom: 16px;                         /* ruimte onder de toolbar */
-            flex-wrap: wrap;                             /* doorbreken op kleine schermen */
-            align-items: center;                         /* verticaal uitlijnen */
-        }
-
-        .toolbar input {
-            flex: 1;                                     /* neemt beschikbare ruimte in */
-            min-width: 200px;                            /* minimale breedte */
-            padding: 8px 12px;                          /* ruimte binnen het invoerveld */
-            border: 1px solid var(--border);             /* rand */
-            border-radius: 5px;                          /* afgeronde hoeken */
-            font-size: 0.9rem;                           /* tekstgrootte */
-            background: var(--bg-input);                 /* donkere invoer achtergrond */
-            color: var(--text-primary);                  /* lichte tekst */
-        }
-
-        .toolbar input::placeholder { color: var(--text-muted); } /* gedimde placeholder tekst */
-
-        .toolbar select, .toolbar button {
-            padding: 8px 14px;                          /* ruimte binnen select en knop */
-            border: 1px solid var(--border);             /* rand */
-            border-radius: 5px;                          /* afgeronde hoeken */
-            font-size: 0.9rem;                           /* tekstgrootte */
-            background: var(--bg-input);                 /* donkere achtergrond */
-            color: var(--text-primary);                  /* lichte tekst */
-            cursor: pointer;                             /* handcursor */
-        }
-
-        .toolbar button:hover { background: var(--bg-card-hover); } /* iets lichter bij hover */
-
-        /* ─── Gebruikerstabel ─── */
-        .table-wrap {
-            overflow-x: auto;
-            border: 1px solid #dee2e6;
+        /* ─── Toegang geweigerd blok ─── */
+        .access-denied {
+            background: var(--bg-card);
+            border: 1px solid var(--tier-admin-fg);
             border-radius: 8px;
-            background: #6e6e6e;                         /* middelgrijs voor de tabelrijen */
+            padding: 32px;
+            text-align: center;
+            max-width: 480px;
+            margin: 60px auto;
         }
+        .access-denied h2 { font-size: 1.2rem; color: var(--tier-admin-fg); margin-bottom: 10px; }
+        .access-denied p  { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
 
-        table {
-            width: 100%;                                 /* volledige breedte */
-            border-collapse: collapse;                   /* geen dubbele randen */
-            font-size: 0.88rem;                          /* tekstgrootte in de tabel */
-        }
-
-        thead { background: var(--bg-thead); }           /* donkere tabelkop */
-
-        thead th {
-            padding: 10px 14px;                         /* ruimte in de koptekst cellen */
-            text-align: left;                            /* links uitlijnen */
-            font-size: 0.75rem;                          /* kleine koptekst */
-            text-transform: uppercase;                   /* hoofdletters */
-            letter-spacing: 0.08em;                      /* ruimte tussen letters */
-            color: var(--text-secondary);                /* gedimde lichte koptekst */
-            border-bottom: 1px solid var(--border);      /* scheidingslijn onder kop */
-            white-space: nowrap;                         /* geen afbreking */
-        }
-
-        tbody tr { border-bottom: 1px solid var(--border-light); background: #6e6e6e; } /* middelgrijs + rijscheiding */
-        tbody tr:last-child { border-bottom: none; }                  /* geen lijn na laatste rij */
-        tbody tr:hover { background: var(--bg-row-hover); }          /* donkerder bij hover */
-        tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); } /* cel opmaak */
-
-        .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* lange e-mails afkappen */
-
-        /* ─── Tier badges — account types: guest | owner | admin ─── */
-        .tier-badge {
-            display: inline-block;                       /* inline blok element */
-            padding: 3px 10px;                          /* ruimte binnen de badge */
-            border-radius: 12px;                         /* ronde badge vorm */
-            font-size: 0.75rem;                          /* kleine tekst */
-            font-weight: 600;                            /* halfvet */
-            text-transform: uppercase;                   /* hoofdletters */
-        }
-
-        .tier-badge.guest { background: var(--tier-guest-bg); color: var(--tier-guest-fg); } /* grijs */
-        .tier-badge.owner { background: var(--tier-owner-bg); color: var(--tier-owner-fg); } /* goud */
-        .tier-badge.admin { background: var(--tier-admin-bg); color: var(--tier-admin-fg); } /* rood */
-
-        /* ─── Tier select dropdown ─── */
-        .tier-select {
-            padding: 4px 8px;                            /* ruimte binnen de dropdown */
-            border: 1px solid var(--border);             /* rand */
-            border-radius: 4px;                          /* afgeronde hoeken */
-            font-size: 0.85rem;                          /* tekstgrootte */
-            background: var(--bg-input);                 /* donkere achtergrond */
-            color: var(--text-primary);                  /* lichte tekst */
-            cursor: pointer;                             /* handcursor */
-        }
-
-        /* ─── Actieknoppen per rij ─── */
-        .row-actions { display: flex; gap: 6px; }        /* horizontale rij knoppen */
-
-        .btn-action {
-            padding: 4px 10px;                           /* ruimte binnen de knop */
-            border: 1px solid var(--border);             /* rand */
-            border-radius: 4px;                          /* afgeronde hoeken */
-            font-size: 0.8rem;                           /* kleine tekstgrootte */
-            background: var(--bg-input);                 /* donkere achtergrond */
-            color: var(--text-primary);                  /* lichte tekst */
-            cursor: pointer;                             /* handcursor */
-            transition: all 0.15s;                       /* vloeiende hover animatie */
-        }
-
+        /* ─── Pagina inhoud ─── */
+        .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+        .admin-wrap h1 { font-size: 1.6rem; font-weight: bold; color: var(--text-primary); margin-bottom: 8px; }
+        .admin-wrap .subtitel { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 28px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 28px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; border-top: 3px solid var(--accent); }
+        .stat-card:nth-child(1) { border-top-color: var(--tier-totaal-fg); }
+        .stat-card:nth-child(2) { border-top-color: var(--tier-guest-fg);  }
+        .stat-card:nth-child(3) { border-top-color: var(--tier-owner-fg);  }
+        .stat-card:nth-child(4) { border-top-color: var(--tier-admin-fg);  }
+        .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; }
+        .stat-value { font-size: 2rem; font-weight: bold; color: var(--text-primary); }
+        #statTotal { color: var(--tier-totaal-fg); }
+        #statGuest { color: var(--tier-guest-fg);  }
+        #statOwner { color: var(--tier-owner-fg);  }
+        #statAdmin { color: var(--tier-admin-fg);  }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .toolbar input { flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; background: var(--bg-input); color: var(--text-primary); }
+        .toolbar input::placeholder { color: var(--text-muted); }
+        .toolbar select, .toolbar button { padding: 8px 14px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; background: var(--bg-input); color: var(--text-primary); cursor: pointer; }
+        .toolbar button:hover { background: var(--bg-card-hover); }
+        .table-wrap { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 8px; background: #6e6e6e; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        thead { background: var(--bg-thead); }
+        thead th { padding: 10px 14px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid var(--border-light); background: #6e6e6e; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--bg-row-hover); }
+        tbody td { padding: 10px 14px; vertical-align: middle; color: var(--text-primary); }
+        .col-email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tier-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .tier-badge.guest { background: var(--tier-guest-bg); color: var(--tier-guest-fg); }
+        .tier-badge.owner { background: var(--tier-owner-bg); color: var(--tier-owner-fg); }
+        .tier-badge.admin { background: var(--tier-admin-bg); color: var(--tier-admin-fg); }
+        .tier-select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; background: var(--bg-input); color: var(--text-primary); cursor: pointer; }
+        .row-actions { display: flex; gap: 6px; }
+        .btn-action { padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.8rem; background: var(--bg-input); color: var(--text-primary); cursor: pointer; transition: all 0.15s; }
         .btn-action:hover        { background: var(--bg-card-hover); }
         .btn-action.danger:hover { background: var(--tier-admin-bg); border-color: var(--tier-admin-fg); color: var(--tier-admin-fg); }
-
-        .loading-row td, .empty-row td {
-            text-align: center;                          /* centreer laad/leeg tekst */
-            color: var(--text-muted);                    /* gedimde tekst */
-            padding: 40px;                               /* ruimte rondom de tekst */
-        }
-
-        /* ─── Toast notificatie ─── */
-        #toast {
-            position: fixed;                             /* vast op het scherm */
-            bottom: 24px;                               /* afstand van onderkant */
-            right: 24px;                                /* afstand van rechterkant */
-            background: var(--bg-toast);                 /* zeer donkere achtergrond */
-            color: var(--text-primary);                  /* lichte tekst */
-            font-size: 0.88rem;                          /* tekstgrootte */
-            padding: 10px 18px;                         /* ruimte binnen de toast */
-            border-radius: 6px;                          /* afgeronde hoeken */
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);     /* zwaardere schaduw */
-            opacity: 0;                                  /* standaard onzichtbaar */
-            transform: translateY(8px);                  /* licht naar beneden verschoven */
-            transition: opacity 0.2s, transform 0.2s;   /* vloeiende animatie */
-            pointer-events: none;                        /* niet klikbaar */
-            z-index: 999;                                /* boven alles */
-            max-width: 300px;                            /* maximale breedte */
-        }
-
+        .loading-row td, .empty-row td { text-align: center; color: var(--text-muted); padding: 40px; }
+        #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg-toast); color: var(--text-primary); font-size: 0.88rem; padding: 10px 18px; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 999; max-width: 300px; }
         #toast.show  { opacity: 1; transform: translateY(0); }
         #toast.error { background: var(--tier-admin-bg); color: var(--tier-admin-fg); }
-
-        /* ─── Bevestigingsmodal ─── */
-        .modal-overlay {
-            position: fixed;                             /* vast op het scherm */
-            inset: 0;                                    /* volledige viewport bedekken */
-            background: rgba(0,0,0,0.65);               /* donkere overlay */
-            display: flex;                               /* flexbox voor centreren */
-            align-items: center;                         /* verticaal centreren */
-            justify-content: center;                     /* horizontaal centreren */
-            z-index: 500;                                /* boven de pagina */
-            opacity: 0;                                  /* standaard onzichtbaar */
-            pointer-events: none;                        /* niet klikbaar als gesloten */
-            transition: opacity 0.2s;                    /* vloeiende animatie */
-        }
-
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-        .modal-box {
-            background: var(--bg-modal);                 /* donkere modal achtergrond */
-            border: 1px solid var(--border);             /* subtiele rand */
-            border-radius: 8px;                          /* afgeronde hoeken */
-            padding: 28px;                               /* ruimte binnen de modal */
-            width: 360px;                                /* breedte van de modal */
-            max-width: 90vw;                             /* niet breder dan het scherm */
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);     /* zwaardere schaduw */
-        }
-
+        .modal-box { background: var(--bg-modal); border: 1px solid var(--border); border-radius: 8px; padding: 28px; width: 360px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
         .modal-box h3 { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: var(--text-primary); }
         .modal-box p  { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }
         .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-
-        .btn-cancel {
-            padding: 8px 18px;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        .btn-confirm-delete {
-            padding: 8px 18px;
-            border: 1px solid var(--tier-admin-fg);
-            border-radius: 5px;
-            background: var(--tier-admin-bg);
-            color: var(--tier-admin-fg);
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
+        .btn-cancel { padding: 8px 18px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg-input); color: var(--text-primary); font-size: 0.9rem; cursor: pointer; }
+        .btn-confirm-delete { padding: 8px 18px; border: 1px solid var(--tier-admin-fg); border-radius: 5px; background: var(--tier-admin-bg); color: var(--tier-admin-fg); font-size: 0.9rem; cursor: pointer; }
         .btn-confirm-delete:hover { background: #4a2020; }
-
-        /* ─── Timestamp label ─── */
         #lastRefresh { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
+
+        /* ─── Verberg inhoud tot auth-check klaar is ─── */
+        #accessDenied { display: none; }
+        #page-content  { display: none; }
     </style>
 </head>
 <body>
 
-<!-- ======================= source view enablement  ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 
-<!-- ======================= TopBar ======================= -->
 <div id="topbar-placeholder"></div>
-
-<!-- ======================= Navbar ======================= -->
 <div id="navbar-placeholder"></div>
 
-<!-- ======================= Hoofd content ======================= -->
 <main>
   <div class="admin-wrap">
 
-    <h1>Accountbeheer</h1>
-    <p id="lastRefresh" class="subtitel">Laden...</p>
-
-    <!-- Statistieken — account types: totaal | guest | owner | admin -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Totaal</div>
-        <div class="stat-value" id="statTotal">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Guest</div>
-        <div class="stat-value" id="statGuest">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Owner</div>
-        <div class="stat-value" id="statOwner">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Admin</div>
-        <div class="stat-value" id="statAdmin">—</div>
-      </div>
+    <!-- Toegang geweigerd scherm — zichtbaar als niet admin -->
+    <div id="accessDenied" class="access-denied">
+      <h2>Geen toegang</h2>
+      <p>Deze pagina is alleen toegankelijk voor administrators.<br>
+         Log in met een admin-account om verder te gaan.</p>
     </div>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <input type="text" id="searchInput" placeholder="Zoek op e-mail of gebruikersnaam…" />
-      <select id="tierFilter">
-        <option value="all">Alle tiers</option>
-        <option value="guest">Guest</option>
-        <option value="owner">Owner</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button id="btnRefresh">↻ Vernieuwen</button>
-    </div>
+    <!-- Pagina inhoud — zichtbaar na geslaagde admin-check -->
+    <div id="page-content">
+      <h1>Accountbeheer</h1>
+      <p id="lastRefresh" class="subtitel">Laden&#x2026;</p>
 
-    <!-- Tabel — 5 kolommen -->
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>E-mail</th>
-            <th>Huidige tier</th>
-            <th>Tier wijzigen</th>
-            <th>Aangemeld op</th>
-            <th>Acties</th>
-          </tr>
-        </thead>
-        <tbody id="usersTbody">
-          <tr class="loading-row"><td colspan="5">Laden…</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Totaal</div><div class="stat-value" id="statTotal">&#8212;</div></div>
+        <div class="stat-card"><div class="stat-label">Guest</div><div class="stat-value"  id="statGuest">&#8212;</div></div>
+        <div class="stat-card"><div class="stat-label">Owner</div><div class="stat-value"  id="statOwner">&#8212;</div></div>
+        <div class="stat-card"><div class="stat-label">Admin</div><div class="stat-value"  id="statAdmin">&#8212;</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="Zoek op e-mail of gebruikersnaam&#x2026;" />
+        <select id="tierFilter">
+          <option value="all">Alle tiers</option>
+          <option value="guest">Guest</option>
+          <option value="owner">Owner</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button id="btnRefresh">&#8635; Vernieuwen</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>E-mail</th>
+              <th>Huidige tier</th>
+              <th>Tier wijzigen</th>
+              <th>Aangemeld op</th>
+              <th>Acties</th>
+            </tr>
+          </thead>
+          <tbody id="usersTbody">
+            <tr class="loading-row"><td colspan="5">Laden&#x2026;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /page-content -->
 
   </div>
 </main>
 
-<!-- ======================= Footer ======================= -->
 <div id="footer-placeholder"></div>
-
-<!-- ─── Toast ─── -->
 <div id="toast"></div>
 
-<!-- ─── Modal ─── -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-box">
     <h3>Gebruiker verwijderen</h3>
@@ -406,44 +196,44 @@
 </div>
 
 <!-- =============================================================
-     SCRIPTS — verplichte volgorde
+     SCRIPTS — verplichte volgorde:
+     supabase → utils.js → auth.js → adminGuard.js → TopBar fetch
+     → topbar.js → accountbeheer.js
      ============================================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/MyFamTreeCollab/js/utils.js"></script>
 <script src="/MyFamTreeCollab/js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/adminGuard.js"></script>      <!-- Admin toegangsbeveiliging -->
 
 <script>
-    // Stap 1: TopBar HTML laden en in de placeholder zetten
+    // Stap 1: TopBar laden, dan topbar.js, dan admin-check, dan accountbeheer.js
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(resp => resp.text())                                              // HTML ophalen als tekst
-        .then(function(data) {
-            document.getElementById('topbar-placeholder').innerHTML = data;    // TopBar HTML in de DOM zetten
-
-            // Stap 2: topbar.js dynamisch laden NA de TopBar HTML
-            var s = document.createElement('script');                          // nieuw script element aanmaken
-            s.src = '/MyFamTreeCollab/js/topbar.js';                          // pad naar topbar.js
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            document.getElementById('topbar-placeholder').innerHTML = html;  // TopBar injecteren
+            var s = document.createElement('script');                        // topbar script element
+            s.src = '/MyFamTreeCollab/js/topbar.js';                        // pad naar topbar.js
             s.onload = function() {
-                // Stap 3: accountbeheer.js laden NA topbar.js
-                var p = document.createElement('script');                      // nieuw script element aanmaken
-                p.src = '/MyFamTreeCollab/js/accountbeheer.js';               // pad naar accountbeheer.js
-                document.body.appendChild(p);                                  // script toevoegen aan de DOM
+                // Stap 2: admin-check via AdminGuard
+                AdminGuard.protect('admin').then(function(granted) {
+                    if (!granted) return;                                     // stop als geen toegang
+                    // Stap 3: accountbeheer.js laden na geslaagde check
+                    var p = document.createElement('script');                // pagina script element
+                    p.src = '/MyFamTreeCollab/js/accountbeheer.js';         // pad naar accountbeheer.js
+                    document.body.appendChild(p);                            // toevoegen aan DOM
+                });
             };
-            document.body.appendChild(s);                                      // topbar.js toevoegen aan de DOM
+            document.body.appendChild(s);                                    // topbar.js toevoegen
         });
 
-    // Stap 4: Navbar laden — onafhankelijk van auth, mag parallel
+    // Navbar en Footer laden parallel
     fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(resp => resp.text())                                              // HTML ophalen als tekst
-        .then(function(data) {
-            document.getElementById('navbar-placeholder').innerHTML = data;    // Navbar HTML in de DOM zetten
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('navbar-placeholder').innerHTML = html; });
 
-    // Stap 5: Footer laden — onafhankelijk van auth, mag parallel
     fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(resp => resp.text())                                              // HTML ophalen als tekst
-        .then(function(data) {
-            document.getElementById('footer-placeholder').innerHTML = data;    // Footer HTML in de DOM zetten
-        });
+        .then(function(r) { return r.text(); })
+        .then(function(html) { document.getElementById('footer-placeholder').innerHTML = html; });
 </script>
 
 </body>
