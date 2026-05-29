@@ -1,11 +1,13 @@
-/* ======================= js/import.js v2.1.0 ======================= */
-/* Wijziging v2.1.0 (sessie 25):
-   - Alle hardcoded statusmeldingen vervangen door i18nModule.t('import:status.*')
-   - success melding gebruikt i18next interpolatie voor persoon-count
+/* ======================= js/import.js v2.2.0 ======================= */
+/* Wijziging v2.2.0 (sessie 26):
+   - TD-11 / F8-56: import-parser gebruikt nu schema.normalizeHeader()
+   - Legacy CSV (19 kolommen) wordt correct herkend via LEGACY_HEADERS in schema.js
+   - Legacy velden die niet in schema.fields staan worden genegeerd (huwelijksdatum, etc.)
+   - Eigen object-bouw vervangen door schema.fromCSV() voor correcte migratie
    Drop-in CSV/TXT importer voor MyFamTreeCollab
    - Geen validatie, geen ID generaties
    - Eerste 14 velden volgens schema.fields
-   - Extra kolommen 15-22 → _extra
+   - Extra kolommen 15-22 → _extra (alleen bij huidige schema, niet bij legacy)
    - Delimiter detectie: comma, semicolon, tab
    - Quotes handling en embedded delimiters
 */
@@ -15,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const btn = document.getElementById("importBtn"); // zoek import knop
     if(!btn){
-        console.error("importBtn niet gevonden");
+        console.error("importBtn niet gevonden"); // log fout als knop ontbreekt
         return;
     }
 
@@ -25,122 +27,139 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Controleer of storage.js geladen is
         if(typeof StamboomStorage === "undefined"){
-            status.innerHTML = "❌ " + i18nModule.t("import:status.storageError");
+            status.innerHTML = "❌ " + i18nModule.t("import:status.storageError"); // foutmelding storage
             status.style.color = "red";
             return;
         }
 
         // Controleer of schema.js geladen is
         if(!window.StamboomSchema){
-            status.innerHTML = "❌ " + i18nModule.t("import:status.schemaError");
+            status.innerHTML = "❌ " + i18nModule.t("import:status.schemaError"); // foutmelding schema
             status.style.color = "red";
             return;
         }
 
-        const schema = window.StamboomSchema;
-        const coreCount = schema.fields.length;  // eerste 14 velden
-        const maxColumns = 22;                    // max kolommen totaal
+        const schema = window.StamboomSchema; // lokale referentie naar schema module
+        const maxColumns = schema.maxColumns;  // max kolommen totaal (22)
 
         const fileInput = document.getElementById("importFile"); // verborgen native input
-        const file = fileInput.files[0];
+        const file = fileInput.files[0]; // geselecteerd bestand
 
         // Controleer of een bestand geselecteerd is
         if(!file){
-            status.innerHTML = "❌ " + i18nModule.t("import:status.noFile");
+            status.innerHTML = "❌ " + i18nModule.t("import:status.noFile"); // foutmelding geen bestand
             status.style.color = "red";
             return;
         }
 
-        const reader = new FileReader();
+        const reader = new FileReader(); // bestandslezer
         reader.onload = function(e){
 
-            let text = e.target.result;
+            let text = e.target.result; // ruwe bestandsinhoud
             text = text.replace(/^\uFEFF/, ""); // verwijder BOM indien aanwezig
 
             // ======================= DELIMITER DETECTIE =======================
             function detectDelimiter(csv){
-                const firstLine = csv.split(/\r?\n/)[0];        // eerste regel
-                const options = [",",";","\t"];                 // mogelijke delimiters
-                let best = ",";
-                let bestScore = 0;
+                const firstLine = csv.split(/\r?\n/)[0]; // eerste regel voor detectie
+                const options = [",",";","\t"];           // mogelijke delimiters
+                let best = ",";                           // standaard delimiter
+                let bestScore = 0;                        // hoogste kolomtelling
                 options.forEach(d => {
-                    const score = firstLine.split(d).length;
-                    if(score > bestScore){ bestScore = score; best = d; }
+                    const score = firstLine.split(d).length; // tel kolommen per delimiter
+                    if(score > bestScore){ bestScore = score; best = d; } // bewaar beste
                 });
-                return best;
+                return best; // geef gedetecteerde delimiter terug
             }
 
-            const delimiter = detectDelimiter(text);
+            const delimiter = detectDelimiter(text); // detecteer delimiter van dit bestand
 
             // ======================= SPLIT LINES =======================
             const lines = text
-                .split(/\r?\n/)     // split regels
-                .map(l => l.trim()) // trim whitespace
-                .filter(l => l.length); // lege regels overslaan
+                .split(/\r?\n/)      // split op newline (unix en windows)
+                .map(l => l.trim())  // trim whitespace per regel
+                .filter(l => l.length); // verwijder lege regels
 
-            // Controleer of CSV data bevat
+            // Controleer of CSV minimaal een header + 1 datarij bevat
             if(lines.length < 2){
-                status.innerHTML = "❌ " + i18nModule.t("import:status.noData");
+                status.innerHTML = "❌ " + i18nModule.t("import:status.noData"); // foutmelding leeg bestand
                 status.style.color = "red";
                 return;
             }
 
-            // ======================= HEADER MAPPING =======================
-            const headers = lines[0].split(delimiter).map(h => h.trim());
+            // ======================= HEADER DETECTIE =======================
+            // Gebruik schema.normalizeHeader om headertype te bepalen:
+            // - "current"  → huidige 14-kolommen structuur
+            // - "legacy"   → oudere structuur (bv. 19 kolommen met huwelijksdata)
+            // - "unknown"  → onbekende structuur, best-effort import
+            const headerLine = lines[0];                          // eerste regel = header
+            const headerInfo = schema.normalizeHeader(headerLine); // detecteer type
 
-            // eenvoudige mapping: eerste 14 headers naar schema.fields
-            const headerMap = [];
-            for(let i=0;i<coreCount;i++){
-                headerMap.push(headers[i] ?? schema.fields[i] ?? ""); // fallback naar schema veldnaam
+            console.log("Import header type:", headerInfo.type, headerInfo.header); // debug info
+
+            // ======================= CSV SPLIT HULPFUNCTIE =======================
+            function splitLine(line){
+                let values = [];   // resultaat array
+                let current = "";  // huidige cel
+                let insideQuotes = false; // quote tracking
+
+                for(let i = 0; i < line.length; i++){
+                    const char = line[i]; // huidig karakter
+                    if(char === '"'){
+                        insideQuotes = !insideQuotes; // toggle quote modus
+                    } else if(char === delimiter && !insideQuotes){
+                        values.push(current); // sla cel op bij delimiter buiten quotes
+                        current = "";         // reset cel
+                    } else {
+                        current += char; // voeg karakter toe aan cel
+                    }
+                }
+                values.push(current); // laatste cel toevoegen
+
+                // verwijder surrounding quotes en escaped dubbele quotes
+                return values.map(v => v.replace(/^"(.*)"$/,'$1').replace(/""/g,'"').trim());
             }
 
             // ======================= PARSEN VAN RIJEN =======================
-            const newRows = [];
-            const existing = StamboomStorage.get();
+            const newRows = [];                  // geïmporteerde personen
+            const existing = StamboomStorage.get(); // bestaande data
 
-            lines.slice(1).forEach((line,index)=>{
+            lines.slice(1).forEach((line, index) => { // sla headerrij over, loop door datarijen
 
                 if(!line.trim()) return; // lege regel overslaan
 
-                // ======================= CSV SPLIT MET QUOTES =======================
-                let values = [];
-                let current = "";
-                let insideQuotes = false;
+                const values = splitLine(line); // splits CSV-regel in waarden
 
-                for(let i=0;i<line.length;i++){
-                    const char = line[i];
-                    if(char === '"') insideQuotes = !insideQuotes;
-                    else if(char === delimiter && !insideQuotes){
-                        values.push(current);
-                        current = "";
-                    } else current += char;
-                }
-                values.push(current);
+                let obj; // persoonsobject
 
-                // verwijder surrounding quotes en dubbele quotes
-                values = values.map(v => v.replace(/^"(.*)"$/,'$1').replace(/""/g,'"').trim());
+                if(headerInfo.type === "legacy"){
+                    // Legacy structuur: schema.fromCSV gebruikt migrateLegacyRow
+                    // Velden die niet in schema.fields staan (huwelijksdatum etc.) worden genegeerd
+                    obj = schema.fromCSV(line, headerInfo); // migreer via schema module
 
-                // ======================= OBJECT MAKEN =======================
-                const obj = {};
-                for(let j=0;j<coreCount;j++){
-                    obj[schema.fields[j]] = values[j] !== undefined ? values[j] : "";
+                } else {
+                    // Huidige of onbekende structuur: bouw object op via schema.fields
+                    obj = schema.empty(); // start met leeg schema object
+
+                    schema.fields.forEach((field, i) => {
+                        obj[field] = values[i] !== undefined ? values[i] : ""; // vul kernvelden
+                    });
+
+                    // Extra kolommen 15-22 bewaren als _extra array
+                    obj._extra = values.slice(schema.coreFieldCount, maxColumns); // kolommen buiten schema
                 }
 
-                // ======================= EXTRA KOLOMMEN =======================
-                obj._extra = values.slice(coreCount, maxColumns); // kolommen 15-22
-
-                newRows.push(obj);
+                newRows.push(obj); // voeg toe aan importlijst
             });
 
             // ======================= OPSLAAN =======================
-            StamboomStorage.set(existing.concat(newRows));
+            StamboomStorage.set(existing.concat(newRows)); // voeg nieuwe rijen toe aan bestaande data
 
             // Succesmelding met geïnterpoleerd aantal personen via i18next
             status.innerHTML = "✅ " + i18nModule.t("import:status.success", { count: newRows.length });
             status.style.color = "green";
-            console.log("Import completed:", newRows);
+            console.log("Import completed:", newRows.length, "personen, type:", headerInfo.type); // debug
         };
 
-        reader.readAsText(file);
+        reader.readAsText(file); // lees bestand als tekst
     });
 });
