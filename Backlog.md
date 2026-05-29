@@ -208,7 +208,7 @@
 | SEC-01 | 🔴 Kritiek | `admin_users` view droppen — lekte auth.users via publieke API | ✅ Gedaan |
 | SEC-02 | 🔴 Kritiek | RLS inschakelen op alle publieke tabellen (6 tabellen) | ✅ Gedaan |
 | SEC-03 | 🔴 Kritiek | Anon-rechten intrekken + authenticated grants minimaliseren | ✅ Gedaan |
-| SEC-04 | 🟡 Middel | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` | 📋 Open |
+| SEC-04 | 🟡 Middel | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` |  ✅ Gedaan (RLS was al correct, dubbele policies opgeruimd) |
 
 ---
 
@@ -283,4 +283,4 @@
 | TD-07 | Resend zonder eigen domein — mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
 | TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | ✅ Gedaan — handlers waren al verwijderd in eerdere sessie |
-| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig | ✅ Gedaan |
+| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig | ✅ Gedaan - staat al correct |
