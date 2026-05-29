@@ -118,7 +118,7 @@
 | F8-20 t/m F8-55 | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n | ✅ Gedaan |
 | F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | ✅ Gedaan |
 | F8-57 t/m F8-62 | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key | ✅ Gedaan |
-| F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | 📋 Open |
+| F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | ✅ Gedaan — handlers waren al verwijderd in eerdere sessie |
 
 ---
 
@@ -170,7 +170,7 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| FA+-01 t/m FA+-10 | Cloud sync, tiers, rollen | ✅ Gedaan |
+| FA+-01 t/m FA+-10 | Cloud sync, tiers, rollen, beveiliging | ✅ Gedaan |
 
 ---
 
@@ -213,6 +213,12 @@
 ---
 
 ## Bugfixes
+
+### Sessie 2026-05-29 (sessie 34)
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-62 | `import.js` v2.2.0 — legacy CSV (19 kolommen) werd niet herkend, parser gebruikte eigen object-bouw i.p.v. schema.normalizeHeader() + schema.fromCSV() | ✅ Opgelost |
 
 ### Sessie 2026-05-29 (sessie 33)
 
@@ -261,7 +267,7 @@
 | ID | Omschrijving | Status |
 |----|-------------|--------|
 | AN-01 t/m AN-40 | trackPage() alle pagina's + dashboard | ✅ Gedaan |
-| AN-21 | `stamboom/account.html` — tracking toevoegen | 📋 Open |
+| AN-21 | `stamboom/account.html` — tracking toevoegen | ❌ Geannuleerd — bestand bestaat niet |
 
 ---
 
@@ -276,5 +282,5 @@
 | TD-05 | Popup-stijlen in LiveSearch.js hardcoded inline | 🟢 Laag |
 | TD-07 | Resend zonder eigen domein — mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
-| TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
-| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig |  ✅ Gedaan |
+| TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | ✅ Gedaan — handlers waren al verwijderd in eerdere sessie |
+| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig | ✅ Gedaan |
