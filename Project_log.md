@@ -5,6 +5,16 @@
 
 ---
 
+## Sessie 34
+- import.js v2.1.0 → v2.2.0: TD-11/F8-56 legacy CSV-detectie via schema.normalizeHeader()
+- AN-21: stamboom/account.html bestaat niet → ❌ Geannuleerd
+- TD-09: lang-link handlers al verwijderd → ✅ Gedaan
+- SEC-04: editor UPDATE policy op stambomen bestond al, cloudSync.js correct
+  Dubbele RLS policies opgeruimd: 4 policies verwijderd op stambomen + stamboom_gedeeld
+- BACKLOG.md bijgewerkt
+
+---
+
   ## Sessie 33 — TD-11/F8-56 + AN-21 + TD-09 opgeschoond
 - import.js v2.1.0 → v2.2.0: legacy CSV-detectie via schema.normalizeHeader()
 - AN-21: stamboom/account.html bestaat niet → ❌ Geannuleerd
