@@ -1,5 +1,5 @@
 # BACKLOG.md — MyFamTreeCollab
-## Bijgewerkt: 2026-05-28
+## Bijgewerkt: 2026-05-29
 
 > Alle taken georganiseerd per fase en prioriteit.
 > Status: 📋 Open · 🔄 In uitvoering · ✅ Gedaan · ❌ Geannuleerd · 🔮 Toekomst
@@ -117,8 +117,7 @@
 | F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | ❌ Geannuleerd |
 | F8-20 t/m F8-55 | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n | ✅ Gedaan |
 | F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | 📋 Open |
-| F8-57 t/m F8-61 | template.html taalwissel + abonnementen namespaces | ✅ Gedaan |
-| F8-62 | 🟡 Middel | `locales/{nl,en,es}/common.json` — `nav.sub.supabaseAnalyse` toegevoegd | ✅ Gedaan |
+| F8-57 t/m F8-62 | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key | ✅ Gedaan |
 | F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | 📋 Open |
 
 ---
@@ -139,24 +138,23 @@
 
 ---
 
-## Fase 10 — Admin toegangsbeveiliging 🔄 VOLGENDE SESSIE
+## Fase 10 — Admin toegangsbeveiliging ✅ AFGEROND
 
-> Referentie-implementatie: `admin/supabase-analyse.html` — bevat het patroon dat uitgerold wordt.
->
-> **Patroon:**
-> 1. `AuthModule.getTier()` check bij `initPage()`
-> 2. Tier !== 'admin' → toon rood foutscherm (`#accessDenied`), stop uitvoering
-> 3. `AuthModule.onAuthChange()` listener → bij uitloggen automatisch redirect naar `index.html`
-> 4. Pagina-inhoud (`#dashboard` of equivalent) standaard `display:none`, alleen zichtbaar na geslaagde admin-check
+> **Patroon:** `AdminGuard.protect(role)` via centrale `adminGuard.js` module.
+> - Tier !== 'admin' → `#accessDenied` zichtbaar, `#page-content` verborgen, uitvoering gestopt
+> - Tier === 'admin' → `#page-content` zichtbaar, `onAuthChange` listener actief
+> - Bij `SIGNED_OUT` → redirect naar `index.html`
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F10-01 | 🔴 Hoog | `admin/accountbeheer.html` — admin-check + uitlog-redirect toevoegen | 📋 Open |
-| F10-02 | 🔴 Hoog | `admin/analytics.html` — admin-check + uitlog-redirect toevoegen | 📋 Open |
-| F10-03 | 🔴 Hoog | `admin/analyse.html` — admin-check + uitlog-redirect toevoegen | 📋 Open |
-| F10-04 | 🟡 Middel | `admin/supabase-analyse.html` — `onAuthChange` uitlog-redirect toevoegen (check zit er al in) | 📋 Open |
-| F10-05 | 🟡 Middel | Gedeeld `js/adminGuard.js` module aanmaken — herbruikbare guard functie voor alle admin-pagina's | 📋 Open |
-| F10-06 | 🟢 Laag | Developer-pagina's (`develop/*.html`) — zelfde patroon voor developer-only toegang | 📋 Open |
+| F10-01 | 🔴 Hoog | `admin/accountbeheer.html` — admin-check + uitlog-redirect | ✅ Gedaan |
+| F10-02 | 🔴 Hoog | `admin/analytics.html` — admin-check + uitlog-redirect | ✅ Gedaan |
+| F10-03 | 🔴 Hoog | `admin/analyse.html` — admin-check + uitlog-redirect | ✅ Gedaan |
+| F10-04 | 🟡 Middel | `admin/supabase-analyse.html` — inline check vervangen door `adminGuard.js` | ✅ Gedaan |
+| F10-05 | 🟡 Middel | `js/adminGuard.js` — centrale herbruikbare guard module | ✅ Gedaan |
+| F10-06 | 🟢 Laag | `develop/blank.html` — developer-only toegang via `adminGuard.js` | ✅ Gedaan |
+| F10-07 | 🟢 Laag | `develop/sandbox.html` — developer-only toegang via `adminGuard.js` | ✅ Gedaan |
+| F10-08 | 🟢 Laag | `develop/standaardpagina.html` — developer-only toegang via `adminGuard.js` | ✅ Gedaan |
 
 ---
 
@@ -216,11 +214,17 @@
 
 ## Bugfixes
 
+### Sessie 2026-05-29 (sessie 33)
+
+| ID | Omschrijving | Status |
+|----|-------------|--------|
+| BF-61 | `supabase-analyse.html` — inline `AuthModule.getTier()` check vervangen door `AdminGuard.protect()`, `#dashboard` → `#page-content` | ✅ Opgelost |
+
 ### Sessie 2026-05-28 (sessie 32)
 
 | ID | Omschrijving | Status |
 |----|-------------|--------|
-| BF-60 | `supabase-analyse.html` — Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt. Vervangen door stamboom-analyse secties. | ✅ Opgelost |
+| BF-60 | `supabase-analyse.html` — Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt | ✅ Opgelost |
 
 ### Sessie 2026-05-26 (sessie 31)
 
