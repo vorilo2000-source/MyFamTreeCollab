@@ -116,7 +116,7 @@
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
 | F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | ❌ Geannuleerd |
 | F8-20 t/m F8-55 | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n | ✅ Gedaan |
-| F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | 📋 Open |
+| F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | ✅ Gedaan |
 | F8-57 t/m F8-62 | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key | ✅ Gedaan |
 | F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | 📋 Open |
 
@@ -277,4 +277,4 @@
 | TD-07 | Resend zonder eigen domein — mail alleen naar Resend-account | 🟡 Middel |
 | TD-08 | async/await mismatch — call-sites van storage.add() controleren | 🟡 Middel |
 | TD-09 | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen | 🟡 Middel |
-| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig | 🔴 Hoog |
+| TD-11 | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig |  ✅ Gedaan |
