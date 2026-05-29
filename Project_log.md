@@ -5,13 +5,15 @@
 
 ---
 
-## Sessie 33 — TD-11 / F8-56: Import-parser fix
-- import.js v2.1.0 → v2.2.0
+  ## Sessie 33 — TD-11/F8-56 + AN-21 + TD-09 opgeschoond
+- import.js v2.1.0 → v2.2.0: legacy CSV-detectie via schema.normalizeHeader()
+- AN-21: stamboom/account.html bestaat niet → ❌ Geannuleerd
+- TD-09: lang-link handlers al verwijderd in eerdere sessie → ✅ Gedaan
 - Parser gebruikt nu schema.normalizeHeader() voor headertype-detectie
 - Legacy CSV (19 kolommen) correct herkend en gemigreerd via schema.fromCSV()
 - Velden buiten schema.fields (Huwelijksdatum, Huwelijksplaats, etc.) worden genegeerd
 - Events-structuur besproken: aparte tabel, GEDCOM-compatibel, fase 4
-  
+
 ---
 
 ## Sessie 32 — Supabase analyse pagina + admin toegangsbeveiliging (voorbereiding)
