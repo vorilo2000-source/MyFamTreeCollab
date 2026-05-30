@@ -191,14 +191,21 @@
                 <li>Click the 🗑️ icon on the left of the row.</li>
                 <li>Confirm the deletion. The ID is automatically removed from all relationships.</li>
             </ul>
-            <h3>Recording relationships</h3>
+          <h3>Recording relationships</h3>
+            <p>FatherID, MotherID and PartnerID support multiple values. Each cell shows a dynamic list of input fields.</p>
             <ul>
-                <li><strong>FatherID</strong> — ID of the father</li>
-                <li><strong>MotherID</strong> — ID of the mother</li>
-                <li><strong>PartnerID</strong> — ID of the partner. Multiple partners: <code>P-001|P-003</code></li>
+                <li><strong>FatherID</strong> — one or more fathers (e.g. adoption, stepfather)</li>
+                <li><strong>MotherID</strong> — one or more mothers</li>
+                <li><strong>PartnerID</strong> — one or more partners</li>
             </ul>
-            <a href="#" class="terug-top">↑ Back to top</a>
-        </div>
+            <h3>Adding and removing IDs</h3>
+            <ul class="stappen">
+                <li>Click <strong>"+ ID"</strong> below a field to add an extra input.</li>
+                <li>Click <strong>"×"</strong> next to an input to remove that ID.</li>
+                <li>The last field is cleared rather than removed.</li>
+                <li>Click <strong>"Save"</strong> to store your changes.</li>
+            </ul>
+            <div class="tip"><strong>Storage:</strong> Values are stored internally as <code>P-001|P-003</code> — the widget handles this automatically.</div>
 
         <div class="sectie" id="stamboom-bekijken">
             <h2>5. Viewing your family tree</h2>
