@@ -1,20 +1,23 @@
 /* ======================= js/manage.js v2.6.1 =======================
-   Wijziging v2.6.1 (sessie 35 — bugfix headers):
-   - buildHeader() niet meer aangeroepen vanuit init()
-   - buildHeader() geëxposed via window.ManageTable.buildHeader
-   - Aanroep verplaatst naar manage.html .then()-chain, ná loadNamespace('manage')
-   - languageChanged listener blijft in manage.js (gebruikt window.ManageTable.buildHeader)
+   Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
+   Vereist: schema.js, idGenerator.js, storage.js, LiveSearch.js, relatieEngine.js
 
-   Wijziging v2.6.0 (sessie F3-48):
-   - VaderID, MoederID en PartnerID dynamische lijsten met add/remove knoppen
+   Wijziging v2.6.1 (bugfix headers):
+   - buildHeader() verwijderd uit init() — werd aangeroepen vóór namespace geladen
+   - window.ManageTable.buildHeader() exposed voor aanroep vanuit manage.html .then()-chain
+   - showPlaceholder() in init() vervangen door lege tbody (namespace nog niet geladen)
+   - showPlaceholder() correct aangeroepen vanuit manage.html na loadNamespace()
+
+   Wijziging v2.6.0 (F3-48):
+   - VaderID, MoederID, PartnerID: dynamische lijsten met add/remove knoppen
    - buildMultiIDCell(), buildMultiIDRow(), readMultiIDCell()
-   - buildRow(p, isNew) centrale rij-bouwer
-   - makeDeleteHandler() cleanup via parsePartners()/stringifyPartners()
+   - buildRow(p, isNew): centrale rij-bouwer
+   - makeDeleteHandler(): cleanup via parsePartners()/stringifyPartners()
 
    Wijziging v2.5.1 (sessie 27):
    - COLUMNS uitgebreid met i18nKey per kolom
    - buildHeader() gebruikt i18nModule.t(col.i18nKey)
-   - i18next.on('languageChanged') toegevoegd
+   - i18next.on('languageChanged'): headers herladen bij taalwisseling
 
    Scripts: utils.js → schema.js → idGenerator.js → storage.js → auth.js →
             siteAnalytics.js → shareModule.js → accessGuard.js → LiveSearch.js →
@@ -31,7 +34,7 @@
     var MULTI_ID_FIELDS = ['VaderID', 'MoederID', 'PartnerID'];           // Velden met |-gescheiden meerdere waarden
 
     /* ======================= KOLOMMEN DEFINITIE ======================= */
-    var COLUMNS = [                                                        // Array met alle tabelkolommen en hun bewerkbaarheid
+    var COLUMNS = [
         { key: 'Acties',            i18nKey: 'manage:table.actions',           readonly: true  },
         { key: 'Relatie',           i18nKey: 'manage:table.relatie',           readonly: true  },
         { key: 'ID',                i18nKey: 'manage:table.id',                readonly: true  },
@@ -66,13 +69,13 @@
     var searchInput   = document.getElementById('searchPerson');          // Zoekveld live search
 
     /* ======================= HEADER BOUWEN ======================= */
-    // Exposed via window.ManageTable.buildHeader zodat manage.html
-    // dit kan aanroepen ná loadNamespace('manage') in de .then()-chain
+    // Aangeropen vanuit manage.html .then()-chain, ná loadNamespace('manage')
+    // Niet vanuit init() — namespace is dan nog niet geladen
     function buildHeader() {
         theadRow.innerHTML = '';                                          // Verwijder bestaande kolomkoppen
         COLUMNS.forEach(function (col) {                                  // Loop door elke kolom-definitie
-            var th = document.createElement('th');                       // Maak een nieuw <th> element
-            th.textContent = i18nModule.t(col.i18nKey);                  // Vertaalde kolomnaam via i18nKey
+            var th = document.createElement('th');                       // Maak nieuw <th> element
+            th.textContent = i18nModule.t(col.i18nKey);                  // Vertaalde kolomnaam via namespace
             theadRow.appendChild(th);                                    // Toevoegen aan header-rij
         });
     }
@@ -98,22 +101,22 @@
     /* ======================= MULTI-ID WIDGET BOUWEN ======================= */
     function buildMultiIDCell(fieldKey, currentValue) {
         var td = document.createElement('td');                           // Container cel
-        td.dataset.multiField = fieldKey;                                // Markeer cel als multi-ID widget
+        td.dataset.multiField = fieldKey;                                // Markeer als multi-ID widget
 
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'display:flex;flex-direction:column;gap:4px;min-width:120px'; // verticale lijst
+        wrapper.style.cssText = 'display:flex;flex-direction:column;gap:4px;min-width:120px'; // Verticale lijst
 
-        var ids = window.StamboomSchema.parsePartners(currentValue || ''); // ['P002','P005'] of []
-        if (ids.length === 0) { ids = ['']; }                            // Eén lege invoer als startpunt
+        var ids = window.StamboomSchema.parsePartners(currentValue || ''); // Splits op |
+        if (ids.length === 0) { ids = ['']; }                            // Minimaal één leeg veld
 
         ids.forEach(function (idValue) {
-            wrapper.appendChild(buildMultiIDRow(idValue, wrapper));      // Voeg rij toe aan wrapper
+            wrapper.appendChild(buildMultiIDRow(idValue, wrapper));      // Rij per ID
         });
 
         var addIdBtn = document.createElement('button');
-        addIdBtn.type        = 'button';
-        addIdBtn.textContent = '+ ID';
-        addIdBtn.title       = 'Extra ID toevoegen';
+        addIdBtn.type        = 'button';                                 // Geen form submit
+        addIdBtn.textContent = '+ ID';                                   // Label
+        addIdBtn.title       = 'Extra ID toevoegen';                     // Tooltip
         addIdBtn.style.cssText = 'margin-top:2px;padding:2px 6px;font-size:0.8rem;cursor:pointer;background:#28a745;color:#fff;border:none;border-radius:3px;align-self:flex-start';
 
         addIdBtn.addEventListener('click', function () {
@@ -131,24 +134,24 @@
         row.style.cssText = 'display:flex;gap:4px;align-items:center';  // Horizontale rij
 
         var input = document.createElement('input');
-        input.type        = 'text';
-        input.value       = idValue;
-        input.placeholder = 'ID...';
-        input.className   = 'multi-id-input';
+        input.type        = 'text';                                      // Tekst invoer
+        input.value       = idValue;                                     // Huidige waarde
+        input.placeholder = 'ID...';                                     // Hint
+        input.className   = 'multi-id-input';                            // Klasse voor uitlezen
         input.style.cssText = 'flex:1;padding:3px 6px;font-size:0.88rem;border:1px solid #ccc;border-radius:3px;box-sizing:border-box';
 
         var removeBtn = document.createElement('button');
-        removeBtn.type        = 'button';
-        removeBtn.textContent = '×';
-        removeBtn.title       = 'Verwijder dit ID';
+        removeBtn.type        = 'button';                                // Geen form submit
+        removeBtn.textContent = '×';                                     // Kruisje
+        removeBtn.title       = 'Verwijder dit ID';                      // Tooltip
         removeBtn.style.cssText = 'padding:2px 6px;font-size:0.9rem;cursor:pointer;background:#dc3545;color:#fff;border:none;border-radius:3px;line-height:1';
 
         removeBtn.addEventListener('click', function () {
-            var allRows = wrapper.querySelectorAll('div');               // Alle invoer-rijen in de widget
+            var allRows = wrapper.querySelectorAll('div');               // Alle rijen in widget
             if (allRows.length > 1) {
-                wrapper.removeChild(row);                                // Rij verwijderen
+                wrapper.removeChild(row);                                // Verwijder deze rij
             } else {
-                input.value = '';                                        // Laatste rij: alleen leegmaken
+                input.value = '';                                        // Laatste rij: leegmaken
             }
         });
 
@@ -159,7 +162,7 @@
 
     /* ======================= MULTI-ID WIDGET UITLEZEN ======================= */
     function readMultiIDCell(td) {
-        var inputs = td.querySelectorAll('input.multi-id-input');        // Alle invoervelden in de widget
+        var inputs = td.querySelectorAll('input.multi-id-input');        // Alle inputs in widget
         var values = [];
 
         inputs.forEach(function (input) {
@@ -167,15 +170,15 @@
             if (val) values.push(val);                                   // Alleen niet-lege waarden
         });
 
-        return window.StamboomSchema.stringifyPartners(values);          // |-gescheiden string
+        return window.StamboomSchema.stringifyPartners(values);          // Samenvoegen met |
     }
 
     /* ======================= DELETE HANDLER FACTORY ======================= */
     function makeDeleteHandler(tr, getID) {
         return function () {
-            if (!confirm(i18nModule.t('manage:confirm.delete'))) return;
+            if (!confirm(i18nModule.t('manage:confirm.delete'))) return; // Bevestiging
 
-            var id = getID();
+            var id = getID();                                            // Te verwijderen ID
 
             if (id) {
                 dataset = dataset.filter(function (x) { return safe(x.ID) !== id; }); // Verwijder persoon
@@ -183,12 +186,12 @@
                 dataset = dataset.map(function (x) {
                     var updated = Object.assign({}, x);                  // Ondiepe kopie
 
-                    // VaderID, MoederID, PartnerID: verwijder gedelete ID uit |-lijst
+                    // Verwijder gedelete ID uit VaderID, MoederID en PartnerID
                     ['VaderID', 'MoederID', 'PartnerID'].forEach(function (field) {
                         if (safe(updated[field])) {
                             updated[field] = window.StamboomSchema.stringifyPartners(
                                 window.StamboomSchema.parsePartners(updated[field])
-                                    .filter(function (s) { return s !== id; }) // Verwijder gedelete ID
+                                    .filter(function (s) { return s !== id; })
                             );
                         }
                     });
@@ -199,7 +202,7 @@
                 StamboomStorage.set(dataset);                            // Opgeschoonde dataset opslaan
             }
 
-            tr.remove();                                                 // Rij direct uit DOM verwijderen
+            tr.remove();                                                 // Rij uit DOM verwijderen
         };
     }
 
@@ -303,7 +306,7 @@
     /* ======================= RIJ BOUWEN ======================= */
     function buildRow(p, isNew) {
         var tr = document.createElement('tr');
-        if (!isNew && p.Relatie) tr.classList.add(p.Relatie);
+        if (!isNew && p.Relatie) tr.classList.add(p.Relatie);           // CSS kleurklasse op relatie
 
         COLUMNS.forEach(function (col) {
             var td;
@@ -317,7 +320,7 @@
                     btn.title       = i18nModule.t('manage:action.deleteRowTitle');
                     btn.addEventListener('click', function () {
                         tr.remove();
-                        tempRowCount--;
+                        tempRowCount--;                                  // Teller verlagen
                     });
                 } else {
                     btn.textContent = i18nModule.t('manage:action.delete');
@@ -329,14 +332,14 @@
 
             } else if (col.key === 'Relatie') {
                 td = document.createElement('td');
-                td.textContent = isNew ? '' : relatieLabel(p.Relatie);
+                td.textContent = isNew ? '' : relatieLabel(p.Relatie);  // Leeg voor nieuwe rij
 
             } else if (col.readonly) {
                 td = document.createElement('td');
-                td.textContent = isNew ? '' : (p[col.key] || '');
+                td.textContent = isNew ? '' : (p[col.key] || '');       // Leeg voor nieuwe rij
 
             } else if (MULTI_ID_FIELDS.indexOf(col.key) !== -1) {
-                td = buildMultiIDCell(col.key, isNew ? '' : (p[col.key] || ''));
+                td = buildMultiIDCell(col.key, isNew ? '' : (p[col.key] || '')); // Multi-ID widget
 
             } else {
                 td = document.createElement('td');
@@ -395,7 +398,7 @@
 
                     if (col.readonly) {
                         if (col.key === 'ID') {
-                            persoon.ID = safe(cell.textContent);
+                            persoon.ID = safe(cell.textContent);         // ID uit readonly cel
                         }
                     } else if (MULTI_ID_FIELDS.indexOf(col.key) !== -1) {
                         persoon[col.key] = readMultiIDCell(cell);        // |-gescheiden string
@@ -463,17 +466,16 @@
 
     /* ======================= INITIALISATIE ======================= */
     function init() {
-        // buildHeader() wordt NIET hier aangeroepen —
-        // manage.html roept window.ManageTable.buildHeader() aan
-        // ná loadNamespace('manage') in de .then()-chain
+        // buildHeader() en showPlaceholder() worden NIET hier aangeroepen —
+        // beide vereisen de manage-namespace die nog niet geladen is op dit moment.
+        // manage.html roept window.ManageTable.buildHeader() en
+        // window.ManageTable.showPlaceholder() aan ná loadNamespace('manage').
 
-        // languageChanged: namespace is al herladen door i18n.js
-        // voordat dit event vuurt, dus t() geeft direct correcte strings
+        // languageChanged: i18n.js herlaadt namespace vóór dit event vuurt
+        // zodat t() al correcte strings geeft bij hertekenen
         i18next.on('languageChanged', function () {
             buildHeader();                                               // Headers hertekenen bij taalwissel
         });
-
-        showPlaceholder(i18nModule.t('manage:placeholder.select'));      // Beginmelding — werkt pas correct als namespace geladen is
 
         addBtn.addEventListener('click', addRow);
         saveBtn.addEventListener('click', saveDatasetMerged);
@@ -503,13 +505,14 @@
         }
     }
 
-    init();                                                              // Start initialisatie
+    init();
 
     /* ======================= PUBLIEKE API ======================= */
-    // Exposed zodat manage.html buildHeader() kan aanroepen
+    // Exposed via window.ManageTable zodat manage.html beide functies kan aanroepen
     // ná loadNamespace('manage') — consistent met window.RelatieEngine, window.StamboomSchema
     window.ManageTable = {
-        buildHeader: buildHeader                                         // Enige publieke functie
+        buildHeader:     buildHeader,                                    // Headers bouwen na namespace load
+        showPlaceholder: showPlaceholder                                 // Beginmelding na namespace load
     };
 
 })();
