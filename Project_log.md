@@ -5,6 +5,44 @@
 
 ---
 
+## Sessie 35 — F3-62 Import validatie + F3-48 Meerdere partners/ouders
+
+**Datum:** 2026-05-30
+
+### F3-62 — Import validatie: dubbele ID's detecteren
+- `js/import.js` v2.2.0 → v2.3.0
+- Duplicate check via Set van bestaande IDs
+- Modal met 4 keuzes: Overslaan / Overschrijven / Toch alles / Annuleren
+- Geen HTML aanpassingen nodig — modal dynamisch gebouwd
+
+### F3-48 — Meerdere partners, vaders en moeders
+- `js/manage.js` v2.5.1 → v2.6.1: multi-ID widget (buildMultiIDCell / buildMultiIDRow / readMultiIDCell)
+- `stamboom/manage.html` v2.5.0 → v2.6.0: window.ManageTable.buildHeader() na loadNamespace
+- `js/view.js` v1.6.5 → v1.7.0: findMultiple() helper, alle directe findPerson() calls vervangen
+- `js/timeline.js` v2.4.0 → v2.5.0: findMultiple() helper, collectAncestorLevel en nakomelingen bijgewerkt
+- `js/relatieEngine.js` v2.4.0 → v2.5.0: parsePartners() + includes() voor alle VaderID/MoederID/PartnerID checks
+
+### Handleiding
+- `bronnen/handleiding-nl.html` v2.4.0 → v2.5.0: sectie 4 en 11 bijgewerkt
+- `bronnen/handleiding-en.html` v2.4.0 → v2.5.0: sectie 4 en 11 bijgewerkt
+- `bronnen/handleiding-es.html` v2.4.0 → v2.5.0: sectie 4 en 11 bijgewerkt
+
+### Versie-overzicht
+
+| Bestand | Van | Naar |
+|---------|-----|------|
+| `js/import.js` | v2.2.0 | v2.3.0 |
+| `js/manage.js` | v2.5.1 | v2.6.1 |
+| `stamboom/manage.html` | v2.5.0 | v2.6.0 |
+| `js/view.js` | v1.6.5 | v1.7.0 |
+| `js/timeline.js` | v2.4.0 | v2.5.0 |
+| `js/relatieEngine.js` | v2.4.0 | v2.5.0 |
+| `bronnen/handleiding-nl.html` | v2.4.0 | v2.5.0 |
+| `bronnen/handleiding-en.html` | v2.4.0 | v2.5.0 |
+| `bronnen/handleiding-es.html` | v2.4.0 | v2.5.0 |
+
+---
+
 ## Sessie 34
 - import.js v2.1.0 → v2.2.0: TD-11/F8-56 legacy CSV-detectie via schema.normalizeHeader()
 - AN-21: stamboom/account.html bestaat niet → ❌ Geannuleerd
