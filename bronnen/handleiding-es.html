@@ -206,7 +206,9 @@
                 <li>Haz clic en <strong>"Guardar"</strong> para guardar los cambios.</li>
             </ul>
             <div class="tip"><strong>Almacenamiento:</strong> Los valores se guardan internamente como <code>P-001|P-003</code> — el widget lo gestiona automáticamente.</div>
-
+               <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+             
         <div class="sectie" id="stamboom-bekijken">
             <h2>5. Ver tu árbol genealógico</h2>
             <p>La página Árbol genealógico muestra una vista visual de los familiares alrededor de una persona seleccionada.</p>
@@ -301,13 +303,21 @@
 
         <div class="sectie" id="importeren">
             <h2>11. Importar</h2>
-            <p>Puedes importar datos de un árbol genealógico existente mediante un archivo CSV.</p>
+<p>Puedes importar datos de un árbol genealógico existente mediante un archivo CSV. Durante la importación, los IDs duplicados se detectan automáticamente.</p>
             <ul class="stappen">
                 <li>Descarga la <a href="/MyFamTreeCollab/bronnen/template.html">plantilla CSV</a>.</li>
                 <li>Rellena la plantilla con los datos de tu familia.</li>
                 <li>Ve a <strong>Importar</strong> desde la navegación.</li>
                 <li>Haz clic en <strong>"Elegir archivo"</strong> y selecciona tu CSV.</li>
                 <li>Haz clic en <strong>"Importar"</strong>.</li>
+            </ul>
+            <h3>Gestión de duplicados</h3>
+            <p>Si un ID importado ya existe en tu árbol genealógico, aparece un cuadro de diálogo con el número de duplicados y los IDs afectados. Elige cómo continuar:</p>
+            <ul>
+                <li><strong>⏭ Omitir</strong> — importar solo personas nuevas, omitir duplicados</li>
+                <li><strong>♻️ Sobrescribir</strong> — reemplazar personas existentes con la versión importada</li>
+                <li><strong>📥 Importar todo de todas formas</strong> — añadir todo incluyendo duplicados</li>
+                <li><strong>✖ Cancelar</strong> — detener la importación, no se guarda nada</li>
             </ul>
             <div class="waarschuwing"><strong>Atención:</strong> Solo disponible para cuentas <strong>Owner</strong>.</div>
             <a href="#" class="terug-top">↑ Volver arriba</a>
