@@ -198,14 +198,21 @@
                 <li>Klik op het 🗑️ icoon links van de rij.</li>
                 <li>Bevestig de verwijdering. Het ID wordt automatisch opgeruimd uit alle relaties.</li>
             </ul>
-            <h3>Relaties vastleggen</h3>
+             <h3>Relaties vastleggen</h3>
+            <p>VaderID, MoederID en PartnerID ondersteunen meerdere waarden. Elke cel toont een dynamische lijst met invoervelden.</p>
             <ul>
-                <li><strong>VaderID</strong> — ID van de vader</li>
-                <li><strong>MoederID</strong> — ID van de moeder</li>
-                <li><strong>PartnerID</strong> — ID van de partner. Meerdere partners: <code>P-001|P-003</code></li>
+                <li><strong>VaderID</strong> — één of meerdere vaders (bv. adoptie, stiefvader)</li>
+                <li><strong>MoederID</strong> — één of meerdere moeders</li>
+                <li><strong>PartnerID</strong> — één of meerdere partners</li>
             </ul>
-            <a href="#" class="terug-top">↑ Terug naar boven</a>
-        </div>
+            <h3>ID's toevoegen en verwijderen</h3>
+            <ul class="stappen">
+                <li>Klik op <strong>"+ ID"</strong> onder een veld om een extra invoer toe te voegen.</li>
+                <li>Klik op <strong>"×"</strong> naast een invoer om dat ID te verwijderen.</li>
+                <li>Het laatste veld wordt leeggemaakt in plaats van verwijderd.</li>
+                <li>Klik op <strong>"Opslaan"</strong> om de wijzigingen te bewaren.</li>
+            </ul>
+            <div class="tip"><strong>Opslag:</strong> De waarden worden intern opgeslagen als <code>P-001|P-003</code> — de widget regelt dit automatisch.</div>
 
         <div class="sectie" id="stamboom-bekijken">
             <h2>5. Stamboom bekijken</h2>
