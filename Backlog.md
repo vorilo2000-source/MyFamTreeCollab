@@ -64,7 +64,7 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F3-48 | 🔴 Hoog | Meerdere partners ondersteunen | 📋 Open |
+| F3-48 | 🔴 Hoog | Meerdere partners ondersteunen | ✅ Gedaan |
 | F3-49 | 🔴 Hoog | Relatie toevoegen vanuit `manage.html` | 📋 Open |
 | F3-50 | 🟡 Middel | Grootouders en kleinkinderen tonen in view.html | 📋 Open |
 | F3-51 | 🟡 Middel | Halfbroers/halfzussen correct onderscheiden | 📋 Open |
@@ -93,7 +93,7 @@
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
 | F3-61 | 🔴 Hoog | `import.js` herschrijven met inline commentaar | ✅ Gedaan |
-| F3-62 | 🔴 Hoog | Import validatie: dubbele ID's detecteren | 📋 Open |
+| F3-62 | 🔴 Hoog | Import validatie: dubbele ID's detecteren | ✅ Gedaan |
 | F3-63 | 🟡 Middel | Import preview tonen vóór opslaan | 📋 Open |
 | F3-64 | 🟡 Middel | GEDCOM-formaat importeren | 📋 Open |
 
