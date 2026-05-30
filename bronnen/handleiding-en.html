@@ -301,13 +301,21 @@
 
         <div class="sectie" id="importeren">
             <h2>11. Importing</h2>
-            <p>You can import existing family tree data via a CSV file.</p>
+<p>You can import existing family tree data via a CSV file. During import, duplicate IDs are detected automatically.</p>
             <ul class="stappen">
                 <li>Download the <a href="/MyFamTreeCollab/bronnen/template.html">CSV template</a>.</li>
                 <li>Fill in the template with your family data.</li>
                 <li>Go to <strong>Import</strong> via the navigation.</li>
                 <li>Click <strong>"Choose file"</strong> and select your CSV.</li>
                 <li>Click <strong>"Import"</strong>.</li>
+            </ul>
+            <h3>Handling duplicates</h3>
+            <p>If an imported ID already exists in your family tree, a dialog appears showing the number of duplicates and the affected IDs. Choose how to proceed:</p>
+            <ul>
+                <li><strong>⏭ Skip</strong> — import only new people, skip duplicates</li>
+                <li><strong>♻️ Overwrite</strong> — replace existing people with the imported version</li>
+                <li><strong>📥 Import all anyway</strong> — add everything including duplicates</li>
+                <li><strong>✖ Cancel</strong> — stop the import, nothing is saved</li>
             </ul>
             <div class="waarschuwing"><strong>Note:</strong> Only available for <strong>Owner</strong> accounts.</div>
             <a href="#" class="terug-top">↑ Back to top</a>
