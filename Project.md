@@ -1,5 +1,5 @@
 # MyFamTreeCollab — Project.md
-## Bijgewerkt: 2026-05-12
+## Bijgewerkt: 2026-05-30
 
 ---
 
@@ -104,6 +104,7 @@ topbar.js                 ← geïnjecteerd ná TopBar HTML (garandeert #top-aut
 | `window.TopBarAuth` | topbar.js | v2.3.0 |
 | `window.SiteAnalytics` | siteAnalytics.js | v2.6.0 |
 | `window.DemoModule` | demo.js | v1.2.1 |
+| `window.ManageTable.buildHeader` | manage.js | v2.6.1 |
 
 ---
 
