@@ -1,54 +1,39 @@
-/* ======================= js/relatieEngine.js v2.4.0 =======================
+/* ======================= js/relatieEngine.js v2.5.0 =======================
    Centrale relatie-berekening voor MyFamTreeCollab
    Berekent alle familierelaties rond een geselecteerde hoofdpersoon
    Exporteert: window.RelatieEngine.computeRelaties(data, hoofdId)
 
-   Vereist: utils.js (voor safe()) — moet eerder geladen zijn in HTML
-   Gebruikt door: view.js, timeline.js, manage.js
+   Vereist: utils.js (voor safe()), schema.js (voor parsePartners())
 
-   Wijziging v2.4.0 t.o.v. v2.3.0:
-   - PHoofdID bepaald via split('|')[0]: eerste partner uit pipe-gescheiden
-     PartnerID wordt gebruikt als primaire partner voor de scenario-logica.
-     Overige partners worden niet meegenomen in de relatieberekening —
-     view.js en manage.js tonen extra partners via eigen split-logica.
+   Wijziging v2.5.0 (sessie 35 — F3-48):
+   - Alle directe string-vergelijkingen op VaderID/MoederID/PartnerID vervangen
+     door parsePartners() + includes() voor correcte | ondersteuning
+   - VHoofdID/MHoofdID: array via parsePartners() i.p.v. enkele string
+   - PHoofdID: eerste partner via parsePartners()[0] (ongewijzigd gedrag)
+   - Kind-scenario checks: parsePartners(p.VaderID/MoederID).includes()
+   - BZID check: parsePartners(p.VaderID/MoederID).includes() voor zelfde ouder
+   - BZPartnerID: parsePartners(s.PartnerID) voor meerdere BZ-partners
+   - Relatie classificatie: VHoofdID/MHoofdID arrays via .includes()
 
-   Wijziging v2.3.0 t.o.v. v2.2.0:
-   - KindPartnerID verwijderd — bestaat niet in de specificatie, partners van
-     kinderen worden per pagina opgezocht via k.PartnerID
-   - Sortering onbekende geboortedatum gecorrigeerd: new Date(0) → new Date(9999,0)
-     zodat personen zonder datum écht achteraan komen (niet tussen 1970-personen)
+   Wijziging v2.4.0:
+   - PHoofdID bepaald via split('|')[0]: eerste partner als primaire partner
 
-   Wijziging v2.2.0 t.o.v. v2.1.0:
-   - Secundaire sortering toegevoegd: binnen elke relatiegroep oud → jong
-     op basis van Geboortedatum. Geldt voor manage, view en timeline.
+   Wijziging v2.3.0:
+   - KindPartnerID verwijderd
+   - Sortering onbekende geboortedatum gecorrigeerd
 
-   Wijziging v2.1.0 t.o.v. v2.0.0:
-   - Kind-classificatie volledig herschreven zodat zowel vader als moeder
-     als hoofdpersoon kan fungeren. Drie scenario's (conform specificatie):
+   Wijziging v2.2.0:
+   - Secundaire sortering: binnen elke relatiegroep oud → jong
 
-     Scenario 1 — KindID:
-       (VaderID = HoofdID EN MoederID = PHoofdID)
-       OF (MoederID = HoofdID EN VaderID = PHoofdID)
-       → Kind van BEIDE: hoofdpersoon + diens partner
-
-     Scenario 2 — HKindID:
-       (VaderID = HoofdID EN MoederID ≠ PHoofdID)
-       OF (MoederID = HoofdID EN VaderID ≠ PHoofdID)
-       → Kind van ALLEEN de hoofdpersoon (andere ouder is iemand anders of onbekend)
-
-     Scenario 3 — PHKindID:
-       (VaderID = PHoofdID EN MoederID ≠ HoofdID)
-       OF (MoederID = PHoofdID EN VaderID ≠ HoofdID)
-       → Kind van ALLEEN de partner (hoofdpersoon is niet de andere ouder)
-
-   - BZID exclusie bijgewerkt om alle nieuwe kindtypen mee te nemen
-   - KindPartnerID en BZPartnerID traversal bijgewerkt
+   Wijziging v2.1.0:
+   - Kind-classificatie herschreven: 3 scenario's (KindID/HKindID/PHKindID)
    ========================================================================= */
 
 (function () {
     'use strict';
 
-    const safe = window.ftSafe; // Centrale safe() uit utils.js
+    var safe          = window.ftSafe;                                     // Centrale safe() uit utils.js
+    var parsePartners = window.StamboomSchema.parsePartners;               // | splitter uit schema.js
 
     /**
      * Berekent alle familierelaties van alle personen t.o.v. de hoofdpersoon.
@@ -60,122 +45,162 @@
 
         if (!hoofdId) return [];                                            // Geen hoofdpersoon → lege array
 
-        const hoofd = data.find(p => safe(p.ID) === safe(hoofdId));        // Zoek hoofdpersoon op
+        var hoofd = data.find(function (p) { return safe(p.ID) === safe(hoofdId); });
         if (!hoofd) return [];                                              // Niet gevonden → stop
 
-        const sid      = safe(hoofdId);                                    // Veilige string van hoofdId
-        const VHoofdID = safe(hoofd.VaderID);                              // Vader van hoofdpersoon
-        const MHoofdID = safe(hoofd.MoederID);                             // Moeder van hoofdpersoon
-        const PHoofdID = safe(hoofd.PartnerID).split('|')[0].trim();         // Eerste partner uit pipe-lijst — gebruikt als primaire partner in scenario-logica
+        var sid = safe(hoofdId);                                           // Veilige string van hoofdId
+
+        // Ouders van hoofdpersoon als arrays — meerdere waarden via |
+        // Was: const VHoofdID = safe(hoofd.VaderID) — slechts één vader
+        var VHoofdIDs = parsePartners(hoofd.VaderID  || '');               // ['P010', 'P015'] of []
+        var MHoofdIDs = parsePartners(hoofd.MoederID || '');               // ['P011'] of []
+
+        // Primaire partner: eerste uit de | lijst — ongewijzigd gedrag voor scenario-logica
+        var allPartners = parsePartners(hoofd.PartnerID || '');            // Alle partners
+        var PHoofdID    = allPartners.length > 0 ? allPartners[0] : '';   // Eerste partner als primaire
 
         /* ======================= KINDEREN — 3 SCENARIO'S ======================= */
         /*
-         * Een persoon p is een kind als minstens één ouder de hoofdpersoon of diens
-         * partner is. We bepalen het scenario op basis van BEIDE ouders samen.
-         *
          * Scenario 1 — KindID  (kind van HoofdID + PHoofdID samen):
-         *   (p.VaderID = HoofdID  EN p.MoederID = PHoofdID)
-         *   OF (p.MoederID = HoofdID EN p.VaderID = PHoofdID)
+         *   (p.VaderIDs bevat HoofdID  EN p.MoederIDs bevat PHoofdID)
+         *   OF (p.MoederIDs bevat HoofdID EN p.VaderIDs bevat PHoofdID)
          *
          * Scenario 2 — HKindID  (kind van alleen HoofdID):
-         *   (p.VaderID = HoofdID  EN p.MoederID ≠ PHoofdID)
-         *   OF (p.MoederID = HoofdID EN p.VaderID ≠ PHoofdID)
+         *   (p.VaderIDs bevat HoofdID  EN p.MoederIDs bevat PHoofdID NIET)
+         *   OF (p.MoederIDs bevat HoofdID EN p.VaderIDs bevat PHoofdID NIET)
          *
          * Scenario 3 — PHKindID  (kind van alleen PHoofdID):
-         *   (p.VaderID = PHoofdID  EN p.MoederID ≠ HoofdID)
-         *   OF (p.MoederID = PHoofdID EN p.VaderID ≠ HoofdID)
+         *   (p.VaderIDs bevat PHoofdID  EN p.MoederIDs bevat HoofdID NIET)
+         *   OF (p.MoederIDs bevat PHoofdID EN p.VaderIDs bevat HoofdID NIET)
          */
 
-        const KindID   = []; // Scenario 1: kind van HoofdID én PHoofdID samen
-        const HKindID  = []; // Scenario 2: kind van alleen HoofdID
-        const PHKindID = []; // Scenario 3: kind van alleen PHoofdID
+        var KindID   = []; // Scenario 1
+        var HKindID  = []; // Scenario 2
+        var PHKindID = []; // Scenario 3
 
-        data.forEach(p => {
-            const pid   = safe(p.ID);
-            const vader = safe(p.VaderID);
-            const moeder = safe(p.MoederID);
-
+        data.forEach(function (p) {
+            var pid = safe(p.ID);
             if (pid === sid) return;                                        // Hoofdpersoon zelf overslaan
 
-            const hoofdIsVader  = (vader  === sid);                        // VaderID = HoofdID
-            const hoofdIsMoeder = (moeder === sid);                        // MoederID = HoofdID
-            const partnerIsVader  = PHoofdID && (vader  === PHoofdID);     // VaderID = PHoofdID
-            const partnerIsMoeder = PHoofdID && (moeder === PHoofdID);     // MoederID = PHoofdID
+            // Ouders van dit kind als arrays — meerdere waarden via |
+            // Was: const vader = safe(p.VaderID) — slechts één vader als string
+            var vaderIDs  = parsePartners(p.VaderID  || '');               // Array van vader-IDs
+            var moederIDs = parsePartners(p.MoederID || '');               // Array van moeder-IDs
 
-            const hoofdIsOuder   = hoofdIsVader  || hoofdIsMoeder;        // Hoofd is minstens één ouder
-            const partnerIsOuder = partnerIsVader || partnerIsMoeder;      // Partner is minstens één ouder
+            // Controleer of hoofdpersoon of partner ouder is via .includes()
+            var hoofdIsVader    = vaderIDs.includes(sid);                  // Hoofd staat in vaderlijst
+            var hoofdIsMoeder   = moederIDs.includes(sid);                 // Hoofd staat in moederlijst
+            var partnerIsVader  = PHoofdID && vaderIDs.includes(PHoofdID); // Partner staat in vaderlijst
+            var partnerIsMoeder = PHoofdID && moederIDs.includes(PHoofdID);// Partner staat in moederlijst
+
+            var hoofdIsOuder   = hoofdIsVader   || hoofdIsMoeder;         // Hoofd is minstens één ouder
+            var partnerIsOuder = partnerIsVader || partnerIsMoeder;       // Partner is minstens één ouder
 
             if (!hoofdIsOuder && !partnerIsOuder) return;                  // Geen relatie met dit kind
 
             if (hoofdIsOuder && partnerIsOuder) {
-                // Scenario 1: beide ouders zijn HoofdID en PHoofdID
-                KindID.push(pid);
+                KindID.push(pid);                                          // Scenario 1: beide ouders
 
             } else if (hoofdIsOuder && !partnerIsOuder) {
-                // Scenario 2: alleen HoofdID is ouder, andere ouder is iemand anders
-                HKindID.push(pid);
+                HKindID.push(pid);                                         // Scenario 2: alleen hoofd
 
             } else if (partnerIsOuder && !hoofdIsOuder) {
-                // Scenario 3: alleen PHoofdID is ouder, andere ouder is niet de hoofdpersoon
-                PHKindID.push(pid);
+                PHKindID.push(pid);                                        // Scenario 3: alleen partner
             }
         });
 
         /* ======================= BROERS EN ZUSSEN ======================= */
 
-        const alleKinderen = [...KindID, ...HKindID, ...PHKindID];        // Alle kindtypen voor exclusie
+        var alleKinderen = KindID.concat(HKindID).concat(PHKindID);       // Alle kindtypen voor exclusie
 
-        const BZID = data
-            .filter(p => {
-                const pid = safe(p.ID);
-                if (pid === sid)                       return false;        // Hoofdpersoon zelf overslaan
-                if (pid === PHoofdID)                  return false;        // Partner overslaan
-                if (alleKinderen.includes(pid))        return false;        // Kinderen overslaan
-                return (VHoofdID && safe(p.VaderID)  === VHoofdID)         // Zelfde vader = broer/zus
-                    || (MHoofdID && safe(p.MoederID) === MHoofdID);        // Zelfde moeder = broer/zus
+        var BZID = data
+            .filter(function (p) {
+                var pid = safe(p.ID);
+                if (pid === sid)                        return false;       // Hoofdpersoon zelf
+                if (pid === PHoofdID)                   return false;       // Partner
+                if (alleKinderen.indexOf(pid) !== -1)   return false;       // Kinderen
+
+                // Zelfde vader of moeder als hoofdpersoon — via includes() op arrays
+                // Was: safe(p.VaderID) === VHoofdID — slechts één vader als string
+                var pVaderIDs  = parsePartners(p.VaderID  || '');          // Vaders van dit persoon
+                var pMoederIDs = parsePartners(p.MoederID || '');          // Moeders van dit persoon
+
+                // Broer/zus als minstens één gedeelde vader of moeder
+                var gedeeldeVader  = VHoofdIDs.some(function (vid) { return pVaderIDs.includes(vid);  });
+                var gedeeldeMoeder = MHoofdIDs.some(function (mid) { return pMoederIDs.includes(mid); });
+
+                return gedeeldeVader || gedeeldeMoeder;
             })
-            .map(p => safe(p.ID));
+            .map(function (p) { return safe(p.ID); });
 
         /* ======================= PARTNERS VAN BROERS/ZUSSEN ======================= */
 
-        const BZPartnerID = BZID
-            .map(id => {
-                const s = data.find(p => safe(p.ID) === id);
-                return (s && safe(s.PartnerID)) ? safe(s.PartnerID) : null;
-            })
-            .filter(Boolean);
+        var BZPartnerID = [];
+        BZID.forEach(function (id) {
+            var s = data.find(function (p) { return safe(p.ID) === id; });
+            if (!s) return;
+            // Alle partners van broer/zus — meerdere via |
+            // Was: return (s && safe(s.PartnerID)) ? safe(s.PartnerID) : null
+            parsePartners(s.PartnerID || '').forEach(function (pid) {
+                if (pid && BZPartnerID.indexOf(pid) === -1) {
+                    BZPartnerID.push(pid);                                 // Uniek toevoegen
+                }
+            });
+        });
 
         /* ======================= RELATIE CLASSIFICATIE ======================= */
 
         return data
-            .map(p => {
-                const pid   = safe(p.ID);
-                const clone = { ...p };                                    // Ondiepe kopie — origineel blijft intact
+            .map(function (p) {
+                var pid   = safe(p.ID);
+                var clone = Object.assign({}, p);                          // Ondiepe kopie
 
                 clone.Relatie   = '';
                 clone._priority = 99;
 
-                if      (pid === sid)                    { clone.Relatie = 'HoofdID';  clone._priority = 1;   }
-                else if (pid === VHoofdID)               { clone.Relatie = 'VHoofdID'; clone._priority = 0;   }
-                else if (pid === MHoofdID)               { clone.Relatie = 'MHoofdID'; clone._priority = 0;   }
-                else if (pid === PHoofdID)               { clone.Relatie = 'PHoofdID'; clone._priority = 2;   }
-                else if (KindID.includes(pid))           { clone.Relatie = 'KindID';   clone._priority = 3;   }
-                else if (HKindID.includes(pid))          { clone.Relatie = 'HKindID';  clone._priority = 3;   }
-                else if (PHKindID.includes(pid))         { clone.Relatie = 'PHKindID'; clone._priority = 3;   }
-                else if (BZID.includes(pid))             { clone.Relatie = 'BZID';     clone._priority = 4;   }
-                else if (BZPartnerID.includes(pid))      { clone.Relatie = 'BZPartnerID'; clone._priority = 4.5; }
+                if (pid === sid) {
+                    clone.Relatie = 'HoofdID';  clone._priority = 1;
+
+                // VHoofdID: hoofd staat in VHoofdIDs array
+                // Was: else if (pid === VHoofdID)
+                } else if (VHoofdIDs.includes(pid)) {
+                    clone.Relatie = 'VHoofdID'; clone._priority = 0;
+
+                // MHoofdID: hoofd staat in MHoofdIDs array
+                // Was: else if (pid === MHoofdID)
+                } else if (MHoofdIDs.includes(pid)) {
+                    clone.Relatie = 'MHoofdID'; clone._priority = 0;
+
+                } else if (pid === PHoofdID) {
+                    clone.Relatie = 'PHoofdID'; clone._priority = 2;
+
+                } else if (KindID.indexOf(pid) !== -1) {
+                    clone.Relatie = 'KindID';   clone._priority = 3;
+
+                } else if (HKindID.indexOf(pid) !== -1) {
+                    clone.Relatie = 'HKindID';  clone._priority = 3;
+
+                } else if (PHKindID.indexOf(pid) !== -1) {
+                    clone.Relatie = 'PHKindID'; clone._priority = 3;
+
+                } else if (BZID.indexOf(pid) !== -1) {
+                    clone.Relatie = 'BZID';     clone._priority = 4;
+
+                } else if (BZPartnerID.indexOf(pid) !== -1) {
+                    clone.Relatie = 'BZPartnerID'; clone._priority = 4.5;
+                }
 
                 return clone;
             })
-            .sort((a, b) => {
-                if (a._priority !== b._priority) return a._priority - b._priority;          // Primair: op relatievolgorde
-                const da = a.Geboortedatum ? new Date(a.Geboortedatum) : new Date(9999, 0); // Onbekend datum → achteraan
-                const db = b.Geboortedatum ? new Date(b.Geboortedatum) : new Date(9999, 0); // Onbekend datum → achteraan
-                return da - db;                                                              // Secundair: oud → jong
+            .sort(function (a, b) {
+                if (a._priority !== b._priority) return a._priority - b._priority; // Op relatievolgorde
+                var da = a.Geboortedatum ? new Date(a.Geboortedatum) : new Date(9999, 0); // Onbekend → achteraan
+                var db = b.Geboortedatum ? new Date(b.Geboortedatum) : new Date(9999, 0);
+                return da - db;                                                     // Oud → jong
             });
     }
 
     /* ======================= EXPORTEER ======================= */
-    window.RelatieEngine = { computeRelaties };
+    window.RelatieEngine = { computeRelaties: computeRelaties };
 
 })();
