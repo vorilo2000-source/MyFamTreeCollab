@@ -1,22 +1,21 @@
-/* ======================= js/timeline.js v2.4.0 =======================
+/* ======================= js/timeline.js v2.5.0 =======================
  * Canvas-based family timeline renderer
+ *
+ * Wijzigingen v2.5.0 (sessie 35 — F3-48):
+ *  - VaderID, MoederID, PartnerID ondersteunen meerdere waarden via | scheiding
+ *  - findMultiple() helper toegevoegd: splitst op | via parsePartners(), retourneert array
+ *  - collectAncestorLevel(): partnerId via findMultiple() loop i.p.v. safe(parent.PartnerID)
+ *  - collectAncestorLevel(): ouder-IDs via findMultiple() i.p.v. [safe(VaderID), safe(MoederID)]
+ *  - rootFatherId check vervangen: rootPerson.VaderID via parsePartners() voor relatie-detectie
+ *  - Hoofdpersoon partners: findMultiple(rootPerson.PartnerID).forEach() loop
+ *  - Broer/zus partners: findMultiple(sib.PartnerID).forEach() loop
+ *  - Nakomeling partners: findMultiple(person.PartnerID).forEach() loop
  *
  * Wijzigingen v2.4.0 (sessie 26):
  *  - Alle hardcoded strings vervangen door i18nModule.t('timeline:...')
- *  - Generatie-labels (gen -3 t/m +n) via i18n namespace
- *  - Tooltip-velden (rel-labels, geboren, overleden, leeftijd) via i18n
- *  - Placeholder-meldingen via i18n
- *  - genLabel() leest uit timeline:gen.* keys
- *  - buildTooltipText() leest uit timeline:rel.* en timeline:tooltip.*
- *  - showPlaceholder() leest uit timeline:placeholder.*
  *
  * Wijzigingen v2.3.5:
- *  - Sticky generatiekolom: #tlStickyCol blijft zichtbaar bij horizontaal scrollen
- *  - updateGenLabels() schrijft labels naar #tlStickyCol
- *
- * Wijzigingen v2.3.1:
- *  - Bug fix: ancestor volgorde gecorrigeerd
- *  - collectAncestorLevel buffer-aanpak
+ *  - Sticky generatiekolom: #tlStickyCol
  *
  * Dependencies:
  *   i18n.js          -> window.i18nModule.t()
@@ -32,31 +31,31 @@
     /* ------------------------------------------------------------------
      * SECTION 1 — DOM REFERENCES
      * ------------------------------------------------------------------ */
-    var container   = document.getElementById('timelineContainer');  // Buitenste wrapper
-    var stickyCol   = document.getElementById('tlStickyCol');        // Sticky generatiekolom links
-    var scrollArea  = document.getElementById('tlScrollArea');       // Scrollgebied rechts
-    var canvas      = document.getElementById('timelineCanvas');     // Canvas voor balkjes
-    var placeholder = document.getElementById('timelinePlaceholder'); // Melding zonder selectie
-    var tooltip     = document.getElementById('timelineTooltip');    // Hover-tooltip
-    var searchInput = document.getElementById('sandboxSearch');      // Zoekveld
+    var container   = document.getElementById('timelineContainer');
+    var stickyCol   = document.getElementById('tlStickyCol');
+    var scrollArea  = document.getElementById('tlScrollArea');
+    var canvas      = document.getElementById('timelineCanvas');
+    var placeholder = document.getElementById('timelinePlaceholder');
+    var tooltip     = document.getElementById('timelineTooltip');
+    var searchInput = document.getElementById('sandboxSearch');
 
     /* ------------------------------------------------------------------
      * SECTION 2 — LAYOUT CONSTANTS
      * ------------------------------------------------------------------ */
-    var ROW_H        = 28;  // Hoogte van één persoons-rij in pixels
-    var ROW_GAP      = 4;   // Ruimte tussen rijen binnen dezelfde familiegroep
-    var GROUP_GAP    = 12;  // Ruimte tussen familiegroepen
-    var RIGHT_PAD    = 32;  // Rechter marge na tijdas-einde
-    var TICK_AREA_H  = 40;  // Hoogte gereserveerd voor tijdas bovenaan
-    var BAR_H        = 16;  // Hoogte van een levensbalk
-    var RADIUS       = 3;   // Afronding van balkjes
-    var DEFAULT_SPAN = 50;  // Aangenomen levensduur als overlijdensdatum onbekend
-    var TICK_INTERVAL= 10;  // Jaren tussen tikmarkeringen
-    var UNKNOWN_BAR_W= 60;  // Breedte voor balkjes zonder geboortedatum
-    var LABEL_COL_W  = 155; // Overeenkomstig CSS width van #tlStickyCol
-    var MIN_PX_YEAR  = 5;   // Minimum pixels per jaar
-    var SECTION_H    = 20;  // Hoogte van generatie-header rij
-    var YEAR_PAD     = 5;   // Pixels tussen jaarlabel en balkrand
+    var ROW_H        = 28;
+    var ROW_GAP      = 4;
+    var GROUP_GAP    = 12;
+    var RIGHT_PAD    = 32;
+    var TICK_AREA_H  = 40;
+    var BAR_H        = 16;
+    var RADIUS       = 3;
+    var DEFAULT_SPAN = 50;
+    var TICK_INTERVAL= 10;
+    var UNKNOWN_BAR_W= 60;
+    var LABEL_COL_W  = 155;
+    var MIN_PX_YEAR  = 5;
+    var SECTION_H    = 20;
+    var YEAR_PAD     = 5;
 
     /* ------------------------------------------------------------------
      * SECTION 3 — COLOUR PALETTE
@@ -129,7 +128,7 @@
     }
 
     function fmtDate(dateStr) {
-        if (!dateStr) return '\u2014'; // Em-dash
+        if (!dateStr) return '\u2014';
         var r = resolveQ(String(dateStr).trim());
         return window.ftFormatDate ? window.ftFormatDate(r) : r;
     }
@@ -143,6 +142,14 @@
         var sid = safe(id);
         if (!sid) return null;
         return dataset.find(function (p) { return safe(p.ID) === sid; }) || null;
+    }
+
+    // Splits |-gescheiden veld naar array van gevonden personen
+    // Gebruikt schema.parsePartners() — zelfde helper als manage.js en view.js
+    function findMultiple(fieldValue) {
+        return window.StamboomSchema.parsePartners(fieldValue || '') // Splits op |
+            .map(function (id) { return findPerson(id); })           // Zoek elk ID op
+            .filter(Boolean);                                        // Verwijder niet-gevonden
     }
 
     function displayName(p) {
@@ -181,26 +188,23 @@
 
     /* ------------------------------------------------------------------
      * SECTION 9 — GENERATIE-LABEL HELPER
-     * Labels worden nu via i18nModule.t() opgehaald uit de timeline namespace.
      * ------------------------------------------------------------------ */
     function genLabel(depth, shownGenLabels) {
-        if (shownGenLabels.has(depth)) return null; // Al getoond voor deze diepte
+        if (shownGenLabels.has(depth)) return null;
         shownGenLabels.add(depth);
 
-        // Vaste keys voor bekende generatiediepten
         var fixedKeys = [
-            null,                                    // 0 = root — apart afgehandeld
-            'timeline:gen.children',                 // +1
-            'timeline:gen.grandchildren',            // +2
-            'timeline:gen.greatgrandchildren',       // +3
-            'timeline:gen.greatgreatgrandchildren'   // +4
+            null,
+            'timeline:gen.children',
+            'timeline:gen.grandchildren',
+            'timeline:gen.greatgrandchildren',
+            'timeline:gen.greatgreatgrandchildren'
         ];
 
-        if (depth === 0) return null; // Root heeft eigen label via buildRows
+        if (depth === 0) return null;
         if (depth >= 1 && depth <= 4 && fixedKeys[depth]) {
-            return i18nModule.t(fixedKeys[depth]); // Vertaald via i18n
+            return i18nModule.t(fixedKeys[depth]);
         }
-        // Diepte > 4: dynamisch label met interpolatie
         return i18nModule.t('timeline:gen.furtherDescendants', { n: depth });
     }
 
@@ -236,32 +240,56 @@
         function collectAncestorLevel(parentIds, sectionLabel, genNum) {
             var buffer    = [];
             var nextLevel = [];
+
+            // Vaders van rootPersoon als Set voor relatie-detectie
+            // Was: var rootFatherId = safe(rootPerson.VaderID)  — slechts één vader
+            // Nu: alle vaders van rootPersoon via parsePartners()
+            var rootFatherIds = new Set(
+                window.StamboomSchema.parsePartners(rootPerson.VaderID || '')
+            );
+
             parentIds.forEach(function (pid) {
                 var parent = findPerson(pid);
                 if (!parent || seen.has(safe(pid))) return;
                 seen.add(safe(pid));
-                var rootFatherId = safe(rootPerson.VaderID);
+
+                // Relatie bepalen: is dit een vader of moeder van de rootpersoon?
                 var relatie = genNum === -1
-                    ? (safe(parent.ID) === rootFatherId ? 'VHoofdID' : 'MHoofdID')
-                    : 'VHoofdID';
+                    ? (rootFatherIds.has(safe(parent.ID)) ? 'VHoofdID' : 'MHoofdID')
+                    : 'VHoofdID';                                     // Hogere generaties: altijd VHoofdID
+
                 buffer.push({ id: pid, relatie: relatie, color: COLOR[relatie], genNum: genNum, sectionLabel: sectionLabel });
-                var partnerId = safe(parent.PartnerID);
-                if (partnerId && !seen.has(partnerId)) {
-                    seen.add(partnerId);
-                    buffer.push({ id: partnerId, relatie: 'PHoofdID', color: COLOR.PHoofdID, genNum: genNum, sectionLabel: null });
-                }
-                [safe(parent.VaderID), safe(parent.MoederID)]
+
+                // Partners van deze voorouder — meerdere via | scheiding
+                // Was: var partnerId = safe(parent.PartnerID); if (partnerId && ...) { addRow... }
+                findMultiple(parent.PartnerID).forEach(function (partner) {
+                    var partnerId = safe(partner.ID);
+                    if (!seen.has(partnerId)) {
+                        seen.add(partnerId);
+                        buffer.push({ id: partnerId, relatie: 'PHoofdID', color: COLOR.PHoofdID, genNum: genNum, sectionLabel: null });
+                    }
+                });
+
+                // Ouders van deze voorouder voor volgende generatie — meerdere via |
+                // Was: [safe(parent.VaderID), safe(parent.MoederID)].filter(...)
+                var grandparentIds = window.StamboomSchema.parsePartners(parent.VaderID || '')
+                    .concat(window.StamboomSchema.parsePartners(parent.MoederID || '')); // Combineer vaders en moeders
+
+                grandparentIds
                     .filter(function (id) { return id && !seen.has(id); })
-                    .forEach(function (id) { nextLevel.push(id); });
+                    .forEach(function (id) { nextLevel.push(id); });   // Toevoegen aan volgende generatie
             });
+
             return { buffer: buffer, nextLevel: Array.from(new Set(nextLevel)) };
         }
 
         // Voorouders — labels via i18n
-        var gen1Ids = [safe(rootPerson.VaderID), safe(rootPerson.MoederID)].filter(Boolean);
-        var col1    = collectAncestorLevel(gen1Ids, i18nModule.t('timeline:gen.parents'),            -1);
-        var col2    = collectAncestorLevel(col1.nextLevel, i18nModule.t('timeline:gen.grandparents'), -2);
-        var col3    = collectAncestorLevel(col2.nextLevel, i18nModule.t('timeline:gen.greatgrandparents'), -3);
+        var gen1Ids = window.StamboomSchema.parsePartners(rootPerson.VaderID  || '')
+            .concat(window.StamboomSchema.parsePartners(rootPerson.MoederID || '')); // Alle directe ouders
+
+        var col1 = collectAncestorLevel(gen1Ids,         i18nModule.t('timeline:gen.parents'),           -1);
+        var col2 = collectAncestorLevel(col1.nextLevel,  i18nModule.t('timeline:gen.grandparents'),      -2);
+        var col3 = collectAncestorLevel(col2.nextLevel,  i18nModule.t('timeline:gen.greatgrandparents'), -3);
 
         [col3.buffer, col2.buffer, col1.buffer].forEach(function (buffer) {
             buffer.forEach(function (item) {
@@ -277,19 +305,26 @@
         addRow(rootPerson.ID, 'HoofdID', COLOR.HoofdID, 0, false, 0,
                i18nModule.t('timeline:gen.root'), false);
 
-        if (safe(rootPerson.PartnerID)) {
-            addRow(rootPerson.PartnerID, 'PHoofdID', COLOR.PHoofdID, 0, false, 0, null, false);
-        }
+        // Partners van hoofdpersoon — meerdere via |
+        // Was: if (safe(rootPerson.PartnerID)) { addRow(rootPerson.PartnerID, ...) }
+        findMultiple(rootPerson.PartnerID).forEach(function (partner) {
+            addRow(safe(partner.ID), 'PHoofdID', COLOR.PHoofdID, 0, false, 0, null, false);
+        });
 
-        // Broers en zussen
+        // Broers en zussen + hun partners
         relaties
             .filter(function (r) { return safe(r.Relatie) === 'BZID'; })
             .sort(function (a, b) { return (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999); })
             .forEach(function (r) {
                 addRow(r.ID, 'BZID', COLOR.BZID, 0, false, 0, null, false);
                 var sib = findPerson(r.ID);
-                if (sib && safe(sib.PartnerID)) {
-                    addRow(sib.PartnerID, 'BZPartnerID', COLOR.BZPartnerID, 0, false, 0, null, false);
+
+                // Partners van broer/zus — meerdere via |
+                // Was: if (sib && safe(sib.PartnerID)) { addRow(sib.PartnerID, ...) }
+                if (sib) {
+                    findMultiple(sib.PartnerID).forEach(function (bzPartner) {
+                        addRow(safe(bzPartner.ID), 'BZPartnerID', COLOR.BZPartnerID, 0, false, 0, null, false);
+                    });
                 }
             });
 
@@ -304,14 +339,26 @@
         function addDescendantGroup(personId, genDepth) {
             var person = findPerson(personId);
             if (!person || seen.has(safe(personId))) return;
-            var lbl = genLabel(genDepth, shownGenLabels); // Vertaald label
+            var lbl = genLabel(genDepth, shownGenLabels);
             addRow(safe(personId), 'KindID', descendantColor(genDepth), genDepth, true, genDepth, lbl, false);
-            var partnerId = safe(person.PartnerID);
-            if (partnerId) addRow(partnerId, 'PHoofdID', COLOR.partner, genDepth, true, genDepth, null, false);
+
+            // Partners van nakomeling — meerdere via |
+            // Was: var partnerId = safe(person.PartnerID); if (partnerId) addRow(partnerId, ...)
+            findMultiple(person.PartnerID).forEach(function (partner) {
+                addRow(safe(partner.ID), 'PHoofdID', COLOR.partner, genDepth, true, genDepth, null, false);
+            });
+
             dataset
-                .filter(function (p) { return safe(p.VaderID) === safe(personId) || safe(p.MoederID) === safe(personId); })
+                .filter(function (p) {
+                    // Kind van deze persoon als vader of moeder — meerdere ouders via parsePartners()
+                    var vaders  = window.StamboomSchema.parsePartners(p.VaderID  || '');
+                    var moeders = window.StamboomSchema.parsePartners(p.MoederID || '');
+                    return vaders.indexOf(safe(personId)) !== -1 || moeders.indexOf(safe(personId)) !== -1;
+                })
                 .sort(function (a, b) { return (parseYear(a.Geboortedatum) || 9999) - (parseYear(b.Geboortedatum) || 9999); })
-                .forEach(function (child) { if (!seen.has(safe(child.ID))) addDescendantGroup(safe(child.ID), genDepth + 1); });
+                .forEach(function (child) {
+                    if (!seen.has(safe(child.ID))) addDescendantGroup(safe(child.ID), genDepth + 1);
+                });
         }
 
         rootChildren.forEach(function (r, idx) {
@@ -329,7 +376,6 @@
     function renderCanvas(rows) {
         if (!rows || rows.length === 0) return;
 
-        // Bereken canvas hoogte
         var totalH    = TICK_AREA_H;
         var prevLabel = null;
         rows.forEach(function (row) {
@@ -338,7 +384,6 @@
         });
         totalH += 20;
 
-        // Canvas breedte — gebaseerd op scrollArea breedte
         var yearSpan  = dynMaxYear - dynMinYear;
         var available = Math.max(scrollArea.clientWidth - RIGHT_PAD, 400);
         var pxPerYear = Math.max(available / yearSpan, MIN_PX_YEAR);
@@ -346,19 +391,17 @@
 
         canvas.height = totalH;
         canvas.width  = timeW + RIGHT_PAD;
-        stickyCol.style.height = totalH + 'px'; // Sticky kolom hoogte gelijkstellen
+        stickyCol.style.height = totalH + 'px';
 
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         hitRects = [];
         var barPositions = {};
-        var genLabelY    = {}; // genNum/genDepth -> Y pixel voor sticky kolom
+        var genLabelY    = {};
 
-        // Pass 1: tijdas
         drawTimeAxis(ctx, timeW);
 
-        // Pass 2: rijen
         var curY  = TICK_AREA_H;
         prevLabel = null;
 
@@ -398,27 +441,28 @@
             curY += ROW_H + (row.isLastInUnit ? GROUP_GAP : ROW_GAP);
         });
 
-        // Pass 3: connectors
+        // Connectors — ouders via parsePartners() voor correcte multi-ouder links
         rows.forEach(function (row) {
             var p = row.entry.person;
-            [safe(p.VaderID), safe(p.MoederID)].forEach(function (parentId) {
+            // Alle vaders en moeders ophalen via parsePartners()
+            var ouderIds = window.StamboomSchema.parsePartners(p.VaderID  || '')
+                .concat(window.StamboomSchema.parsePartners(p.MoederID || ''));
+
+            ouderIds.forEach(function (parentId) {
                 if (!parentId) return;
                 var cp = barPositions[safe(p.ID)];
                 var pp = barPositions[parentId];
                 if (!cp || !pp) return;
-                drawConnector(ctx, pp, cp);
+                drawConnector(ctx, pp, cp);                             // Lijn van ouder naar kind
             });
         });
 
-        // Pass 4: vandaag-lijn
         drawTodayLine(ctx, timeW);
-
-        // Pass 5: sticky kolom
         updateGenLabels(rows, genLabelY, totalH);
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 12 — DRAW FUNCTIONS
+     * SECTION 12 — DRAW FUNCTIONS (ongewijzigd)
      * ------------------------------------------------------------------ */
     function drawTimeAxis(ctx, timeW) {
         ctx.strokeStyle = COLOR.tick;
@@ -584,10 +628,10 @@
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 13 — STICKY GEN-LABEL KOLOM
+     * SECTION 13 — STICKY GEN-LABEL KOLOM (ongewijzigd)
      * ------------------------------------------------------------------ */
     function updateGenLabels(rows, genLabelY, totalH) {
-        stickyCol.innerHTML = ''; // Verwijder bestaande labels
+        stickyCol.innerHTML = '';
 
         var placed    = new Set();
         var prevLabel = null;
@@ -598,7 +642,7 @@
             if (placed.has(row.sectionLabel)) return;
             placed.add(row.sectionLabel);
 
-            var gn = row.isDescendant ? row.genDepth : row.genNum; // Generatienummer als Y-sleutel
+            var gn = row.isDescendant ? row.genDepth : row.genNum;
             var y  = (gn !== null && gn !== undefined && genLabelY[gn] !== undefined)
                 ? genLabelY[gn] : 0;
 
@@ -615,14 +659,13 @@
                 overflow:     'hidden',
                 textOverflow: 'ellipsis'
             });
-            lbl.textContent = row.sectionLabel; // Label tekst (al vertaald via genLabel())
+            lbl.textContent = row.sectionLabel;
             stickyCol.appendChild(lbl);
         });
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 14 — HIT DETECTION & TOOLTIP
-     * Tooltip-tekst volledig via i18nModule.t()
+     * SECTION 14 — HIT DETECTION & TOOLTIP (ongewijzigd)
      * ------------------------------------------------------------------ */
     function getHitAt(mx, my) {
         for (var i = hitRects.length - 1; i >= 0; i--) {
@@ -633,26 +676,23 @@
     }
 
     function buildTooltipText(entry) {
-        var p    = entry.person;
-        // Relatie-labels via i18n — fallback naar ruwe sleutel als niet gevonden
+        var p      = entry.person;
         var relKey = 'timeline:rel.' + entry.relatie;
         var rel    = i18nModule.t(relKey);
-        if (!rel || rel === relKey) rel = entry.relatie || '\u2014'; // Fallback
+        if (!rel || rel === relKey) rel = entry.relatie || '\u2014';
 
-        var name  = displayName(p) || i18nModule.t('timeline:tooltip.noName'); // Vertaald fallback
+        var name  = displayName(p) || i18nModule.t('timeline:tooltip.noName');
         var geb   = fmtDate(p.Geboortedatum);
         var overl = p.Overlijdensdatum
             ? fmtDate(p.Overlijdensdatum)
-            : i18nModule.t('timeline:tooltip.alive'); // "nog in leven"
+            : i18nModule.t('timeline:tooltip.alive');
 
         var life = '';
         if (entry.birthYear && entry.deathYear) {
-            // Exacte leeftijd: "Leeftijd: 72 jaar"
             life = '\n' + i18nModule.t('timeline:tooltip.age') + ': ' +
                    (entry.deathYear - entry.birthYear) + ' ' +
                    i18nModule.t('timeline:tooltip.years');
         } else if (entry.birthYear) {
-            // Geschatte leeftijd: "Leeftijd: ~45 jaar"
             life = '\n' + i18nModule.t('timeline:tooltip.age') + ': ' +
                    i18nModule.t('timeline:tooltip.approx', { age: TODAY - entry.birthYear });
         }
@@ -701,19 +741,19 @@
     });
 
     /* ------------------------------------------------------------------
-     * SECTION 15 — MAIN DRAW + PLACEHOLDER
+     * SECTION 15 — MAIN DRAW + PLACEHOLDER (ongewijzigd)
      * ------------------------------------------------------------------ */
     function draw() {
         if (!rootId) return;
         var root = findPerson(rootId);
         if (!root) {
-            showPlaceholder(i18nModule.t('timeline:placeholder.notFound')); // Vertaald
+            showPlaceholder(i18nModule.t('timeline:placeholder.notFound'));
             return;
         }
         setDynamicRange(root);
         var rows = buildRows(root);
         if (rows.length === 0) {
-            showPlaceholder(i18nModule.t('timeline:placeholder.noFamily')); // Vertaald
+            showPlaceholder(i18nModule.t('timeline:placeholder.noFamily'));
             return;
         }
         placeholder.style.display = 'none';
@@ -724,12 +764,12 @@
     function showPlaceholder(msg) {
         canvas.style.display      = 'none';
         placeholder.style.display = 'block';
-        placeholder.textContent   = msg;   // Vertaald bericht
-        stickyCol.innerHTML       = '';    // Reset sticky kolom
+        placeholder.textContent   = msg;
+        stickyCol.innerHTML       = '';
     }
 
     /* ------------------------------------------------------------------
-     * SECTION 16 — INIT
+     * SECTION 16 — INIT (ongewijzigd)
      * ------------------------------------------------------------------ */
     function init() {
         dataset = window.StamboomStorage.get() || [];
