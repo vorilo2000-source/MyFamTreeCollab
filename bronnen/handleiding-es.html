@@ -192,13 +192,20 @@
                 <li>Confirma la eliminación. El ID se elimina automáticamente de todas las relaciones.</li>
             </ul>
             <h3>Registrar relaciones</h3>
+            <p>PadreID, MadreID y ParejaID admiten múltiples valores. Cada celda muestra una lista dinámica de campos de entrada.</p>
             <ul>
-                <li><strong>PadreID</strong> — ID del padre</li>
-                <li><strong>MadreID</strong> — ID de la madre</li>
-                <li><strong>ParejaID</strong> — ID de la pareja. Varias parejas: <code>P-001|P-003</code></li>
+                <li><strong>PadreID</strong> — uno o más padres (p. ej. adopción, padrastro)</li>
+                <li><strong>MadreID</strong> — una o más madres</li>
+                <li><strong>ParejaID</strong> — una o más parejas</li>
             </ul>
-            <a href="#" class="terug-top">↑ Volver arriba</a>
-        </div>
+            <h3>Añadir y eliminar IDs</h3>
+            <ul class="stappen">
+                <li>Haz clic en <strong>"+ ID"</strong> debajo de un campo para añadir una entrada adicional.</li>
+                <li>Haz clic en <strong>"×"</strong> junto a una entrada para eliminar ese ID.</li>
+                <li>El último campo se vacía en lugar de eliminarse.</li>
+                <li>Haz clic en <strong>"Guardar"</strong> para guardar los cambios.</li>
+            </ul>
+            <div class="tip"><strong>Almacenamiento:</strong> Los valores se guardan internamente como <code>P-001|P-003</code> — el widget lo gestiona automáticamente.</div>
 
         <div class="sectie" id="stamboom-bekijken">
             <h2>5. Ver tu árbol genealógico</h2>
