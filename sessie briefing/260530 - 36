@@ -1,0 +1,80 @@
+# Sessie 36 — Topbar & Navbar vastzetten in alle HTML pagina's
+
+**Datum:** nvt — volgende sessie
+**Gerelateerde taak:** TD-04
+**Doel:** `fetch()` van TopBar en Navbar vervangen door statische inline HTML op alle pagina's
+
+---
+
+## Context
+
+Alle pagina's laden momenteel TopBar en Navbar dynamisch via `fetch()`:
+
+```js
+fetch('/MyFamTreeCollab/Layout/TopBar.html')
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+        i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+        var s = document.createElement('script');
+        s.src = '../js/topbar.js';
+        document.body.appendChild(s);
+    });
+
+fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+        i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+    });
+```
+
+Dit werkt **niet** op `file://` protocol (TD-04). Oplossing: TopBar en Navbar als statische HTML inline in elke pagina plaatsen.
+
+---
+
+## Wat Claude nodig heeft aan het begin van de sessie
+
+1. `Layout/TopBar.html` — volledige huidige inhoud
+2. `Layout/Navbar.html` — volledige huidige inhoud
+3. Lijst van alle HTML pagina's in de repo (of repo structuur via GitHub)
+4. Één voorbeeldpagina volledig geplakt (bv. `stamboom/manage.html`) ter bevestiging van het patroon
+
+---
+
+## Aanpak per pagina
+
+### Wat verandert
+| Was | Wordt |
+|-----|-------|
+| `<div id="topbar-placeholder"></div>` | Volledige TopBar HTML inline |
+| `<div id="navbar-placeholder"></div>` | Volledige Navbar HTML inline |
+| `fetch(TopBar.html)` blok in script | Vervalt — `i18nModule.onComponentLoaded()` op inline element |
+| `fetch(Navbar.html)` blok in script | Vervalt |
+| `topbar.js` injectie via `createElement` | Blijft — nu als `<script src="...">` tag na inline TopBar HTML |
+
+### Wat blijft
+- `i18nModule.onComponentLoaded(element)` — werkt op inline HTML, geen fetch nodig
+- `data-i18n` attributen in TopBar en Navbar — ongewijzigd
+- `topbar.js` — ongewijzigd, wordt alleen anders geladen
+- Alle overige scripts en volgorde — ongewijzigd
+
+---
+
+## Aandachtspunten
+
+- **Relatieve paden** — `../js/topbar.js` vs `/MyFamTreeCollab/js/topbar.js` verschilt per pagina-niveau
+- **Navbar active-state** — controleer of de huidige pagina correct gemarkeerd wordt
+- **Footer** — beslissen of footer ook meegenomen wordt in deze sessie of apart
+- **TD-04** — na sessie op ✅ zetten in BACKLOG.md
+
+---
+
+## Definitie of Done sessie 36
+
+- [ ] Alle HTML pagina's hebben statische inline TopBar en Navbar
+- [ ] `fetch()` blokken voor TopBar en Navbar verwijderd
+- [ ] `topbar.js` correct geladen als statische `<script>` tag
+- [ ] Getest op `file://` protocol — topbar en navbar zichtbaar
+- [ ] Geen console-errors
+- [ ] TD-04 op ✅ in BACKLOG.md
+- [ ] PROJECT_LOG.md bijgewerkt
+- [ ] Project.md bijgewerkt
