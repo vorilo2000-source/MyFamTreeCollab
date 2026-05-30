@@ -1,15 +1,19 @@
-// ======================= js/view.js v1.6.5 =======================
+// ======================= js/view.js v1.7.0 =======================
 // Boom rendering + Live search >> in LiveSearch.js + optimized code structure
 // Relatie logica komt nu uit externe relatieEngine.js
 //
+// Wijziging v1.7.0 (sessie 35 — F3-48):
+// - VaderID, MoederID, PartnerID ondersteunen nu meerdere waarden via | scheiding
+// - Alle directe findPerson(safe(x.PartnerID)) vervangen door parsePartners() loop
+// - Meerdere ouders, partners, kind-partners en BZ-partners worden correct getoond
+//
 // Wijziging v1.6.5 (sessie 26):
 // - "Selecteer een persoon" en "Persoon niet gevonden" via i18nModule.t()
-// - Afhankelijk van i18n.js (geladen via view.html <head>)
 //
-// Wijziging v1.6.4: lokale sortering verwijderd — relatieEngine.js sorteert nu centraal
+// Wijziging v1.6.4: lokale sortering verwijderd — relatieEngine.js sorteert centraal
 
 (function () {
-    'use strict'; // Dwingt strikte JavaScript modus af (voorkomt stille fouten)
+    'use strict'; // Dwingt strikte JavaScript modus af
 
     // =======================
     // DOM-elementen
@@ -55,6 +59,14 @@
         return dataset.find(function (p) { return safe(p.ID) === safe(id); });
     }
 
+    // Splits |-gescheiden ID-veld naar array van gevonden personen
+    // Gebruikt schema.parsePartners() — zelfde helper als manage.js
+    function findMultiple(fieldValue) {
+        return window.StamboomSchema.parsePartners(fieldValue || '') // Splits op |
+            .map(function (id) { return findPerson(id); })           // Zoek elk ID op
+            .filter(Boolean);                                        // Verwijder niet-gevonden
+    }
+
     // =======================
     // NODE CREATOR
     // =======================
@@ -81,7 +93,7 @@
             renderTree();
         });
 
-        return div; // Geef node terug
+        return div;
     }
 
     // =======================
@@ -92,15 +104,13 @@
         BZBox.innerHTML   = ''; // Reset broer/zus container
 
         if (!rootID) {
-            // Lege staat — vertaald via i18n
-            treeBox.textContent = i18nModule.t('view:tree.selectPerson');
+            treeBox.textContent = i18nModule.t('view:tree.selectPerson'); // Lege staat
             return;
         }
 
         var root = findPerson(rootID);
         if (!root) {
-            // Persoon onbekend — vertaald via i18n
-            treeBox.textContent = i18nModule.t('view:tree.notFound');
+            treeBox.textContent = i18nModule.t('view:tree.notFound'); // Persoon onbekend
             return;
         }
 
@@ -110,40 +120,40 @@
         var dataRel = window.RelatieEngine.computeRelaties(dataset, rootID);
 
         // =======================
-        // HOOFD + PARTNER
+        // HOOFD + PARTNERS (meerdere via |)
         // =======================
         var rootWrapper = document.createElement('div');
-        rootWrapper.className = 'tree-root-main';
+        rootWrapper.className = 'tree-root-main';             // Horizontale rij: hoofd + partners
 
-        rootWrapper.appendChild(createTreeNode(root, 'HoofdID')); // Hoofdpersoon toevoegen
+        rootWrapper.appendChild(createTreeNode(root, 'HoofdID')); // Hoofdpersoon altijd eerst
 
-        if (root.PartnerID) {
-            var partner = findPerson(safe(root.PartnerID)); // Partner zoeken
-            if (partner) rootWrapper.appendChild(createTreeNode(partner, 'PHoofdID'));
-        }
+        // Alle partners ophalen via parsePartners() — was: findPerson(safe(root.PartnerID))
+        findMultiple(root.PartnerID).forEach(function (partner) {
+            rootWrapper.appendChild(createTreeNode(partner, 'PHoofdID')); // Elke partner als node
+        });
 
         treeBox.appendChild(rootWrapper);
 
         // =======================
-        // OUDERS
+        // OUDERS (meerdere via |)
         // =======================
         var parents = document.createElement('div');
-        parents.className = 'tree-parents';
+        parents.className = 'tree-parents';                   // Horizontale rij boven hoofdpersoon
 
-        if (root.VaderID) {
-            var v = findPerson(safe(root.VaderID)); // Vader zoeken
-            if (v) parents.appendChild(createTreeNode(v, 'VHoofdID'));
-        }
+        // Alle vaders — was: findPerson(safe(root.VaderID))
+        findMultiple(root.VaderID).forEach(function (v) {
+            parents.appendChild(createTreeNode(v, 'VHoofdID')); // Elke vader als node
+        });
 
-        if (root.MoederID) {
-            var m = findPerson(safe(root.MoederID)); // Moeder zoeken
-            if (m) parents.appendChild(createTreeNode(m, 'MHoofdID'));
-        }
+        // Alle moeders — was: findPerson(safe(root.MoederID))
+        findMultiple(root.MoederID).forEach(function (m) {
+            parents.appendChild(createTreeNode(m, 'MHoofdID')); // Elke moeder als node
+        });
 
-        if (parents.children.length > 0) treeBox.prepend(parents); // Ouders boven hoofdpersoon
+        if (parents.children.length > 0) treeBox.prepend(parents); // Ouders boven boom plaatsen
 
         // =======================
-        // KINDEREN + partner (volgorde via relatieEngine.js: oud → jong)
+        // KINDEREN + partners (meerdere via |)
         // =======================
         var children = dataRel.filter(function (d) {
             return ['KindID', 'HKindID', 'PHKindID'].includes(d.Relatie); // Alle kindrollen
@@ -151,18 +161,18 @@
 
         if (children.length > 0) {
             var kidsWrap = document.createElement('div');
-            kidsWrap.className = 'tree-children'; // Wrapper voor alle kinder-nodes
+            kidsWrap.className = 'tree-children';             // Wrapper voor alle kinder-nodes
 
             children.forEach(function (k) {
                 var kidGroup = document.createElement('div');
-                kidGroup.className = 'tree-kid-group'; // Horizontaal groepje: kind + partner
+                kidGroup.className = 'tree-kid-group';        // Horizontaal groepje: kind + partners
 
                 kidGroup.appendChild(createTreeNode(k, k.Relatie)); // Kind toevoegen
 
-                if (k.PartnerID) {
-                    var kPartner = findPerson(safe(k.PartnerID)); // Partner van kind zoeken
-                    if (kPartner) kidGroup.appendChild(createTreeNode(kPartner, 'PKindID'));
-                }
+                // Alle partners van het kind — was: findPerson(safe(k.PartnerID))
+                findMultiple(k.PartnerID).forEach(function (kPartner) {
+                    kidGroup.appendChild(createTreeNode(kPartner, 'PKindID')); // Partner van kind
+                });
 
                 kidsWrap.appendChild(kidGroup); // Groep toevoegen aan wrapper
             });
@@ -171,20 +181,20 @@
         }
 
         // =======================
-        // BROER / ZUS (volgorde via relatieEngine.js: oud → jong)
+        // BROER / ZUS + partners (meerdere via |)
         // =======================
         var bzNodes = dataRel.filter(function (d) { return d.Relatie === 'BZID'; });
 
         bzNodes.forEach(function (b) {
             var bzGroup = document.createElement('div');
-            bzGroup.className = 'tree-kid-group'; // Horizontaal groepje: broer/zus + partner
+            bzGroup.className = 'tree-kid-group';             // Horizontaal groepje: BZ + partners
 
-            bzGroup.appendChild(createTreeNode(b, 'BZID')); // Broer/zus toevoegen
+            bzGroup.appendChild(createTreeNode(b, 'BZID'));   // Broer/zus toevoegen
 
-            if (b.PartnerID) {
-                var bPartner = findPerson(safe(b.PartnerID)); // Partner van broer/zus zoeken
-                if (bPartner) bzGroup.appendChild(createTreeNode(bPartner, 'PBZID'));
-            }
+            // Alle partners van broer/zus — was: findPerson(safe(b.PartnerID))
+            findMultiple(b.PartnerID).forEach(function (bPartner) {
+                bzGroup.appendChild(createTreeNode(bPartner, 'PBZID')); // Partner van broer/zus
+            });
 
             BZBox.appendChild(bzGroup); // Groep toevoegen aan BZ-container
         });
@@ -195,12 +205,12 @@
     // =======================
     searchInput.addEventListener('input', function () {
         liveSearch({
-            searchInput:    searchInput,   // Input element
-            dataset:        dataset,       // Huidige dataset
-            displayType:    'popup',       // Popup weergave in view
+            searchInput:    searchInput,
+            dataset:        dataset,
+            displayType:    'popup',
             renderCallback: function (selected) {
-                selectedHoofdId = safe(selected.ID); // Stel geselecteerde persoon in
-                renderTree();                        // Update de boom
+                selectedHoofdId = safe(selected.ID);
+                renderTree();
             }
         });
     });
@@ -209,15 +219,15 @@
     // INIT
     // =======================
     function renderTree() {
-        buildTree(selectedHoofdId); // Bouw boom voor geselecteerde persoon
+        buildTree(selectedHoofdId);
     }
 
     function refreshView() {
-        dataset         = window.StamboomStorage.get() || []; // Dataset herladen
-        selectedHoofdId = null;                               // Selectie resetten
-        renderTree();                                         // Boom opnieuw renderen
+        dataset         = window.StamboomStorage.get() || [];
+        selectedHoofdId = null;
+        renderTree();
     }
 
-    refreshView(); // Initiële render bij laden pagina
+    refreshView();
 
 })();
