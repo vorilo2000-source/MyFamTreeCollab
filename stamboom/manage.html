@@ -1,16 +1,14 @@
 <!-- ======================= stamboom/manage.html v2.6.0 =======================
      Beheerpagina: stamboom bewerken als tabel met live search
 
-     Wijziging v2.6.0 (sessie 35 — bugfix headers):
+     Wijziging v2.6.0 (bugfix headers):
      - window.ManageTable.buildHeader() aangeroepen ná loadNamespace('manage')
-     - Fixes: headers toonden als raw keys (table.actions etc.) bij eerste load
-     - showPlaceholder() vertaald via i18nModule na namespace load
+     - window.ManageTable.showPlaceholder() aangeroepen ná loadNamespace('manage')
+     - Fixes: headers toonden als raw keys bij eerste load
 
      Wijziging v2.5.0 (sessie 26):
      - i18n geïntegreerd: data-i18n attributen op alle statische teksten
-     - i18next scripts + i18n.js toegevoegd aan <head>
      - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
-     - Placeholder en knoplabels via data-i18n; placeholder gezet na init
 
      Scripts: utils.js → schema.js → idGenerator.js → storage.js → auth.js →
               siteAnalytics.js → shareModule.js → accessGuard.js → LiveSearch.js →
@@ -102,27 +100,27 @@
 <main>
     <div class="container">
 
-        <!-- Welkomstblok — vertaald via data-i18n -->
+        <!-- Welkomstblok -->
         <div class="welkom-blok">
             <h1 data-i18n="manage:welcome.heading">Welkom bij je stamboom Manager</h1>
             <p data-i18n="manage:welcome.intro">Zoek een persoon op om de stamboom te beheren.</p>
         </div>
 
-        <!-- Zoekbalk — placeholder via JS na i18n init -->
+        <!-- Zoekbalk -->
         <div class="zoek-sectie">
             <input type="text" id="searchPerson"
                    data-i18n-placeholder="manage:search.placeholder"
                    placeholder="Zoek op ID, naam of geboortedatum...">
         </div>
 
-        <!-- Knoppen — labels vertaald via data-i18n -->
+        <!-- Knoppen -->
         <div class="knoppen-balk">
             <button id="refreshBtn" data-i18n="manage:btn.refresh">Vernieuwen</button>
             <button id="addBtn"     data-i18n="manage:btn.add">+ Toevoegen</button>
             <button id="saveBtn"    data-i18n="manage:btn.save">Opslaan</button>
         </div>
 
-        <!-- Tabel — gevuld door manage.js -->
+        <!-- Tabel -->
         <div class="manage-tabel-wrapper">
             <table id="manageTable">
                 <thead><tr></tr></thead>
@@ -140,14 +138,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js -->
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
 <!-- ======================= Pagina-scripts (volgorde verplicht) ======================= -->
 <script src="../js/schema.js"></script>
 <script src="../js/idGenerator.js"></script>
 <script src="../js/storage.js"></script>
-<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
-<script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen editor + owner -->
+<script src="../js/shareModule.js"></script>
+<script src="../js/accessGuard.js"></script>
 <script src="../js/LiveSearch.js"></script>
 <script src="../js/relatieEngine.js"></script>
 <script src="../js/manage.js"></script>
@@ -158,56 +156,60 @@ i18nModule.init()
     .then(function () { return i18nModule.loadNamespace('manage'); })
     .then(function () {
 
-    // Namespace geladen — nu pas headers bouwen via window.ManageTable
-    // (zelfde patroon als bouwTabel() in bronnen/template.html)
-    window.ManageTable.buildHeader();                                    // Headers correct vertaald
+        // Namespace geladen — nu pas headers en placeholder bouwen
+        // (zelfde patroon als bouwTabel() in bronnen/template.html)
+        window.ManageTable.buildHeader();                                // Headers vertaald renderen
+        window.ManageTable.showPlaceholder(                              // Beginmelding vertaald tonen
+            i18nModule.t('manage:placeholder.select')
+        );
 
-    // Paginatitel vertalen
-    document.title = i18nModule.t('manage:page.title');
+        // Paginatitel
+        document.title = i18nModule.t('manage:page.title');
 
-    // Placeholder vertalen (data-i18n-placeholder)
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
-        var key = el.getAttribute('data-i18n-placeholder');
-        if (key) el.placeholder = i18nModule.t(key);                    // Vertaald placeholder
-    });
-
-    // Laad TopBar en activeer i18n + topbar.js
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(function (r) { return r.text(); })
-        .then(function (html) {
-            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
-            var s = document.createElement('script');
-            s.src = '../js/topbar.js';
-            document.body.appendChild(s);
+        // Placeholder input vertalen
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+            var key = el.getAttribute('data-i18n-placeholder');
+            if (key) el.placeholder = i18nModule.t(key);
         });
 
-    // Laad Navbar en activeer i18n
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(function (r) { return r.text(); })
-        .then(function (html) {
-            i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
-        });
+        // TopBar
+        return fetch('/MyFamTreeCollab/Layout/TopBar.html')
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+                var s = document.createElement('script');
+                s.src = '../js/topbar.js';
+                document.body.appendChild(s);
+            });
+    })
+    .then(function () {
+        // Navbar
+        return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
+            });
+    })
+    .then(function () {
+        // Footer
+        return fetch('/MyFamTreeCollab/Layout/Footer.html')
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+                i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+            });
+    })
+    .then(function () {
+        // Tracking en rolcheck
+        SiteAnalytics.trackPage('manage');
 
-    // Laad Footer en activeer i18n
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(function (r) { return r.text(); })
-        .then(function (html) {
-            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
-        });
-
-    // Pagina tracking
-    SiteAnalytics.trackPage('manage');                                   // Bezoek registreren in Supabase
-
-    // Rolcheck: manage.html is alleen toegankelijk voor editor en owner
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () {
+                window.AccessGuard.check(['editor']);
+            });
+        } else {
             window.AccessGuard.check(['editor']);
-        });
-    } else {
-        window.AccessGuard.check(['editor']);
-    }
-
-});
+        }
+    });
 </script>
 
 </body>
