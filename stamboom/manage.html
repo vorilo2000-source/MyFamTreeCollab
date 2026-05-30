@@ -1,18 +1,16 @@
-<!-- ======================= stamboom/manage.html v2.5.0 =======================
+<!-- ======================= stamboom/manage.html v2.6.0 =======================
      Beheerpagina: stamboom bewerken als tabel met live search
+
+     Wijziging v2.6.0 (sessie 35 — bugfix headers):
+     - window.ManageTable.buildHeader() aangeroepen ná loadNamespace('manage')
+     - Fixes: headers toonden als raw keys (table.actions etc.) bij eerste load
+     - showPlaceholder() vertaald via i18nModule na namespace load
 
      Wijziging v2.5.0 (sessie 26):
      - i18n geïntegreerd: data-i18n attributen op alle statische teksten
      - i18next scripts + i18n.js toegevoegd aan <head>
      - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
      - Placeholder en knoplabels via data-i18n; placeholder gezet na init
-
-     Wijziging v2.4.0 (sessie 20):
-     - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
-     - SiteAnalytics.trackPage("manage") toegevoegd in fetch-scriptblok
-
-     Wijziging v2.3.0 (F5-04):
-     - AccessGuard toegevoegd: alleen editor en owner mogen bewerken
 
      Scripts: utils.js → schema.js → idGenerator.js → storage.js → auth.js →
               siteAnalytics.js → shareModule.js → accessGuard.js → LiveSearch.js →
@@ -160,13 +158,17 @@ i18nModule.init()
     .then(function () { return i18nModule.loadNamespace('manage'); })
     .then(function () {
 
+    // Namespace geladen — nu pas headers bouwen via window.ManageTable
+    // (zelfde patroon als bouwTabel() in bronnen/template.html)
+    window.ManageTable.buildHeader();                                    // Headers correct vertaald
+
     // Paginatitel vertalen
     document.title = i18nModule.t('manage:page.title');
 
     // Placeholder vertalen (data-i18n-placeholder)
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
         var key = el.getAttribute('data-i18n-placeholder');
-        if (key) el.placeholder = i18nModule.t(key); // Vertaald placeholder
+        if (key) el.placeholder = i18nModule.t(key);                    // Vertaald placeholder
     });
 
     // Laad TopBar en activeer i18n + topbar.js
@@ -194,12 +196,12 @@ i18nModule.init()
         });
 
     // Pagina tracking
-    SiteAnalytics.trackPage('manage'); // Bezoek registreren in Supabase page_visits tabel
+    SiteAnalytics.trackPage('manage');                                   // Bezoek registreren in Supabase
 
     // Rolcheck: manage.html is alleen toegankelijk voor editor en owner
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
-            window.AccessGuard.check(['editor']); // Owner intern altijd toegelaten
+            window.AccessGuard.check(['editor']);
         });
     } else {
         window.AccessGuard.check(['editor']);
