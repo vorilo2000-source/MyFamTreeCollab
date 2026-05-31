@@ -1,4 +1,4 @@
-<!-- ======================= stamboom/view.html v2.2.0 =======================
+<!-- ======================= stamboom/view.html v2.2.1 =======================
      Stamboomweergave: visualiseert relaties rondom een geselecteerde persoon
 
      Wijziging v2.2.0 (sessie 26):
@@ -6,6 +6,7 @@
      - i18next scripts + i18n.js toegevoegd aan <head>
      - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
      - Placeholder en broer/zus titel via i18nModule.t() in view.js
+     - 2.2.1 Laadvolgorde en colorhelper.js scripts
 
      Wijziging v2.1.0 (sessie 20):
      - siteAnalytics.js toegevoegd aan laadvolgorde (na auth.js)
@@ -127,11 +128,12 @@
 <!-- ======================= Externe scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/colorHelper.js"></script>  <!-- nieuw -->
+<script src="../js/schema.js"></script>
 <script src="../js/auth.js"></script>
 <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js -->
 
 <!-- ======================= Pagina-scripts (volgorde verplicht) ======================= -->
-<script src="../js/schema.js"></script>
 <script src="../js/storage.js"></script>
 <script src="../js/relatieEngine.js"></script>
 <script src="../js/LiveSearch.js"></script>
