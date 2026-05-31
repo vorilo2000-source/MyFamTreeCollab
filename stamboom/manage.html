@@ -1,10 +1,11 @@
-<!-- ======================= stamboom/manage.html v2.6.0 =======================
+<!-- ======================= stamboom/manage.html v2.6.1 =======================
      Beheerpagina: stamboom bewerken als tabel met live search
 
      Wijziging v2.6.0 (bugfix headers):
      - window.ManageTable.buildHeader() aangeroepen ná loadNamespace('manage')
      - window.ManageTable.showPlaceholder() aangeroepen ná loadNamespace('manage')
      - Fixes: headers toonden als raw keys bij eerste load
+     - 2.6.1 Laadvolgorde en colorhelper.js scripts 
 
      Wijziging v2.5.0 (sessie 26):
      - i18n geïntegreerd: data-i18n attributen op alle statische teksten
@@ -137,6 +138,8 @@
 <!-- ======================= Externe scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/colorHelper.js"></script>  <!-- nieuw -->
+<script src="../js/schema.js"></script>
 <script src="../js/auth.js"></script>
 <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
