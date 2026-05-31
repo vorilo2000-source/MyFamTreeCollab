@@ -25,7 +25,7 @@
     var BASE_COLORS = {
         HoofdID:        '#fff9c4',   // licht geel        — hoofdpersoon
         PHoofdID:       '#d1c4e9',   // licht paars       — eerste partner hoofdpersoon
-        VHoofdID:       '#e8f5e9',   // licht groen       — vader(s) van hoofdpersoon
+        VHoofdID:       '#7ccc86',   // groen             — vader(s) van hoofdpersoon
         MHoofdID:       '#e8f5e9',   // licht groen       — moeder(s) van hoofdpersoon
         KindID:         '#2196f3',   // blauw             — kind van hoofd + partner
         HKindID:        '#90caf9',   // sky blauw         — kind van alleen hoofd
