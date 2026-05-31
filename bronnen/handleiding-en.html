@@ -93,6 +93,7 @@
                 <li><a href="#account">Creating an account and logging in</a></li>
                 <li><a href="#persoon-aanmaken">Adding your first person</a></li>
                 <li><a href="#stamboom-beheren">Managing your family tree</a></li>
+                <li><a href="#kleuren">Kleurcodering</a></li>
                 <li><a href="#stamboom-bekijken">Viewing your family tree</a></li>
                 <li><a href="#tijdlijn">Timeline</a></li>
                 <li><a href="#statistieken">Statistics</a></li>
@@ -209,8 +210,31 @@
                <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
+         <div class="sectie" id="kleuren">
+    <h2>5. Colour coding</h2>
+    <p>MyFamTreeCollab uses colours to make family relationships immediately recognisable. The same colour coding is applied in the Manage table, the Family Tree view and the Timeline.</p>
+    <table class="rol-tabel">
+        <thead>
+            <tr><th>Colour</th><th>Relationship</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#fff9c4;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Main person</strong></td><td>The selected person as the central focus</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#d1c4e9;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Partner</strong></td><td>Partner of the main person</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#C49A6C;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Father(s)</strong></td><td>Father(s) of the main person</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#7ccc86;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Mother(s)</strong></td><td>Mother(s) of the main person</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#2196f3;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Child</strong></td><td>Child of both the main person and partner</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#90caf9;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Own child</strong></td><td>Child of the main person only</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#e5f2ff;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Partner's child</strong></td><td>Child of the partner only</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#FFEAD5;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Brother / Sister</strong></td><td>Sibling of the main person</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#d7d7d7;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Family partner</strong></td><td>Partner of a child, brother or sister</td></tr>
+        </tbody>
+    </table>
+    <div class="tip"><strong>Multiple parents or partners:</strong> When there are multiple fathers, mothers or partners, the first is shown in the base colour. Each subsequent one is displayed 20% lighter.</div>
+    <a href="#" class="terug-top">↑ Back to top</a>
+</div>
+
         <div class="sectie" id="stamboom-bekijken">
-            <h2>5. Viewing your family tree</h2>
+            <h2>6. Viewing your family tree</h2>
             <p>The Family Tree page shows a visual overview of family members around a selected person.</p>
             <ul class="stappen">
                 <li>Click <strong>Family Tree</strong> in the navigation.</li>
@@ -222,7 +246,7 @@
         </div>
 
         <div class="sectie" id="tijdlijn">
-            <h2>6. Timeline</h2>
+            <h2>7. Timeline</h2>
             <p>The Timeline shows all family members on a horizontal time axis. Each person is a bar from birth year to death year.</p>
             <ul class="stappen">
                 <li>Click <strong>Timeline</strong> in the navigation.</li>
@@ -234,7 +258,7 @@
         </div>
 
         <div class="sectie" id="statistieken">
-            <h2>7. Statistics</h2>
+            <h2>8. Statistics</h2>
             <p>The Statistics page gives an overview of your family tree: number of people, gender distribution, oldest and youngest person.</p>
             <ul class="stappen">
                 <li>Click <strong>Statistics</strong> in the navigation.</li>
@@ -244,7 +268,7 @@
         </div>
 
         <div class="sectie" id="mijn-account">
-            <h2>8. My Account</h2>
+            <h2>9. My Account</h2>
             <p>The account page gives you a complete overview of your profile and settings. Accessible via the user menu at the top right.</p>
             <h3>Profile</h3>
             <p>At the top you see your avatar, username, email address, account type and membership date.</p>
@@ -265,7 +289,7 @@
         </div>
 
         <div class="sectie" id="versiegeschiedenis">
-            <h2>9. Version history</h2>
+            <h2>10. Version history</h2>
             <p>Version history lets you view, compare and restore earlier versions of a family tree. A maximum of <strong>5 versions</strong> are kept per tree.</p>
             <div class="tip"><strong>Required:</strong> Logged in as <strong>Owner</strong>.</div>
             <ul class="stappen">
@@ -279,7 +303,7 @@
         </div>
 
         <div class="sectie" id="cloud">
-            <h2>10. Cloud family trees</h2>
+            <h2>11. Cloud family trees</h2>
             <p>With an <strong>Owner</strong> account you can save multiple family trees to the cloud.</p>
             <div class="tip"><strong>Required:</strong> Owner to save. Viewers/Editors can load shared trees via "🔗 Shared with me".</div>
             <h3>Saving a family tree</h3>
@@ -302,7 +326,7 @@
         </div>
 
         <div class="sectie" id="importeren">
-            <h2>11. Importing</h2>
+            <h2>12. Importing</h2>
 <p>You can import existing family tree data via a CSV file. During import, duplicate IDs are detected automatically.</p>
             <ul class="stappen">
                 <li>Download the <a href="/MyFamTreeCollab/bronnen/template.html">CSV template</a>.</li>
@@ -324,7 +348,7 @@
         </div>
 
         <div class="sectie" id="exporteren">
-            <h2>12. Exporting</h2>
+            <h2>13. Exporting</h2>
             <p>Export your family tree as CSV or JSON. Available for all logged-in accounts (Basic and Owner).</p>
             <ul class="stappen">
                 <li>Go to <strong>Export</strong> via the navigation.</li>
@@ -347,7 +371,7 @@
         </div>
 
         <div class="sectie" id="delen">
-            <h2>14. Sharing &amp; collaborating</h2>
+            <h2>15. Sharing &amp; collaborating</h2>
             <p>As an <strong>Owner</strong> you can invite others to view or contribute to your family tree. Invited users receive a tree permission: <strong>Viewer</strong> or <strong>Editor</strong>.</p>
             <div class="tip"><strong>Required:</strong> Logged in as <strong>Owner</strong>. The tree must be saved to the cloud.</div>
             <h3>Account types overview</h3>
@@ -410,7 +434,7 @@
         </div>
 
         <div class="sectie" id="collab">
-            <h2>15. Message board (Collaboration)</h2>
+            <h2>16. Message board (Collaboration)</h2>
             <p>The message board shows all family trees you have access to. Per tree you see discussions about specific people, organised by person ID.</p>
             <div class="tip"><strong>Required:</strong> Logged in with access to at least one family tree.</div>
             <h3>Opening the message board</h3>
@@ -457,7 +481,7 @@
         </div>
 
         <div class="sectie" id="steun">
-            <h2>16. Support this project</h2>
+            <h2>17. Support this project</h2>
             <p>MyFamTreeCollab is free to use. If you find the app valuable, you can support development via Ko-fi.</p>
             <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
                style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#FF5E5B; color:#fff; text-decoration:none; border-radius:6px; font-size:0.95rem; font-weight:bold;">
