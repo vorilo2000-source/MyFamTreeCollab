@@ -1,5 +1,10 @@
-/* ======================= js/timeline.js v2.6.0 =======================
+/* ======================= js/timeline.js v2.7.0 =======================
  * Canvas-based family timeline renderer
+ *
+ * Wijzigingen v2.7.0 (sessie 36):
+ *  - COLOR object: relatie-kleuren vervangen door window.ColorHelper.BASE_COLORS
+ *  - Canvas-specifieke kleuren (tick, barText, connLine etc.) blijven in COLOR
+ *  - needsDarkText() past tekstkleur automatisch aan op lichte achtergronden
  *
  * Wijzigingen v2.6.0 (sessie 36):
  *  - Kleurgradiënt voor meerdere VaderID/MoederID/PartnerID balkjes
@@ -65,25 +70,37 @@
 
     /* ------------------------------------------------------------------
      * SECTION 3 — COLOUR PALETTE
+     * Relatie-kleuren komen uit window.ColorHelper.BASE_COLORS (synchroon met RelationColors.css)
+     * Canvas-specifieke kleuren (tick, barText, connLine etc.) blijven hier hardcoded
      * ------------------------------------------------------------------ */
+
+    // Haal relatie-kleuren op uit ColorHelper zodra beschikbaar — fallback naar hardcoded waarden
+    function getBaseColor(key, fallback) {
+        return (window.ColorHelper && window.ColorHelper.BASE_COLORS[key])
+            ? window.ColorHelper.BASE_COLORS[key]
+            : fallback;
+    }
+
     var COLOR = {
-        HoofdID:     '#c8960c',
-        PHoofdID:    '#7b56c2',
-        VHoofdID:    '#2d7d46',
-        MHoofdID:    '#2d7d46',
-        BZID:        '#c8741a',
-        BZPartnerID: '#9e9e9e',
-        partner:     '#9e9e9e',
-        today:       '#ee0055',
-        tick:        '#bbbbbb',
-        barText:     '#ffffff',
-        barTextDark: '#1a1a1a',
-        birthLabel:  '#555555',
-        unknown:     '#cccccc',
-        unknownText: '#666666',
-        connLine:    '#cccccc',
-        genSep:      '#e8e8e8',
-        sectionText: '#888888'
+        // Relatie-kleuren — synchroon met colorHelper.js BASE_COLORS
+        HoofdID:     getBaseColor('HoofdID',     '#fff9c4'),  // licht geel
+        PHoofdID:    getBaseColor('PHoofdID',    '#d1c4e9'),  // licht paars
+        VHoofdID:    getBaseColor('VHoofdID',    '#C49A6C'),  // bruin
+        MHoofdID:    getBaseColor('MHoofdID',    '#7ccc86'),  // groen
+        BZID:        getBaseColor('BZID',        '#FFEAD5'),  // licht oranje
+        BZPartnerID: getBaseColor('BZPartnerID', '#d7d7d7'),  // lichtgrijs
+        partner:     getBaseColor('partner',     '#d7d7d7'),  // lichtgrijs
+        // Canvas-specifieke kleuren — niet in BASE_COLORS
+        today:       '#ee0055',   // vandaag-lijn
+        tick:        '#bbbbbb',   // tijdas ticks
+        barText:     '#ffffff',   // tekst op donkere balkjes
+        barTextDark: '#1a1a1a',   // tekst op lichte balkjes
+        birthLabel:  '#555555',   // jaar labels
+        unknown:     '#cccccc',   // balk zonder geboortedatum
+        unknownText: '#666666',   // tekst op onbekende balk
+        connLine:    '#cccccc',   // verbindingslijnen
+        genSep:      '#e8e8e8',   // generatie scheiding
+        sectionText: '#888888'    // sectie labels
     };
 
     function descendantColor(genDepth) {
