@@ -591,7 +591,7 @@
         var pad  = 5;
         var maxW = barW - pad * 2;
         if (maxW < 8) return;
-        ctx.fillStyle    = darkText ? COLOR.barTextDark : COLOR.barText;
+        ctx.fillStyle = COLOR.barTextDark;
         ctx.font         = '9px sans-serif';
         ctx.textAlign    = 'left';
         ctx.textBaseline = 'middle';
