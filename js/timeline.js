@@ -1,5 +1,10 @@
-/* ======================= js/timeline.js v2.5.0 =======================
+/* ======================= js/timeline.js v2.6.0 =======================
  * Canvas-based family timeline renderer
+ *
+ * Wijzigingen v2.6.0 (sessie 36):
+ *  - Kleurgradiënt voor meerdere VaderID/MoederID/PartnerID balkjes
+ *  - ColorHelper.getRelationColor(relatie, index) gebruikt i.p.v. vaste COLOR waarden
+ *  - collectAncestorLevel, partners en nakomelingen krijgen index mee
  *
  * Wijzigingen v2.5.0 (sessie 35 — F3-48):
  *  - VaderID, MoederID, PartnerID ondersteunen meerdere waarden via | scheiding
@@ -23,6 +28,7 @@
  *   storage.js       -> window.StamboomStorage.get()
  *   LiveSearch.js    -> window.initLiveSearch(inputEl, dataset, cb)
  *   relatieEngine.js -> window.RelatieEngine.computeRelaties(data, hoofdId)
+ *   colorHelper.js  -> window.ColorHelper.getRelationColor(relatie, index)
  * ===================================================================== */
 
 (function () {
@@ -225,13 +231,18 @@
                      isRoot: safe(person.ID) === safe(rootPerson.ID) };
         }
 
-        function addRow(id, relatie, color, genNum, isDescendant, genDepth, sectionLabel, isLastInUnit) {
+        // colorIndex: volgorde-index voor kleurgradiënt (0 = basiskleur, 1 = 20% lichter, ...)
+        function addRow(id, relatie, color, genNum, isDescendant, genDepth, sectionLabel, isLastInUnit, colorIndex) {
             var sid = safe(id);
             if (!sid || seen.has(sid)) return false;
             var p = findPerson(sid);
             if (!p) return false;
             seen.add(sid);
-            rows.push({ entry: makeEntry(p, relatie, color), isDescendant: isDescendant,
+            // Bereken kleur via ColorHelper als beschikbaar, anders gebruik doorgegeven color
+            var finalColor = (window.ColorHelper && colorIndex !== undefined)
+                ? window.ColorHelper.getRelationColor(relatie, colorIndex)
+                : color;
+            rows.push({ entry: makeEntry(p, relatie, finalColor), isDescendant: isDescendant,
                         genDepth: genDepth, genNum: genNum,
                         sectionLabel: sectionLabel, isLastInUnit: isLastInUnit });
             return true;
@@ -258,15 +269,15 @@
                     ? (rootFatherIds.has(safe(parent.ID)) ? 'VHoofdID' : 'MHoofdID')
                     : 'VHoofdID';                                     // Hogere generaties: altijd VHoofdID
 
-                buffer.push({ id: pid, relatie: relatie, color: COLOR[relatie], genNum: genNum, sectionLabel: sectionLabel });
+                buffer.push({ id: pid, relatie: relatie, color: COLOR[relatie], genNum: genNum, sectionLabel: sectionLabel, colorIndex: 0 });
 
-                // Partners van deze voorouder — meerdere via | scheiding
-                // Was: var partnerId = safe(parent.PartnerID); if (partnerId && ...) { addRow... }
-                findMultiple(parent.PartnerID).forEach(function (partner) {
+                // Partners van deze voorouder — meerdere via | scheiding, index per positie
+                var parentPartnerIDs = window.StamboomSchema.parsePartners(parent.PartnerID || '');
+                findMultiple(parent.PartnerID).forEach(function (partner, idx) {
                     var partnerId = safe(partner.ID);
                     if (!seen.has(partnerId)) {
                         seen.add(partnerId);
-                        buffer.push({ id: partnerId, relatie: 'PHoofdID', color: COLOR.PHoofdID, genNum: genNum, sectionLabel: null });
+                        buffer.push({ id: partnerId, relatie: 'PHoofdID', color: COLOR.PHoofdID, genNum: genNum, sectionLabel: null, colorIndex: idx });
                     }
                 });
 
@@ -295,7 +306,10 @@
             buffer.forEach(function (item) {
                 var p = findPerson(item.id);
                 if (!p) return;
-                rows.push({ entry: makeEntry(p, item.relatie, item.color), isDescendant: false,
+                var finalColor = (window.ColorHelper && item.colorIndex !== undefined)
+                    ? window.ColorHelper.getRelationColor(item.relatie, item.colorIndex)
+                    : item.color;
+                rows.push({ entry: makeEntry(p, item.relatie, finalColor), isDescendant: false,
                             genDepth: 0, genNum: item.genNum,
                             sectionLabel: item.sectionLabel, isLastInUnit: false });
             });
@@ -305,10 +319,9 @@
         addRow(rootPerson.ID, 'HoofdID', COLOR.HoofdID, 0, false, 0,
                i18nModule.t('timeline:gen.root'), false);
 
-        // Partners van hoofdpersoon — meerdere via |
-        // Was: if (safe(rootPerson.PartnerID)) { addRow(rootPerson.PartnerID, ...) }
-        findMultiple(rootPerson.PartnerID).forEach(function (partner) {
-            addRow(safe(partner.ID), 'PHoofdID', COLOR.PHoofdID, 0, false, 0, null, false);
+        // Partners van hoofdpersoon — meerdere via |, index per positie
+        findMultiple(rootPerson.PartnerID).forEach(function (partner, idx) {
+            addRow(safe(partner.ID), 'PHoofdID', COLOR.PHoofdID, 0, false, 0, null, false, idx);
         });
 
         // Broers en zussen + hun partners
@@ -322,8 +335,8 @@
                 // Partners van broer/zus — meerdere via |
                 // Was: if (sib && safe(sib.PartnerID)) { addRow(sib.PartnerID, ...) }
                 if (sib) {
-                    findMultiple(sib.PartnerID).forEach(function (bzPartner) {
-                        addRow(safe(bzPartner.ID), 'BZPartnerID', COLOR.BZPartnerID, 0, false, 0, null, false);
+                    findMultiple(sib.PartnerID).forEach(function (bzPartner, idx) {
+                        addRow(safe(bzPartner.ID), 'BZPartnerID', COLOR.BZPartnerID, 0, false, 0, null, false, idx);
                     });
                 }
             });
@@ -342,10 +355,9 @@
             var lbl = genLabel(genDepth, shownGenLabels);
             addRow(safe(personId), 'KindID', descendantColor(genDepth), genDepth, true, genDepth, lbl, false);
 
-            // Partners van nakomeling — meerdere via |
-            // Was: var partnerId = safe(person.PartnerID); if (partnerId) addRow(partnerId, ...)
-            findMultiple(person.PartnerID).forEach(function (partner) {
-                addRow(safe(partner.ID), 'PHoofdID', COLOR.partner, genDepth, true, genDepth, null, false);
+            // Partners van nakomeling — meerdere via |, index per positie
+            findMultiple(person.PartnerID).forEach(function (partner, idx) {
+                addRow(safe(partner.ID), 'PHoofdID', COLOR.partner, genDepth, true, genDepth, null, false, idx);
             });
 
             dataset
