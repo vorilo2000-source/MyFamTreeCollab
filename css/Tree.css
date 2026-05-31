@@ -29,48 +29,6 @@
 .tree-node.PKindID       { background-color: var(--color-partner); }
 .tree-node.KindPartnerID { background-color: var(--color-partner); }
 .tree-node.BZPartnerID   { background-color: var(--color-partner); }
-/* ======================= TREE NODE BASIS ======================= */
-.tree-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    width: 250px;
-    height: auto;         /* laat de hoogte automatisch passen */
-    padding: 6px 6px;
-    margin: 5px;
-    border-radius: 6px;
-    border: 1px solid #999;
-    background: #ffffff;
-    font-size: 0.9rem;
-    color: #000;           /* standaard zwart voor alle tekst */
-    cursor: default;
-    box-sizing: border-box;
-    overflow: visible;   /* laat inhoud niet verbergen */
-}
-
-/* ======================= TREE NODE BIRTH ======================= */
-.tree-node .birth {
-    display: block;   /* datum altijd op nieuwe regel */
-}
-
-/* ======================= Hoofd + Partner ======================= */
-.tree-node.HoofdID { background-color: var(--color-hoofd); }
-.tree-node.PHoofdID { background-color: var(--color-partner-hoofd); }
-
-/* ======================= Ouders ======================= */
-.tree-node.VHoofdID { background-color: var(--color-vader); }
-.tree-node.MHoofdID { background-color: var(--color-moeder); }
-
-/* ======================= Kinderen ======================= */
-.tree-node.kind1 { background-color: var(--color-kind1); }
-.tree-node.kind2 { background-color: var(--color-kind2); }
-.tree-node.kind3 { background-color: var(--color-kind3); }
-
-/* Partner van kind / Broers-Zussen */
-.tree-node.PKindID { background-color: var(--color-partner); }
-.tree-node.BZID { background-color: var(--color-bz); }
-.tree-node.PBZID { background-color: var(--color-partner); }
 
 /* ======================= Hoofd + Partner Wrapper ======================= */
 .tree-root-main {
