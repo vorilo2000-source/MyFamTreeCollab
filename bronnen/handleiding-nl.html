@@ -100,6 +100,7 @@
                 <li><a href="#account">Account aanmaken en inloggen</a></li>
                 <li><a href="#persoon-aanmaken">Eerste persoon aanmaken</a></li>
                 <li><a href="#stamboom-beheren">Stamboom beheren</a></li>
+                <li><a href="#kleuren">Kleurcodering</a></li>
                 <li><a href="#stamboom-bekijken">Stamboom bekijken</a></li>
                 <li><a href="#tijdlijn">Tijdlijn</a></li>
                 <li><a href="#statistieken">Statistieken</a></li>
@@ -212,13 +213,35 @@
                 <li>Het laatste veld wordt leeggemaakt in plaats van verwijderd.</li>
                 <li>Klik op <strong>"Opslaan"</strong> om de wijzigingen te bewaren.</li>
             </ul>
-                 <a href="#" class="terug-top">↑ Terug naar boven</a>
+              <div class="tip"><strong>Opslag:</strong> De waarden worden intern opgeslagen als <code>P-001|P-003</code> — de widget regelt dit automatisch.</div>
+             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
-
-         <div class="tip"><strong>Opslag:</strong> De waarden worden intern opgeslagen als <code>P-001|P-003</code> — de widget regelt dit automatisch.</div>
-
+       
+         <div class="sectie" id="kleuren">
+    <h2>5. Kleurcodering</h2>
+    <p>MyFamTreeCollab gebruikt kleuren om familierelaties direct herkenbaar te maken. Dezelfde kleurcodering wordt toegepast in de Beheer-tabel, de Stamboomweergave en de Tijdlijn.</p>
+    <table class="rol-tabel">
+        <thead>
+            <tr><th>Kleur</th><th>Relatie</th><th>Omschrijving</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#fff9c4;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Hoofdpersoon</strong></td><td>De geselecteerde persoon als middelpunt</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#d1c4e9;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Partner</strong></td><td>Partner van de hoofdpersoon</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#C49A6C;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Vader(s)</strong></td><td>Vader(s) van de hoofdpersoon</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#7ccc86;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Moeder(s)</strong></td><td>Moeder(s) van de hoofdpersoon</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#2196f3;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Kind</strong></td><td>Kind van hoofdpersoon én partner samen</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#90caf9;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Eigen kind</strong></td><td>Kind van alleen de hoofdpersoon</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#e5f2ff;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Partnerkind</strong></td><td>Kind van alleen de partner</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#FFEAD5;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Broer / Zus</strong></td><td>Broer of zus van de hoofdpersoon</td></tr>
+            <tr><td><span style="display:inline-block;width:18px;height:18px;background:#d7d7d7;border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span></td><td><strong>Partner van familie</strong></td><td>Partner van kind, broer of zus</td></tr>
+        </tbody>
+    </table>
+    <div class="tip"><strong>Meerdere ouders of partners:</strong> Bij meerdere vaders, moeders of partners wordt de eerste op de basiskleur getoond. Elke volgende wordt 20% lichter weergegeven.</div>
+    <a href="#" class="terug-top">↑ Terug naar boven</a>
+</div>
+         
         <div class="sectie" id="stamboom-bekijken">
-            <h2>5. Stamboom bekijken</h2>
+            <h2>6. Stamboom bekijken</h2>
             <p>De Stamboom-pagina toont een visueel overzicht van de familieleden rondom een geselecteerde persoon.</p>
             <ul class="stappen">
                 <li>Klik op <strong>Stamboom</strong> in de navigatie.</li>
@@ -230,7 +253,7 @@
         </div>
 
         <div class="sectie" id="tijdlijn">
-            <h2>6. Tijdlijn</h2>
+            <h2>7. Tijdlijn</h2>
             <p>De Tijdlijn toont alle familieleden op een horizontale tijdas. Elke persoon is een balk van geboortejaar tot overlijdensjaar.</p>
             <ul class="stappen">
                 <li>Klik op <strong>Tijdlijn</strong> in de navigatie.</li>
@@ -242,7 +265,7 @@
         </div>
 
         <div class="sectie" id="statistieken">
-            <h2>7. Statistieken</h2>
+            <h2>8. Statistieken</h2>
             <p>De Statistieken-pagina geeft een overzicht van je stamboom: aantal personen, verdeling mannen/vrouwen, oudste en jongste persoon.</p>
             <ul class="stappen">
                 <li>Klik op <strong>Statistieken</strong> in de navigatie.</li>
@@ -252,7 +275,7 @@
         </div>
 
         <div class="sectie" id="mijn-account">
-            <h2>8. Mijn Account</h2>
+            <h2>9. Mijn Account</h2>
             <p>De accountpagina geeft je een volledig overzicht van je profiel en instellingen. Bereikbaar via het gebruikersmenu rechtsboven.</p>
             <h3>Profiel</h3>
             <p>Bovenaan zie je je avatar, gebruikersnaam, e-mailadres, account type en lidmaatschapsdatum.</p>
@@ -273,7 +296,7 @@
         </div>
 
         <div class="sectie" id="versiegeschiedenis">
-            <h2>9. Versiegeschiedenis</h2>
+            <h2>10. Versiegeschiedenis</h2>
             <p>Met de Versiegeschiedenis kun je eerdere versies bekijken, vergelijken en terugzetten. Per stamboom worden maximaal <strong>5 versies</strong> bewaard.</p>
             <div class="tip"><strong>Vereist:</strong> Ingelogd als <strong>Owner</strong>.</div>
             <ul class="stappen">
@@ -287,7 +310,7 @@
         </div>
 
         <div class="sectie" id="cloud">
-            <h2>10. Cloud stambomen</h2>
+            <h2>11. Cloud stambomen</h2>
             <p>Met een <strong>Owner</strong> account kun je meerdere stambomen opslaan in de cloud.</p>
             <div class="tip"><strong>Vereist:</strong> Owner voor opslaan. Viewers/Editors kunnen gedeelde stambomen laden via "🔗 Gedeeld met mij".</div>
             <h3>Stamboom opslaan</h3>
@@ -310,7 +333,7 @@
         </div>
 
         <div class="sectie" id="importeren">
-            <h2>11. Importeren</h2>
+            <h2>12. Importeren</h2>
       <p>Je kunt bestaande stamboomdata importeren via een CSV-bestand. Bij het importeren worden dubbele ID's automatisch gedetecteerd.</p>
             <ul class="stappen">
                 <li>Download het <a href="/MyFamTreeCollab/bronnen/template.html">CSV-sjabloon</a>.</li>
@@ -332,7 +355,7 @@
         </div>
 
         <div class="sectie" id="wachtwoord-reset">
-            <h2>13. Wachtwoord vergeten</h2>
+            <h2>14. Wachtwoord vergeten</h2>
             <ul class="stappen">
                 <li>Klik op <strong>Login</strong> bovenaan de pagina.</li>
                 <li>Klik op <strong>"Wachtwoord vergeten?"</strong>.</li>
@@ -344,7 +367,7 @@
         </div>
 
         <div class="sectie" id="delen">
-            <h2>14. Stamboom delen &amp; samenwerken</h2>
+            <h2>15. Stamboom delen &amp; samenwerken</h2>
             <p>Als <strong>Owner</strong> kun je anderen uitnodigen om mee te kijken of mee te werken. Uitgenodigde gebruikers krijgen een stamboom-recht: <strong>Viewer</strong> of <strong>Editor</strong>.</p>
             <div class="tip"><strong>Vereist:</strong> Ingelogd als <strong>Owner</strong>. De stamboom moet opgeslagen zijn in de cloud.</div>
             <h3>Account types overzicht</h3>
@@ -407,7 +430,7 @@
         </div>
 
         <div class="sectie" id="collab">
-            <h2>15. Berichtenboard (Samenwerken)</h2>
+            <h2>16. Berichtenboard (Samenwerken)</h2>
             <p>Het berichtenboard toont alle stambomen waar je toegang toe hebt. Per stamboom zie je discussies over specifieke personen, geordend per persoon-ID.</p>
             <div class="tip"><strong>Vereist:</strong> Ingelogd met toegang tot minimaal één stamboom.</div>
             <h3>Berichtenboard openen</h3>
@@ -454,7 +477,7 @@
         </div>
 
         <div class="sectie" id="steun">
-            <h2>16. Steun dit project</h2>
+            <h2>17. Steun dit project</h2>
             <p>MyFamTreeCollab is gratis te gebruiken. Als je de app waardevol vindt, kun je de ontwikkeling steunen via Ko-fi.</p>
             <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
                style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#FF5E5B; color:#fff; text-decoration:none; border-radius:6px; font-size:0.95rem; font-weight:bold;">
