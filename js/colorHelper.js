@@ -29,8 +29,8 @@
         MHoofdID:       '#7ccc86',   // groen             — moeder(s) van hoofdpersoon
         KindID:         '#2196f3',   // blauw             — kind van hoofd + partner
         HKindID:        '#90caf9',   // sky blauw         — kind van alleen hoofd
-        MHKindID:       '#90caf9',   // sky blauw         — kind via MoederID=HoofdID
-        PHKindID:       '#bbdefb',   // licht blauw       — kind van alleen partner
+        MHKindID:       '#90CAF9',   // sky blauw -20%    — kind via MoederID=HoofdID
+        PHKindID:       '#e5f2ff',   // sky blauw -40%    — kind van alleen partner
         BZID:           '#FFEAD5',   // licht oranje      — broer/zus
         BZPartnerID:    '#d7d7d7',   // lichtgrijs        — partner van broer/zus
         partner:        '#d7d7d7',   // lichtgrijs        — partner van kind/BZ
