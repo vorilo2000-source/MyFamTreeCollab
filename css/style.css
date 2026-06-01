@@ -12,7 +12,7 @@ body {
 
 main {
     padding: 2rem; /* interne marge rondom content */
-    padding-top: 100px; /* 35px topbar +76px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
+    padding-top: 80px; /* 35px topbar +76px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
     color: #333; /* standaard tekstkleur */
 }
 
