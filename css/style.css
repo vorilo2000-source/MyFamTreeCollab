@@ -12,7 +12,7 @@ body {
 
 main {
     padding: 2rem; /* interne marge rondom content */
-    padding-top: 150px; /* 35px topbar + ~56px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
+    padding-top: 100px; /* 35px topbar + ~56px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
     color: #333; /* standaard tekstkleur */
 }
 
@@ -30,7 +30,7 @@ main {
 /* Navbar vast direct onder de TopBar */
 #navbar-placeholder {
     position: fixed;          /* Uit de documentflow, altijd zichtbaar bij scrollen */
-    top: 25px;                /* Hoogte van .topbar — sluit direct aan op TopBar */
+    top: 35px;                /* Hoogte van .topbar — sluit direct aan op TopBar */
     left: 0;                  /* Volledige breedte links */
     right: 0;                 /* Volledige breedte rechts */
     z-index: 1000;            /* Boven pagina-inhoud, onder TopBar */
@@ -113,7 +113,7 @@ nav ul.menu li:hover > .submenu {
 /* ======================= TOPBAR ======================= */
 .topbar {
     background-color: #f0f0f0;
-    height: 25px;
+    height: 35px;
     display: flex;
     align-items: center;
     font-size: 14px;
