@@ -111,11 +111,11 @@
 
 | ID | Prioriteit | Taak | Status |
 |----|-----------|------|--------|
-| F8-01 t/m F8-16 | Core i18n module, common/home/create/manage/auth locales | ✅ Gedaan |
+| F8-01 t/m F8-16 | 🟢 Laag | Core i18n module, common/home/create/manage/auth locales | ✅ Gedaan |
 | F8-17 | 🟢 Laag | Automatische namespace detectie op basis van URL | 🔮 Toekomst |
 | F8-18 | 🟢 Laag | Missing key logging activeren in development | 🔮 Toekomst |
 | F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | ❌ Geannuleerd |
-| F8-20 t/m F8-55 | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n | ✅ Gedaan |
+| F8-20 t/m F8-55 | 🟢 Laag | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n | ✅ Gedaan |
 | F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | ✅ Gedaan |
 | F8-57 t/m F8-62 | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key | ✅ Gedaan |
 | F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | ✅ Gedaan — handlers waren al verwijderd in eerdere sessie |
