@@ -1,5 +1,6 @@
-/* ======================= css/style.css v1.0.6 ======================= */
-/* Algemene styling (zonder timeline — die zit nu in timeline.css) */
+/* ======================= css/style.css v1.0.7 ======================= */
+/* Wijziging v1.0.7: sticky TopBar en Navbar toegevoegd                 */
+/* Algemene styling (zonder timeline — die zit nu in timeline.css)      */
 
 /* ======================= BASIS LAYOUT ======================= */
 body {
@@ -11,7 +12,28 @@ body {
 
 main {
     padding: 2rem; /* interne marge rondom content */
+    padding-top: 100px; /* 35px topbar + ~56px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
     color: #333; /* standaard tekstkleur */
+}
+
+/* ======================= STICKY HEADER ======================= */
+
+/* TopBar vast bovenaan het scherm */
+#topbar-placeholder {
+    position: fixed;          /* Uit de documentflow, altijd zichtbaar bij scrollen */
+    top: 0;                   /* Plakt aan bovenkant venster */
+    left: 0;                  /* Volledige breedte links */
+    right: 0;                 /* Volledige breedte rechts */
+    z-index: 1100;            /* Boven de Navbar gestapeld */
+}
+
+/* Navbar vast direct onder de TopBar */
+#navbar-placeholder {
+    position: fixed;          /* Uit de documentflow, altijd zichtbaar bij scrollen */
+    top: 35px;                /* Hoogte van .topbar — sluit direct aan op TopBar */
+    left: 0;                  /* Volledige breedte links */
+    right: 0;                 /* Volledige breedte rechts */
+    z-index: 1000;            /* Boven pagina-inhoud, onder TopBar */
 }
 
 /* ======================= HEADER / NAVBAR ======================= */
