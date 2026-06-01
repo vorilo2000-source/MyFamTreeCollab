@@ -30,7 +30,7 @@ main {
 /* Navbar vast direct onder de TopBar */
 #navbar-placeholder {
     position: fixed;          /* Uit de documentflow, altijd zichtbaar bij scrollen */
-    top: 35px;                /* Hoogte van .topbar — sluit direct aan op TopBar */
+    top: 30px;                /* Hoogte van .topbar — sluit direct aan op TopBar */
     left: 0;                  /* Volledige breedte links */
     right: 0;                 /* Volledige breedte rechts */
     z-index: 1000;            /* Boven pagina-inhoud, onder TopBar */
