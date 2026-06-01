@@ -113,7 +113,7 @@ nav ul.menu li:hover > .submenu {
 /* ======================= TOPBAR ======================= */
 .topbar {
     background-color: #f0f0f0;
-    height: 35px;
+    height: 30px;
     display: flex;
     align-items: center;
     font-size: 14px;
