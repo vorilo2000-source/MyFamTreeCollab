@@ -1,5 +1,5 @@
 # MyFamTreeCollab — Project.md
-## Bijgewerkt: 2026-05-30
+## Bijgewerkt: 2026-06-01
 
 ---
 
@@ -105,6 +105,7 @@ topbar.js                 ← geïnjecteerd ná TopBar HTML (garandeert #top-aut
 | `window.SiteAnalytics` | siteAnalytics.js | v2.6.0 |
 | `window.DemoModule` | demo.js | v1.2.1 |
 | `window.ManageTable.buildHeader` | manage.js | v2.6.1 |
+| `window.ColorHelper` | colorHelper.js | v1.0.0 |
 
 ---
 
@@ -194,6 +195,23 @@ topbar.js                 ← geïnjecteerd ná TopBar HTML (garandeert #top-aut
 | Naam | Waarde |
 |---|---|
 | `RESEND_API_KEY` | Resend API key — ingesteld in Supabase dashboard |
+
+---
+
+## Gewijzigde bestanden sessie 2026-06-01
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `js/colorHelper.js` | — | v1.0.0 | Nieuw — centrale kleurberekening |
+| `css/RelationColors.css` | v1.0.2 | v1.1.0 | Vader bruin, moeder groen, PHKindID aangepast |
+| `css/Tree.css` | v2.1.0 | v2.2.0 | Eigen variabelen verwijderd, gebruikt RelationColors.css |
+| `js/manage.js` | v2.7.0 | v2.8.0 | Kleurgradiënt op td cellen, inline commentaar |
+| `stamboom/manage.html` | v2.6.1 | v2.7.0 | VHoofdID/MHoofdID aparte CSS regels |
+| `js/view.js` | v1.7.0 | v1.8.0 | index parameter in createTreeNode() |
+| `js/timeline.js` | v2.5.0 | v2.7.0 | BASE_COLORS via ColorHelper, zwarte tekst |
+| `bronnen/handleiding-nl.html` | v2.5.0 | v2.6.0 | Sectie 5 kleurcodering |
+| `bronnen/handleiding-en.html` | v2.5.0 | v2.6.0 | Sectie 5 colour coding |
+| `bronnen/handleiding-es.html` | v2.5.0 | v2.6.0 | Sectie 5 código de colores |
 
 ---
 
