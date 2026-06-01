@@ -1,24 +1,27 @@
-<!-- ======================= stamboom/manage.html v2.6.1 =======================
+<!-- ======================= stamboom/manage.html v2.7.0 =======================
      Beheerpagina: stamboom bewerken als tabel met live search
+
+     Wijziging v2.7.0 (sessie 36):
+     - tr.VHoofdID en tr.MHoofdID aparte CSS regels — waren samengevoegd waardoor
+       beide bruin kleurden; nu VHoofdID bruin en MHoofdID groen via aparte variabelen
+     - RelationColors.css vóór Tree.css geladen — correcte cascadevolgorde
 
      Wijziging v2.6.0 (bugfix headers):
      - window.ManageTable.buildHeader() aangeroepen ná loadNamespace('manage')
      - window.ManageTable.showPlaceholder() aangeroepen ná loadNamespace('manage')
-     - Fixes: headers toonden als raw keys bij eerste load
-     - 2.6.1 Laadvolgorde en colorhelper.js scripts 
 
      Wijziging v2.5.0 (sessie 26):
      - i18n geïntegreerd: data-i18n attributen op alle statische teksten
      - TopBar/Navbar/Footer via i18nModule.onComponentLoaded()
 
-     Scripts: utils.js → schema.js → idGenerator.js → storage.js → auth.js →
-              siteAnalytics.js → shareModule.js → accessGuard.js → LiveSearch.js →
-              relatieEngine.js → manage.js (verplichte volgorde)
+     Scripts: utils.js → colorHelper.js → schema.js → idGenerator.js →
+              storage.js → auth.js → siteAnalytics.js → shareModule.js →
+              accessGuard.js → LiveSearch.js → relatieEngine.js → manage.js
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">b
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="manage:page.title">Beheer</title>
 
@@ -34,15 +37,18 @@
     <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
     <script src="/MyFamTreeCollab/js/i18n.js"></script>
 
+    <!-- RelationColors.css VÓÓR Tree.css — definieert de CSS variabelen -->
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/Tree.css">
     <link rel="stylesheet" href="../css/RelationColors.css">
+    <link rel="stylesheet" href="../css/Tree.css">
 
     <style>
+        /* ======================= WELKOMSTBLOK ======================= */
         .welkom-blok { margin-bottom: 20px; }
         .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
         .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
 
+        /* ======================= ZOEKBALK ======================= */
         .zoek-sectie { margin-bottom: 16px; }
         #searchPerson {
             width: 50%;
@@ -54,6 +60,7 @@
         }
         #searchPerson:focus { outline: none; border-color: #1E90FF; }
 
+        /* ======================= KNOPPEN ======================= */
         .knoppen-balk { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
         .knoppen-balk button {
             padding: 9px 18px; font-size: 0.95rem; font-weight: bold;
@@ -66,6 +73,7 @@
         #saveBtn { background: #1E90FF; color: #fff; }
         #saveBtn:hover { background: #1278d4; }
 
+        /* ======================= TABEL ======================= */
         .manage-tabel-wrapper { overflow-x: auto; margin-bottom: 16px; }
 
         #manageTable {
@@ -79,15 +87,19 @@
             box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 0.9rem; padding: 2px 4px;
         }
 
-        tr.HoofdID td  { background: var(--color-hoofd); font-weight: 500; }
-        tr.VHoofdID td,
-        tr.MHoofdID td { background: var(--color-vader); }
-        tr.PHoofdID td { background: var(--color-partner-hoofd); font-style: italic; }
-        tr.KindID td   { background: var(--color-KindID); opacity: 0.85; }
-        tr.HKindID td  { background: var(--color-HKindID); }
-        tr.PHKindID td { background: var(--color-PHKindID); }
-        tr.Partner td  { background: var(--color-partner); font-style: italic; }
-        tr.BZID td     { background: var(--color-bz); }
+        /* ======================= TABELRIJ KLEUREN ======================= */
+        /* Kleuren komen uit RelationColors.css via CSS variabelen            */
+        /* VHoofdID en MHoofdID zijn APARTE regels — anders krijgen beide     */
+        /* dezelfde kleur (--color-vader) omdat de eerste variabele wint      */
+        tr.HoofdID td  { background: var(--color-hoofd); font-weight: 500; }    /* licht geel */
+        tr.VHoofdID td { background: var(--color-vader); }                       /* bruin — aparte regel */
+        tr.MHoofdID td { background: var(--color-moeder); }                      /* groen — aparte regel */
+        tr.PHoofdID td { background: var(--color-partner-hoofd); font-style: italic; } /* licht paars */
+        tr.KindID td   { background: var(--color-KindID); opacity: 0.85; }      /* blauw */
+        tr.HKindID td  { background: var(--color-HKindID); }                    /* sky blauw */
+        tr.PHKindID td { background: var(--color-PHKindID); }                   /* licht blauw */
+        tr.Partner td  { background: var(--color-partner); font-style: italic; } /* lichtgrijs */
+        tr.BZID td     { background: var(--color-bz); }                         /* licht oranje */
     </style>
 </head>
 <body>
@@ -101,27 +113,27 @@
 <main>
     <div class="container">
 
-        <!-- Welkomstblok -->
+        <!-- Welkomstblok — vertaald via data-i18n -->
         <div class="welkom-blok">
             <h1 data-i18n="manage:welcome.heading">Welkom bij je stamboom Manager</h1>
             <p data-i18n="manage:welcome.intro">Zoek een persoon op om de stamboom te beheren.</p>
         </div>
 
-        <!-- Zoekbalk -->
+        <!-- Zoekbalk — placeholder via JS na i18n init -->
         <div class="zoek-sectie">
             <input type="text" id="searchPerson"
                    data-i18n-placeholder="manage:search.placeholder"
                    placeholder="Zoek op ID, naam of geboortedatum...">
         </div>
 
-        <!-- Knoppen -->
+        <!-- Knoppen — labels vertaald via data-i18n -->
         <div class="knoppen-balk">
             <button id="refreshBtn" data-i18n="manage:btn.refresh">Vernieuwen</button>
             <button id="addBtn"     data-i18n="manage:btn.add">+ Toevoegen</button>
             <button id="saveBtn"    data-i18n="manage:btn.save">Opslaan</button>
         </div>
 
-        <!-- Tabel -->
+        <!-- Tabel — gevuld door manage.js -->
         <div class="manage-tabel-wrapper">
             <table id="manageTable">
                 <thead><tr></tr></thead>
@@ -138,16 +150,16 @@
 <!-- ======================= Externe scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/utils.js"></script>
-<script src="../js/colorHelper.js"></script>  <!-- nieuw -->
+<script src="../js/colorHelper.js"></script>    <!-- Kleuren: vóór manage.js en relatieEngine.js -->
 <script src="../js/schema.js"></script>
 <script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js -->
 
 <!-- ======================= Pagina-scripts (volgorde verplicht) ======================= -->
 <script src="../js/idGenerator.js"></script>
 <script src="../js/storage.js"></script>
-<script src="../js/shareModule.js"></script>
-<script src="../js/accessGuard.js"></script>
+<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
+<script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen editor + owner -->
 <script src="../js/LiveSearch.js"></script>
 <script src="../js/relatieEngine.js"></script>
 <script src="../js/manage.js"></script>
@@ -155,37 +167,37 @@
 <script>
 // ======================= i18n initialisatie + component fetch =======================
 i18nModule.init()
-    .then(function () { return i18nModule.loadNamespace('manage'); })
+    .then(function () { return i18nModule.loadNamespace('manage'); })    // Namespace laden
     .then(function () {
 
-        // Namespace geladen — nu pas headers en placeholder bouwen
+        // Namespace geladen — headers en placeholder bouwen via window.ManageTable
         // (zelfde patroon als bouwTabel() in bronnen/template.html)
         window.ManageTable.buildHeader();                                // Headers vertaald renderen
         window.ManageTable.showPlaceholder(                              // Beginmelding vertaald tonen
             i18nModule.t('manage:placeholder.select')
         );
 
-        // Paginatitel
+        // Paginatitel vertalen
         document.title = i18nModule.t('manage:page.title');
 
         // Placeholder input vertalen
         document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
             var key = el.getAttribute('data-i18n-placeholder');
-            if (key) el.placeholder = i18nModule.t(key);
+            if (key) el.placeholder = i18nModule.t(key);                // Vertaald placeholder
         });
 
-        // TopBar
+        // TopBar laden en activeren
         return fetch('/MyFamTreeCollab/Layout/TopBar.html')
             .then(function (r) { return r.text(); })
             .then(function (html) {
                 i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
                 var s = document.createElement('script');
-                s.src = '../js/topbar.js';
+                s.src = '../js/topbar.js';                              // topbar.js na TopBar HTML in DOM
                 document.body.appendChild(s);
             });
     })
     .then(function () {
-        // Navbar
+        // Navbar laden
         return fetch('/MyFamTreeCollab/Layout/Navbar.html')
             .then(function (r) { return r.text(); })
             .then(function (html) {
@@ -193,7 +205,7 @@ i18nModule.init()
             });
     })
     .then(function () {
-        // Footer
+        // Footer laden
         return fetch('/MyFamTreeCollab/Layout/Footer.html')
             .then(function (r) { return r.text(); })
             .then(function (html) {
@@ -201,12 +213,12 @@ i18nModule.init()
             });
     })
     .then(function () {
-        // Tracking en rolcheck
-        SiteAnalytics.trackPage('manage');
+        SiteAnalytics.trackPage('manage');                               // Bezoek registreren in Supabase
 
+        // Rolcheck: manage.html alleen toegankelijk voor editor en owner
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function () {
-                window.AccessGuard.check(['editor']);
+                window.AccessGuard.check(['editor']);                    // Owner intern altijd toegelaten
             });
         } else {
             window.AccessGuard.check(['editor']);
