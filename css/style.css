@@ -12,7 +12,7 @@ body {
 
 main {
     padding: 2rem; /* interne marge rondom content */
-    padding-top: 80px; /* 35px topbar + ~56px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
+    padding-top: 110px; /* 35px topbar + ~56px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
     color: #333; /* standaard tekstkleur */
 }
 
@@ -113,7 +113,7 @@ nav ul.menu li:hover > .submenu {
 /* ======================= TOPBAR ======================= */
 .topbar {
     background-color: #f0f0f0;
-    height: 30px;
+    height: 25px;
     display: flex;
     align-items: center;
     font-size: 14px;
