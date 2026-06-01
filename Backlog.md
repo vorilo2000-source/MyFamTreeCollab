@@ -117,7 +117,7 @@
 | F8-19 | 🟢 Laag | `handleiding-nl.html` bijwerken met i18n uitleg | ❌ Geannuleerd |
 | F8-20 t/m F8-55 | 🟢 Laag | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n | ✅ Gedaan |
 | F8-56 | 🔴 Hoog | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) | ✅ Gedaan |
-| F8-57 t/m F8-62 | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key | ✅ Gedaan |
+| F8-57 t/m F8-62 | | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key | ✅ Gedaan |
 | F8-15 | 🟢 Laag | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) | ✅ Gedaan — handlers waren al verwijderd in eerdere sessie |
 
 ---
@@ -160,7 +160,7 @@
 
 ## Fase A — Account & donaties ✅ AFGEROND
 
-| ID | Prioriteit | Taak | Status |
+| ID | Taak | Status |
 |----|-----------|------|--------|
 | FA-01 t/m FA-22 | Account, auth, Ko-fi, admin, bevestigingsmail | ✅ Gedaan |
 
@@ -168,7 +168,7 @@
 
 ## Fase A+ — Cloud backup ✅ AFGEROND
 
-| ID | Prioriteit | Taak | Status |
+| ID | Taak | Status |
 |----|-----------|------|--------|
 | FA+-01 t/m FA+-10 | Cloud sync, tiers, rollen, beveiliging | ✅ Gedaan |
 
@@ -187,7 +187,7 @@
 
 ## Fase 6 — Rolmodel implementatie ✅ AFGEROND
 
-| ID | Prioriteit | Taak | Status |
+| ID | Taak | Status |
 |----|-----------|------|--------|
 | F6-01 t/m F6-20 | Rolmodel, demo database, upgrade flow, versiebeheer, handleiding | ✅ Gedaan |
 
