@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Team Backlog</title>
+<script src="../js/adminGuard.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -67,6 +68,15 @@ input:focus,select:focus,textarea:focus{border-color:#888}
 .s-future{background:#fdf4ff;color:#7e22ce;border-color:#e9d5ff}
 </style>
 </head>
+<!-- Access denied message (hidden by default) -->
+<div id="accessDenied" style="display:none;text-align:center;padding:4rem 2rem">
+  <div style="font-size:32px;margin-bottom:12px">🔒</div>
+  <div style="font-weight:500;font-size:17px;margin-bottom:8px">Toegang geweigerd</div>
+  <div style="font-size:13px;color:#888">Deze pagina is alleen toegankelijk voor admins.</div>
+</div>
+
+<!-- Page content (shown only to admins) -->
+<div id="page-content" style="display:none">
 <body x-data="backlog()" x-init="init()">
 
 <div class="topbar">
@@ -326,6 +336,7 @@ input:focus,select:focus,textarea:focus{border-color:#888}
 </template>
 
 <script>
+AdminGuard.protect('admin');
 function backlog() {
   return {
     items: [],
