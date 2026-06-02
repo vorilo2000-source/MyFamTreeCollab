@@ -25,6 +25,12 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
+                            /* ── Tijdelijk: ruimte voor sticky TopBar + Navbar ──
+           Verwijderen zodra style.css v1.0.7 live is         */
+        main {
+            padding-top: 150px; /* 35px topbar + ~56px navbar + 9px marge */
+        }
+         
         /* ======================= CSS VARIABELEN ======================= */
         :root {
             --bg-main:      #565656;
@@ -42,7 +48,12 @@
             --color-danger: #f08080;
         }
 
-        main { background-color: var(--bg-main); min-height: 100vh; padding: 32px 20px 64px; font-family: var(--font-sans); }
+        main {
+            background-color: var(--bg-main);   /* Zet de achtergrondkleur van de main container via CSS variabele --bg-main */
+            min-height: 100vh;                  /* Zorgt dat main minstens even hoog is als de volledige viewport (100% van schermhoogte) */
+            padding: 32px 20px 64px;            /* Binnenruimte: boven 32px, links/rechts 20px, onder 64px */
+            font-family: var(--font-sans);      /* Zet het lettertype van de main content via CSS variabele --font-sans */
+          }
 
         /* ─── Toegang geweigerd blok ─── */
         .access-denied {
