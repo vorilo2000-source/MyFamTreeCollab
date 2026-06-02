@@ -1,4 +1,8 @@
-<!-- ======================= home/import.html v2.3.0 =======================
+<!-- ======================= home/import.html v2.4.0 =======================
+     Wijziging v2.4.0:
+     - padding-top: 100px toegevoegd aan main — ruimte voor sticky TopBar + Navbar
+     - Volledige inline commentaar toegevoegd op elke coderegel
+
      Wijziging v2.3.0 (sessie 25):
      - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
      - i18nModule.init() + loadNamespace('import') toegevoegd
@@ -26,228 +30,275 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8"> <!-- Zorgt voor correcte tekencodering -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive gedrag -->
-    <title>Import</title> <!-- Wordt overschreven door i18n na init -->
+    <meta charset="UTF-8">                                                  <!-- Tekencodering instellen -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive weergave -->
+    <title>Import</title>                                                   <!-- Wordt overschreven door i18n na init -->
 
-    <!-- ======================= Favicon ======================= -->
-    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+    <!-- ======================= FAVICON ======================= -->
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">                         <!-- Standaard favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">        <!-- PNG favicon 32px -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">        <!-- iOS homescreen icon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">    <!-- Android homescreen icon -->
 
-    <link rel="stylesheet" href="../css/style.css"> <!-- Globale styling -->
+    <!-- ======================= GLOBALE CSS ======================= -->
+    <link rel="stylesheet" href="../css/style.css">                         <!-- Globale stijlen inclusief sticky header -->
 
-    <!-- ======================= i18next laadvolgorde (verplicht) ======================= -->
-    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
-    <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Centrale i18n module -->
+    <!-- ======================= I18NEXT CDN — VOLGORDE KRITISCH =======================
+         Regel voor elke pagina: deze 4 scripts altijd in <head>, vóór alle andere JS.
+         Reden: i18nModule.init() moet klaar zijn vóór fetch van TopBar/Navbar/Footer,
+         zodat buildLanguageSwitcher() de <select> vindt na injectie.
+         ============================================================================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>                                               <!-- i18next core bibliotheek -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>                        <!-- HTTP back-end plugin — laadt JSON bestanden via fetch -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script> <!-- Language detector — leest navigator / localStorage / cookie -->
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>                     <!-- Eigen i18n module -->
 
+    <!-- ======================= PAGINA-SPECIFIEKE STIJLEN ======================= -->
     <style>
-        .welkom-blok { margin-bottom: 24px; }
-        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
-        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }
 
+        /* ── Tijdelijk: ruimte voor sticky TopBar + Navbar ──
+           Verwijderen zodra style.css v1.0.7 live is         */
+        main {
+            padding-top: 100px; /* 35px topbar + ~56px navbar + 9px marge */
+        }
+
+        /* ── Welkomstblok: introductietekst bovenaan pagina ── */
+        .welkom-blok { margin-bottom: 24px; }                               /* Ruimte onder het blok */
+        .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; } /* Paginatitel stijl */
+        .welkom-blok p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0; }         /* Introtekst stijl */
+
+        /* ── Import sectie: uploadkaart ── */
         .import-sectie {
-            border: 1px solid #ddd; border-radius: 6px; padding: 24px;
-            margin-bottom: 20px; background: #fafafa; max-width: 560px;
+            border: 1px solid #ddd;     /* Lichte rand */
+            border-radius: 6px;         /* Afgeronde hoeken */
+            padding: 24px;              /* Interne marge */
+            margin-bottom: 20px;        /* Ruimte onder de kaart */
+            background: #fafafa;        /* Lichte achtergrond */
+            max-width: 560px;           /* Maximale breedte */
         }
-        .import-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 6px 0; color: #333; }
-        .import-sectie .subtitel { font-size: 0.88rem; color: #888; margin: 0 0 18px 0; }
-        .import-sectie p  { font-size: 0.9rem; color: #555; line-height: 1.6; margin: 0 0 16px 0; }
+        .import-sectie h2 { font-size: 1.1rem; font-weight: bold; margin: 0 0 6px 0; color: #333; } /* Sectietitel */
+        .import-sectie .subtitel { font-size: 0.88rem; color: #888; margin: 0 0 18px 0; }           /* Ondertitel */
+        .import-sectie p  { font-size: 0.9rem; color: #555; line-height: 1.6; margin: 0 0 16px 0; } /* Paragraaf stijl */
 
-        /* ======================= CUSTOM FILE INPUT ======================= */
-        /* Verbergt de native browser file input volledig */
+        /* ── Custom file input: verbergt native browser input ── */
         #importFile {
-            display: none;
+            display: none;              /* Native file picker volledig verborgen */
         }
 
-        /* Wrapper voor de custom file input rij */
+        /* ── Custom file input rij: knop + bestandsnaam naast elkaar ── */
         .custom-file-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            display: flex;              /* Horizontale flex layout */
+            align-items: center;        /* Verticaal uitlijnen */
+            gap: 12px;                  /* Ruimte tussen knop en naam */
+            margin-bottom: 16px;        /* Ruimte onder de rij */
         }
 
-        /* Eigen "Kies bestand" knop — triggert de verborgen native input */
+        /* ── Kies bestand knop: triggert de verborgen native input ── */
         .knop-kies-bestand {
-            padding: 8px 16px;
-            background: #6c757d;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            cursor: pointer;
-            white-space: nowrap;
+            padding: 8px 16px;          /* Klikruimte */
+            background: #6c757d;        /* Grijze achtergrond */
+            color: #fff;                /* Witte tekst */
+            border: none;               /* Geen rand */
+            border-radius: 4px;         /* Afgeronde hoeken */
+            font-size: 0.9rem;          /* Leesbare tekstgrootte */
+            font-weight: bold;          /* Vetgedrukt */
+            cursor: pointer;            /* Pointer cursor */
+            white-space: nowrap;        /* Tekst niet afbreken */
         }
-        .knop-kies-bestand:hover { background: #5a6268; }
+        .knop-kies-bestand:hover { background: #5a6268; }                   /* Donkerder grijs bij hover */
 
-        /* Tekst die de bestandsnaam of "Geen bestand geselecteerd" toont */
+        /* ── Bestandsnaam span: toont naam of "Geen bestand geselecteerd" ── */
         #bestandsnaam {
-            font-size: 0.9rem;
-            color: #666;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            font-size: 0.9rem;          /* Leesbare tekstgrootte */
+            color: #666;                /* Grijze tekst */
+            overflow: hidden;           /* Lange namen afkappen */
+            text-overflow: ellipsis;    /* Ellipsis bij overflow */
+            white-space: nowrap;        /* Geen regelomloop */
         }
 
+        /* ── Import knop: start het importproces ── */
         .knop-import {
-            padding: 10px 24px; background: #1E90FF; color: #fff;
-            border: none; border-radius: 5px; font-size: 0.95rem;
-            font-weight: bold; cursor: pointer;
+            padding: 10px 24px;         /* Klikruimte */
+            background: #1E90FF;        /* Blauwe achtergrond */
+            color: #fff;                /* Witte tekst */
+            border: none;               /* Geen rand */
+            border-radius: 5px;         /* Afgeronde hoeken */
+            font-size: 0.95rem;         /* Leesbare tekstgrootte */
+            font-weight: bold;          /* Vetgedrukt */
+            cursor: pointer;            /* Pointer cursor */
         }
-        .knop-import:hover { background: #1278d4; }
+        .knop-import:hover { background: #1278d4; }                         /* Donkerder blauw bij hover */
 
-        #importStatus { font-size: 0.9rem; margin-top: 12px; }
+        /* ── Import status: feedback na import poging ── */
+        #importStatus { font-size: 0.9rem; margin-top: 12px; }             /* Kleine tekst met ruimte boven */
 
+        /* ── Info blok: uitleg over ondersteunde formaten ── */
         .info-blok {
-            max-width: 560px; background: #eef4fb;
-            border-left: 4px solid #1E90FF; border-radius: 0 6px 6px 0;
-            padding: 14px 18px; font-size: 0.88rem; color: #333; line-height: 1.7;
+            max-width: 560px;           /* Maximale breedte */
+            background: #eef4fb;        /* Lichtblauwe achtergrond */
+            border-left: 4px solid #1E90FF; /* Blauwe linkerrand */
+            border-radius: 0 6px 6px 0; /* Rechter hoeken afgerond */
+            padding: 14px 18px;         /* Interne marge */
+            font-size: 0.88rem;         /* Iets kleiner dan bodytekst */
+            color: #333;                /* Donkergrijze tekst */
+            line-height: 1.7;           /* Ruime regelafstand */
         }
-        .info-blok strong { color: #004080; }
+        .info-blok strong { color: #004080; }                               /* Donkerblauwe nadruk */
+
     </style>
 </head>
 <body>
 
-<!-- ======================= TopBar ======================= -->
-<div id="topbar-placeholder"></div>
+    <!-- ======================= TOPBAR ======================= -->
+    <div id="topbar-placeholder"></div>                                     <!-- Wordt gevuld via fetch + i18n -->
 
-<!-- ======================= Navbar ======================= -->
-<div id="navbar-placeholder"></div>
+    <!-- ======================= NAVBAR ======================= -->
+    <div id="navbar-placeholder"></div>                                     <!-- Wordt gevuld via fetch + i18n -->
 
-<main>
-    <div class="container">
+    <!-- ======================= PAGINA-INHOUD ======================= -->
+    <main>
+        <div class="container">                                             <!-- Centreert inhoud binnen main -->
 
-        <!-- Welkomstblok -->
-        <div class="welkom-blok">
-            <h1 data-i18n="import:welcome.heading"></h1>
-            <p data-i18n="import:welcome.intro"></p>
-        </div>
-
-        <!-- Formulier sectie -->
-        <div class="import-sectie">
-            <h2 data-i18n="import:form.heading"></h2>
-            <p class="subtitel" data-i18n="import:form.subtitle"></p>
-
-            <!-- Native input verborgen — wordt getriggerd via knop hieronder -->
-            <input type="file" id="importFile" accept=".csv,.txt">
-
-            <!-- Custom file input: eigen knop + bestandsnaam span -->
-            <div class="custom-file-wrapper">
-                <!-- Knop triggert click op de verborgen native input -->
-                <button type="button"
-                        class="knop-kies-bestand"
-                        id="kiesBestandBtn"
-                        data-i18n="import:file.button">Kies bestand</button>
-                <!-- Toont bestandsnaam na selectie, of "Geen bestand geselecteerd" -->
-                <span id="bestandsnaam" data-i18n="import:file.noFile">Geen bestand geselecteerd</span>
+            <!-- ── WELKOM ── Introductietekst bovenaan de pagina ── -->
+            <div class="welkom-blok">
+                <h1 data-i18n="import:welcome.heading"></h1>               <!-- Paginatitel via i18n -->
+                <p  data-i18n="import:welcome.intro"></p>                  <!-- Introtekst via i18n -->
             </div>
 
-            <!-- Import knop -->
-            <button id="importBtn" class="knop-import" data-i18n="import:form.button"></button>
-            <p id="importStatus"></p>
+            <!-- ── IMPORT FORMULIER ── Uploadkaart met bestandskiezer ── -->
+            <div class="import-sectie">
+                <h2 data-i18n="import:form.heading"></h2>                  <!-- Sectietitel via i18n -->
+                <p class="subtitel" data-i18n="import:form.subtitle"></p>  <!-- Ondertitel via i18n -->
+
+                <!-- Native input verborgen — wordt getriggerd via knop hieronder -->
+                <input type="file" id="importFile" accept=".csv,.txt">     <!-- Verborgen native file picker -->
+
+                <!-- Custom file input: eigen knop + bestandsnaam span -->
+                <div class="custom-file-wrapper">
+                    <button type="button"
+                            class="knop-kies-bestand"
+                            id="kiesBestandBtn"
+                            data-i18n="import:file.button">Kies bestand</button>   <!-- Triggert verborgen native input -->
+                    <span id="bestandsnaam"
+                          data-i18n="import:file.noFile">Geen bestand geselecteerd</span> <!-- Toont bestandsnaam na selectie -->
+                </div>
+
+                <!-- Import knop — start verwerking via import.js -->
+                <button id="importBtn"
+                        class="knop-import"
+                        data-i18n="import:form.button"></button>           <!-- Knoptekst via i18n -->
+
+                <!-- Status feedback — ingevuld door import.js -->
+                <p id="importStatus"></p>                                  <!-- Leeg tot import gestart is -->
+            </div>
+
+            <!-- ── INFO BLOK ── Uitleg ondersteunde formaten ── -->
+            <div class="info-blok">
+                <strong data-i18n="import:info.heading"></strong><br>      <!-- Koptekst via i18n -->
+                <span data-i18n="import:info.line1"></span><br>            <!-- Regel 1 via i18n -->
+                <span data-i18n="import:info.line2"></span><br>            <!-- Regel 2 via i18n -->
+                <span data-i18n="import:info.line3"></span><br>            <!-- Regel 3 via i18n -->
+                <span data-i18n="import:info.line4"></span>                <!-- Regel 4 via i18n -->
+            </div>
+
         </div>
+    </main>
 
-        <!-- Infoblok — elke regel apart vertaald -->
-        <div class="info-blok">
-            <strong data-i18n="import:info.heading"></strong><br>
-            <span data-i18n="import:info.line1"></span><br>
-            <span data-i18n="import:info.line2"></span><br>
-            <span data-i18n="import:info.line3"></span><br>
-            <span data-i18n="import:info.line4"></span>
-        </div>
+    <!-- ======================= FOOTER ======================= -->
+    <div id="footer-placeholder"></div>                                     <!-- Wordt gevuld via fetch + i18n -->
 
-    </div>
-</main>
+    <!-- ======================= EXTERNE SCRIPTS ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
+    <script src="../js/utils.js"></script>                                  <!-- Utilities -->
+    <script src="../js/auth.js"></script>                                   <!-- Authenticatie module -->
+    <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>            <!-- Bezoektracking — na auth.js zodat tier beschikbaar is -->
 
-<!-- ======================= Footer ======================= -->
-<div id="footer-placeholder"></div>
+    <!-- ======================= INITIALISATIE ======================= -->
+    <script>
 
-<!-- ======================= SCRIPTS ======================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/utils.js"></script>
-<script src="../js/auth.js"></script>
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script> <!-- Bezoektracking: na auth.js zodat tier beschikbaar is -->
+        // ── i18n initialiseren ──
+        // Moet als eerste — vóór de fetch calls — zodat vertalingen
+        // klaar zijn op het moment dat componenten worden geïnjecteerd
+        i18nModule.init().then(function () {
 
-<script>
-    // ======================= i18n initialiseren =======================
-    i18nModule.init().then(function () {
+            i18nModule.loadNamespace('import');                             // Import namespace laden na common
+            document.title = i18nModule.t('import:page.title');            // Paginatitel instellen via i18n
 
-        // Laad de 'import' namespace voor deze pagina
-        i18nModule.loadNamespace('import');
+            // ── TopBar laden en injecteren ──
+            fetch('/MyFamTreeCollab/Layout/TopBar.html')                   // TopBar HTML ophalen
+                .then(r => r.text())                                        // Response naar tekst converteren
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(                           // Injecteren + vertalingen toepassen
+                        html,
+                        document.getElementById('topbar-placeholder')
+                    );
+                    var s = document.createElement('script');              // Script element aanmaken
+                    s.src = '../js/topbar.js';                             // Pad naar topbar.js
+                    document.body.appendChild(s);                          // Aan DOM toevoegen om laden te starten
+                });
 
-        // Stel paginatitel in via i18n key
-        document.title = i18nModule.t('import:page.title');
+            // ── Navbar laden en injecteren ──
+            fetch('/MyFamTreeCollab/Layout/Navbar.html')                   // Navbar HTML ophalen
+                .then(r => r.text())                                        // Response naar tekst converteren
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(                           // Injecteren + vertalingen toepassen
+                        html,
+                        document.getElementById('navbar-placeholder')
+                    );
+                });
 
-        // ======================= TopBar laden =======================
-        fetch('/MyFamTreeCollab/Layout/TopBar.html')
-            .then(r => r.text())
-            .then(function (html) {
-                i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
-                var s = document.createElement('script');
-                s.src = '../js/topbar.js';
-                document.body.appendChild(s);
-            });
+            // ── Footer laden en injecteren ──
+            fetch('/MyFamTreeCollab/Layout/Footer.html')                   // Footer HTML ophalen
+                .then(r => r.text())                                        // Response naar tekst converteren
+                .then(function (html) {
+                    i18nModule.onComponentLoaded(                           // Injecteren + vertalingen toepassen
+                        html,
+                        document.getElementById('footer-placeholder')
+                    );
+                });
 
-        // ======================= Navbar laden =======================
-        fetch('/MyFamTreeCollab/Layout/Navbar.html')
-            .then(r => r.text())
-            .then(function (html) {
-                i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
-            });
-
-        // ======================= Footer laden =======================
-        fetch('/MyFamTreeCollab/Layout/Footer.html')
-            .then(r => r.text())
-            .then(function (html) {
-                i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
-            });
-    });
-
-    // Pagina tracking — buiten i18n init, blokkeert niets
-    SiteAnalytics.trackPage("import"); // Bezoek registreren in Supabase page_visits tabel
-</script>
-
-<script src="../js/schema.js"></script>
-<script src="../js/storage.js"></script>
-<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
-<script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen owner -->
-<script src="../js/import.js"></script>
-
-<script>
-    // ======================= Custom file input logica =======================
-    document.addEventListener('DOMContentLoaded', function () {
-
-        var kiesBtn     = document.getElementById('kiesBestandBtn'); // Eigen kies-knop
-        var nativeInput = document.getElementById('importFile');      // Verborgen native input
-        var naamSpan    = document.getElementById('bestandsnaam');    // Bestandsnaam display
-
-        // Klik op eigen knop → triggert de verborgen native file picker
-        kiesBtn.addEventListener('click', function () {
-            nativeInput.click();
         });
 
-        // Na bestandsselectie: toon bestandsnaam of "Geen bestand geselecteerd"
-        nativeInput.addEventListener('change', function () {
-            if (nativeInput.files.length > 0) {
-                // Toon "Geselecteerd: bestandsnaam.csv"
-                naamSpan.textContent = i18nModule.t('import:file.selected') + nativeInput.files[0].name;
-                naamSpan.removeAttribute('data-i18n'); // Verwijder key zodat updateContent() dit niet overschrijft
-            } else {
-                // Reset naar "Geen bestand geselecteerd"
-                naamSpan.textContent = i18nModule.t('import:file.noFile');
-                naamSpan.setAttribute('data-i18n', 'import:file.noFile'); // Herstel key voor taalwissel
-            }
-        });
+        // Pagina tracking — buiten i18n init zodat het niets blokkeert
+        SiteAnalytics.trackPage("import");                                 // Bezoek registreren in Supabase page_visits tabel
 
-        // ======================= Rolcheck =======================
-        window.AccessGuard.check([]); // Lege array: alleen owner wordt doorgelaten
-    });
-</script>
+    </script>
+
+    <!-- ======================= DOMEIN SCRIPTS ======================= -->
+    <script src="../js/schema.js"></script>                                 <!-- Schema definities -->
+    <script src="../js/storage.js"></script>                                <!-- Lokale opslag module -->
+    <script src="../js/shareModule.js"></script>                            <!-- Vereist door accessGuard.js -->
+    <script src="../js/accessGuard.js"></script>                            <!-- Rolcheck: alleen owner -->
+    <script src="../js/import.js"></script>                                 <!-- Import logica -->
+
+    <!-- ======================= CUSTOM FILE INPUT + ROLCHECK ======================= -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            var kiesBtn     = document.getElementById('kiesBestandBtn');   // Eigen kies-knop ophalen
+            var nativeInput = document.getElementById('importFile');       // Verborgen native input ophalen
+            var naamSpan    = document.getElementById('bestandsnaam');     // Bestandsnaam span ophalen
+
+            // Klik op eigen knop → opent de verborgen native file picker
+            kiesBtn.addEventListener('click', function () {
+                nativeInput.click();                                        // Native file dialog openen
+            });
+
+            // Na bestandsselectie: toon bestandsnaam of reset naar standaardtekst
+            nativeInput.addEventListener('change', function () {
+                if (nativeInput.files.length > 0) {
+                    naamSpan.textContent = i18nModule.t('import:file.selected') + nativeInput.files[0].name; // Bestandsnaam tonen
+                    naamSpan.removeAttribute('data-i18n');                 // Key verwijderen zodat i18n dit niet overschrijft
+                } else {
+                    naamSpan.textContent = i18nModule.t('import:file.noFile'); // Reset naar standaardtekst
+                    naamSpan.setAttribute('data-i18n', 'import:file.noFile'); // Key herstellen voor taalwissel
+                }
+            });
+
+            // Rolcheck: alleen owner mag importeren
+            window.AccessGuard.check([]);                                  // Lege array: alleen owner wordt doorgelaten
+        });
+    </script>
 
 </body>
 </html>
