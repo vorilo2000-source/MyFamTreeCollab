@@ -1,316 +1,339 @@
-/* ======================= css/style.css v1.0.7 ======================= */
-/* Wijziging v1.0.7: sticky TopBar en Navbar toegevoegd                 */
-/* Algemene styling (zonder timeline — die zit nu in timeline.css)      */
+<!-- ======================= home/index.html v2.4.0 =======================
+     Wijziging v2.4.0:
+     - <main> wrapper toegevoegd rond alle <section> elementen
+       zodat padding-top uit style.css de sticky header correct opvangt
+     - Volledige inline commentaar toegevoegd op elke coderegel
+     Wijziging v2.3.0: i18next namespace setup geïmplementeerd
+     - Alle hardcoded teksten vervangen door data-i18n attributen
+     - i18next + http-backend + browser-languagedetector geladen via CDN
+     - js/i18n.js geladen als core i18n module
+     - loadNamespace('home') aangeroepen na initialisatie
+     - TopBar/Navbar/Footer vertalen via onComponentLoaded()
+     - Language switcher geïntegreerd in TopBar
+     v2.2.1: Demo knop toegevoegd naast "Start je stamboom"
+     ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">                                                  <!-- Tekencodering instellen -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsive weergave -->
+    <title>MyFamTreeCollab</title>
 
-/* ======================= BASIS LAYOUT ======================= */
-body {
-    font-family: Arial, sans-serif; /* basis font voor de pagina */
-    margin: 0; /* verwijder standaard browser marge */
-    padding: 0; /* verwijder standaard browser padding */
-    background-color: #fdfdfd; /* lichte achtergrondkleur */
-}
+    <!-- ======================= FAVICON ======================= -->
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">                          <!-- Standaard favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">         <!-- PNG favicon 32px -->
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">         <!-- iOS homescreen icon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png">     <!-- Android homescreen icon -->
 
-main {
-    padding: 2rem; /* interne marge rondom content */
-    padding-top: 100px; /* 35px topbar + ~56px navbar + 9px marge — voorkomt dat content achter vaste balken verdwijnt */
-    color: #333; /* standaard tekstkleur */
-}
+    <!-- ======================= GLOBALE CSS ======================= -->
+    <link rel="stylesheet" href="css/style.css">                           <!-- Globale stijlen inclusief sticky header -->
 
-/* ======================= STICKY HEADER ======================= */
+    <!-- ======================= I18NEXT CDN — VOLGORDE KRITISCH =======================
+         Regel voor elke pagina: deze 4 scripts altijd in <head>, vóór alle andere JS.
+         Reden: i18nModule.init() moet klaar zijn vóór fetch van TopBar/Navbar/Footer,
+         zodat buildLanguageSwitcher() de <select> vindt na injectie.
+         ============================================================================= -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>                                              <!-- i18next core bibliotheek -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>                       <!-- HTTP back-end plugin — laadt JSON bestanden via fetch -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script><!-- Language detector — leest navigator / localStorage / cookie -->
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>                    <!-- Eigen i18n module -->
 
-/* TopBar vast bovenaan het scherm */
-#topbar-placeholder {
-    position: fixed;          /* Uit de documentflow, altijd zichtbaar bij scrollen */
-    top: 0;                   /* Plakt aan bovenkant venster */
-    left: 0;                  /* Volledige breedte links */
-    right: 0;                 /* Volledige breedte rechts */
-    z-index: 1100;            /* Boven de Navbar gestapeld */
-}
+    <!-- ======================= PAGINA-SPECIFIEKE STIJLEN ======================= -->
+    <style>
 
-/* Navbar vast direct onder de TopBar */
-#navbar-placeholder {
-    position: fixed;          /* Uit de documentflow, altijd zichtbaar bij scrollen */
-    top: 35px;                /* Hoogte van .topbar — sluit direct aan op TopBar */
-    left: 0;                  /* Volledige breedte links */
-    right: 0;                 /* Volledige breedte rechts */
-    z-index: 1000;            /* Boven pagina-inhoud, onder TopBar */
-}
+        /* ── Headings: verwijder standaard marges bovenaan ── */
+        h1, h2, h3 {
+            margin-top: 0;      /* Geen extra ruimte boven koppen */
+            margin-bottom: 12px;/* Consistente ruimte onder koppen */
+        }
 
-/* ======================= HEADER / NAVBAR ======================= */
-header {
-    background-color: #004080; /* donkerblauwe achtergrond */
-    color: white; /* tekstkleur wit */
-    padding: 1rem; /* interne marge */
-    display: flex; /* flex layout */
-    justify-content: space-between; /* ruimte tussen items */
-    align-items: center; /* verticale uitlijning */
-}
+        /* ── Hero: gecentreerde openingssectie ── */
+        .hero {
+            max-width: 900px;   /* Maximale breedte voor leesbaarheid */
+            margin: 0 auto;     /* Horizontaal centreren */
+            text-align: center; /* Tekst centreren */
+            padding: 48px 24px; /* Lucht boven/onder en links/rechts */
+        }
 
-header h1,
-header .brand,
-header .logo {
-    color: white; /* forceer wit */
-    margin: 0; /* verwijder marge */
-}
+        .hero h1 {
+            font-size: 2rem;    /* Grote hoofdtitel */
+            margin-bottom: 12px;/* Ruimte onder de titel */
+        }
 
-/* ======================= NAVIGATIE ======================= */
-nav ul.menu {
-    list-style: none; /* geen bullets */
-    margin: 0;
-    padding: 0;
-    display: flex; /* horizontaal */
-    gap: 1rem; /* ruimte tussen items */
-}
+        .hero p {
+            color: #555;        /* Iets grijzere subtekst */
+            margin-bottom: 20px;/* Ruimte onder paragraaf */
+            line-height: 1.6;   /* Regelafstand voor leesbaarheid */
+        }
 
-nav ul.menu > li {
-    position: relative; /* nodig voor submenu */
-}
+        .hero-actions a {
+            margin: 6px;        /* Ruimte tussen de actieknoppen */
+        }
 
-nav ul.menu a {
-    color: white; /* witte links */
-    text-decoration: none; /* geen underline */
-    padding: 0.5rem 1rem; /* klikruimte */
-    display: block; /* blokniveau */
-}
+        /* ── Demo intro: kleine hint-tekst onder knoppen ── */
+        .demo-intro {
+            font-size: 0.88rem; /* Kleiner dan bodytekst */
+            color: #888;        /* Lichtgrijs */
+            margin-top: 12px;   /* Ruimte boven de tekst */
+        }
 
-nav li.dropdown > a {
-    cursor: pointer; /* visuele hint */
-}
+        .demo-intro a {
+            color: #1E90FF;         /* Blauwe linkkleur */
+            text-decoration: underline; /* Underline voor herkenbaarheid */
+        }
 
-/* ======================= SUBMENU ======================= */
-nav ul.submenu {
-    display: none; /* standaard verborgen */
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #004080;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    border-radius: 4px;
-    min-width: 150px;
-    z-index: 1000;
-}
+        /* ── Buttons ── */
+        .btn-primary {
+            background: #1E90FF;    /* Blauwe achtergrond */
+            color: #fff;            /* Witte tekst */
+            padding: 12px 26px;     /* Klikruimte */
+            border-radius: 6px;     /* Afgeronde hoeken */
+            text-decoration: none;  /* Geen underline */
+            font-weight: bold;      /* Vetgedrukt */
+        }
 
-nav ul.submenu li a {
-    padding: 0.5rem 1rem;
-}
+        .btn-primary:hover {
+            background: #1278d4;    /* Donkerder blauw bij hover */
+        }
 
-nav ul.menu li:hover > .submenu {
-    display: block; /* zichtbaar bij hover */
-}
+        .btn-secondary {
+            border: 1px solid #1E90FF; /* Blauwe rand */
+            color: #1E90FF;            /* Blauwe tekst */
+            padding: 12px 26px;        /* Klikruimte */
+            border-radius: 6px;        /* Afgeronde hoeken */
+            text-decoration: none;     /* Geen underline */
+        }
 
-/* ======================= BUTTONS ======================= */
-.btn {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    background-color: #0080ff;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-}
+        .btn-demo {
+            border: 1px solid #28a745; /* Groene rand */
+            color: #28a745;            /* Groene tekst */
+            padding: 12px 26px;        /* Klikruimte */
+            border-radius: 6px;        /* Afgeronde hoeken */
+            text-decoration: none;     /* Geen underline */
+            cursor: pointer;           /* Pointer cursor bij hover */
+            background: transparent;   /* Transparante achtergrond */
+            font-size: 1rem;           /* Zelfde grootte als bodytekst */
+            font-weight: normal;       /* Niet vetgedrukt */
+        }
 
-/* ======================= TOPBAR ======================= */
-.topbar {
-    background-color: #f0f0f0;
-    height: 35px;
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-}
+        .btn-demo:hover {
+            background: #e8f5e9;       /* Lichtgroene achtergrond bij hover */
+        }
 
-.topbar-content {
-    width: 95%;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-}
+        /* ── Secties: gecentreerde inhoudsblokken ── */
+        section {
+            max-width: 900px;   /* Maximale breedte */
+            margin: 0 auto;     /* Horizontaal centreren */
+            padding: 28px 24px; /* Lucht boven/onder en links/rechts */
+        }
 
-.top-left a,
-.top-right a {
-    text-decoration: none;
-    color: #333;
-    margin-left: 10px;
-    font-weight: 500;
-}
+        section h2 {
+            margin-bottom: 10px;/* Ruimte onder sectiekoppen */
+        }
 
-.top-left a:hover,
-.top-right a:hover {
-    text-decoration: underline;
-}
+        section p {
+            margin-bottom: 12px;/* Ruimte onder paragrafen */
+            line-height: 1.6;   /* Regelafstand */
+        }
 
-.topbar a.active {
-    font-weight: 700;
-    text-decoration: underline;
-    color: #004080;
-}
+        /* ── Benefits: grid van voordelen-kaarten ── */
+        .benefits {
+            display: grid;              /* CSS grid layout */
+            grid-template-columns: 1fr; /* Één kolom (mobiel-first) */
+            gap: 16px;                  /* Ruimte tussen kaarten */
+        }
 
-/* ======================= TABLE ======================= */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1.5rem;
-    background-color: #ffffff;
-}
+        .benefit {
+            border: 1px solid #ddd;     /* Lichte rand */
+            padding: 16px;              /* Interne marge */
+            border-radius: 6px;         /* Afgeronde hoeken */
+            background: #fafafa;        /* Lichte achtergrond */
+        }
 
-table th {
-    background-color: #004080;
-    color: white;
-    font-weight: 600;
-}
+        /* ── Steps: genummerde stappenlijst ── */
+        .steps ol {
+            padding-left: 20px; /* Inspringing voor nummers */
+            line-height: 1.6;   /* Regelafstand */
+        }
 
-table th,
-table td {
-    border: 1px solid #d9d9d9;
-    padding: 0.6rem 0.8rem;
-    text-align: left;
-    vertical-align: top;
-    font-size: 14px;
-}
+        /* ── CTA: gecentreerde call-to-action onderaan ── */
+        .cta {
+            text-align: center; /* Tekst en knop centreren */
+        }
 
-table tr:hover {
-    background-color: #eef4fb;
-}
+    </style>
+</head>
+<body>
 
-/* ======================= STORAGE TABLE ======================= */
-#storageTable tr:nth-child(even) {
-    background-color: #f7f9fc;
-}
+    <!-- ======================= TOPBAR ======================= -->
+    <div id="topbar-placeholder"></div>                                     <!-- Wordt gevuld via fetch + i18n -->
 
-#storageTable tr:nth-child(odd) {
-    background-color: #ffffff;
-}
+    <!-- ======================= NAVBAR ======================= -->
+    <div id="navbar-placeholder"></div>                                     <!-- Wordt gevuld via fetch + i18n -->
 
-/* ======================= SELECTED ROW ======================= */
-table tr.selected {
-    background-color: #dbeeff;
-}
+    <!-- ======================= PAGINA-INHOUD ======================= -->
+    <!-- <main> zorgt dat padding-top uit style.css de sticky header opvangt -->
+    <main>
 
-/* ======================= MODAL ======================= */
-.modal {
-    position: fixed;
-    top: 8%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 85%;
-    max-width: 1000px;
-    max-height: 85vh;
-    overflow-y: auto;
-    background: #ffffff;
-    border: 2px solid #004080;
-    border-radius: 6px;
-    padding: 1.5rem;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-    z-index: 9999;
-}
+        <!-- ── HERO ── Openingssectie met titel, subtitel en actieknoppen ── -->
+        <section class="hero">
 
-.modal-content h2 {
-    margin-top: 0;
-    color: #004080;
-}
+            <h1 data-i18n="home:hero.title"></h1>                          <!-- Hoofdtitel via i18n -->
+            <p  data-i18n="home:hero.subtitle"></p>                        <!-- Subtitel via i18n -->
 
-.hidden {
-    display: none !important;
-}
+            <!-- Actieknoppen: start, meer info, demo -->
+            <div class="hero-actions">
+                <a href="/MyFamTreeCollab/home/create.html"
+                   class="btn-primary"
+                   data-i18n="home:hero.ctaStart"></a>                     <!-- Primaire CTA -->
 
-.modal pre {
-    background: #f4f6f9;
-    padding: 1rem;
-    border-radius: 4px;
-    font-size: 13px;
-    overflow-x: auto;
-}
+                <a href="/MyFamTreeCollab/home/about.html"
+                   class="btn-secondary"
+                   data-i18n="home:hero.ctaMore"></a>                      <!-- Secundaire CTA -->
 
-/* ======================= BUTTONS (ADMIN) ======================= */
-button {
-    cursor: pointer;
-    font-family: inherit;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    font-size: 14px;
-    transition: background-color 0.2s ease, transform 0.05s ease;
-}
+                <button id="btnDemo"
+                        class="btn-demo"
+                        data-i18n="home:hero.ctaDemo"></button>            <!-- Demo knop -->
+            </div>
 
-button:hover {
-    opacity: 0.9;
-}
+            <!-- Demo uitlegblok -->
+            <div class="benefit">
+                <h3 data-i18n="home:demo.title"></h3>                      <!-- "🌳 Bekijk demo" -->
+                <p  data-i18n="home:demo.description"></p>                 <!-- Uitleg demo stamboom -->
+            </div>
 
-button:active {
-    transform: scale(0.98);
-}
+        </section>
 
-button.danger {
-    background-color: #b30000;
-    color: white;
-}
+        <!-- ── WAAROM ── Probleemstelling en oplossing ── -->
+        <section>
+            <h2 data-i18n="home:why.title"></h2>                           <!-- Sectietitel -->
+            <p  data-i18n="home:why.problem"></p>                          <!-- Probleemstelling -->
+            <p  data-i18n="home:why.solution"></p>                         <!-- Oplossing -->
+        </section>
 
-button.danger:hover {
-    background-color: #990000;
-}
+        <!-- ── VOORDELEN ── Grid van drie benefit-kaarten ── -->
+        <section class="benefits">
 
-/* ======================= STORAGE SUMMARY ======================= */
-#storageSummary {
-    margin-top: 1rem;
-    padding: 0.8rem 1rem;
-    background-color: #eef4fb;
-    border-left: 4px solid #004080;
-    font-size: 14px;
-}
+            <div class="benefit">
+                <h3 data-i18n="home:why.privacy.title"></h3>               <!-- "🔐 Jij behoudt controle" -->
+                <p  data-i18n="home:why.privacy.text"></p>                 <!-- Privacy uitleg -->
+            </div>
 
-/* ======================= RESPONSIVE ======================= */
-@media (max-width: 768px) {
-    nav ul.menu {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+            <div class="benefit">
+                <h3 data-i18n="home:why.collab.title"></h3>                <!-- "🤝 Samen bouwen" -->
+                <p  data-i18n="home:why.collab.text"></p>                  <!-- Samenwerken uitleg -->
+            </div>
 
-    table th,
-    table td {
-        font-size: 13px;
-    }
+            <div class="benefit">
+                <h3 data-i18n="home:why.easy.title"></h3>                  <!-- "⚡ Eenvoudig starten" -->
+                <p  data-i18n="home:why.easy.text"></p>                    <!-- Eenvoud uitleg -->
+            </div>
 
-    .modal {
-        width: 95%;
-    }
-}
+        </section>
 
-/* ======================= TREE VIEW ======================= */
-#treeContainer { 
-    margin: 20px 0;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background-color: #fdfdfd;
-    text-align: center;
-}
+        <!-- ── HOE HET WERKT ── Genummerde stappenlijst ── -->
+        <section class="steps">
+            <h2 data-i18n="home:howItWorks.title"></h2>                    <!-- Sectietitel -->
+            <ol>
+                <li data-i18n="home:howItWorks.step1"></li>                <!-- Stap 1 -->
+                <li data-i18n="home:howItWorks.step2"></li>                <!-- Stap 2 -->
+                <li data-i18n="home:howItWorks.step3"></li>                <!-- Stap 3 -->
+            </ol>
+        </section>
 
-.tree-parents, 
-.tree-children { 
-    text-align: center;
-    margin: 10px 0;
-}
+        <!-- ── VERHAAL ── Achtergrond van het project ── -->
+        <section>
+            <h2 data-i18n="home:story.title"></h2>                         <!-- Sectietitel -->
+            <p  data-i18n="home:story.text"></p>                           <!-- Verhaaltekst -->
+        </section>
 
-.tree-node { 
-    display: inline-block;
-    padding: 6px 10px;
-    margin: 6px;
-    border: 1px solid #444;
-    border-radius: 6px;
-    background: #f5f5f5;
-    font-size: 13px;
-    cursor: default;
-}
+        <!-- ── CTA ── Afsluitende call-to-action ── -->
+        <section class="cta">
+            <h2 data-i18n="home:cta.title"></h2>                           <!-- CTA titel -->
+            <a href="/MyFamTreeCollab/home/create.html"
+               class="btn-primary"
+               data-i18n="home:cta.button"></a>                            <!-- CTA knop -->
+        </section>
 
-.tree-node:hover { 
-    background-color: #e0f0ff;
-    border-color: #004080;
-}
+    </main>
 
-.tree-connector { 
-    display: block;
-    height: 1px;
-    border-top: 1px solid #ccc;
-    margin: 6px auto;
-    width: 50%;
-}
+    <!-- ======================= FOOTER ======================= -->
+    <div id="footer-placeholder"></div>                                     <!-- Wordt gevuld via fetch + i18n -->
+
+    <!-- ======================= EXTERNE SCRIPTS ======================= -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
+    <script src="js/utils.js"></script>                                     <!-- Utilities -->
+    <script src="js/schema.js"></script>                                    <!-- Schema definities -->
+    <script src="js/storage.js"></script>                                   <!-- Lokale opslag module -->
+    <script src="js/auth.js"></script>                                      <!-- Authenticatie module -->
+    <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>            <!-- Bezoektracking -->
+    <script src="js/demo.js"></script>                                      <!-- Demo module -->
+
+    <!-- ======================= INITIALISATIE ======================= -->
+    <script>
+
+        // ── i18n initialiseren ──
+        // Moet als eerste — vóór de fetch calls — zodat vertalingen
+        // klaar zijn op het moment dat componenten worden geïnjecteerd
+        i18nModule.init().then(function() {
+
+            i18nModule.loadNamespace('home');                               // Home namespace laden na common
+
+            // ── TopBar laden en injecteren ──
+            fetch('/MyFamTreeCollab/Layout/TopBar.html')                   // TopBar HTML ophalen
+                .then(resp => resp.text())                                  // Response naar tekst converteren
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(                           // Injecteren + vertalingen toepassen
+                        html,
+                        document.getElementById('topbar-placeholder')
+                    );
+                    var s   = document.createElement('script');            // Script element aanmaken
+                    s.src   = 'js/topbar.js';                              // Pad naar topbar.js
+                    document.body.appendChild(s);                          // Aan DOM toevoegen om laden te starten
+                });
+
+            // ── Navbar laden en injecteren ──
+            fetch('/MyFamTreeCollab/Layout/Navbar.html')                   // Navbar HTML ophalen
+                .then(resp => resp.text())                                  // Response naar tekst converteren
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(                           // Injecteren + vertalingen toepassen
+                        html,
+                        document.getElementById('navbar-placeholder')
+                    );
+                });
+
+            // ── Footer laden en injecteren ──
+            fetch('/MyFamTreeCollab/Layout/Footer.html')                   // Footer HTML ophalen
+                .then(resp => resp.text())                                  // Response naar tekst converteren
+                .then(function(html) {
+                    i18nModule.onComponentLoaded(                           // Injecteren + vertalingen toepassen
+                        html,
+                        document.getElementById('footer-placeholder')
+                    );
+                });
+
+            SiteAnalytics.trackPage("home");                               // Paginabezoek registreren in Supabase
+
+        });
+
+        // ── Demo knop handler ──
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('btnDemo');                  // Demo knop ophalen
+            if (!btn) return;                                              // Knop niet gevonden — stoppen
+
+            btn.addEventListener('click', async function() {
+                if (!window.DemoModule) {                                  // Controleer of DemoModule geladen is
+                    alert(i18nModule.t('common.errors.loadFailed'));       // Vertaalde foutmelding tonen
+                    return;
+                }
+                btn.textContent = i18nModule.t('common.loading.data');    // Knoptekst naar "Gegevens ophalen…"
+                btn.disabled    = true;                                    // Knop uitschakelen tijdens laden
+                await window.DemoModule.loadDemo(true);                    // Demo laden (force = true)
+                window.location.href = '/MyFamTreeCollab/stamboom/manage.html'; // Navigeren naar beheer
+            });
+        });
+
+    </script>
+
+</body>
+</html>
