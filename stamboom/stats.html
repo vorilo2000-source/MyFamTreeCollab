@@ -15,7 +15,7 @@
      Wijziging v1.0.0: facelift — welkomstblok, inline stijlen naar <style>,
                        paginatitel div verwijderd, // commentaar boven DOCTYPE verwijderd
      v2.0.1 Login + Favicon / App-icoon
-     Scripts: storage.js
+     Scripts: storage.jsj
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -39,6 +39,12 @@
     <script src="/MyFamTreeCollab/js/i18n.js"></script>
 
     <style>
+             /* ── Tijdelijk: ruimte voor sticky TopBar + Navbar ──
+           Verwijderen zodra style.css v1.0.7 live is         */
+        main {
+            padding-top: 150px; /* 35px topbar + ~56px navbar + 9px marge */
+        }
+         
         /* ======================= WELKOMSTBLOK ======================= */
         .welkom-blok { margin-bottom: 24px; }
         .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
