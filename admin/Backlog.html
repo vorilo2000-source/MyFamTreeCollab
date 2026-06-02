@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Team Backlog</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f9f9f7;color:#1a1a18;min-height:100vh}
+h1{font-size:1.4rem;font-weight:500}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit;color:#1a1a18;background:#fff;border:0.5px solid #ccc;border-radius:8px;padding:7px 10px;font-size:13px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#888}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:0.5px solid #ccc;border-radius:8px;background:#fff;font-size:13px;transition:background .15s}
+.btn:hover{background:#f1f0ec}
+.btn-primary{background:#1a1a18;color:#fff;border-color:#1a1a18}
+.btn-primary:hover{background:#333}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn-ghost:hover{background:#f1f0ec}
+.card{background:#fff;border:0.5px solid #e0dfd8;border-radius:10px;padding:14px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:99px;border:0.5px solid}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.tag{font-size:10px;padding:1px 7px;border-radius:4px;background:#f1f0ec;color:#555}
+.label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px}
+.stat-card{background:#f1f0ec;border-radius:8px;padding:12px 16px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:100%;max-width:540px;border:0.5px solid #ccc;max-height:90vh;overflow-y:auto}
+.phase-pill{font-size:12px;padding:3px 10px;border-radius:99px;border:0.5px solid #ccc;background:transparent;color:#666;cursor:pointer;transition:background .15s}
+.phase-pill:hover{background:#f1f0ec}
+.phase-pill.active{background:#e8f0fe;color:#1a4ed8;border-color:#a8c0f8}
+.topbar{background:#fff;border-bottom:0.5px solid #e0dfd8;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.container{max-width:1100px;margin:0 auto;padding:1.5rem}
+.grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:1.5rem}
+.progress-bar{height:4px;background:#e0dfd8;border-radius:99px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:#15803d;border-radius:99px;transition:width .4s}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+.board-col-title{font-size:11px;font-weight:500;color:#888;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.list-table{width:100%;border-collapse:collapse;font-size:13px}
+.list-table th{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;text-align:left;border-bottom:0.5px solid #e0dfd8;background:#f9f9f7;white-space:nowrap}
+.list-table td{padding:8px 12px;border-bottom:0.5px solid #e0dfd8;vertical-align:middle}
+.list-table tr:hover td{background:#f9f9f7}
+.empty{text-align:center;padding:4rem 2rem;border:0.5px dashed #ccc;border-radius:12px}
+.ai-box{margin-top:10px;font-size:12px;background:#f9f9f7;border-radius:8px;padding:10px 14px;white-space:pre-wrap;line-height:1.6;color:#555;border:0.5px solid #e0dfd8}
+.view-toggle{display:flex;border:0.5px solid #ccc;border-radius:8px;overflow:hidden}
+.view-toggle button{font-size:12px;padding:5px 12px;border:none;background:transparent;color:#888;transition:background .15s}
+.view-toggle button.active{background:#f1f0ec;color:#1a1a18}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem}
+.filters input,.filters select{width:auto}
+.filters input{flex:1;min-width:160px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.grid2{grid-template-columns:1fr}}
+/* priority colors */
+.p-critical{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+.p-high{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+.p-medium{background:#fefce8;color:#854d0e;border-color:#fde047}
+.p-low{background:#f0fdf4;color:#166534;border-color:#86efac}
+.dot-critical{background:#ef4444}
+.dot-high{background:#f97316}
+.dot-medium{background:#eab308}
+.dot-low{background:#22c55e}
+/* status colors */
+.s-open{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.s-inprogress{background:#faf5ff;color:#6d28d9;border-color:#c4b5fd}
+.s-done{background:#f0fdf4;color:#15803d;border-color:#86efac}
+.s-cancelled{background:#f3f4f6;color:#6b7280;border-color:#d1d5db}
+.s-future{background:#fdf4ff;color:#7e22ce;border-color:#e9d5ff}
+</style>
+</head>
+<body x-data="backlog()" x-init="init()">
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:16px">
+    <h1>📋 Team Backlog</h1>
+    <span style="font-size:13px;color:#888" x-text="items.length + ' items · ' + stats.pct + '% complete'"></span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <!-- API Key -->
+    <div style="position:relative">
+      <button class="btn" @click="showKeyInput=!showKeyInput" :style="apiKey ? 'border-color:#86efac;color:#15803d' : ''">
+        🔑 <span x-text="apiKey ? 'AI ready' : 'Set API key'"></span>
+      </button>
+      <div x-show="showKeyInput" @click.outside="showKeyInput=false" style="position:absolute;right:0;top:38px;background:#fff;border:0.5px solid #ccc;border-radius:10px;padding:14px;width:300px;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+        <label class="label">Anthropic API key</label>
+        <input type="password" x-model="apiKey" placeholder="sk-ant-…" @change="saveKey()" style="margin-bottom:8px"/>
+        <p style="font-size:11px;color:#888;line-height:1.5">Your key is stored in localStorage and never sent anywhere except the Anthropic API.</p>
+      </div>
+    </div>
+    <button class="btn" @click="exportCSV()">⬇ Export CSV</button>
+    <button class="btn btn-primary" @click="openAdd()">+ Add item</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="grid-stats">
+    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Total</div><div style="font-size:22px;font-weight:500" x-text="items.length"></div></div>
+    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Open</div><div style="font-size:22px;font-weight:500" x-text="stats.open"></div></div>
+    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">In progress</div><div style="font-size:22px;font-weight:500" x-text="stats.inprog"></div></div>
+    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Done</div><div style="font-size:22px;font-weight:500" x-text="stats.done"></div></div>
+    <div class="stat-card">
+      <div style="font-size:12px;color:#888;margin-bottom:4px">Progress</div>
+      <div style="font-size:22px;font-weight:500" x-text="stats.pct + '%'"></div>
+      <div class="progress-bar"><div class="progress-fill" :style="'width:'+stats.pct+'%'"></div></div>
+    </div>
+  </div>
+
+  <!-- Phases -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+    <span style="font-size:12px;color:#888;font-weight:500">Phases:</span>
+    <template x-for="ph in phases" :key="ph">
+      <span class="phase-pill" :class="filterPhase===ph?'active':''" @click="filterPhase = filterPhase===ph?'All':ph">
+        <span x-text="ph"></span>
+        <span style="margin-left:5px;opacity:.4" @click.stop="removePhase(ph)">×</span>
+      </span>
+    </template>
+    <template x-if="!showPhaseInput">
+      <button class="phase-pill" @click="showPhaseInput=true">+ New phase</button>
+    </template>
+    <template x-if="showPhaseInput">
+      <span style="display:flex;gap:4px;align-items:center">
+        <input x-model="newPhase" @keydown.enter="addPhase()" @keydown.escape="showPhaseInput=false" placeholder="Phase name" style="width:130px;padding:3px 8px;font-size:12px" x-ref="phaseInput" x-init="$nextTick(()=>$refs.phaseInput?.focus())"/>
+        <button class="btn" style="padding:3px 8px;font-size:12px" @click="addPhase()">Add</button>
+        <button class="btn-ghost btn" style="padding:3px 6px;font-size:12px" @click="showPhaseInput=false">✕</button>
+      </span>
+    </template>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <input x-model="search" placeholder="Search items…" type="search"/>
+    <select x-model="filterStatus">
+      <option value="All">All statuses</option>
+      <template x-for="s in statuses"><option :value="s" x-text="s"></option></template>
+    </select>
+    <select x-model="filterPriority">
+      <option value="All">All priorities</option>
+      <template x-for="p in priorities"><option :value="p" x-text="p"></option></template>
+    </select>
+    <div class="view-toggle">
+      <button :class="view==='board'?'active':''" @click="view='board'">Board</button>
+      <button :class="view==='list'?'active':''" @click="view='list'">List</button>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <template x-if="items.length===0">
+    <div class="empty">
+      <div style="font-size:32px;margin-bottom:12px">📋</div>
+      <div style="font-weight:500;margin-bottom:6px">No items yet</div>
+      <div style="font-size:13px;color:#888;margin-bottom:20px">Create phases above, then add your first backlog item.</div>
+      <button class="btn btn-primary" @click="openAdd()">+ Add first item</button>
+    </div>
+  </template>
+
+  <!-- Board view -->
+  <template x-if="view==='board' && items.length>0">
+    <div class="board">
+      <template x-for="s in statuses" :key="s">
+        <div>
+          <div class="board-col-title">
+            <span x-text="statusIcon(s)"></span>
+            <span x-text="s.toUpperCase()"></span>
+            <span style="opacity:.4" x-text="'('+byStatus(s).length+')'"></span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <template x-for="item in byStatus(s)" :key="item.id">
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                  <span style="font-size:11px;font-family:monospace;opacity:.4" x-text="item.id"></span>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn-ghost btn" style="padding:2px 4px;font-size:12px" @click="openEdit(item)">✏️</button>
+                    <button class="btn-ghost btn" style="padding:2px 4px;font-size:12px" @click="deleteItem(item.id)">🗑</button>
+                  </div>
+                </div>
+                <div style="font-weight:500;font-size:13px;margin-bottom:6px;line-height:1.4" x-text="item.title"></div>
+                <template x-if="item.description">
+                  <div style="font-size:12px;color:#666;margin-bottom:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden" x-text="item.description"></div>
+                </template>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                  <span class="badge" :class="priorityClass(item.priority)">
+                    <span class="dot" :class="dotClass(item.priority)"></span>
+                    <span x-text="item.priority"></span>
+                  </span>
+                  <template x-if="item.phase">
+                    <span class="badge" style="border-color:#ccc;color:#666" x-text="item.phase"></span>
+                  </template>
+                  <template x-if="item.assignee">
+                    <span style="font-size:11px;color:#888">👤 <span x-text="item.assignee"></span></span>
+                  </template>
+                </div>
+                <template x-if="item.tags">
+                  <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
+                    <template x-for="t in item.tags.split(',').map(x=>x.trim()).filter(Boolean)" :key="t">
+                      <span class="tag" x-text="t"></span>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+            <template x-if="byStatus(s).length===0">
+              <div style="font-size:12px;color:#ccc;padding:6px 0">—</div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- List view -->
+  <template x-if="view==='list' && items.length>0">
+    <div style="border:0.5px solid #e0dfd8;border-radius:10px;overflow:auto">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Title</th><th>Phase</th><th>Type</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Tags</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="item in filtered" :key="item.id">
+            <tr>
+              <td style="font-family:monospace;font-size:11px;opacity:.5" x-text="item.id"></td>
+              <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="item.title"></td>
+              <td style="color:#888" x-text="item.phase"></td>
+              <td style="color:#888" x-text="item.type"></td>
+              <td><span class="badge" :class="priorityClass(item.priority)"><span class="dot" :class="dotClass(item.priority)"></span><span x-text="item.priority"></span></span></td>
+              <td><span class="badge" :class="statusClass(item.status)"><span x-text="statusIcon(item.status)+' '+item.status"></span></span></td>
+              <td style="color:#888" x-text="item.assignee"></td>
+              <td>
+                <div style="display:flex;gap:3px;flex-wrap:wrap">
+                  <template x-for="t in (item.tags||'').split(',').map(x=>x.trim()).filter(Boolean)" :key="t">
+                    <span class="tag" x-text="t"></span>
+                  </template>
+                </div>
+              </td>
+              <td>
+                <button class="btn-ghost btn" style="padding:2px 5px" @click="openEdit(item)">✏️</button>
+                <button class="btn-ghost btn" style="padding:2px 5px" @click="deleteItem(item.id)">🗑</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+</div>
+
+<!-- Modal -->
+<template x-if="modal">
+  <div class="modal-overlay" @click.self="closeModal()">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+        <h2 style="font-size:17px;font-weight:500" x-text="modalMode==='add'?'Add backlog item':'Edit item'"></h2>
+        <button class="btn-ghost btn" style="font-size:18px;padding:4px 8px" @click="closeModal()">✕</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label class="label">Title *</label>
+          <input x-model="form.title" placeholder="Short, descriptive title"/>
+        </div>
+        <div class="grid2">
+          <div>
+            <label class="label">Phase</label>
+            <select x-model="form.phase">
+              <option value="">— none —</option>
+              <template x-for="p in phases"><option :value="p" x-text="p"></option></template>
+            </select>
+          </div>
+          <div>
+            <label class="label">Type</label>
+            <select x-model="form.type">
+              <template x-for="t in types"><option :value="t" x-text="t"></option></template>
+            </select>
+          </div>
+          <div>
+            <label class="label">Priority</label>
+            <select x-model="form.priority">
+              <template x-for="p in priorities"><option :value="p" x-text="p"></option></template>
+            </select>
+          </div>
+          <div>
+            <label class="label">Status</label>
+            <select x-model="form.status">
+              <template x-for="s in statuses"><option :value="s" x-text="s"></option></template>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="label">Assignee</label>
+          <input x-model="form.assignee" placeholder="Name or @handle"/>
+        </div>
+        <div>
+          <label class="label">Tags</label>
+          <input x-model="form.tags" placeholder="tag1, tag2, tag3"/>
+        </div>
+        <div>
+          <label class="label">Description</label>
+          <textarea x-model="form.description" placeholder="What needs to be done? Why?" rows="3" style="resize:vertical"></textarea>
+        </div>
+
+        <!-- AI suggestion -->
+        <div style="border-top:0.5px solid #e0dfd8;padding-top:12px">
+          <button class="btn" :disabled="aiLoading || !form.title.trim() || !apiKey" @click="getAiSuggestion()" :style="(!form.title.trim()||!apiKey)?'opacity:.4;cursor:not-allowed':''">
+            <span x-text="aiLoading ? '…getting suggestion' : '✦ AI suggestion'"></span>
+          </button>
+          <template x-if="!apiKey">
+            <span style="font-size:11px;color:#f97316;margin-left:8px">Set your API key first</span>
+          </template>
+          <template x-if="aiSuggestion">
+            <div class="ai-box" x-text="aiSuggestion"></div>
+          </template>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1.5rem">
+        <button class="btn" @click="closeModal()">Cancel</button>
+        <button class="btn btn-primary" :disabled="!form.title.trim()" @click="saveItem()">
+          <span x-text="modalMode==='add'?'Add item':'Save changes'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+function backlog() {
+  return {
+    items: [],
+    phases: [],
+    modal: false,
+    modalMode: 'add',
+    form: {},
+    search: '',
+    filterStatus: 'All',
+    filterPriority: 'All',
+    filterPhase: 'All',
+    view: 'board',
+    newPhase: '',
+    showPhaseInput: false,
+    showKeyInput: false,
+    apiKey: '',
+    aiLoading: false,
+    aiSuggestion: '',
+    statuses: ['Open','In Progress','Done','Cancelled','Future'],
+    priorities: ['Critical','High','Medium','Low'],
+    types: ['Feature','Bug','Improvement','Security','Tech Debt','Other'],
+
+    init() {
+      this.items = JSON.parse(localStorage.getItem('bl_items')||'[]');
+      this.phases = JSON.parse(localStorage.getItem('bl_phases')||'[]');
+      this.apiKey = localStorage.getItem('bl_apikey')||'';
+    },
+
+    save() {
+      localStorage.setItem('bl_items', JSON.stringify(this.items));
+      localStorage.setItem('bl_phases', JSON.stringify(this.phases));
+    },
+
+    saveKey() { localStorage.setItem('bl_apikey', this.apiKey); },
+
+    genId() { return Math.random().toString(36).slice(2,8).toUpperCase(); },
+
+    emptyForm() { return { id:'', phase:'', title:'', description:'', type:'Feature', priority:'Medium', status:'Open', assignee:'', tags:'' }; },
+
+    openAdd() { this.form = this.emptyForm(); this.aiSuggestion=''; this.modalMode='add'; this.modal=true; },
+    openEdit(item) { this.form = {...item}; this.aiSuggestion=''; this.modalMode='edit'; this.modal=true; },
+    closeModal() { this.modal=false; this.aiSuggestion=''; },
+
+    saveItem() {
+      if (!this.form.title.trim()) return;
+      const item = {...this.form, id: this.form.id || this.genId()};
+      if (this.modalMode==='add') this.items.push(item);
+      else this.items = this.items.map(i => i.id===item.id ? item : i);
+      this.save(); this.closeModal();
+    },
+
+    deleteItem(id) {
+      if (!confirm('Delete this item?')) return;
+      this.items = this.items.filter(i => i.id!==id);
+      this.save();
+    },
+
+    addPhase() {
+      const v = this.newPhase.trim();
+      if (v && !this.phases.includes(v)) { this.phases.push(v); this.save(); }
+      this.newPhase=''; this.showPhaseInput=false;
+    },
+
+    removePhase(ph) {
+      this.phases = this.phases.filter(p => p!==ph);
+      if (this.filterPhase===ph) this.filterPhase='All';
+      this.save();
+    },
+
+    get filtered() {
+      const q = this.search.toLowerCase();
+      return this.items.filter(i => {
+        const mq = !q || i.title.toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || i.id.toLowerCase().includes(q);
+        const ms = this.filterStatus==='All' || i.status===this.filterStatus;
+        const mp = this.filterPriority==='All' || i.priority===this.filterPriority;
+        const mph = this.filterPhase==='All' || i.phase===this.filterPhase;
+        return mq && ms && mp && mph;
+      });
+    },
+
+    byStatus(s) { return this.filtered.filter(i => i.status===s); },
+
+    get stats() {
+      const t = this.items.length;
+      return {
+        total: t,
+        done: this.items.filter(i=>i.status==='Done').length,
+        inprog: this.items.filter(i=>i.status==='In Progress').length,
+        open: this.items.filter(i=>i.status==='Open').length,
+        pct: t ? Math.round(this.items.filter(i=>i.status==='Done').length/t*100) : 0
+      };
+    },
+
+    priorityClass(p) { return {Critical:'p-critical',High:'p-high',Medium:'p-medium',Low:'p-low'}[p]||'p-medium'; },
+    dotClass(p) { return {Critical:'dot-critical',High:'dot-high',Medium:'dot-medium',Low:'dot-low'}[p]||'dot-medium'; },
+    statusClass(s) { return {'Open':'s-open','In Progress':'s-inprogress','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'}[s]||'s-open'; },
+    statusIcon(s) { return {'Open':'📋','In Progress':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮'}[s]||'📋'; },
+
+    exportCSV() {
+      const cols = ['id','phase','title','description','type','priority','status','assignee','tags'];
+      const rows = [cols.join(','), ...this.items.map(i => cols.map(c => '"'+(i[c]||'').replace(/"/g,'""')+'"').join(','))];
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([rows.join('\n')], {type:'text/csv'}));
+      a.download = 'backlog.csv'; a.click();
+    },
+
+    async getAiSuggestion() {
+      if (!this.form.title.trim() || !this.apiKey) return;
+      this.aiLoading=true; this.aiSuggestion='';
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':this.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body: JSON.stringify({
+            model:'claude-sonnet-4-20250514', max_tokens:800,
+            messages:[{role:'user', content:`You are a product manager assistant. Given this backlog item, suggest:\n1) Recommended priority (Critical/High/Medium/Low) with a 1-sentence reason\n2) 2-3 concrete acceptance criteria\n3) Relevant tags (comma-separated)\n\nTitle: ${this.form.title}\nDescription: ${this.form.description||'(none)'}\nType: ${this.form.type}\n\nFormat:\nPRIORITY: [level] — [reason]\nACCEPTANCE CRITERIA:\n- …\nTAGS: …`}]
+          })
+        });
+        const data = await res.json();
+        this.aiSuggestion = data.content?.[0]?.text || 'No suggestion returned.';
+      } catch(e) { this.aiSuggestion = 'Error: '+e.message; }
+      this.aiLoading=false;
+    }
+  }
+}
+</script>
+</body>
+</html>
