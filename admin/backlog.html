@@ -1,25 +1,24 @@
-<!-- ======================= admin/backlog.html v3.0.0 =======================
+<!-- ======================= admin/backlog.html v4.0.0 =======================
     Backlog Manager — admin only
 
-    Wijzigingen v3.0.0 (sessie 35):
+    Wijzigingen v4.0.0 (sessie 35):
+     - Styling aangepast aan admin look & feel (donker, IBM Plex, groene accenten)
+     - Kaarten met gekleurde bovenlijn, sticky tabelheader in blauw
+     - Consistent met accountbeheer.html en analytics.html
+
+    Wijzigingen v3.0.0:
      - MD én CSV laden en exporteren
      - Projectnaam + versie + datum + statistieken in header
      - Fase-beschrijving als tooltip bij hover
-     - Tag-filter als klikbare pills
-     - Multi-select filters voor status, prioriteit, type en tags
-     - Alle kolommen filterbaar
+     - Tag-filter als klikbare pills, multi-select op alle filters
      - Vanilla JavaScript, geen framework
-
-    Wijzigingen v2.0.0:
-     - Herschreven van Alpine.js naar vanilla JavaScript
-     - Correcte laadvolgorde: supabase → utils → auth → adminGuard → siteAnalytics
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
      - /MyFamTreeCollab/js/adminGuard.js
      - /MyFamTreeCollab/js/siteAnalytics.js
      - ../js/topbar.js (via fetch)
-     - ../data/backlog.csv of BACKLOG.md (bij eerste laden)
+     - ../data/BACKLOG.md of ../data/backlog.csv (bij eerste laden)
     ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -35,150 +34,188 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* === Toegangs- en paginablokken === */
-    #accessDenied { display:none; text-align:center; padding:4rem 2rem; }
+    /* ── CSS variabelen: zelfde palet als analytics.html ── */
+    :root {
+      --bg-main:      #565656;
+      --bg-card:      #3a3a3a;
+      --bg-card-alt:  #444444;
+      --accent:       #00d4aa;
+      --accent-dim:   rgba(0,212,170,0.15);
+      --text-primary: #f0f0f0;
+      --text-muted:   #aaa;
+      --border:       rgba(255,255,255,0.08);
+      --font-mono:    'IBM Plex Mono', monospace;
+      --font-sans:    'IBM Plex Sans', sans-serif;
+      --radius:       8px;
+      --shadow:       0 4px 20px rgba(0,0,0,0.35);
+      --color-danger: #f08080;
+    }
+
+    /* ── Toegangsblokken ── */
+    #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
     #page-content  { display:none; }
 
-    /* === Layout === */
-    main { padding:150px 20px 64px; min-height:100vh; font-family:'IBM Plex Sans',sans-serif; background:#f9f9f7; color:#1a1a18; }
-    .container { max-width:1140px; margin:0 auto; }
+    /* ── Main ── */
+    main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
+    .dash-wrap { max-width:1140px; margin:0 auto; }
 
-    /* === Project header === */
-    .proj-header { margin-bottom:1.5rem; }
-    .proj-name { font-size:1.4rem; font-weight:600; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
-    .proj-name span { font-size:13px; font-weight:400; color:#888; cursor:pointer; border:0.5px solid #ccc; border-radius:6px; padding:2px 8px; }
-    .proj-name span:hover { background:#f1f0ec; }
-    .proj-meta { font-size:12px; color:#888; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-    .proj-meta b { color:#1a1a18; }
+    /* ── Fade-up animatie ── */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
-    /* === Topbar acties === */
-    .bl-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem; }
+    /* ── Project header ── */
+    .proj-header { margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
+    .proj-name { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 6px; display:flex; align-items:center; gap:12px; }
+    .proj-edit-btn { font-family:var(--font-mono); font-size:0.75rem; background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent); border-radius:var(--radius); padding:3px 10px; cursor:pointer; transition:background .2s; }
+    .proj-edit-btn:hover { background:rgba(0,212,170,0.28); }
+    .proj-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
+    .proj-meta b { color:var(--accent); }
 
-    /* === Knoppen === */
-    .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:0.5px solid #ccc; border-radius:8px; background:#fff; font-size:13px; cursor:pointer; font-family:inherit; transition:background .15s; }
-    .btn:hover { background:#f1f0ec; }
-    .btn:disabled { opacity:.4; cursor:not-allowed; }
-    .btn-primary { background:#1a1a18; color:#fff; border-color:#1a1a18; }
-    .btn-primary:hover { background:#333; }
-    .btn-ghost { border-color:transparent; background:transparent; }
-    .btn-ghost:hover { background:#f1f0ec; }
-    .btn-ai-ready { border-color:#86efac!important; color:#15803d!important; }
-
-    /* === API key dropdown === */
-    .apikey-wrap { position:relative; }
-    .apikey-dd { display:none; position:absolute; right:0; top:38px; background:#fff; border:0.5px solid #ccc; border-radius:10px; padding:14px; width:300px; z-index:60; box-shadow:0 4px 20px rgba(0,0,0,.1); }
-    .apikey-dd.open { display:block; }
-    .apikey-dd input { width:100%; margin-bottom:8px; }
-    .apikey-dd p { font-size:11px; color:#888; line-height:1.5; }
-
-    /* === Projectinfo bewerken dropdown === */
-    .projinfo-dd { display:none; background:#fff; border:0.5px solid #ccc; border-radius:10px; padding:14px; margin-bottom:1rem; }
-    .projinfo-dd.open { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    /* ── Projectinfo edit paneel ── */
+    .projinfo-dd { display:none; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.25rem; animation:fadeUp .3s ease; }
+    .projinfo-dd.open { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
     @media(max-width:600px){ .projinfo-dd.open{ grid-template-columns:1fr; } }
 
-    /* === Statistieken === */
-    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; margin-bottom:1.5rem; }
-    .stat-card { background:#f1f0ec; border-radius:8px; padding:12px 16px; }
-    .stat-label { font-size:12px; color:#888; margin-bottom:4px; }
-    .stat-value { font-size:22px; font-weight:500; }
-    .progress-bar { height:4px; background:#e0dfd8; border-radius:99px; overflow:hidden; margin-top:6px; }
-    .progress-fill { height:100%; background:#15803d; border-radius:99px; transition:width .4s; }
+    /* ── Acties balk ── */
+    .bl-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; }
 
-    /* === Filter sectie === */
-    .filter-section { background:#fff; border:0.5px solid #e0dfd8; border-radius:10px; padding:14px 16px; margin-bottom:1.25rem; display:flex; flex-direction:column; gap:10px; }
-    .filter-row { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; }
-    .filter-row-label { font-size:11px; font-weight:500; color:#888; text-transform:uppercase; letter-spacing:.04em; min-width:80px; padding-top:5px; }
-    .pills-wrap { display:flex; gap:6px; flex-wrap:wrap; }
-    .filter-pill { font-size:12px; padding:3px 10px; border-radius:99px; border:0.5px solid #ccc; background:transparent; color:#666; cursor:pointer; font-family:inherit; transition:background .15s; white-space:nowrap; }
-    .filter-pill:hover { background:#f1f0ec; }
-    .filter-pill.active { background:#1a1a18; color:#fff; border-color:#1a1a18; }
-    .filter-search { flex:1; min-width:200px; font-family:inherit; font-size:13px; padding:6px 10px; border:0.5px solid #ccc; border-radius:8px; background:#fff; color:#1a1a18; outline:none; }
+    /* ── Knoppen ── */
+    .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; }
+    .btn:hover { background:var(--bg-card-alt); }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-accent { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+    .btn-accent:hover { background:rgba(0,212,170,0.28); }
+    .btn-ghost { border-color:transparent; background:transparent; color:var(--text-muted); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.06); }
+    .btn-ai-ready { border-color:var(--accent)!important; color:var(--accent)!important; }
 
-    /* === Weergave toggle === */
-    .view-toggle { display:flex; border:0.5px solid #ccc; border-radius:8px; overflow:hidden; }
-    .view-toggle button { font-size:12px; padding:5px 12px; border:none; background:transparent; color:#888; cursor:pointer; font-family:inherit; }
-    .view-toggle button.active { background:#f1f0ec; color:#1a1a18; }
+    /* ── API key dropdown ── */
+    .apikey-wrap { position:relative; }
+    .apikey-dd { display:none; position:absolute; left:0; top:38px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; width:300px; z-index:60; box-shadow:var(--shadow); }
+    .apikey-dd.open { display:block; animation:fadeUp .2s ease; }
+    .apikey-dd p { font-size:11px; color:var(--text-muted); line-height:1.5; margin-top:6px; }
 
-    /* === Fase pills sectie === */
-    .phases-bar { display:flex; align-items:center; gap:8px; margin-bottom:1rem; flex-wrap:wrap; }
-    .phases-label { font-size:12px; color:#888; font-weight:500; white-space:nowrap; }
-    .phase-pill { font-size:12px; padding:3px 10px; border-radius:99px; border:0.5px solid #ccc; background:transparent; color:#666; cursor:pointer; font-family:inherit; transition:background .15s; position:relative; }
-    .phase-pill:hover { background:#f1f0ec; }
-    .phase-pill.active { background:#e8f0fe; color:#1a4ed8; border-color:#a8c0f8; }
-    /* Tooltip voor fase-beschrijving */
-    .phase-pill[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1a1a18; color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; }
-    .phase-pill[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 1px); left:50%; transform:translateX(-50%); border:4px solid transparent; border-top-color:#1a1a18; pointer-events:none; z-index:99; }
-    .phase-input-wrap { display:none; gap:4px; align-items:center; }
+    /* ── Form elementen (donker) ── */
+    .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
+    .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
+    .form-input:focus { border-color:var(--accent); }
+    select.form-input { cursor:pointer; }
+    textarea.form-input { resize:vertical; }
+
+    /* ── Statistieken ── */
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:1.75rem; }
+    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 20px 16px; box-shadow:var(--shadow); position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+    .stat-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:8px; }
+    .stat-value { font-family:var(--font-mono); font-size:2rem; font-weight:600; color:var(--text-primary); line-height:1; }
+    .progress-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; margin-top:8px; }
+    .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s; }
+
+    /* ── Fase pills ── */
+    .phases-bar { display:flex; align-items:center; gap:8px; margin-bottom:1.25rem; flex-wrap:wrap; }
+    .phases-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; }
+    .phase-pill { font-family:var(--font-mono); font-size:0.75rem; padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; position:relative; }
+    .phase-pill:hover { border-color:var(--accent); color:var(--accent); }
+    .phase-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+    /* Tooltip */
+    .phase-pill[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1a1a18; color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; border:1px solid var(--border); }
+    .phase-pill[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 3px); left:50%; transform:translateX(-50%); border:4px solid transparent; border-top-color:#1a1a18; pointer-events:none; z-index:99; }
+    .phase-input-wrap { display:none; gap:6px; align-items:center; }
     .phase-input-wrap.open { display:flex; }
-    .phase-input-wrap input { width:130px; padding:3px 8px; font-size:12px; font-family:inherit; border:0.5px solid #ccc; border-radius:6px; outline:none; }
 
-    /* === Lege staat === */
-    .empty { text-align:center; padding:4rem 2rem; border:0.5px dashed #ccc; border-radius:12px; }
+    /* ── Filter sectie ── */
+    .filter-section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.5rem; display:flex; flex-direction:column; gap:12px; animation:fadeUp .35s ease; }
+    .filter-row { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+    .filter-row-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); min-width:80px; padding-top:5px; white-space:nowrap; }
+    .pills-wrap { display:flex; gap:6px; flex-wrap:wrap; }
+    .filter-pill { font-family:var(--font-mono); font-size:0.72rem; padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .filter-pill:hover { border-color:var(--accent); color:var(--accent); }
+    .filter-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+
+    /* ── Weergave toggle ── */
+    .view-toggle { display:flex; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); overflow:hidden; }
+    .view-toggle button { font-family:var(--font-mono); font-size:0.75rem; padding:5px 14px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; transition:background .15s; }
+    .view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
+
+    /* ── Lege staat ── */
+    .empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); }
     .empty .empty-icon { font-size:32px; margin-bottom:12px; }
-    .empty p { font-size:13px; color:#888; margin-bottom:20px; }
+    .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
 
-    /* === Board === */
-    .board { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
-    .board-col-title { font-size:11px; font-weight:500; color:#888; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    /* ── Board ── */
+    .board { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; }
+    .board-col-title { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
     .board-col-items { display:flex; flex-direction:column; gap:8px; }
-    .board-empty { font-size:12px; color:#ccc; padding:6px 0; }
+    .board-empty { font-family:var(--font-mono); font-size:0.75rem; color:rgba(255,255,255,0.15); padding:6px 0; }
 
-    /* === Kaart === */
-    .card { background:#fff; border:0.5px solid #e0dfd8; border-radius:10px; padding:14px; }
+    /* ── Kaart ── */
+    .card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); animation:fadeUp .3s ease; }
     .card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
-    .card-id { font-size:11px; font-family:monospace; opacity:.4; }
-    .card-actions { display:flex; gap:4px; }
-    .card-title { font-weight:500; font-size:13px; margin-bottom:6px; line-height:1.4; }
-    .card-desc { font-size:12px; color:#666; margin-bottom:8px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .card-id { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); opacity:.6; }
+    .card-actions { display:flex; gap:2px; }
+    .card-title { font-family:var(--font-sans); font-weight:600; font-size:0.85rem; margin-bottom:6px; line-height:1.4; color:var(--text-primary); }
+    .card-desc { font-size:0.78rem; color:var(--text-muted); margin-bottom:8px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .card-footer { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
     .card-tags { margin-top:6px; display:flex; gap:4px; flex-wrap:wrap; }
 
-    /* === Badges & tags === */
-    .badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:2px 8px; border-radius:99px; border:0.5px solid; }
+    /* ── Badges & tags ── */
+    .badge { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
     .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-    .tag { font-size:10px; padding:1px 7px; border-radius:4px; background:#f1f0ec; color:#555; }
-    .assignee-txt { font-size:11px; color:#888; }
+    .tag { font-family:var(--font-mono); font-size:0.65rem; padding:1px 7px; border-radius:4px; background:rgba(255,255,255,0.08); color:var(--text-muted); }
+    .assignee-txt { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
 
-    /* === Lijstweergave === */
-    .list-wrap { border:0.5px solid #e0dfd8; border-radius:10px; overflow:auto; }
-    .list-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .list-table th { font-size:11px; font-weight:500; color:#888; text-transform:uppercase; letter-spacing:.04em; padding:8px 12px; text-align:left; border-bottom:0.5px solid #e0dfd8; background:#f9f9f7; white-space:nowrap; }
-    .list-table td { padding:8px 12px; border-bottom:0.5px solid #e0dfd8; vertical-align:middle; }
-    .list-table tr:hover td { background:#f9f9f7; }
+    /* ── Tabel (zelfde stijl als accountbeheer) ── */
+    .list-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; max-height:600px; box-shadow:var(--shadow); animation:fadeUp .35s ease; }
+    .list-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.78rem; }
+    .list-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; text-align:left; color:#fff; padding:10px 12px; border-bottom:2px solid #0f5c35; font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:0.68rem; }
+    .list-table tbody td { padding:9px 12px; color:#1a1a1a; background:#c8c8c8; border-bottom:1px solid #aaa; vertical-align:middle; }
+    .list-table tbody tr:last-child td { border-bottom:none; }
+    .list-table tbody tr:hover td { background:#d8d8d8; }
 
-    /* === Modal === */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); align-items:center; justify-content:center; z-index:100; padding:16px; }
+    /* ── Prioriteit kleuren (licht voor tabel, donker voor kaart) ── */
+    .p-critical { background:rgba(240,128,128,0.2); color:#f08080; border:1px solid #f08080; }
+    .p-high     { background:rgba(249,115,22,0.2);  color:#fb923c; border:1px solid #fb923c; }
+    .p-medium   { background:rgba(234,179,8,0.2);   color:#fbbf24; border:1px solid #fbbf24; }
+    .p-low      { background:rgba(34,197,94,0.2);   color:#4ade80; border:1px solid #4ade80; }
+    .p-critical-tbl { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .p-high-tbl     { background:#fff7ed; color:#9a3412; border:1px solid #fdba74; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .p-medium-tbl   { background:#fefce8; color:#854d0e; border:1px solid #fde047; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .p-low-tbl      { background:#f0fdf4; color:#166534; border:1px solid #86efac; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .dot-critical{background:#f08080} .dot-high{background:#fb923c}
+    .dot-medium  {background:#fbbf24} .dot-low {background:#4ade80}
+
+    /* ── Status kleuren ── */
+    .s-open       { background:rgba(96,165,250,0.2);  color:#60a5fa; border:1px solid #60a5fa; }
+    .s-inprogress { background:rgba(167,139,250,0.2); color:#a78bfa; border:1px solid #a78bfa; }
+    .s-done       { background:rgba(0,212,170,0.2);   color:var(--accent); border:1px solid var(--accent); }
+    .s-cancelled  { background:rgba(255,255,255,0.06);color:var(--text-muted); border:1px solid rgba(255,255,255,0.15); }
+    .s-future     { background:rgba(244,114,182,0.2); color:#f472b6; border:1px solid #f472b6; }
+    /* Status voor tabel (lichte achtergrond) */
+    .s-open-tbl       { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .s-inprogress-tbl { background:#faf5ff; color:#6d28d9; border:1px solid #c4b5fd; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .s-done-tbl       { background:#f0fdf4; color:#15803d; border:1px solid #86efac; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .s-cancelled-tbl  { background:#f3f4f6; color:#6b7280; border:1px solid #d1d5db; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+    .s-future-tbl     { background:#fdf4ff; color:#7e22ce; border:1px solid #e9d5ff; border-radius:10px; padding:2px 8px; font-size:0.68rem; font-weight:600; display:inline-block; }
+
+    /* ── Modal ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
     .modal-overlay.open { display:flex; }
-    .modal { background:#fff; border-radius:12px; padding:1.5rem; width:100%; max-width:560px; border:0.5px solid #ccc; max-height:90vh; overflow-y:auto; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; }
-    .modal-header h2 { font-size:17px; font-weight:500; margin:0; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:12px; }
+    .modal-header h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:0; }
     .modal-body { display:flex; flex-direction:column; gap:12px; }
-    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; }
-    .form-label { font-size:11px; font-weight:500; color:#888; text-transform:uppercase; letter-spacing:.04em; display:block; margin-bottom:4px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
     .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
-    .form-field input,.form-field select,.form-field textarea { width:100%; font-family:inherit; font-size:13px; padding:7px 10px; border:0.5px solid #ccc; border-radius:8px; background:#fff; color:#1a1a18; outline:none; box-sizing:border-box; }
-    .form-field textarea { resize:vertical; }
 
-    /* === AI suggestie === */
-    .ai-section { border-top:0.5px solid #e0dfd8; padding-top:12px; }
-    .ai-warning { font-size:11px; color:#f97316; margin-left:8px; }
-    .ai-box { margin-top:10px; font-size:12px; background:#f9f9f7; border-radius:8px; padding:10px 14px; white-space:pre-wrap; line-height:1.6; color:#555; border:0.5px solid #e0dfd8; }
+    /* ── AI suggestie ── */
+    .ai-section { border-top:1px solid var(--border); padding-top:12px; }
+    .ai-warning { font-family:var(--font-mono); font-size:0.72rem; color:#fb923c; margin-left:8px; }
+    .ai-box { margin-top:10px; font-family:var(--font-mono); font-size:0.75rem; background:#2a2a2a; border-radius:var(--radius); padding:10px 14px; white-space:pre-wrap; line-height:1.6; color:var(--text-muted); border:1px solid var(--border); }
 
-    /* === Prioriteit kleuren === */
-    .p-critical{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
-    .p-high    {background:#fff7ed;color:#9a3412;border-color:#fdba74}
-    .p-medium  {background:#fefce8;color:#854d0e;border-color:#fde047}
-    .p-low     {background:#f0fdf4;color:#166534;border-color:#86efac}
-    .dot-critical{background:#ef4444}.dot-high{background:#f97316}
-    .dot-medium  {background:#eab308}.dot-low {background:#22c55e}
-
-    /* === Status kleuren === */
-    .s-open      {background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
-    .s-inprogress{background:#faf5ff;color:#6d28d9;border-color:#c4b5fd}
-    .s-done      {background:#f0fdf4;color:#15803d;border-color:#86efac}
-    .s-cancelled {background:#f3f4f6;color:#6b7280;border-color:#d1d5db}
-    .s-future    {background:#fdf4ff;color:#7e22ce; border-color:#e9d5ff}
+    /* ── Toegang geweigerd ── */
+    .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
+    .access-denied h2 { font-size:1.2rem; color:var(--color-danger); margin-bottom:10px; font-family:var(--font-sans); }
+    .access-denied p { font-size:0.9rem; color:var(--text-muted); line-height:1.6; }
   </style>
 </head>
 <body>
@@ -190,41 +227,31 @@
   <div id="navbar-placeholder"></div>
 
   <div id="accessDenied">
-    <div style="font-size:32px;margin-bottom:12px">🔒</div>
-    <div style="font-weight:500;font-size:17px;margin-bottom:8px">Toegang geweigerd</div>
-    <div style="font-size:13px;color:#888">Deze pagina is alleen toegankelijk voor admins.</div>
+    <div class="access-denied">
+      <h2>Geen toegang</h2>
+      <p>Deze pagina is alleen toegankelijk voor administrators.<br>Log in met een admin-account om verder te gaan.</p>
+    </div>
   </div>
 
   <div id="page-content">
     <main>
-      <div class="container">
+      <div class="dash-wrap">
 
         <!-- Project header -->
         <div class="proj-header">
           <div class="proj-name">
             <span id="proj-name-txt">Project</span>
-            <span id="btn-edit-proj" title="Projectinfo bewerken">✏️ bewerken</span>
+            <button class="proj-edit-btn" id="btn-edit-proj">✏️ bewerken</button>
           </div>
-          <!-- Bewerkbaar projectinfo paneel -->
           <div class="projinfo-dd" id="projinfo-dd">
-            <div class="form-field">
-              <label class="form-label">Projectnaam</label>
-              <input type="text" id="pi-name" placeholder="MyFamTreeCollab"/>
-            </div>
-            <div class="form-field">
-              <label class="form-label">Versie</label>
-              <input type="text" id="pi-version" placeholder="v1.0.0"/>
-            </div>
-            <div class="form-field">
-              <label class="form-label">Datum</label>
-              <input type="date" id="pi-date"/>
-            </div>
+            <div><label class="form-label">Projectnaam</label><input class="form-input" type="text" id="pi-name" placeholder="MyFamTreeCollab"/></div>
+            <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0.0"/></div>
+            <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
             <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
               <button class="btn" id="btn-proj-cancel">Annuleren</button>
-              <button class="btn btn-primary" id="btn-proj-save">Opslaan</button>
+              <button class="btn btn-accent" id="btn-proj-save">Opslaan</button>
             </div>
           </div>
-          <!-- Meta info regel -->
           <div class="proj-meta" id="proj-meta"></div>
         </div>
 
@@ -234,14 +261,14 @@
             <button class="btn" id="btn-apikey">🔑 <span id="apikey-label">API key instellen</span></button>
             <div class="apikey-dd" id="apikey-dd">
               <label class="form-label">Anthropic API key</label>
-              <input type="password" id="input-apikey" placeholder="sk-ant-…"/>
+              <input class="form-input" type="password" id="input-apikey" placeholder="sk-ant-…"/>
               <p>Sleutel wordt opgeslagen in localStorage en alleen naar de Anthropic API gestuurd.</p>
             </div>
           </div>
           <button class="btn" id="btn-export-csv">💾 CSV opslaan</button>
           <button class="btn" id="btn-export-md">📝 MD exporteren</button>
           <label class="btn" style="cursor:pointer">📂 Laden (CSV/MD)<input type="file" id="input-file" accept=".csv,.md" style="display:none"/></label>
-          <button class="btn btn-primary" id="btn-add">+ Toevoegen</button>
+          <button class="btn btn-accent" id="btn-add">+ Toevoegen</button>
         </div>
 
         <!-- Statistieken -->
@@ -253,42 +280,28 @@
           <div id="phase-pills"></div>
           <button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button>
           <div class="phase-input-wrap" id="phase-input-wrap">
-            <input type="text" id="input-new-phase" placeholder="Naam fase"/>
-            <input type="text" id="input-new-phase-desc" placeholder="Korte beschrijving (tooltip)"/>
-            <button class="btn" id="btn-add-phase" style="padding:3px 8px;font-size:12px">+</button>
-            <button class="btn-ghost btn" id="btn-cancel-phase" style="padding:3px 6px;font-size:12px">✕</button>
+            <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="width:130px;padding:3px 8px;font-size:12px"/>
+            <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving (tooltip)" style="width:180px;padding:3px 8px;font-size:12px"/>
+            <button class="btn btn-accent" id="btn-add-phase" style="padding:4px 10px">+</button>
+            <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">✕</button>
           </div>
         </div>
 
-        <!-- Filter sectie: alle kolommen -->
+        <!-- Filters -->
         <div class="filter-section">
           <div class="filter-row">
             <span class="filter-row-label">Zoeken</span>
-            <input type="search" class="filter-search" id="input-search" placeholder="Titel, omschrijving, ID, toegewezen…"/>
+            <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID, toegewezen…" style="flex:1;min-width:200px"/>
             <div class="view-toggle">
               <button id="btn-view-board" class="active">Board</button>
               <button id="btn-view-list">Lijst</button>
             </div>
+            <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.72rem;padding:4px 12px">✕ Wissen</button>
           </div>
-          <div class="filter-row">
-            <span class="filter-row-label">Status</span>
-            <div class="pills-wrap" id="filter-status-pills"></div>
-          </div>
-          <div class="filter-row">
-            <span class="filter-row-label">Prioriteit</span>
-            <div class="pills-wrap" id="filter-priority-pills"></div>
-          </div>
-          <div class="filter-row">
-            <span class="filter-row-label">Type</span>
-            <div class="pills-wrap" id="filter-type-pills"></div>
-          </div>
-          <div class="filter-row">
-            <span class="filter-row-label">Tags</span>
-            <div class="pills-wrap" id="filter-tag-pills"></div>
-          </div>
-          <div style="display:flex;justify-content:flex-end">
-            <button class="btn" id="btn-clear-filters" style="font-size:12px;padding:4px 12px">✕ Filters wissen</button>
-          </div>
+          <div class="filter-row"><span class="filter-row-label">Status</span><div class="pills-wrap" id="filter-status-pills"></div></div>
+          <div class="filter-row"><span class="filter-row-label">Prioriteit</span><div class="pills-wrap" id="filter-priority-pills"></div></div>
+          <div class="filter-row"><span class="filter-row-label">Type</span><div class="pills-wrap" id="filter-type-pills"></div></div>
+          <div class="filter-row"><span class="filter-row-label">Tags</span><div class="pills-wrap" id="filter-tag-pills"></div></div>
         </div>
 
         <!-- Inhoud -->
@@ -303,52 +316,30 @@
     <div class="modal">
       <div class="modal-header">
         <h2 id="modal-title">Item toevoegen</h2>
-        <button class="btn-ghost btn" id="btn-modal-close" style="font-size:18px;padding:4px 8px">✕</button>
+        <button class="btn btn-ghost" id="btn-modal-close" style="font-size:18px;padding:4px 8px">✕</button>
       </div>
       <div class="modal-body">
-        <div class="form-field">
-          <label class="form-label">Titel *</label>
-          <input type="text" id="f-title" placeholder="Korte, beschrijvende titel"/>
-        </div>
+        <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="f-title" placeholder="Korte, beschrijvende titel"/></div>
         <div class="form-grid2">
-          <div class="form-field">
-            <label class="form-label">Fase</label>
-            <select id="f-phase"></select>
-          </div>
-          <div class="form-field">
-            <label class="form-label">Type</label>
-            <select id="f-type">
+          <div><label class="form-label">Fase</label><select class="form-input" id="f-phase"></select></div>
+          <div><label class="form-label">Type</label>
+            <select class="form-input" id="f-type">
               <option>Feature</option><option>Bug</option><option>Improvement</option>
               <option>Security</option><option>Tech Debt</option><option>Other</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label class="form-label">Prioriteit</label>
-            <select id="f-priority">
-              <option>Critical</option><option>High</option>
-              <option selected>Medium</option><option>Low</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label class="form-label">Status</label>
-            <select id="f-status">
+            </select></div>
+          <div><label class="form-label">Prioriteit</label>
+            <select class="form-input" id="f-priority">
+              <option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option>
+            </select></div>
+          <div><label class="form-label">Status</label>
+            <select class="form-input" id="f-status">
               <option selected>Open</option><option>In Progress</option>
               <option>Done</option><option>Cancelled</option><option>Future</option>
-            </select>
-          </div>
+            </select></div>
         </div>
-        <div class="form-field">
-          <label class="form-label">Toegewezen aan</label>
-          <input type="text" id="f-assignee" placeholder="Naam of @handle"/>
-        </div>
-        <div class="form-field">
-          <label class="form-label">Tags</label>
-          <input type="text" id="f-tags" placeholder="tag1, tag2, tag3"/>
-        </div>
-        <div class="form-field">
-          <label class="form-label">Omschrijving</label>
-          <textarea id="f-description" rows="3" placeholder="Wat moet er gedaan worden? Waarom?"></textarea>
-        </div>
+        <div><label class="form-label">Toegewezen aan</label><input class="form-input" type="text" id="f-assignee" placeholder="Naam of @handle"/></div>
+        <div><label class="form-label">Tags</label><input class="form-input" type="text" id="f-tags" placeholder="tag1, tag2, tag3"/></div>
+        <div><label class="form-label">Omschrijving</label><textarea class="form-input" id="f-description" rows="3" placeholder="Wat moet er gedaan worden? Waarom?"></textarea></div>
         <div class="ai-section">
           <button class="btn" id="btn-ai">✦ AI suggestie</button>
           <span class="ai-warning" id="ai-warning" style="display:none">Stel eerst je API key in</span>
@@ -357,7 +348,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn" id="btn-modal-cancel">Annuleren</button>
-        <button class="btn btn-primary" id="btn-modal-save">Toevoegen</button>
+        <button class="btn btn-accent" id="btn-modal-save">Toevoegen</button>
       </div>
     </div>
   </div>
@@ -372,9 +363,9 @@
   <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
   <script>
-  // ── Layout laden ──
+  // ── Layout laden → topbar → admin-check → Backlog.init() ──
   fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
-    document.getElementById('topbar-placeholder').innerHTML = html;
+    document.getElementById('topbar-placeholder').innerHTML=html;
     const s=document.createElement('script'); s.src='../js/topbar.js';
     s.onload=()=>AdminGuard.protect('admin').then(ok=>{ if(ok) Backlog.init(); });
     document.body.appendChild(s);
@@ -383,300 +374,211 @@
   fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{ document.getElementById('footer-placeholder').innerHTML=html; });
 
   // ================================================================
-  // BACKLOG MODULE
+  // BACKLOG MODULE — vanilla JS
   // ================================================================
   const Backlog = (() => {
-    // === State ===
-    let items=[], phases=[], phaseDescs={};  // items, fases en fase-beschrijvingen
-    let view='board';                         // 'board' of 'list'
-    let search='';                            // zoekterm
-    let fPhase='All';                         // actief fasefilter
-    let fStatus=new Set();                    // actieve statusfilters (multi)
-    let fPriority=new Set();                  // actieve prioriteitsfilters (multi)
-    let fType=new Set();                      // actieve typefilters (multi)
-    let fTags=new Set();                      // actieve tagfilters (multi)
-    let editId=null;                          // ID van item in bewerking
-    let apiKey='';                            // Anthropic API key
-    let projName='', projVersion='', projDate=''; // projectinfo
+    let items=[], phases=[], phaseDescs={};
+    let view='board', search='', fPhase='All';
+    let fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
+    let editId=null, apiKey='';
+    let projName='', projVersion='', projDate='';
 
-    // === Constanten ===
-    const STATUSES    = ['Open','In Progress','Done','Cancelled','Future'];
-    const PRIORITIES  = ['Critical','High','Medium','Low'];
-    const TYPES       = ['Feature','Bug','Improvement','Security','Tech Debt','Other'];
-    const STATUS_ICON = {'Open':'📋','In Progress':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮'};
-    const STATUS_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
-    const PRIO_CSS    = {'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
-    const DOT_CSS     = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
+    const STATUSES   = ['Open','In Progress','Done','Cancelled','Future'];
+    const PRIORITIES = ['Critical','High','Medium','Low'];
+    const TYPES      = ['Feature','Bug','Improvement','Security','Tech Debt','Other'];
+    const S_ICON = {'Open':'📋','In Progress':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮'};
+    const S_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
+    const S_TBL  = {'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
+    const P_CSS  = {'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
+    const P_TBL  = {'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
+    const D_CSS  = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
 
-    const $=id=>document.getElementById(id); // DOM helper
+    const $=id=>document.getElementById(id);
 
-    // ── Init ──
     async function init() {
-      apiKey = localStorage.getItem('bl_apikey')||'';
-      _loadProjInfo();
-      _updateApiKeyUI();
-
-      const savedItems = localStorage.getItem('bl_items');
-      if (savedItems) {
-        items      = JSON.parse(savedItems);
-        phases     = JSON.parse(localStorage.getItem('bl_phases')||'[]');
-        phaseDescs = JSON.parse(localStorage.getItem('bl_phasedescs')||'{}');
+      apiKey=localStorage.getItem('bl_apikey')||'';
+      _loadProjInfo(); _updateApiKeyUI();
+      const saved=localStorage.getItem('bl_items');
+      if(saved){
+        items=JSON.parse(saved);
+        phases=JSON.parse(localStorage.getItem('bl_phases')||'[]');
+        phaseDescs=JSON.parse(localStorage.getItem('bl_phasedescs')||'{}');
       } else {
-        // Probeer eerst BACKLOG.md, dan backlog.csv
-        const md = await _tryFetch('../data/BACKLOG.md');
-        if (md) _parseMD(md);
-        else {
-          const csv = await _tryFetch('../data/backlog.csv');
-          if (csv) _parseCSV(csv);
-        }
+        const md=await _tryFetch('../data/BACKLOG.md');
+        if(md) _parseMD(md);
+        else { const csv=await _tryFetch('../data/backlog.csv'); if(csv)_parseCSV(csv); }
       }
-      _bindEvents();
-      render();
+      _bindEvents(); render();
     }
 
-    // ── Probeer URL te fetchen, geeft tekst of null ──
-    async function _tryFetch(url) {
-      try { const r=await fetch(url); return r.ok ? r.text() : null; }
-      catch(e) { return null; }
-    }
+    async function _tryFetch(url){ try{const r=await fetch(url);return r.ok?r.text():null;}catch(e){return null;} }
 
-    // ── Events koppelen ──
     function _bindEvents() {
-      // Acties
-      $('btn-add').addEventListener('click', ()=>openModal());
-      $('btn-export-csv').addEventListener('click', exportCSV);
-      $('btn-export-md').addEventListener('click', exportMD);
-      $('input-file').addEventListener('change', importFile);
-      $('btn-clear-filters').addEventListener('click', clearFilters);
+      $('btn-add').addEventListener('click',()=>openModal());
+      $('btn-export-csv').addEventListener('click',exportCSV);
+      $('btn-export-md').addEventListener('click',exportMD);
+      $('input-file').addEventListener('change',importFile);
+      $('btn-clear-filters').addEventListener('click',clearFilters);
 
-      // Projectinfo
-      $('btn-edit-proj').addEventListener('click', ()=>{
-        $('pi-name').value    = projName;
-        $('pi-version').value = projVersion;
-        $('pi-date').value    = projDate;
+      $('btn-edit-proj').addEventListener('click',()=>{
+        $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate;
         $('projinfo-dd').classList.toggle('open');
       });
-      $('btn-proj-save').addEventListener('click', ()=>{
-        projName    = $('pi-name').value.trim();
-        projVersion = $('pi-version').value.trim();
-        projDate    = $('pi-date').value;
+      $('btn-proj-save').addEventListener('click',()=>{
+        projName=$('pi-name').value.trim(); projVersion=$('pi-version').value.trim(); projDate=$('pi-date').value;
         _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta();
       });
-      $('btn-proj-cancel').addEventListener('click', ()=>$('projinfo-dd').classList.remove('open'));
+      $('btn-proj-cancel').addEventListener('click',()=>$('projinfo-dd').classList.remove('open'));
 
-      // API key
-      $('btn-apikey').addEventListener('click', ()=>$('apikey-dd').classList.toggle('open'));
-      $('input-apikey').value = apiKey;
-      $('input-apikey').addEventListener('change', e=>{
-        apiKey=e.target.value.trim(); localStorage.setItem('bl_apikey',apiKey); _updateApiKeyUI();
-      });
-      document.addEventListener('click', e=>{
-        if(!$('btn-apikey').contains(e.target)&&!$('apikey-dd').contains(e.target)) $('apikey-dd').classList.remove('open');
-      });
+      $('btn-apikey').addEventListener('click',()=>$('apikey-dd').classList.toggle('open'));
+      $('input-apikey').value=apiKey;
+      $('input-apikey').addEventListener('change',e=>{ apiKey=e.target.value.trim(); localStorage.setItem('bl_apikey',apiKey); _updateApiKeyUI(); });
+      document.addEventListener('click',e=>{ if(!$('btn-apikey').contains(e.target)&&!$('apikey-dd').contains(e.target)) $('apikey-dd').classList.remove('open'); });
 
-      // Fase invoer
-      $('btn-new-phase').addEventListener('click', ()=>{
-        $('phase-input-wrap').classList.add('open');
-        $('btn-new-phase').style.display='none';
-        $('input-new-phase').focus();
-      });
-      $('btn-cancel-phase').addEventListener('click', _cancelPhaseInput);
-      $('btn-add-phase').addEventListener('click', _addPhase);
-      $('input-new-phase').addEventListener('keydown', e=>{ if(e.key==='Enter')_addPhase(); if(e.key==='Escape')_cancelPhaseInput(); });
+      $('btn-new-phase').addEventListener('click',()=>{ $('phase-input-wrap').classList.add('open'); $('btn-new-phase').style.display='none'; $('input-new-phase').focus(); });
+      $('btn-cancel-phase').addEventListener('click',_cancelPhaseInput);
+      $('btn-add-phase').addEventListener('click',_addPhase);
+      $('input-new-phase').addEventListener('keydown',e=>{ if(e.key==='Enter')_addPhase(); if(e.key==='Escape')_cancelPhaseInput(); });
 
-      // Zoeken
-      $('input-search').addEventListener('input', e=>{ search=e.target.value; render(); });
+      $('input-search').addEventListener('input',e=>{ search=e.target.value; render(); });
+      $('btn-view-board').addEventListener('click',()=>{ view='board'; _updateViewToggle(); render(); });
+      $('btn-view-list').addEventListener('click', ()=>{ view='list';  _updateViewToggle(); render(); });
 
-      // Weergave
-      $('btn-view-board').addEventListener('click', ()=>{ view='board'; _updateViewToggle(); render(); });
-      $('btn-view-list').addEventListener('click',  ()=>{ view='list';  _updateViewToggle(); render(); });
-
-      // Modal
-      $('btn-modal-close').addEventListener('click',  closeModal);
-      $('btn-modal-cancel').addEventListener('click', closeModal);
-      $('btn-modal-save').addEventListener('click',   saveItem);
-      $('modal').addEventListener('click', e=>{ if(e.target===$('modal'))closeModal(); });
-
-      // AI
-      $('btn-ai').addEventListener('click', _getAiSuggestion);
+      $('btn-modal-close').addEventListener('click',closeModal);
+      $('btn-modal-cancel').addEventListener('click',closeModal);
+      $('btn-modal-save').addEventListener('click',saveItem);
+      $('modal').addEventListener('click',e=>{ if(e.target===$('modal'))closeModal(); });
+      $('btn-ai').addEventListener('click',_getAiSuggestion);
     }
 
-    // ── Hoofdrender ──
-    function render() {
-      _renderMeta();
-      _renderStats();
-      _renderPhasePills();
-      _renderFilterPills();
-      _renderContent();
-      _updatePhasesInModal();
-    }
+    function render() { _renderMeta(); _renderStats(); _renderPhasePills(); _renderFilterPills(); _renderContent(); _updatePhasesInModal(); }
 
-    // ── Meta regel ──
     function _renderMeta() {
-      const t=items.length, done=items.filter(i=>i.status==='Done').length;
-      const pct=t?Math.round(done/t*100):0;
-      $('proj-name-txt').textContent = projName || 'Project';
-      $('proj-meta').innerHTML =
+      const t=items.length, done=items.filter(i=>i.status==='Done').length, pct=t?Math.round(done/t*100):0;
+      $('proj-name-txt').textContent=projName||'Project';
+      $('proj-meta').innerHTML=
         `${projVersion?`<span>📦 <b>${projVersion}</b></span>`:''}` +
         `${projDate   ?`<span>📅 <b>${_fmtDate(projDate)}</b></span>`:''}` +
-        `<span>📋 <b>${t}</b> items</span>` +
-        `<span>✅ <b>${pct}%</b> afgerond</span>`;
+        `<span>📋 <b>${t}</b> items</span><span>✅ <b>${pct}%</b> afgerond</span>`;
     }
 
-    function _fmtDate(d) {
-      if(!d) return ''; const p=d.split('-');
-      return p.length===3 ? `${p[2]}-${p[1]}-${p[0]}` : d; // DD-MM-YYYY
-    }
+    function _fmtDate(d){ if(!d)return''; const p=d.split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; }
 
-    // ── Statistieken ──
     function _renderStats() {
-      const t=items.length, done=items.filter(i=>i.status==='Done').length;
-      const pct=t?Math.round(done/t*100):0;
+      const t=items.length, done=items.filter(i=>i.status==='Done').length, pct=t?Math.round(done/t*100):0;
       $('stat-grid').innerHTML=`
         <div class="stat-card"><div class="stat-label">Totaal</div><div class="stat-value">${t}</div></div>
         <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${items.filter(i=>i.status==='Open').length}</div></div>
         <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${items.filter(i=>i.status==='In Progress').length}</div></div>
         <div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">${done}</div></div>
-        <div class="stat-card">
-          <div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-        </div>`;
+        <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
     }
 
-    // ── Fase pills ──
     function _renderPhasePills() {
-      $('phase-pills').innerHTML = phases.map(ph=>{
-        const desc = phaseDescs[ph]||'';
+      $('phase-pills').innerHTML=phases.map(ph=>{
+        const desc=phaseDescs[ph]||'';
         return `<span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}" ${desc?`data-tip="${desc}"`:''}>${ph} <span data-remove="${ph}" style="margin-left:5px;opacity:.4;cursor:pointer">×</span></span>`;
       }).join('');
       $('phase-pills').querySelectorAll('.phase-pill').forEach(el=>{
-        el.addEventListener('click', e=>{
-          if(e.target.dataset.remove){ _removePhase(e.target.dataset.remove); return; }
-          fPhase = fPhase===el.dataset.phase?'All':el.dataset.phase;
-          render();
-        });
+        el.addEventListener('click',e=>{ if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;} fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; render(); });
       });
     }
 
-    // ── Filter pills voor status/prioriteit/type/tags ──
     function _renderFilterPills() {
-      // Unieke tags verzamelen uit alle items
       const allTags=[...new Set(items.flatMap(i=>(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort();
-
-      _buildPills('filter-status-pills',   STATUSES,   fStatus,   STATUS_ICON);
+      _buildPills('filter-status-pills',   STATUSES,   fStatus,   S_ICON);
       _buildPills('filter-priority-pills', PRIORITIES, fPriority, {});
       _buildPills('filter-type-pills',     TYPES,      fType,     {});
       _buildPills('filter-tag-pills',      allTags,    fTags,     {});
     }
 
-    // ── Pills bouwen voor een filter ──
-    function _buildPills(containerId, options, activeSet, icons) {
-      const el=$(containerId);
-      el.innerHTML = options.map(o=>
-        `<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`
-      ).join('');
+    function _buildPills(cid, opts, activeSet, icons) {
+      const el=$(cid);
+      el.innerHTML=opts.map(o=>`<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`).join('');
       el.querySelectorAll('.filter-pill').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const v=btn.dataset.val;
-          activeSet.has(v)?activeSet.delete(v):activeSet.add(v); // Toggle selectie
-          render();
-        });
+        btn.addEventListener('click',()=>{ const v=btn.dataset.val; activeSet.has(v)?activeSet.delete(v):activeSet.add(v); render(); });
       });
     }
 
-    // ── Filters wissen ──
-    function clearFilters() {
-      search=''; fPhase='All';
-      fStatus.clear(); fPriority.clear(); fType.clear(); fTags.clear();
-      $('input-search').value='';
-      render();
-    }
+    function clearFilters(){ search='';fPhase='All';fStatus.clear();fPriority.clear();fType.clear();fTags.clear();$('input-search').value='';render(); }
 
-    // ── Gefilterde items ──
     function _filtered() {
       const q=search.toLowerCase();
       return items.filter(i=>{
-        const mq  = !q || i.title.toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || i.id.toLowerCase().includes(q) || (i.assignee||'').toLowerCase().includes(q);
-        const ms  = !fStatus.size   || fStatus.has(i.status);
-        const mp  = !fPriority.size || fPriority.has(i.priority);
-        const mt  = !fType.size     || fType.has(i.type);
-        const mph = fPhase==='All'  || i.phase===fPhase;
-        const itemTags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-        const mta = !fTags.size     || [...fTags].some(t=>itemTags.includes(t));
+        const mq=!q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q)||(i.assignee||'').toLowerCase().includes(q);
+        const ms=!fStatus.size||fStatus.has(i.status);
+        const mp=!fPriority.size||fPriority.has(i.priority);
+        const mt=!fType.size||fType.has(i.type);
+        const mph=fPhase==='All'||i.phase===fPhase;
+        const it=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+        const mta=!fTags.size||[...fTags].some(t=>it.includes(t));
         return mq&&ms&&mp&&mt&&mph&&mta;
       });
     }
 
-    // ── Inhoud renderen ──
     function _renderContent() {
       const filtered=_filtered();
       if(!items.length){
-        $('bl-content').innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Nog geen items. Laad een CSV of MD bestand, of voeg je eerste item toe.</p><button class="btn btn-primary" id="btn-add-empty">+ Eerste item toevoegen</button></div>`;
-        $('btn-add-empty').addEventListener('click',()=>openModal());
-        return;
+        $('bl-content').innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Nog geen items. Laad een CSV of MD bestand, of voeg je eerste item toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste item toevoegen</button></div>`;
+        $('btn-add-empty').addEventListener('click',()=>openModal()); return;
       }
-      $('bl-content').innerHTML = view==='board'?_boardHTML(filtered):_listHTML(filtered);
+      $('bl-content').innerHTML=view==='board'?_boardHTML(filtered):_listHTML(filtered);
       $('bl-content').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.edit)));
       $('bl-content').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>_deleteItem(b.dataset.delete)));
     }
 
-    // ── Board HTML ──
     function _boardHTML(filtered) {
       return `<div class="board">${STATUSES.map(s=>{
         const col=filtered.filter(i=>i.status===s);
-        return `<div><div class="board-col-title">${STATUS_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
+        return `<div><div class="board-col-title">${S_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
         <div class="board-col-items">${col.length?col.map(_cardHTML).join(''):'<div class="board-empty">—</div>'}</div></div>`;
       }).join('')}</div>`;
     }
 
-    // ── Kaart HTML ──
-    function _cardHTML(item) {
-      const tags=(item.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+    function _cardHTML(i) {
+      const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
       return `<div class="card">
-        <div class="card-header"><span class="card-id">${item.id}</span>
+        <div class="card-header"><span class="card-id">${i.id}</span>
           <div class="card-actions">
-            <button class="btn-ghost btn" data-edit="${item.id}" style="padding:2px 4px;font-size:12px">✏️</button>
-            <button class="btn-ghost btn" data-delete="${item.id}" style="padding:2px 4px;font-size:12px">🗑</button>
+            <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px;font-size:11px">✏️</button>
+            <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px;font-size:11px">🗑</button>
           </div></div>
-        <div class="card-title">${item.title}</div>
-        ${item.description?`<div class="card-desc">${item.description}</div>`:''}
+        <div class="card-title">${i.title}</div>
+        ${i.description?`<div class="card-desc">${i.description}</div>`:''}
         <div class="card-footer">
-          <span class="badge ${PRIO_CSS[item.priority]||'p-medium'}"><span class="dot ${DOT_CSS[item.priority]||'dot-medium'}"></span>${item.priority}</span>
-          ${item.phase?`<span class="badge" style="border-color:#ccc;color:#666">${item.phase}</span>`:''}
-          ${item.assignee?`<span class="assignee-txt">👤 ${item.assignee}</span>`:''}
+          <span class="badge ${P_CSS[i.priority]||'p-medium'}"><span class="dot ${D_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span>
+          ${i.phase?`<span class="badge s-cancelled" style="font-size:0.65rem">${i.phase}</span>`:''}
+          ${i.assignee?`<span class="assignee-txt">👤 ${i.assignee}</span>`:''}
         </div>
         ${tags.length?`<div class="card-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
       </div>`;
     }
 
-    // ── Lijst HTML ──
     function _listHTML(filtered) {
-      if(!filtered.length) return `<p style="color:#888;font-size:13px;padding:1rem 0">Geen items gevonden.</p>`;
+      if(!filtered.length) return `<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem 0;text-align:center">Geen items gevonden.</p>`;
       return `<div class="list-wrap"><table class="list-table">
         <thead><tr><th>ID</th><th>Titel</th><th>Fase</th><th>Type</th><th>Prioriteit</th><th>Status</th><th>Toegewezen</th><th>Tags</th><th></th></tr></thead>
         <tbody>${filtered.map(i=>{
           const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
           return `<tr>
-            <td style="font-family:monospace;font-size:11px;opacity:.5">${i.id}</td>
-            <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</td>
-            <td style="color:#888">${i.phase||''}</td>
-            <td style="color:#888">${i.type||''}</td>
-            <td><span class="badge ${PRIO_CSS[i.priority]||'p-medium'}"><span class="dot ${DOT_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span></td>
-            <td><span class="badge ${STATUS_CSS[i.status]||'s-open'}">${STATUS_ICON[i.status]||''} ${i.status}</span></td>
-            <td style="color:#888">${i.assignee||''}</td>
-            <td>${tags.map(t=>`<span class="tag">${t}</span>`).join(' ')}</td>
+            <td style="font-family:var(--font-mono);font-size:10px;opacity:.6">${i.id}</td>
+            <td style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</td>
+            <td>${i.phase||''}</td><td>${i.type||''}</td>
+            <td><span class="${P_TBL[i.priority]||'p-medium-tbl'}">${i.priority}</span></td>
+            <td><span class="${S_TBL[i.status]||'s-open-tbl'}">${S_ICON[i.status]||''} ${i.status}</span></td>
+            <td>${i.assignee||''}</td>
+            <td>${tags.map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')}</td>
             <td>
-              <button class="btn-ghost btn" data-edit="${i.id}" style="padding:2px 5px">✏️</button>
-              <button class="btn-ghost btn" data-delete="${i.id}" style="padding:2px 5px">🗑</button>
+              <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px">✏️</button>
+              <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px">🗑</button>
             </td></tr>`;
         }).join('')}</tbody></table></div>`;
     }
 
-    // ── Modal ──
     function openModal(id) {
       editId=id||null;
-      $('modal-title').textContent  = id?'Item bewerken':'Item toevoegen';
-      $('btn-modal-save').textContent = id?'Opslaan':'Toevoegen';
+      $('modal-title').textContent=id?'Item bewerken':'Item toevoegen';
+      $('btn-modal-save').textContent=id?'Opslaan':'Toevoegen';
       $('ai-box').style.display='none'; $('ai-box').textContent='';
       $('ai-warning').style.display=apiKey?'none':'inline';
       _updatePhasesInModal();
@@ -693,240 +595,97 @@
       $('modal').classList.add('open'); $('f-title').focus();
     }
 
-    function closeModal() { $('modal').classList.remove('open'); editId=null; }
+    function closeModal(){ $('modal').classList.remove('open'); editId=null; }
 
-    function saveItem() {
+    function saveItem(){
       const title=$('f-title').value.trim(); if(!title){$('f-title').focus();return;}
       const item={id:editId||_genId(),title,phase:$('f-phase').value,type:$('f-type').value,priority:$('f-priority').value,status:$('f-status').value,assignee:$('f-assignee').value.trim(),tags:$('f-tags').value.trim(),description:$('f-description').value.trim()};
-      if(editId) items=items.map(i=>i.id===editId?item:i);
-      else items.push(item);
+      if(editId) items=items.map(i=>i.id===editId?item:i); else items.push(item);
       _save(); closeModal(); render();
     }
 
-    function _deleteItem(id) {
-      if(!confirm('Dit item verwijderen?'))return;
-      items=items.filter(i=>i.id!==id); _save(); render();
-    }
+    function _deleteItem(id){ if(!confirm('Dit item verwijderen?'))return; items=items.filter(i=>i.id!==id); _save(); render(); }
 
-    // ── Fases ──
-    function _addPhase() {
-      const v=$('input-new-phase').value.trim();
-      const d=$('input-new-phase-desc').value.trim();
-      if(v&&!phases.includes(v)){ phases.push(v); if(d) phaseDescs[v]=d; _save(); }
+    function _addPhase(){
+      const v=$('input-new-phase').value.trim(), d=$('input-new-phase-desc').value.trim();
+      if(v&&!phases.includes(v)){ phases.push(v); if(d)phaseDescs[v]=d; _save(); }
       _cancelPhaseInput(); render();
     }
-    function _removePhase(ph) { phases=phases.filter(p=>p!==ph); if(fPhase===ph)fPhase='All'; _save(); render(); }
-    function _cancelPhaseInput() {
-      $('input-new-phase').value=''; $('input-new-phase-desc').value='';
-      $('phase-input-wrap').classList.remove('open'); $('btn-new-phase').style.display='';
-    }
-    function _updatePhasesInModal() {
-      $('f-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join('');
-    }
+    function _removePhase(ph){ phases=phases.filter(p=>p!==ph); if(fPhase===ph)fPhase='All'; _save(); render(); }
+    function _cancelPhaseInput(){ $('input-new-phase').value=''; $('input-new-phase-desc').value=''; $('phase-input-wrap').classList.remove('open'); $('btn-new-phase').style.display=''; }
+    function _updatePhasesInModal(){ $('f-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join(''); }
+    function _updateViewToggle(){ $('btn-view-board').classList.toggle('active',view==='board'); $('btn-view-list').classList.toggle('active',view==='list'); }
+    function _saveProjInfo(){ localStorage.setItem('bl_proj',JSON.stringify({projName,projVersion,projDate})); }
+    function _loadProjInfo(){ const p=JSON.parse(localStorage.getItem('bl_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; }
+    function _updateApiKeyUI(){ $('apikey-label').textContent=apiKey?'AI gereed':'API key instellen'; $('btn-apikey').classList.toggle('btn-ai-ready',!!apiKey); }
+    function _save(){ localStorage.setItem('bl_items',JSON.stringify(items)); localStorage.setItem('bl_phases',JSON.stringify(phases)); localStorage.setItem('bl_phasedescs',JSON.stringify(phaseDescs)); }
+    function _genId(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
 
-    // ── Weergave ──
-    function _updateViewToggle() {
-      $('btn-view-board').classList.toggle('active',view==='board');
-      $('btn-view-list').classList.toggle('active', view==='list');
-    }
-
-    // ── Projectinfo ──
-    function _saveProjInfo() { localStorage.setItem('bl_proj',JSON.stringify({projName,projVersion,projDate})); }
-    function _loadProjInfo() {
-      const p=JSON.parse(localStorage.getItem('bl_proj')||'{}');
-      projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||'';
-    }
-
-    // ── API key UI ──
-    function _updateApiKeyUI() {
-      $('apikey-label').textContent=apiKey?'AI gereed':'API key instellen';
-      $('btn-apikey').classList.toggle('btn-ai-ready',!!apiKey);
-    }
-
-    // ── Persistentie ──
-    function _save() {
-      localStorage.setItem('bl_items',  JSON.stringify(items));
-      localStorage.setItem('bl_phases', JSON.stringify(phases));
-      localStorage.setItem('bl_phasedescs', JSON.stringify(phaseDescs));
-    }
-
-    // ── ID generator ──
-    function _genId() { return Math.random().toString(36).slice(2,8).toUpperCase(); }
-
-    // ── Bestand importeren (CSV of MD) ──
-    function importFile(e) {
+    function importFile(e){
       const file=e.target.files[0]; if(!file)return;
       if(!confirm('Huidige data vervangen door '+file.name+'?')){ e.target.value='';return; }
       const reader=new FileReader();
-      reader.onload=ev=>{
-        if(file.name.endsWith('.md')) _parseMD(ev.target.result);
-        else _parseCSV(ev.target.result);
-        e.target.value='';
-        alert(items.length+' items geladen uit '+file.name);
-        render();
-      };
+      reader.onload=ev=>{ if(file.name.endsWith('.md'))_parseMD(ev.target.result); else _parseCSV(ev.target.result); e.target.value=''; alert(items.length+' items geladen uit '+file.name); render(); };
       reader.readAsText(file);
     }
 
-    // ── CSV parser ──
-    function _parseCSV(text) {
-      const rows=text.trim().split('\n');
-      const headers=rows[0].split(',').map(h=>h.trim());
-      items=rows.slice(1).map(row=>{
-        const vals=[]; let cur=''; let inQ=false;
-        for(const ch of row){
-          if(ch==='"'){inQ=!inQ;}
-          else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
-          else{cur+=ch;}
-        }
-        vals.push(cur.trim());
-        const obj={}; headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj;
-      }).filter(i=>i.id);
-      const seen=new Set();
-      phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
-      _save();
+    function _parseCSV(text){
+      const rows=text.trim().split('\n'), headers=rows[0].split(',').map(h=>h.trim());
+      items=rows.slice(1).map(row=>{ const vals=[]; let cur='',inQ=false; for(const ch of row){ if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;} } vals.push(cur.trim()); const obj={}; headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj; }).filter(i=>i.id);
+      const seen=new Set(); phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p)); _save();
     }
 
-    // ── Markdown parser: leest tabellen uit BACKLOG.md ──
-    function _parseMD(text) {
+    function _parseMD(text){
       items=[]; phases=[]; phaseDescs={};
-      const lines=text.split('\n');
-      let curPhase='', curDesc='';
-
-      for(let i=0;i<lines.length;i++){
-        const line=lines[i];
-
-        // Fase-koptekst: ## Fase X — Beschrijving
-        const phaseMatch=line.match(/^##\s+(.+?)(?:\s+[✅🔄📋🔮]+.*)?$/);
-        if(phaseMatch&&!line.startsWith('###')){
-          const raw=phaseMatch[1].trim();
-          // Splits "Fase 1 — Structuur & centrale modules" in naam + beschrijving
-          const dashIdx=raw.indexOf('—');
-          if(dashIdx>-1){
-            curPhase=raw.slice(0,dashIdx).trim();
-            curDesc =raw.slice(dashIdx+1).trim().replace(/[✅🔄📋🔮].*/,'').trim();
-          } else {
-            curPhase=raw.replace(/[✅🔄📋🔮].*/,'').trim();
-            curDesc ='';
-          }
-          if(curPhase&&!phases.includes(curPhase)) phases.push(curPhase);
-          if(curDesc) phaseDescs[curPhase]=curDesc;
-          continue;
-        }
-
-        // ### sub-fase koptekst (bv. ### 3B — Zoekfunctie)
-        const subMatch=line.match(/^###\s+(.+)/);
-        if(subMatch){
-          const raw=subMatch[1].trim();
-          const dashIdx=raw.indexOf('—');
-          if(dashIdx>-1){
-            curPhase=raw.slice(0,dashIdx).trim();
-            curDesc =raw.slice(dashIdx+1).trim();
-          } else { curPhase=raw; curDesc=''; }
-          if(curPhase&&!phases.includes(curPhase)) phases.push(curPhase);
-          if(curDesc) phaseDescs[curPhase]=curDesc;
-          continue;
-        }
-
-        // Tabelrij: | ID | ... |  (geen header of separator rij)
+      const lines=text.split('\n'); let curPhase='',curDesc='';
+      for(const line of lines){
+        if(line.startsWith('###')){ const raw=line.replace(/^###\s*/,'').trim(); const d=raw.indexOf('—'); if(d>-1){curPhase=raw.slice(0,d).trim();curDesc=raw.slice(d+1).trim();}else{curPhase=raw;curDesc='';} if(curPhase&&!phases.includes(curPhase))phases.push(curPhase); if(curDesc)phaseDescs[curPhase]=curDesc; continue; }
+        if(line.startsWith('##')&&!line.startsWith('###')){ const raw=line.replace(/^##\s*/,'').trim(); const d=raw.indexOf('—'); if(d>-1){curPhase=raw.slice(0,d).replace(/[✅🔄📋🔮]/g,'').trim();curDesc=raw.slice(d+1).replace(/[✅🔄📋🔮].*/,'').trim();}else{curPhase=raw.replace(/[✅🔄📋🔮].*/,'').trim();curDesc='';} if(curPhase&&!phases.includes(curPhase))phases.push(curPhase); if(curDesc)phaseDescs[curPhase]=curDesc; continue; }
         if(line.startsWith('|')&&!line.includes('---')){
-          const cells=line.split('|').map(c=>c.trim()).filter((_,idx,arr)=>idx>0&&idx<arr.length-1);
-          if(!cells.length||cells[0]==='ID'||cells[0]==='Taak') continue; // header rij overslaan
-          // Formaat: | ID | Prioriteit | Taak | Status |  of  | ID | Taak | Status |
-          let id='',prio='Medium',title='',status='Open',desc='',assignee='',tags='',type='Feature';
-
-          if(cells.length>=4&&['🔴','🟡','🟢'].some(e=>cells[1].includes(e))){
-            // Indeling met prioriteit kolom: ID | Prioriteit | Taak | Status
-            id    = cells[0];
-            prio  = _mapPrio(cells[1]);
-            title = cells[2];
-            status= _mapStatus(cells[3]);
-            tags  = cells[4]||'';
-          } else if(cells.length>=3){
-            // Indeling zonder prioriteit: ID | Taak | Status
-            id    = cells[0];
-            title = cells[1];
-            status= _mapStatus(cells[2]);
-          }
-          if(id&&title) items.push({id,phase:curPhase,title,description:desc,type,priority:prio,status,assignee,tags});
+          const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
+          if(!cells.length||cells[0]==='ID'||cells[0]==='Taak')continue;
+          let id='',prio='Medium',title='',status='Open',tags='',type='Feature';
+          if(cells.length>=4&&['🔴','🟡','🟢'].some(e=>cells[1].includes(e))){ id=cells[0];prio=_mapPrio(cells[1]);title=cells[2];status=_mapStatus(cells[3]);tags=cells[4]||''; }
+          else if(cells.length>=3){ id=cells[0];title=cells[1];status=_mapStatus(cells[2]); }
+          if(id&&title)items.push({id,phase:curPhase,title,description:'',type,priority:prio,status,assignee:'',tags});
         }
       }
       _save();
     }
 
-    // ── Status-emoji naar status string mappen ──
-    function _mapStatus(s) {
-      if(!s)return'Open';
-      if(s.includes('✅')||s.toLowerCase().includes('gedaan')) return'Done';
-      if(s.includes('🔄')||s.toLowerCase().includes('uitvoering')) return'In Progress';
-      if(s.includes('❌')||s.toLowerCase().includes('geannuleerd')) return'Cancelled';
-      if(s.includes('🔮')||s.toLowerCase().includes('toekomst')) return'Future';
-      return'Open';
-    }
+    function _mapStatus(s){ if(!s)return'Open'; if(s.includes('✅')||s.toLowerCase().includes('gedaan'))return'Done'; if(s.includes('🔄')||s.toLowerCase().includes('uitvoering'))return'In Progress'; if(s.includes('❌')||s.toLowerCase().includes('geannuleerd'))return'Cancelled'; if(s.includes('🔮')||s.toLowerCase().includes('toekomst'))return'Future'; return'Open'; }
+    function _mapPrio(s){ if(!s)return'Medium'; if(s.includes('🔴'))return'High'; if(s.includes('🟡'))return'Medium'; if(s.includes('🟢'))return'Low'; if(s.toLowerCase().includes('kritiek'))return'Critical'; return'Medium'; }
 
-    // ── Prioriteit-emoji naar prioriteit string mappen ──
-    function _mapPrio(s) {
-      if(!s)return'Medium';
-      if(s.includes('🔴')) return'High';
-      if(s.includes('🟡')) return'Medium';
-      if(s.includes('🟢')) return'Low';
-      if(s.toLowerCase().includes('kritiek')) return'Critical';
-      return'Medium';
-    }
-
-    // ── CSV exporteren ──
-    function exportCSV() {
+    function exportCSV(){
       const cols=['id','phase','title','description','type','priority','status','assignee','tags'];
       const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+(i[c]||'').replace(/"/g,'""')+'"').join(','))];
       _download('backlog.csv',rows.join('\n'),'text/csv');
     }
 
-    // ── Markdown exporteren ──
-    function exportMD() {
-      let md=`# BACKLOG.md — ${projName||'Project'}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
-      md+=`> Versie: ${projVersion||'—'} · ${items.length} items\n\n`;
-      // Groepeer per fase
+    function exportMD(){
+      let md=`# BACKLOG.md — ${projName||'Project'}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n> Versie: ${projVersion||'—'} · ${items.length} items\n\n`;
       const byPhase={};
       items.forEach(i=>{ (byPhase[i.phase||'Overig']=byPhase[i.phase||'Overig']||[]).push(i); });
       for(const ph of [...phases,...Object.keys(byPhase).filter(p=>!phases.includes(p))]){
         if(!byPhase[ph])continue;
         const desc=phaseDescs[ph]?` — ${phaseDescs[ph]}`:'';
-        md+=`## ${ph}${desc}\n\n`;
-        md+=`| ID | Prioriteit | Taak | Status |\n|----|-----------|------|--------|\n`;
-        byPhase[ph].forEach(i=>{
-          const pIcon={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡';
-          const sIcon=STATUS_ICON[i.status]||'📋';
-          md+=`| ${i.id} | ${pIcon} ${i.priority} | ${i.title} | ${sIcon} ${i.status} |\n`;
-        });
+        md+=`## ${ph}${desc}\n\n| ID | Prioriteit | Taak | Status |\n|----|-----------|------|--------|\n`;
+        byPhase[ph].forEach(i=>{ const pi={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡'; md+=`| ${i.id} | ${pi} ${i.priority} | ${i.title} | ${S_ICON[i.status]||'📋'} ${i.status} |\n`; });
         md+='\n';
       }
       _download('BACKLOG.md',md,'text/markdown');
     }
 
-    // ── Bestand downloaden ──
-    function _download(filename,content,type) {
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([content],{type}));
-      a.download=filename; a.click();
-    }
+    function _download(filename,content,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); }
 
-    // ── AI suggestie ──
-    async function _getAiSuggestion() {
+    async function _getAiSuggestion(){
       const title=$('f-title').value.trim(); if(!title||!apiKey)return;
-      $('btn-ai').textContent='…bezig'; $('btn-ai').disabled=true;
-      $('ai-box').style.display='none';
-      try {
-        const res=await fetch('https://api.anthropic.com/v1/messages',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:
-            `Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`
-          }]})
-        });
+      $('btn-ai').textContent='…bezig'; $('btn-ai').disabled=true; $('ai-box').style.display='none';
+      try{
+        const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:`Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`}]})});
         const data=await res.json();
-        $('ai-box').textContent=data.content?.[0]?.text||'Geen suggestie ontvangen.';
-        $('ai-box').style.display='block';
-      } catch(e){ $('ai-box').textContent='Fout: '+e.message; $('ai-box').style.display='block'; }
+        $('ai-box').textContent=data.content?.[0]?.text||'Geen suggestie ontvangen.'; $('ai-box').style.display='block';
+      }catch(e){ $('ai-box').textContent='Fout: '+e.message; $('ai-box').style.display='block'; }
       $('btn-ai').textContent='✦ AI suggestie'; $('btn-ai').disabled=false;
     }
 
