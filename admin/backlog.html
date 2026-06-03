@@ -1,21 +1,25 @@
-<!-- ======================= admin/backlog.html v1.0.0 =======================
+<!-- ======================= admin/backlog.html v2.0.0 =======================
     Backlog Manager — admin only
 
-    Wijzigingen v1.0.0 (sessie 35):
-     - Initiële versie
+    Wijzigingen v2.0.0 (sessie 35):
+     - Volledig herschreven van Alpine.js naar vanilla JavaScript
+     - Zelfde laadvolgorde als analytics.html:
+       supabase → utils.js → auth.js → adminGuard.js → siteAnalytics.js
+       → TopBar fetch → topbar.js → AdminGuard.protect() → backlog.init()
      - Board- en lijstweergave
      - Fases, filters, zoeken
      - CSV opslaan en laden via UI
      - AI suggestie via Anthropic API (gebruiker voert eigen sleutel in)
-     - Toegangsbeveiliging via AdminGuard.protect('admin')
      - Data geladen vanuit data/backlog.csv bij eerste gebruik
      - Data opgeslagen in localStorage (bl_items, bl_phases)
-     - Valt terug op lege staat als CSV niet beschikbaar is
 
     Afhankelijkheden:
-     - ../js/adminGuard.js
-     - ../data/backlog.csv  (alleen bij eerste laden)
-     - Alpine.js v3.13.3 (CDN)
+     - ../js/utils.js
+     - ../js/auth.js
+     - /MyFamTreeCollab/js/adminGuard.js
+     - /MyFamTreeCollab/js/siteAnalytics.js
+     - ../js/topbar.js (via fetch)
+     - ../data/backlog.csv (alleen bij eerste laden)
     ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -36,103 +40,125 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Alpine.js: reactieve UI (defer zodat DOM eerst klaar is) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
-
   <style>
-    /* === Reset & basis === */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #f9f9f7; color: #1a1a18; min-height: 100vh; }
-    h1 { font-size: 1.4rem; font-weight: 500; }
-    button { cursor: pointer; font-family: inherit; }
+    /* === Toegangs- en paginablokken: verborgen tot auth-check klaar === */
+    #accessDenied { display: none; text-align: center; padding: 4rem 2rem; }
+    #page-content  { display: none; }
 
-    /* === Formulierelementen === */
-    input, select, textarea {
-      font-family: inherit; color: #1a1a18; background: #fff;
-      border: 0.5px solid #ccc; border-radius: 8px;
-      padding: 7px 10px; font-size: 13px; width: 100%; outline: none;
-    }
-    input:focus, select:focus, textarea:focus { border-color: #888; }
+    /* === Hoofdlayout === */
+    main { padding: 150px 20px 64px; min-height: 100vh; font-family: 'IBM Plex Sans', sans-serif; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    /* === Topbar === */
+    .bl-topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 1.5rem; }
+    .bl-topbar h1 { font-size: 1.3rem; font-weight: 500; margin: 0; }
+    .bl-topbar-meta { font-size: 13px; color: #888; margin-left: 12px; }
+    .bl-topbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     /* === Knoppen === */
-    .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; font-size: 13px; transition: background .15s; }
+    .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer; font-family: inherit; transition: background .15s; }
     .btn:hover { background: #f1f0ec; }
     .btn-primary { background: #1a1a18; color: #fff; border-color: #1a1a18; }
     .btn-primary:hover { background: #333; }
     .btn-ghost { border-color: transparent; background: transparent; }
     .btn-ghost:hover { background: #f1f0ec; }
+    .btn-ai-ready { border-color: #86efac !important; color: #15803d !important; }
 
-    /* === Kaarten & badges === */
-    .card { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 10px; padding: 14px; }
-    .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 0.5px solid; }
-    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-    .tag { font-size: 10px; padding: 1px 7px; border-radius: 4px; background: #f1f0ec; color: #555; }
+    /* === API key dropdown === */
+    .apikey-wrap { position: relative; }
+    .apikey-dropdown { display: none; position: absolute; right: 0; top: 38px; background: #fff; border: 0.5px solid #ccc; border-radius: 10px; padding: 14px; width: 300px; z-index: 50; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+    .apikey-dropdown.open { display: block; }
+    .apikey-dropdown input { width: 100%; margin-bottom: 8px; }
+    .apikey-dropdown p { font-size: 11px; color: #888; line-height: 1.5; }
 
-    /* === Labels & stats === */
-    .label { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 4px; }
+    /* === Statistieken === */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 10px; margin-bottom: 1.5rem; }
     .stat-card { background: #f1f0ec; border-radius: 8px; padding: 12px 16px; }
-
-    /* === Modal === */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-    .modal { background: #fff; border-radius: 12px; padding: 1.5rem; width: 100%; max-width: 540px; border: 0.5px solid #ccc; max-height: 90vh; overflow-y: auto; }
-
-    /* === Fase-pills === */
-    .phase-pill { font-size: 12px; padding: 3px 10px; border-radius: 99px; border: 0.5px solid #ccc; background: transparent; color: #666; cursor: pointer; transition: background .15s; }
-    .phase-pill:hover { background: #f1f0ec; }
-    .phase-pill.active { background: #e8f0fe; color: #1a4ed8; border-color: #a8c0f8; }
-
-    /* === Topbar & layout === */
-    .topbar { background: #fff; border-bottom: 0.5px solid #e0dfd8; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
-
-    /* === Stats grid & voortgangsbalk === */
-    .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+    .stat-card .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .stat-card .stat-value { font-size: 22px; font-weight: 500; }
     .progress-bar { height: 4px; background: #e0dfd8; border-radius: 99px; overflow: hidden; margin-top: 6px; }
     .progress-fill { height: 100%; background: #15803d; border-radius: 99px; transition: width .4s; }
 
-    /* === Board- en lijstweergave === */
-    .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap: 16px; }
+    /* === Fase pills === */
+    .phases-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .phases-label { font-size: 12px; color: #888; font-weight: 500; }
+    .phase-pill { font-size: 12px; padding: 3px 10px; border-radius: 99px; border: 0.5px solid #ccc; background: transparent; color: #666; cursor: pointer; font-family: inherit; transition: background .15s; }
+    .phase-pill:hover { background: #f1f0ec; }
+    .phase-pill.active { background: #e8f0fe; color: #1a4ed8; border-color: #a8c0f8; }
+    .phase-input-wrap { display: none; gap: 4px; align-items: center; }
+    .phase-input-wrap.open { display: flex; }
+    .phase-input-wrap input { width: 130px; padding: 3px 8px; font-size: 12px; }
+
+    /* === Filters === */
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
+    .filters input[type=search] { flex: 1; min-width: 160px; }
+    .filters input, .filters select { font-family: inherit; font-size: 13px; padding: 6px 10px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a18; outline: none; }
+    .view-toggle { display: flex; border: 0.5px solid #ccc; border-radius: 8px; overflow: hidden; }
+    .view-toggle button { font-size: 12px; padding: 5px 12px; border: none; background: transparent; color: #888; cursor: pointer; font-family: inherit; }
+    .view-toggle button.active { background: #f1f0ec; color: #1a1a18; }
+
+    /* === Lege staat === */
+    .empty { text-align: center; padding: 4rem 2rem; border: 0.5px dashed #ccc; border-radius: 12px; }
+    .empty .empty-icon { font-size: 32px; margin-bottom: 12px; }
+    .empty p { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+    /* === Board === */
+    .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; }
     .board-col-title { font-size: 11px; font-weight: 500; color: #888; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .board-col-items { display: flex; flex-direction: column; gap: 8px; }
+    .board-empty { font-size: 12px; color: #ccc; padding: 6px 0; }
+
+    /* === Kaart === */
+    .card { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 10px; padding: 14px; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .card-id { font-size: 11px; font-family: monospace; opacity: .4; }
+    .card-actions { display: flex; gap: 4px; }
+    .card-title { font-weight: 500; font-size: 13px; margin-bottom: 6px; line-height: 1.4; }
+    .card-desc { font-size: 12px; color: #666; margin-bottom: 8px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-footer { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .card-tags { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* === Badges & tags === */
+    .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 0.5px solid; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .tag { font-size: 10px; padding: 1px 7px; border-radius: 4px; background: #f1f0ec; color: #555; }
+    .assignee { font-size: 11px; color: #888; }
+
+    /* === Lijstweergave === */
+    .list-wrap { border: 0.5px solid #e0dfd8; border-radius: 10px; overflow: auto; }
     .list-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .list-table th { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: .04em; padding: 8px 12px; text-align: left; border-bottom: 0.5px solid #e0dfd8; background: #f9f9f7; white-space: nowrap; }
     .list-table td { padding: 8px 12px; border-bottom: 0.5px solid #e0dfd8; vertical-align: middle; }
     .list-table tr:hover td { background: #f9f9f7; }
 
-    /* === Lege staat === */
-    .empty { text-align: center; padding: 4rem 2rem; border: 0.5px dashed #ccc; border-radius: 12px; }
+    /* === Modal === */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 12px; padding: 1.5rem; width: 100%; max-width: 540px; border: 0.5px solid #ccc; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h2 { font-size: 17px; font-weight: 500; margin: 0; }
+    .modal-body { display: flex; flex-direction: column; gap: 12px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; }
+    .form-label { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 4px; }
+    .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media(max-width:500px) { .form-grid2 { grid-template-columns: 1fr; } }
+    .form-field input, .form-field select, .form-field textarea { width: 100%; font-family: inherit; font-size: 13px; padding: 7px 10px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a18; outline: none; box-sizing: border-box; }
+    .form-field textarea { resize: vertical; }
 
-    /* === AI suggestie box === */
+    /* === AI suggestie === */
+    .ai-section { border-top: 0.5px solid #e0dfd8; padding-top: 12px; }
+    .ai-warning { font-size: 11px; color: #f97316; margin-left: 8px; }
     .ai-box { margin-top: 10px; font-size: 12px; background: #f9f9f7; border-radius: 8px; padding: 10px 14px; white-space: pre-wrap; line-height: 1.6; color: #555; border: 0.5px solid #e0dfd8; }
 
-    /* === Weergave-toggle === */
-    .view-toggle { display: flex; border: 0.5px solid #ccc; border-radius: 8px; overflow: hidden; }
-    .view-toggle button { font-size: 12px; padding: 5px 12px; border: none; background: transparent; color: #888; transition: background .15s; }
-    .view-toggle button.active { background: #f1f0ec; color: #1a1a18; }
-
-    /* === Filters === */
-    .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
-    .filters input, .filters select { width: auto; }
-    .filters input { flex: 1; min-width: 160px; }
-
-    /* === Tweekoloms grid in modal === */
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media(max-width:500px) { .grid2 { grid-template-columns: 1fr; } }
-
-    /* === Toegangs- en paginablokken === */
-    #accessDenied { display: none; text-align: center; padding: 4rem 2rem; }
-    #page-content { display: none; }
-
-    /* === Prioriteit-kleuren === */
+    /* === Prioriteit kleuren === */
     .p-critical { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
     .p-high     { background: #fff7ed; color: #9a3412; border-color: #fdba74; }
     .p-medium   { background: #fefce8; color: #854d0e; border-color: #fde047; }
     .p-low      { background: #f0fdf4; color: #166534; border-color: #86efac; }
-    .dot-critical { background: #ef4444; }
-    .dot-high     { background: #f97316; }
-    .dot-medium   { background: #eab308; }
-    .dot-low      { background: #22c55e; }
+    .dot-critical { background: #ef4444; } .dot-high { background: #f97316; }
+    .dot-medium   { background: #eab308; } .dot-low  { background: #22c55e; }
 
-    /* === Status-kleuren === */
+    /* === Status kleuren === */
     .s-open       { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
     .s-inprogress { background: #faf5ff; color: #6d28d9; border-color: #c4b5fd; }
     .s-done       { background: #f0fdf4; color: #15803d; border-color: #86efac; }
@@ -146,10 +172,9 @@
   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script>eruda.init();</script>
 
-  <!-- Topbar placeholder: gevuld via fetch -->
+  <!-- Topbar placeholder -->
   <div id="topbar-placeholder"></div>
-
-  <!-- Navbar placeholder: gevuld via fetch -->
+  <!-- Navbar placeholder -->
   <div id="navbar-placeholder"></div>
 
   <!-- Toegang geweigerd: zichtbaar voor niet-admins via adminGuard.js -->
@@ -159,626 +184,650 @@
     <div style="font-size:13px;color:#888">Deze pagina is alleen toegankelijk voor admins.</div>
   </div>
 
-  <!-- Getoond na succesvolle admin-check -->
+  <!-- Pagina-inhoud: zichtbaar na succesvolle admin-check -->
   <div id="page-content">
-  <div x-data="backlog()" x-init="init()">
+    <main>
+      <div class="container">
 
-    <!-- ===== TOPBAR ===== -->
-    <div class="topbar">
-      <div style="display:flex;align-items:center;gap:16px">
-        <h1>📋 Team Backlog</h1>
-        <!-- Teller: aantal items en voortgangspercentage -->
-        <span style="font-size:13px;color:#888" x-text="items.length + ' items · ' + stats.pct + '% afgerond'"></span>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-
-        <!-- API key invoer voor AI-suggestie functie -->
-        <div style="position:relative">
-          <button class="btn" @click="showKeyInput=!showKeyInput"
-                  :style="apiKey ? 'border-color:#86efac;color:#15803d' : ''">
-            🔑 <span x-text="apiKey ? 'AI gereed' : 'API key instellen'"></span>
-          </button>
-          <!-- Dropdown voor API key invoer -->
-          <div x-show="showKeyInput" @click.outside="showKeyInput=false"
-               style="position:absolute;right:0;top:38px;background:#fff;border:0.5px solid #ccc;border-radius:10px;padding:14px;width:300px;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.08)">
-            <label class="label">Anthropic API key</label>
-            <input type="password" x-model="apiKey" placeholder="sk-ant-…"
-                   @change="saveKey()" style="margin-bottom:8px"/>
-            <p style="font-size:11px;color:#888;line-height:1.5">
-              Sleutel wordt opgeslagen in localStorage en alleen naar de Anthropic API gestuurd.
-            </p>
+        <!-- Topbar met titel en acties -->
+        <div class="bl-topbar">
+          <div style="display:flex;align-items:center">
+            <h1>📋 Team Backlog</h1>
+            <span class="bl-topbar-meta" id="bl-meta"></span>
+          </div>
+          <div class="bl-topbar-actions">
+            <!-- API key knop -->
+            <div class="apikey-wrap">
+              <button class="btn" id="btn-apikey">🔑 <span id="apikey-label">API key instellen</span></button>
+              <div class="apikey-dropdown" id="apikey-dropdown">
+                <label class="form-label">Anthropic API key</label>
+                <input type="password" id="input-apikey" placeholder="sk-ant-…"/>
+                <p>Sleutel wordt opgeslagen in localStorage en alleen naar de Anthropic API gestuurd.</p>
+              </div>
+            </div>
+            <!-- CSV opslaan -->
+            <button class="btn" id="btn-export">💾 CSV opslaan</button>
+            <!-- CSV laden via bestandskiezer -->
+            <label class="btn" style="cursor:pointer">
+              📂 CSV laden
+              <input type="file" id="input-csv" accept=".csv" style="display:none"/>
+            </label>
+            <!-- Nieuw item toevoegen -->
+            <button class="btn btn-primary" id="btn-add">+ Toevoegen</button>
           </div>
         </div>
 
-        <!-- Exporteer huidige data als backlog.csv -->
-        <button class="btn" @click="exportCSV()">💾 CSV opslaan</button>
+        <!-- Statistieken -->
+        <div class="stat-grid" id="stat-grid"></div>
 
-        <!-- Laad een lokale CSV in — vervangt huidige data na bevestiging -->
-        <label class="btn" style="cursor:pointer">
-          📂 CSV laden
-          <input type="file" accept=".csv" @change="importCSV($event)" style="display:none"/>
-        </label>
+        <!-- Fase pills -->
+        <div class="phases-bar" id="phases-bar">
+          <span class="phases-label">Fases:</span>
+          <div id="phase-pills"></div>
+          <button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button>
+          <div class="phase-input-wrap" id="phase-input-wrap">
+            <input type="text" id="input-new-phase" placeholder="Naam fase"/>
+            <button class="btn" id="btn-add-phase" style="padding:3px 8px;font-size:12px">Toevoegen</button>
+            <button class="btn-ghost btn" id="btn-cancel-phase" style="padding:3px 6px;font-size:12px">✕</button>
+          </div>
+        </div>
 
-        <!-- Nieuw item toevoegen -->
-        <button class="btn btn-primary" @click="openAdd()">+ Toevoegen</button>
+        <!-- Filters en zoeken -->
+        <div class="filters">
+          <input type="search" id="input-search" placeholder="Zoeken op titel, omschrijving of ID…"/>
+          <select id="filter-status">
+            <option value="All">Alle statussen</option>
+            <option>Open</option><option>In Progress</option>
+            <option>Done</option><option>Cancelled</option><option>Future</option>
+          </select>
+          <select id="filter-priority">
+            <option value="All">Alle prioriteiten</option>
+            <option>Critical</option><option>High</option>
+            <option>Medium</option><option>Low</option>
+          </select>
+          <div class="view-toggle">
+            <button id="btn-view-board" class="active">Board</button>
+            <button id="btn-view-list">Lijst</button>
+          </div>
+        </div>
+
+        <!-- Inhoud: board of lijst -->
+        <div id="bl-content"></div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: item toevoegen of bewerken -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Item toevoegen</h2>
+        <button class="btn-ghost btn" id="btn-modal-close" style="font-size:18px;padding:4px 8px">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field">
+          <label class="form-label">Titel *</label>
+          <input type="text" id="f-title" placeholder="Korte, beschrijvende titel"/>
+        </div>
+        <div class="form-grid2">
+          <div class="form-field">
+            <label class="form-label">Fase</label>
+            <select id="f-phase"></select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Type</label>
+            <select id="f-type">
+              <option>Feature</option><option>Bug</option><option>Improvement</option>
+              <option>Security</option><option>Tech Debt</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Prioriteit</label>
+            <select id="f-priority">
+              <option>Critical</option><option>High</option>
+              <option selected>Medium</option><option>Low</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Status</label>
+            <select id="f-status">
+              <option selected>Open</option><option>In Progress</option>
+              <option>Done</option><option>Cancelled</option><option>Future</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Toegewezen aan</label>
+          <input type="text" id="f-assignee" placeholder="Naam of @handle"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Tags</label>
+          <input type="text" id="f-tags" placeholder="tag1, tag2, tag3"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Omschrijving</label>
+          <textarea id="f-description" rows="3" placeholder="Wat moet er gedaan worden? Waarom?"></textarea>
+        </div>
+        <!-- AI suggestie -->
+        <div class="ai-section">
+          <button class="btn" id="btn-ai">✦ AI suggestie</button>
+          <span class="ai-warning" id="ai-warning" style="display:none">Stel eerst je API key in</span>
+          <div class="ai-box" id="ai-box" style="display:none"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-modal-cancel">Annuleren</button>
+        <button class="btn btn-primary" id="btn-modal-save">Toevoegen</button>
       </div>
     </div>
+  </div>
 
-    <!-- ===== HOOFDINHOUD ===== -->
-    <div class="container">
-
-      <!-- Statistieken bovenaan -->
-      <div class="grid-stats">
-        <div class="stat-card">
-          <div style="font-size:12px;color:#888;margin-bottom:4px">Totaal</div>
-          <div style="font-size:22px;font-weight:500" x-text="items.length"></div>
-        </div>
-        <div class="stat-card">
-          <div style="font-size:12px;color:#888;margin-bottom:4px">Open</div>
-          <div style="font-size:22px;font-weight:500" x-text="stats.open"></div>
-        </div>
-        <div class="stat-card">
-          <div style="font-size:12px;color:#888;margin-bottom:4px">In uitvoering</div>
-          <div style="font-size:22px;font-weight:500" x-text="stats.inprog"></div>
-        </div>
-        <div class="stat-card">
-          <div style="font-size:12px;color:#888;margin-bottom:4px">Gedaan</div>
-          <div style="font-size:22px;font-weight:500" x-text="stats.done"></div>
-        </div>
-        <div class="stat-card">
-          <div style="font-size:12px;color:#888;margin-bottom:4px">Voortgang</div>
-          <div style="font-size:22px;font-weight:500" x-text="stats.pct + '%'"></div>
-          <!-- Voortgangsbalk op basis van Done/Totaal -->
-          <div class="progress-bar">
-            <div class="progress-fill" :style="'width:'+stats.pct+'%'"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fase-filter pills -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
-        <span style="font-size:12px;color:#888;font-weight:500">Fases:</span>
-        <!-- Bestaande fases als klikbare pills -->
-        <template x-for="ph in phases" :key="ph">
-          <span class="phase-pill" :class="filterPhase===ph ? 'active' : ''"
-                @click="filterPhase = filterPhase===ph ? 'All' : ph">
-            <span x-text="ph"></span>
-            <!-- Verwijder fase knop -->
-            <span style="margin-left:5px;opacity:.4" @click.stop="removePhase(ph)">×</span>
-          </span>
-        </template>
-        <!-- Nieuwe fase invoer -->
-        <template x-if="!showPhaseInput">
-          <button class="phase-pill" @click="showPhaseInput=true">+ Nieuwe fase</button>
-        </template>
-        <template x-if="showPhaseInput">
-          <span style="display:flex;gap:4px;align-items:center">
-            <input x-model="newPhase"
-                   @keydown.enter="addPhase()"
-                   @keydown.escape="showPhaseInput=false"
-                   placeholder="Naam fase"
-                   style="width:130px;padding:3px 8px;font-size:12px"
-                   x-ref="phaseInput"
-                   x-init="$nextTick(()=>$refs.phaseInput?.focus())"/>
-            <button class="btn" style="padding:3px 8px;font-size:12px" @click="addPhase()">Toevoegen</button>
-            <button class="btn-ghost btn" style="padding:3px 6px;font-size:12px" @click="showPhaseInput=false">✕</button>
-          </span>
-        </template>
-      </div>
-
-      <!-- Zoeken en filters -->
-      <div class="filters">
-        <input x-model="search" placeholder="Zoeken op titel, omschrijving of ID…" type="search"/>
-        <select x-model="filterStatus">
-          <option value="All">Alle statussen</option>
-          <template x-for="s in statuses"><option :value="s" x-text="s"></option></template>
-        </select>
-        <select x-model="filterPriority">
-          <option value="All">Alle prioriteiten</option>
-          <template x-for="p in priorities"><option :value="p" x-text="p"></option></template>
-        </select>
-        <!-- Schakel tussen board en lijstweergave -->
-        <div class="view-toggle">
-          <button :class="view==='board' ? 'active' : ''" @click="view='board'">Board</button>
-          <button :class="view==='list'  ? 'active' : ''" @click="view='list'">Lijst</button>
-        </div>
-      </div>
-
-      <!-- Lege staat: geen items aanwezig -->
-      <template x-if="items.length===0">
-        <div class="empty">
-          <div style="font-size:32px;margin-bottom:12px">📋</div>
-          <div style="font-weight:500;margin-bottom:6px">Nog geen items</div>
-          <div style="font-size:13px;color:#888;margin-bottom:20px">
-            Laad een CSV of voeg handmatig je eerste item toe.
-          </div>
-          <button class="btn btn-primary" @click="openAdd()">+ Eerste item toevoegen</button>
-        </div>
-      </template>
-
-      <!-- ===== BOARDWEERGAVE: kolom per status ===== -->
-      <template x-if="view==='board' && items.length>0">
-        <div class="board">
-          <template x-for="s in statuses" :key="s">
-            <div>
-              <!-- Kolomtitel met statusicoon en teller -->
-              <div class="board-col-title">
-                <span x-text="statusIcon(s)"></span>
-                <span x-text="s.toUpperCase()"></span>
-                <span style="opacity:.4" x-text="'('+byStatus(s).length+')'"></span>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <!-- Kaart per item -->
-                <template x-for="item in byStatus(s)" :key="item.id">
-                  <div class="card">
-                    <!-- Kaart-header: ID + acties -->
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-                      <span style="font-size:11px;font-family:monospace;opacity:.4" x-text="item.id"></span>
-                      <div style="display:flex;gap:4px">
-                        <button class="btn-ghost btn" style="padding:2px 4px;font-size:12px" @click="openEdit(item)">✏️</button>
-                        <button class="btn-ghost btn" style="padding:2px 4px;font-size:12px" @click="deleteItem(item.id)">🗑</button>
-                      </div>
-                    </div>
-                    <!-- Titel -->
-                    <div style="font-weight:500;font-size:13px;margin-bottom:6px;line-height:1.4" x-text="item.title"></div>
-                    <!-- Omschrijving (max 2 regels) -->
-                    <template x-if="item.description">
-                      <div style="font-size:12px;color:#666;margin-bottom:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden"
-                           x-text="item.description"></div>
-                    </template>
-                    <!-- Prioriteit, fase en toegewezen persoon -->
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-                      <span class="badge" :class="priorityClass(item.priority)">
-                        <span class="dot" :class="dotClass(item.priority)"></span>
-                        <span x-text="item.priority"></span>
-                      </span>
-                      <template x-if="item.phase">
-                        <span class="badge" style="border-color:#ccc;color:#666" x-text="item.phase"></span>
-                      </template>
-                      <template x-if="item.assignee">
-                        <span style="font-size:11px;color:#888">👤 <span x-text="item.assignee"></span></span>
-                      </template>
-                    </div>
-                    <!-- Tags -->
-                    <template x-if="item.tags">
-                      <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
-                        <template x-for="t in item.tags.split(',').map(x=>x.trim()).filter(Boolean)" :key="t">
-                          <span class="tag" x-text="t"></span>
-                        </template>
-                      </div>
-                    </template>
-                  </div>
-                </template>
-                <!-- Lege kolom indicator -->
-                <template x-if="byStatus(s).length===0">
-                  <div style="font-size:12px;color:#ccc;padding:6px 0">—</div>
-                </template>
-              </div>
-            </div>
-          </template>
-        </div>
-      </template>
-
-      <!-- ===== LIJSTWEERGAVE: tabel met alle gefilterde items ===== -->
-      <template x-if="view==='list' && items.length>0">
-        <div style="border:0.5px solid #e0dfd8;border-radius:10px;overflow:auto">
-          <table class="list-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Titel</th>
-                <th>Fase</th>
-                <th>Type</th>
-                <th>Prioriteit</th>
-                <th>Status</th>
-                <th>Toegewezen</th>
-                <th>Tags</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="item in filtered" :key="item.id">
-                <tr>
-                  <td style="font-family:monospace;font-size:11px;opacity:.5" x-text="item.id"></td>
-                  <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="item.title"></td>
-                  <td style="color:#888" x-text="item.phase"></td>
-                  <td style="color:#888" x-text="item.type"></td>
-                  <td>
-                    <span class="badge" :class="priorityClass(item.priority)">
-                      <span class="dot" :class="dotClass(item.priority)"></span>
-                      <span x-text="item.priority"></span>
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge" :class="statusClass(item.status)"
-                          x-text="statusIcon(item.status)+' '+item.status"></span>
-                  </td>
-                  <td style="color:#888" x-text="item.assignee"></td>
-                  <td>
-                    <div style="display:flex;gap:3px;flex-wrap:wrap">
-                      <template x-for="t in (item.tags||'').split(',').map(x=>x.trim()).filter(Boolean)" :key="t">
-                        <span class="tag" x-text="t"></span>
-                      </template>
-                    </div>
-                  </td>
-                  <td>
-                    <button class="btn-ghost btn" style="padding:2px 5px" @click="openEdit(item)">✏️</button>
-                    <button class="btn-ghost btn" style="padding:2px 5px" @click="deleteItem(item.id)">🗑</button>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-      </template>
-
-    </div><!-- /container -->
-
-    <!-- ===== MODAL: item toevoegen of bewerken ===== -->
-    <template x-if="modal">
-      <div class="modal-overlay" @click.self="closeModal()">
-        <div class="modal">
-          <!-- Modal-header -->
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
-            <h2 style="font-size:17px;font-weight:500"
-                x-text="modalMode==='add' ? 'Item toevoegen' : 'Item bewerken'"></h2>
-            <button class="btn-ghost btn" style="font-size:18px;padding:4px 8px" @click="closeModal()">✕</button>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <!-- Titel (verplicht) -->
-            <div>
-              <label class="label">Titel *</label>
-              <input x-model="form.title" placeholder="Korte, beschrijvende titel"/>
-            </div>
-            <!-- Fase, type, prioriteit en status in 2 kolommen -->
-            <div class="grid2">
-              <div>
-                <label class="label">Fase</label>
-                <select x-model="form.phase">
-                  <option value="">— geen —</option>
-                  <template x-for="p in phases"><option :value="p" x-text="p"></option></template>
-                </select>
-              </div>
-              <div>
-                <label class="label">Type</label>
-                <select x-model="form.type">
-                  <template x-for="t in types"><option :value="t" x-text="t"></option></template>
-                </select>
-              </div>
-              <div>
-                <label class="label">Prioriteit</label>
-                <select x-model="form.priority">
-                  <template x-for="p in priorities"><option :value="p" x-text="p"></option></template>
-                </select>
-              </div>
-              <div>
-                <label class="label">Status</label>
-                <select x-model="form.status">
-                  <template x-for="s in statuses"><option :value="s" x-text="s"></option></template>
-                </select>
-              </div>
-            </div>
-            <!-- Toegewezen persoon -->
-            <div>
-              <label class="label">Toegewezen aan</label>
-              <input x-model="form.assignee" placeholder="Naam of @handle"/>
-            </div>
-            <!-- Tags (kommagescheiden) -->
-            <div>
-              <label class="label">Tags</label>
-              <input x-model="form.tags" placeholder="tag1, tag2, tag3"/>
-            </div>
-            <!-- Vrije omschrijving -->
-            <div>
-              <label class="label">Omschrijving</label>
-              <textarea x-model="form.description"
-                        placeholder="Wat moet er gedaan worden? Waarom?"
-                        rows="3" style="resize:vertical"></textarea>
-            </div>
-
-            <!-- AI-suggestie sectie -->
-            <div style="border-top:0.5px solid #e0dfd8;padding-top:12px">
-              <!-- Knop actief als titel ingevuld én API key aanwezig -->
-              <button class="btn"
-                      :disabled="aiLoading || !form.title.trim() || !apiKey"
-                      @click="getAiSuggestion()"
-                      :style="(!form.title.trim()||!apiKey) ? 'opacity:.4;cursor:not-allowed' : ''">
-                <span x-text="aiLoading ? '…bezig' : '✦ AI suggestie'"></span>
-              </button>
-              <!-- Waarschuwing als API key ontbreekt -->
-              <template x-if="!apiKey">
-                <span style="font-size:11px;color:#f97316;margin-left:8px">Stel eerst je API key in</span>
-              </template>
-              <!-- Resultaat van AI suggestie -->
-              <template x-if="aiSuggestion">
-                <div class="ai-box" x-text="aiSuggestion"></div>
-              </template>
-            </div>
-          </div>
-
-          <!-- Modal-footer: annuleren of opslaan -->
-          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1.5rem">
-            <button class="btn" @click="closeModal()">Annuleren</button>
-            <button class="btn btn-primary"
-                    :disabled="!form.title.trim()"
-                    @click="saveItem()"
-                    x-text="modalMode==='add' ? 'Toevoegen' : 'Opslaan'"></button>
-          </div>
-        </div>
-      </div>
-    </template>
-
-  </div><!-- /x-data -->
-  </div><!-- /page-content -->
-
-  <!-- Footer placeholder: gevuld via fetch -->
+  <!-- Footer placeholder -->
   <div id="footer-placeholder"></div>
 
   <!-- =============================================================
        SCRIPTS — verplichte volgorde:
        supabase → utils.js → auth.js → adminGuard.js → siteAnalytics.js
-       → TopBar fetch → topbar.js → AdminGuard.protect() → backlog init
+       → TopBar fetch → topbar.js → AdminGuard.protect() → backlog.init()
        ============================================================= -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
-  <script src="../js/utils.js"></script>                                        <!-- Gedeelde utilities -->
-  <script src="../js/auth.js"></script>                                         <!-- Authenticatie module -->
-  <script src="/MyFamTreeCollab/js/adminGuard.js"></script>                    <!-- Admin toegangsbeveiliging -->
-  <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                 <!-- Bezoektracking -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
+  <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
   <script>
-    // ── TopBar laden → topbar.js → admin-check → backlog activeren ──
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')                // TopBar HTML ophalen
-      .then(r => r.text())                                      // Response naar tekst
-      .then(html => {
-        document.getElementById('topbar-placeholder').innerHTML = html; // TopBar injecteren
-        const s = document.createElement('script');             // Script element voor topbar.js
-        s.src    = '../js/topbar.js';                           // Pad naar topbar.js
-        s.onload = function () {
-          AdminGuard.protect('admin').then(granted => {         // Admin-check uitvoeren
-            if (!granted) return;                               // Stoppen als geen toegang
-            // AdminGuard heeft #page-content zichtbaar gemaakt — Alpine.js is al geladen via defer
-          });
-        };
-        document.body.appendChild(s);                          // topbar.js aan DOM toevoegen
+  // ── TopBar laden → topbar.js → admin-check → backlog starten ──
+  fetch('/MyFamTreeCollab/Layout/TopBar.html')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('topbar-placeholder').innerHTML = html;     // TopBar injecteren
+      const s = document.createElement('script');                         // Script element aanmaken
+      s.src    = '../js/topbar.js';                                       // Pad naar topbar.js
+      s.onload = function () {
+        AdminGuard.protect('admin').then(granted => {                     // Admin-check uitvoeren
+          if (!granted) return;                                           // Stoppen als geen toegang
+          Backlog.init();                                                 // Backlog opstarten na toegang
+        });
+      };
+      document.body.appendChild(s);                                       // topbar.js aan DOM toevoegen
+    });
+
+  // ── Navbar laden ──
+  fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    .then(r => r.text())
+    .then(html => { document.getElementById('navbar-placeholder').innerHTML = html; });
+
+  // ── Footer laden ──
+  fetch('/MyFamTreeCollab/Layout/Footer.html')
+    .then(r => r.text())
+    .then(html => { document.getElementById('footer-placeholder').innerHTML = html; });
+
+  // ================================================================
+  // BACKLOG MODULE — vanilla JavaScript, geen framework
+  // ================================================================
+  const Backlog = (() => {
+
+    // === State ===
+    let items      = [];           // alle backlog items
+    let phases     = [];           // beschikbare fases
+    let view       = 'board';      // huidige weergave: 'board' of 'list'
+    let search     = '';           // actieve zoekterm
+    let fStatus    = 'All';        // actief statusfilter
+    let fPriority  = 'All';        // actief prioriteitsfilter
+    let fPhase     = 'All';        // actief fasefilter
+    let editId     = null;         // ID van item in bewerking (null = nieuw)
+    let apiKey     = '';           // Anthropic API key
+
+    // === Constanten ===
+    const STATUSES   = ['Open','In Progress','Done','Cancelled','Future'];  // mogelijke statussen
+    const STATUS_ICON = { 'Open':'📋','In Progress':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮' }; // icoon per status
+    const STATUS_CSS  = { 'Open':'s-open','In Progress':'s-inprogress','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future' }; // CSS klasse per status
+    const PRIO_CSS    = { 'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low' };   // CSS klasse per prioriteit
+    const DOT_CSS     = { 'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low' }; // dot klasse per prioriteit
+
+    // === DOM referenties ===
+    const $ = id => document.getElementById(id);                           // korte querySelector helper
+
+    // ── Initialisatie: laad data en koppel events ──
+    async function init() {
+      apiKey = localStorage.getItem('bl_apikey') || '';                    // API key ophalen
+      _updateApiKeyUI();                                                    // UI bijwerken op basis van key
+
+      const savedItems  = localStorage.getItem('bl_items');               // Opgeslagen items ophalen
+      const savedPhases = localStorage.getItem('bl_phases');              // Opgeslagen fases ophalen
+      if (savedItems) {
+        items  = JSON.parse(savedItems);                                   // Items herstellen uit localStorage
+        phases = JSON.parse(savedPhases || '[]');                         // Fases herstellen
+      } else {
+        await _loadFromCSV('../data/backlog.csv');                        // Eerste keer: CSV laden
+      }
+
+      _bindEvents();                                                       // Event listeners koppelen
+      render();                                                            // Eerste render
+    }
+
+    // ── Event listeners koppelen ──
+    function _bindEvents() {
+      // Topbar acties
+      $('btn-add').addEventListener('click', () => openModal());           // Nieuw item
+      $('btn-export').addEventListener('click', exportCSV);               // CSV opslaan
+      $('input-csv').addEventListener('change', importCSV);               // CSV laden
+
+      // API key dropdown
+      $('btn-apikey').addEventListener('click', () => {
+        $('apikey-dropdown').classList.toggle('open');                     // Dropdown tonen/verbergen
+      });
+      $('input-apikey').value = apiKey;                                   // Huidige key invullen
+      $('input-apikey').addEventListener('change', e => {
+        apiKey = e.target.value.trim();                                   // Key opslaan bij wijziging
+        localStorage.setItem('bl_apikey', apiKey);                        // Persisteren
+        _updateApiKeyUI();                                                 // UI bijwerken
+      });
+      document.addEventListener('click', e => {                           // Klik buiten dropdown sluit hem
+        if (!$('btn-apikey').contains(e.target) && !$('apikey-dropdown').contains(e.target))
+          $('apikey-dropdown').classList.remove('open');
       });
 
-    // ── Navbar laden en injecteren ──
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-      .then(r => r.text())
-      .then(html => {
-        document.getElementById('navbar-placeholder').innerHTML = html; // Navbar injecteren
+      // Fase invoer
+      $('btn-new-phase').addEventListener('click', () => {
+        $('phase-input-wrap').classList.add('open');                      // Invoerveld tonen
+        $('btn-new-phase').style.display = 'none';                       // Knop verbergen
+        $('input-new-phase').focus();                                     // Focus op invoer
+      });
+      $('btn-cancel-phase').addEventListener('click', _cancelPhaseInput); // Annuleer fase-invoer
+      $('btn-add-phase').addEventListener('click', _addPhase);            // Fase toevoegen
+      $('input-new-phase').addEventListener('keydown', e => {
+        if (e.key === 'Enter')  _addPhase();                             // Enter bevestigt
+        if (e.key === 'Escape') _cancelPhaseInput();                     // Escape annuleert
       });
 
-    // ── Footer laden en injecteren ──
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-      .then(r => r.text())
-      .then(html => {
-        document.getElementById('footer-placeholder').innerHTML = html; // Footer injecteren
+      // Filters
+      $('input-search').addEventListener('input',  e => { search    = e.target.value; render(); });    // Zoeken
+      $('filter-status').addEventListener('change', e => { fStatus   = e.target.value; render(); });   // Statusfilter
+      $('filter-priority').addEventListener('change',e => { fPriority = e.target.value; render(); });  // Prioriteitsfilter
+
+      // Weergave toggle
+      $('btn-view-board').addEventListener('click', () => { view='board'; _updateViewToggle(); render(); });
+      $('btn-view-list').addEventListener('click',  () => { view='list';  _updateViewToggle(); render(); });
+
+      // Modal
+      $('btn-modal-close').addEventListener('click',  closeModal);        // Modal sluiten via X
+      $('btn-modal-cancel').addEventListener('click', closeModal);        // Modal sluiten via annuleren
+      $('btn-modal-save').addEventListener('click',   saveItem);          // Item opslaan
+      $('modal').addEventListener('click', e => { if (e.target===$('modal')) closeModal(); }); // Klik buiten modal
+
+      // AI suggestie
+      $('btn-ai').addEventListener('click', _getAiSuggestion);           // AI suggestie opvragen
+    }
+
+    // ── Hoofd render: statistieken + fases + inhoud ──
+    function render() {
+      _renderStats();                                                      // Statistieken bijwerken
+      _renderPhasePills();                                                 // Fase pills bijwerken
+      _renderContent();                                                    // Board of lijst bijwerken
+      _updatePhasesInModal();                                              // Fase-opties in modal bijwerken
+    }
+
+    // ── Gefilterde items berekenen ──
+    function _filtered() {
+      const q = search.toLowerCase();                                      // Zoekterm in kleine letters
+      return items.filter(i => {
+        const mq  = !q || i.title.toLowerCase().includes(q) ||           // Zoek in titel
+                    (i.description||'').toLowerCase().includes(q) ||     // Zoek in omschrijving
+                    i.id.toLowerCase().includes(q);                       // Zoek in ID
+        const ms  = fStatus   === 'All' || i.status   === fStatus;       // Statusfilter
+        const mp  = fPriority === 'All' || i.priority === fPriority;     // Prioriteitsfilter
+        const mph = fPhase    === 'All' || i.phase    === fPhase;        // Fasefilter
+        return mq && ms && mp && mph;
       });
-  </script>
+    }
 
-    function backlog() {
-      return {
-        // === State ===
-        items: [],           // alle backlog items
-        phases: [],          // beschikbare fases
-        modal: false,        // modal open/dicht
-        modalMode: 'add',    // 'add' of 'edit'
-        form: {},            // actief formulier in modal
-        search: '',          // zoekterm
-        filterStatus: 'All', // actief statusfilter
-        filterPriority: 'All', // actief prioriteitsfilter
-        filterPhase: 'All',  // actief fasefilter
-        view: 'board',       // 'board' of 'list'
-        newPhase: '',        // invoer voor nieuwe fase
-        showPhaseInput: false, // toon fase-invoerveld
-        showKeyInput: false, // toon API key dropdown
-        apiKey: '',          // Anthropic API key (localStorage)
-        aiLoading: false,    // AI suggestie bezig
-        aiSuggestion: '',    // AI suggestie resultaat
+    // ── Statistieken renderen ──
+    function _renderStats() {
+      const t    = items.length;                                           // Totaal aantal items
+      const done = items.filter(i => i.status==='Done').length;           // Aantal gedaan
+      const pct  = t ? Math.round(done/t*100) : 0;                       // Voortgangspercentage
+      $('stat-grid').innerHTML = `
+        <div class="stat-card"><div class="stat-label">Totaal</div><div class="stat-value">${t}</div></div>
+        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${items.filter(i=>i.status==='Open').length}</div></div>
+        <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${items.filter(i=>i.status==='In Progress').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">${done}</div></div>
+        <div class="stat-card">
+          <div class="stat-label">Voortgang</div>
+          <div class="stat-value">${pct}%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      $('bl-meta').textContent = `${t} items · ${pct}% afgerond`;        // Meta tekst bijwerken
+    }
 
-        // Vaste lijsten voor dropdowns
-        statuses:   ['Open', 'In Progress', 'Done', 'Cancelled', 'Future'],
-        priorities: ['Critical', 'High', 'Medium', 'Low'],
-        types:      ['Feature', 'Bug', 'Improvement', 'Security', 'Tech Debt', 'Other'],
+    // ── Fase pills renderen ──
+    function _renderPhasePills() {
+      $('phase-pills').innerHTML = phases.map(ph => `
+        <span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}">
+          ${ph} <span class="phase-remove" data-remove="${ph}" style="margin-left:5px;opacity:.4;cursor:pointer">×</span>
+        </span>`).join('');
+      // Klikhandler op pills
+      $('phase-pills').querySelectorAll('.phase-pill').forEach(el => {
+        el.addEventListener('click', e => {
+          if (e.target.dataset.remove) { _removePhase(e.target.dataset.remove); return; } // Verwijder fase
+          const ph = el.dataset.phase;
+          fPhase = fPhase===ph ? 'All' : ph;                             // Toggle fasefilter
+          render();
+        });
+      });
+    }
 
-        // === Initialisatie ===
-        async init() {
-          this.apiKey = localStorage.getItem('bl_apikey') || '';
-          const savedItems  = localStorage.getItem('bl_items');
-          const savedPhases = localStorage.getItem('bl_phases');
-          if (savedItems) {
-            // localStorage heeft prioriteit: gebruiker heeft al wijzigingen
-            this.items  = JSON.parse(savedItems);
-            this.phases = JSON.parse(savedPhases || '[]');
-          } else {
-            // Eerste keer: laad vanuit data/backlog.csv
-            await this.loadFromCSV('../data/backlog.csv');
-          }
-        },
+    // ── Inhoud renderen: board of lijst ──
+    function _renderContent() {
+      const filtered = _filtered();                                        // Gefilterde items ophalen
+      if (items.length === 0) {                                           // Lege staat tonen
+        $('bl-content').innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">📋</div>
+            <p>Nog geen items. Laad een CSV of voeg je eerste item toe.</p>
+            <button class="btn btn-primary" id="btn-add-empty">+ Eerste item toevoegen</button>
+          </div>`;
+        $('btn-add-empty').addEventListener('click', () => openModal());  // Knop in lege staat
+        return;
+      }
+      $('bl-content').innerHTML = view==='board' ? _boardHTML(filtered) : _listHTML(filtered); // Board of lijst
+      _bindContentEvents();                                               // Events op gegenereerde HTML
+    }
 
-        // Laad items vanuit een CSV-url (fetch) of tekstinhoud
-        async loadFromCSV(url) {
-          try {
-            const res  = await fetch(url);
-            const text = await res.text();
-            this._parseCSVText(text);
-          } catch(e) {
-            console.warn('backlog.csv niet geladen:', e);
-            this.items  = [];
-            this.phases = [];
-          }
-        },
+    // ── Board HTML opbouwen ──
+    function _boardHTML(filtered) {
+      return `<div class="board">${STATUSES.map(s => {
+        const col = filtered.filter(i => i.status===s);                  // Items voor deze kolom
+        return `<div>
+          <div class="board-col-title">${STATUS_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
+          <div class="board-col-items">
+            ${col.length ? col.map(_cardHTML).join('') : '<div class="board-empty">—</div>'}
+          </div></div>`;
+      }).join('')}</div>`;
+    }
 
-        // Importeer CSV vanuit bestandskiezer
-        importCSV(event) {
-          const file = event.target.files[0];
-          if (!file) return;
-          if (!confirm('Huidige data vervangen door ' + file.name + '?')) {
-            event.target.value = ''; return;
-          }
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            this._parseCSVText(e.target.result);
-            event.target.value = '';
-            alert(this.items.length + ' items geladen uit ' + file.name);
-          };
-          reader.readAsText(file);
-        },
+    // ── Kaart HTML opbouwen ──
+    function _cardHTML(item) {
+      const tags = (item.tags||'').split(',').map(t=>t.trim()).filter(Boolean); // Tags splitsen
+      return `<div class="card">
+        <div class="card-header">
+          <span class="card-id">${item.id}</span>
+          <div class="card-actions">
+            <button class="btn-ghost btn" data-edit="${item.id}" style="padding:2px 4px;font-size:12px">✏️</button>
+            <button class="btn-ghost btn" data-delete="${item.id}" style="padding:2px 4px;font-size:12px">🗑</button>
+          </div>
+        </div>
+        <div class="card-title">${item.title}</div>
+        ${item.description ? `<div class="card-desc">${item.description}</div>` : ''}
+        <div class="card-footer">
+          <span class="badge ${PRIO_CSS[item.priority]||'p-medium'}">
+            <span class="dot ${DOT_CSS[item.priority]||'dot-medium'}"></span>${item.priority}
+          </span>
+          ${item.phase ? `<span class="badge" style="border-color:#ccc;color:#666">${item.phase}</span>` : ''}
+          ${item.assignee ? `<span class="assignee">👤 ${item.assignee}</span>` : ''}
+        </div>
+        ${tags.length ? `<div class="card-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}
+      </div>`;
+    }
 
-        // Gedeelde CSV-parser: verwerkt tekst naar items en fases
-        _parseCSVText(text) {
-          const rows    = text.trim().split('\n');
-          const headers = rows[0].split(',').map(h => h.trim());
-          this.items = rows.slice(1).map(row => {
-            // Parse met ondersteuning voor geciteerde velden met komma's
-            const vals = []; let cur = ''; let inQ = false;
-            for (const ch of row) {
-              if (ch === '"')            { inQ = !inQ; }
-              else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
-              else                       { cur += ch; }
-            }
-            vals.push(cur.trim());
-            const obj = {};
-            headers.forEach((h, i) => obj[h] = vals[i] || '');
-            return obj;
-          }).filter(i => i.id); // lege rijen overslaan
-          // Fases afleiden uit data, volgorde behouden
-          const seen = new Set();
-          this.phases = this.items
-            .map(i => i.phase)
-            .filter(p => p && !seen.has(p) && seen.add(p));
-          this.save();
-        },
+    // ── Lijst HTML opbouwen ──
+    function _listHTML(filtered) {
+      if (!filtered.length) return '<p style="color:#888;font-size:13px;padding:1rem 0">Geen items gevonden.</p>';
+      return `<div class="list-wrap"><table class="list-table">
+        <thead><tr>
+          <th>ID</th><th>Titel</th><th>Fase</th><th>Type</th>
+          <th>Prioriteit</th><th>Status</th><th>Toegewezen</th><th>Tags</th><th></th>
+        </tr></thead>
+        <tbody>${filtered.map(i => {
+          const tags = (i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+          return `<tr>
+            <td style="font-family:monospace;font-size:11px;opacity:.5">${i.id}</td>
+            <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</td>
+            <td style="color:#888">${i.phase||''}</td>
+            <td style="color:#888">${i.type||''}</td>
+            <td><span class="badge ${PRIO_CSS[i.priority]||'p-medium'}"><span class="dot ${DOT_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span></td>
+            <td><span class="badge ${STATUS_CSS[i.status]||'s-open'}">${STATUS_ICON[i.status]||''} ${i.status}</span></td>
+            <td style="color:#888">${i.assignee||''}</td>
+            <td>${tags.map(t=>`<span class="tag">${t}</span>`).join(' ')}</td>
+            <td>
+              <button class="btn-ghost btn" data-edit="${i.id}" style="padding:2px 5px">✏️</button>
+              <button class="btn-ghost btn" data-delete="${i.id}" style="padding:2px 5px">🗑</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody></table></div>`;
+    }
 
-        // === Persistentie ===
-        save() {
-          localStorage.setItem('bl_items',  JSON.stringify(this.items));
-          localStorage.setItem('bl_phases', JSON.stringify(this.phases));
-        },
-        saveKey() { localStorage.setItem('bl_apikey', this.apiKey); },
+    // ── Events koppelen op dynamisch gegenereerde HTML ──
+    function _bindContentEvents() {
+      $('bl-content').querySelectorAll('[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn.dataset.edit)); // Bewerk-knop
+      });
+      $('bl-content').querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => _deleteItem(btn.dataset.delete)); // Verwijder-knop
+      });
+    }
 
-        // === Hulpfuncties ===
-        genId() { return Math.random().toString(36).slice(2, 8).toUpperCase(); },
-        emptyForm() {
-          return { id: '', phase: '', title: '', description: '', type: 'Feature', priority: 'Medium', status: 'Open', assignee: '', tags: '' };
-        },
+    // ── Modal openen ──
+    function openModal(id) {
+      editId = id || null;                                                 // Bewerkings-ID opslaan
+      $('modal-title').textContent  = id ? 'Item bewerken' : 'Item toevoegen'; // Titel aanpassen
+      $('btn-modal-save').textContent = id ? 'Opslaan' : 'Toevoegen';   // Knoptekst aanpassen
+      $('ai-box').style.display    = 'none';                             // AI box verbergen
+      $('ai-box').textContent      = '';                                 // AI box leegmaken
+      $('ai-warning').style.display = apiKey ? 'none' : 'inline';       // Waarschuwing tonen als geen key
+      _updatePhasesInModal();                                             // Fase-opties vullen
 
-        // === Modal beheer ===
-        openAdd()       { this.form = this.emptyForm(); this.aiSuggestion = ''; this.modalMode = 'add';  this.modal = true; },
-        openEdit(item)  { this.form = { ...item };      this.aiSuggestion = ''; this.modalMode = 'edit'; this.modal = true; },
-        closeModal()    { this.modal = false; this.aiSuggestion = ''; },
+      if (id) {
+        const item = items.find(i => i.id===id);                         // Bestaand item ophalen
+        if (!item) return;
+        $('f-title').value       = item.title       || '';               // Formulier vullen
+        $('f-phase').value       = item.phase       || '';
+        $('f-type').value        = item.type        || 'Feature';
+        $('f-priority').value    = item.priority    || 'Medium';
+        $('f-status').value      = item.status      || 'Open';
+        $('f-assignee').value    = item.assignee    || '';
+        $('f-tags').value        = item.tags        || '';
+        $('f-description').value = item.description || '';
+      } else {
+        // Leeg formulier voor nieuw item
+        $('f-title').value=''; $('f-phase').value=''; $('f-type').value='Feature';
+        $('f-priority').value='Medium'; $('f-status').value='Open';
+        $('f-assignee').value=''; $('f-tags').value=''; $('f-description').value='';
+      }
+      $('modal').classList.add('open');                                   // Modal zichtbaar maken
+      $('f-title').focus();                                               // Focus op titelveld
+    }
 
-        // Sla item op (nieuw of bestaand)
-        saveItem() {
-          if (!this.form.title.trim()) return;
-          const item = { ...this.form, id: this.form.id || this.genId() };
-          if (this.modalMode === 'add') this.items.push(item);
-          else this.items = this.items.map(i => i.id === item.id ? item : i);
-          this.save();
-          this.closeModal();
-        },
+    // ── Modal sluiten ──
+    function closeModal() {
+      $('modal').classList.remove('open');                                // Modal verbergen
+      editId = null;                                                       // Bewerkings-ID resetten
+    }
 
-        // Verwijder item na bevestiging
-        deleteItem(id) {
-          if (!confirm('Dit item verwijderen?')) return;
-          this.items = this.items.filter(i => i.id !== id);
-          this.save();
-        },
+    // ── Item opslaan (nieuw of bestaand) ──
+    function saveItem() {
+      const title = $('f-title').value.trim();
+      if (!title) { $('f-title').focus(); return; }                      // Titel verplicht
+      const item = {
+        id:          editId || _genId(),                                  // Nieuw ID genereren of bestaande gebruiken
+        title,
+        phase:       $('f-phase').value,
+        type:        $('f-type').value,
+        priority:    $('f-priority').value,
+        status:      $('f-status').value,
+        assignee:    $('f-assignee').value.trim(),
+        tags:        $('f-tags').value.trim(),
+        description: $('f-description').value.trim(),
+      };
+      if (editId) items = items.map(i => i.id===editId ? item : i);     // Bestaand item vervangen
+      else        items.push(item);                                       // Nieuw item toevoegen
+      _save();                                                             // Persisteren
+      closeModal();                                                        // Modal sluiten
+      render();                                                            // Opnieuw renderen
+    }
 
-        // === Fase beheer ===
-        addPhase() {
-          const v = this.newPhase.trim();
-          if (v && !this.phases.includes(v)) { this.phases.push(v); this.save(); }
-          this.newPhase = ''; this.showPhaseInput = false;
-        },
-        removePhase(ph) {
-          this.phases = this.phases.filter(p => p !== ph);
-          if (this.filterPhase === ph) this.filterPhase = 'All';
-          this.save();
-        },
+    // ── Item verwijderen ──
+    function _deleteItem(id) {
+      if (!confirm('Dit item verwijderen?')) return;                      // Bevestiging vragen
+      items = items.filter(i => i.id!==id);                              // Item verwijderen
+      _save(); render();                                                   // Opslaan en renderen
+    }
 
-        // === Gefilterde items (getter) ===
-        get filtered() {
-          const q = this.search.toLowerCase();
-          return this.items.filter(i => {
-            const mq  = !q || i.title.toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || i.id.toLowerCase().includes(q);
-            const ms  = this.filterStatus   === 'All' || i.status   === this.filterStatus;
-            const mp  = this.filterPriority === 'All' || i.priority === this.filterPriority;
-            const mph = this.filterPhase    === 'All' || i.phase    === this.filterPhase;
-            return mq && ms && mp && mph;
-          });
-        },
+    // ── Fase toevoegen ──
+    function _addPhase() {
+      const v = $('input-new-phase').value.trim();
+      if (v && !phases.includes(v)) { phases.push(v); _save(); }        // Fase toevoegen als nieuw
+      _cancelPhaseInput();                                                 // Invoerveld verbergen
+      render();                                                            // Opnieuw renderen
+    }
 
-        // Items per status kolom (board)
-        byStatus(s) { return this.filtered.filter(i => i.status === s); },
+    // ── Fase verwijderen ──
+    function _removePhase(ph) {
+      phases = phases.filter(p => p!==ph);                               // Fase verwijderen
+      if (fPhase===ph) fPhase='All';                                     // Filter resetten als actief
+      _save(); render();
+    }
 
-        // === Statistieken (getter) ===
-        get stats() {
-          const t = this.items.length;
-          return {
-            total:  t,
-            done:   this.items.filter(i => i.status === 'Done').length,
-            inprog: this.items.filter(i => i.status === 'In Progress').length,
-            open:   this.items.filter(i => i.status === 'Open').length,
-            pct:    t ? Math.round(this.items.filter(i => i.status === 'Done').length / t * 100) : 0
-          };
-        },
+    // ── Fase invoer annuleren ──
+    function _cancelPhaseInput() {
+      $('input-new-phase').value = '';                                    // Invoer leegmaken
+      $('phase-input-wrap').classList.remove('open');                    // Invoerveld verbergen
+      $('btn-new-phase').style.display = '';                             // Knop terug tonen
+    }
 
-        // === CSS klasse helpers ===
-        priorityClass(p) { return { Critical: 'p-critical', High: 'p-high', Medium: 'p-medium', Low: 'p-low' }[p] || 'p-medium'; },
-        dotClass(p)      { return { Critical: 'dot-critical', High: 'dot-high', Medium: 'dot-medium', Low: 'dot-low' }[p] || 'dot-medium'; },
-        statusClass(s)   { return { 'Open': 's-open', 'In Progress': 's-inprogress', 'Done': 's-done', 'Cancelled': 's-cancelled', 'Future': 's-future' }[s] || 's-open'; },
-        statusIcon(s)    { return { 'Open': '📋', 'In Progress': '🔄', 'Done': '✅', 'Cancelled': '❌', 'Future': '🔮' }[s] || '📋'; },
+    // ── Fase-opties in modal bijwerken ──
+    function _updatePhasesInModal() {
+      $('f-phase').innerHTML = `<option value="">— geen —</option>` +
+        phases.map(p => `<option value="${p}">${p}</option>`).join('');  // Opties genereren
+    }
 
-        // === CSV export ===
-        exportCSV() {
-          const cols = ['id', 'phase', 'title', 'description', 'type', 'priority', 'status', 'assignee', 'tags'];
-          // Header rij + data rijen, velden geciteerd voor veiligheid
-          const rows = [
-            cols.join(','),
-            ...this.items.map(i => cols.map(c => '"' + (i[c] || '').replace(/"/g, '""') + '"').join(','))
-          ];
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' }));
-          a.download = 'backlog.csv';
-          a.click();
-        },
+    // ── Weergave toggle bijwerken ──
+    function _updateViewToggle() {
+      $('btn-view-board').classList.toggle('active', view==='board');    // Board knop actief
+      $('btn-view-list').classList.toggle('active',  view==='list');     // Lijst knop actief
+    }
 
-        // === AI suggestie via Anthropic API ===
-        async getAiSuggestion() {
-          if (!this.form.title.trim() || !this.apiKey) return;
-          this.aiLoading = true;
-          this.aiSuggestion = '';
-          try {
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
-              },
-              body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 800,
-                messages: [{
-                  role: 'user',
-                  content: `Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags (komma-gescheiden)\n\nTitel: ${this.form.title}\nOmschrijving: ${this.form.description || '(geen)'}\nType: ${this.form.type}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`
-                }]
-              })
-            });
-            const data = await res.json();
-            this.aiSuggestion = data.content?.[0]?.text || 'Geen suggestie ontvangen.';
-          } catch(e) {
-            this.aiSuggestion = 'Fout: ' + e.message;
-          }
-          this.aiLoading = false;
+    // ── API key UI bijwerken ──
+    function _updateApiKeyUI() {
+      if (apiKey) {
+        $('apikey-label').textContent = 'AI gereed';                     // Label bijwerken
+        $('btn-apikey').classList.add('btn-ai-ready');                   // Groene stijl
+      } else {
+        $('apikey-label').textContent = 'API key instellen';             // Label resetten
+        $('btn-apikey').classList.remove('btn-ai-ready');                // Stijl resetten
+      }
+    }
+
+    // ── CSV laden via fetch (eerste keer) ──
+    async function _loadFromCSV(url) {
+      try {
+        const res  = await fetch(url);                                    // CSV ophalen
+        const text = await res.text();                                    // Naar tekst
+        _parseCSVText(text);                                              // Parsen
+      } catch(e) {
+        console.warn('backlog.csv niet geladen:', e);                    // Foutmelding in console
+        items=[]; phases=[];
+      }
+    }
+
+    // ── CSV importeren vanuit bestandskiezer ──
+    function importCSV(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!confirm('Huidige data vervangen door ' + file.name + '?')) { e.target.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        _parseCSVText(ev.target.result);                                  // Bestand parsen
+        e.target.value = '';
+        alert(items.length + ' items geladen uit ' + file.name);         // Bevestiging tonen
+        render();
+      };
+      reader.readAsText(file);                                             // Bestand lezen
+    }
+
+    // ── CSV tekst parsen naar items en fases ──
+    function _parseCSVText(text) {
+      const rows    = text.trim().split('\n');
+      const headers = rows[0].split(',').map(h => h.trim());             // Kolomnamen uit eerste rij
+      items = rows.slice(1).map(row => {
+        const vals=[]; let cur=''; let inQ=false;
+        for (const ch of row) {                                          // Teken voor teken parsen
+          if (ch==='"')           { inQ=!inQ; }                         // Aanhalingstekens afhandelen
+          else if (ch===',' && !inQ) { vals.push(cur.trim()); cur=''; } // Komma als scheidingsteken
+          else                    { cur+=ch; }
         }
+        vals.push(cur.trim());
+        const obj={};
+        headers.forEach((h,i) => obj[h]=vals[i]||'');                   // Object opbouwen
+        return obj;
+      }).filter(i => i.id);                                               // Lege rijen overslaan
+      const seen=new Set();
+      phases = items.map(i=>i.phase).filter(p=>p && !seen.has(p) && seen.add(p)); // Fases afleiden
+      _save();
+    }
 
-      }; // einde return object
-    } // einde backlog()
+    // ── Data persisteren naar localStorage ──
+    function _save() {
+      localStorage.setItem('bl_items',  JSON.stringify(items));          // Items opslaan
+      localStorage.setItem('bl_phases', JSON.stringify(phases));         // Fases opslaan
+    }
+
+    // ── CSV exporteren ──
+    function exportCSV() {
+      const cols = ['id','phase','title','description','type','priority','status','assignee','tags'];
+      const rows = [cols.join(','), ...items.map(i =>
+        cols.map(c => '"'+(i[c]||'').replace(/"/g,'""')+'"').join(',')  // Velden citeren
+      )];
+      const a = document.createElement('a');
+      a.href     = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));
+      a.download = 'backlog.csv';
+      a.click();                                                          // Download starten
+    }
+
+    // ── Willekeurig ID genereren ──
+    function _genId() { return Math.random().toString(36).slice(2,8).toUpperCase(); }
+
+    // ── AI suggestie ophalen via Anthropic API ──
+    async function _getAiSuggestion() {
+      const title = $('f-title').value.trim();
+      if (!title || !apiKey) return;                                      // Titel en key vereist
+      $('btn-ai').textContent    = '…bezig';                             // Knoptekst bijwerken
+      $('btn-ai').disabled       = true;                                  // Knop uitschakelen
+      $('ai-box').style.display  = 'none';                               // AI box verbergen
+      try {
+        const res  = await fetch('https://api.anthropic.com/v1/messages', {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'x-api-key':     apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'          // Vereist voor directe browser-aanroep
+          },
+          body: JSON.stringify({
+            model:      'claude-sonnet-4-20250514',
+            max_tokens: 800,
+            messages:   [{ role:'user', content:
+              `Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags (komma-gescheiden)\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`
+            }]
+          })
+        });
+        const data = await res.json();
+        $('ai-box').textContent   = data.content?.[0]?.text || 'Geen suggestie ontvangen.'; // Resultaat tonen
+        $('ai-box').style.display = 'block';
+      } catch(e) {
+        $('ai-box').textContent   = 'Fout: ' + e.message;               // Fout tonen
+        $('ai-box').style.display = 'block';
+      }
+      $('btn-ai').textContent = '✦ AI suggestie';                        // Knoptekst herstellen
+      $('btn-ai').disabled    = false;                                    // Knop inschakelen
+    }
+
+    // Publieke interface van de module
+    return { init };
+
+  })(); // einde Backlog module
   </script>
 
 </body>
