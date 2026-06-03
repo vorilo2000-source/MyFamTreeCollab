@@ -24,10 +24,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Backlog — Admin</title>
 
-  <!-- AdminGuard: blokkeert toegang voor niet-admins -->
-  <script src="../js/adminGuard.js"></script>
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
 
-  <!-- Alpine.js: reactieve UI zonder framework -->
+  <!-- Globale CSS -->
+  <link rel="stylesheet" href="../css/style.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Alpine.js: reactieve UI (defer zodat DOM eerst klaar is) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
 
   <style>
@@ -133,11 +142,17 @@
 </head>
 <body>
 
-    <!-- ======================= ERUDA DEBUGGER (dev only) ======================= -->
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>             <!-- Mobiele devtools bibliotheek -->
-    <script>eruda.init();</script>                                         <!-- Eruda activeren -->
-    
-  <!-- Getoond als gebruiker geen admin is -->
+  <!-- Eruda mobiele devtools (dev only) -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+
+  <!-- Topbar placeholder: gevuld via fetch -->
+  <div id="topbar-placeholder"></div>
+
+  <!-- Navbar placeholder: gevuld via fetch -->
+  <div id="navbar-placeholder"></div>
+
+  <!-- Toegang geweigerd: zichtbaar voor niet-admins via adminGuard.js -->
   <div id="accessDenied">
     <div style="font-size:32px;margin-bottom:12px">🔒</div>
     <div style="font-weight:500;font-size:17px;margin-bottom:8px">Toegang geweigerd</div>
@@ -497,9 +512,51 @@
   </div><!-- /x-data -->
   </div><!-- /page-content -->
 
+  <!-- Footer placeholder: gevuld via fetch -->
+  <div id="footer-placeholder"></div>
+
+  <!-- =============================================================
+       SCRIPTS — verplichte volgorde:
+       supabase → utils.js → auth.js → adminGuard.js → siteAnalytics.js
+       → TopBar fetch → topbar.js → AdminGuard.protect() → backlog init
+       ============================================================= -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Supabase SDK -->
+  <script src="../js/utils.js"></script>                                        <!-- Gedeelde utilities -->
+  <script src="../js/auth.js"></script>                                         <!-- Authenticatie module -->
+  <script src="/MyFamTreeCollab/js/adminGuard.js"></script>                    <!-- Admin toegangsbeveiliging -->
+  <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                 <!-- Bezoektracking -->
+
   <script>
-    // Blokkeer toegang voor niet-admins via centrale guard
-    AdminGuard.protect('admin');
+    // ── TopBar laden → topbar.js → admin-check → backlog activeren ──
+    fetch('/MyFamTreeCollab/Layout/TopBar.html')                // TopBar HTML ophalen
+      .then(r => r.text())                                      // Response naar tekst
+      .then(html => {
+        document.getElementById('topbar-placeholder').innerHTML = html; // TopBar injecteren
+        const s = document.createElement('script');             // Script element voor topbar.js
+        s.src    = '../js/topbar.js';                           // Pad naar topbar.js
+        s.onload = function () {
+          AdminGuard.protect('admin').then(granted => {         // Admin-check uitvoeren
+            if (!granted) return;                               // Stoppen als geen toegang
+            // AdminGuard heeft #page-content zichtbaar gemaakt — Alpine.js is al geladen via defer
+          });
+        };
+        document.body.appendChild(s);                          // topbar.js aan DOM toevoegen
+      });
+
+    // ── Navbar laden en injecteren ──
+    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('navbar-placeholder').innerHTML = html; // Navbar injecteren
+      });
+
+    // ── Footer laden en injecteren ──
+    fetch('/MyFamTreeCollab/Layout/Footer.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('footer-placeholder').innerHTML = html; // Footer injecteren
+      });
+  </script>
 
     function backlog() {
       return {
