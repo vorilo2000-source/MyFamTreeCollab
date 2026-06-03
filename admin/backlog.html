@@ -55,14 +55,50 @@
     .bl-topbar-meta { font-size: 13px; color: #888; margin-left: 12px; }
     .bl-topbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-    /* === Knoppen === */
-    .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border: 0.5px solid #ccc; border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer; font-family: inherit; transition: background .15s; }
-    .btn:hover { background: #f1f0ec; }
-    .btn-primary { background: #1a1a18; color: #fff; border-color: #1a1a18; }
-    .btn-primary:hover { background: #333; }
-    .btn-ghost { border-color: transparent; background: transparent; }
-    .btn-ghost:hover { background: #f1f0ec; }
-    .btn-ai-ready { border-color: #86efac !important; color: #15803d !important; }
+/* === Knoppen === */
+
+.btn {                                  /* Basisstijl voor alle knoppen */
+    display: inline-flex;               /* Flexbox voor tekst en iconen */
+    align-items: center;                /* Verticaal centreren */
+    gap: 5px;                           /* Ruimte tussen icoon en tekst */
+    padding: 6px 14px;                  /* Binnenmarge */
+    border: 0.5px solid #ccc;           /* Lichtgrijze rand */
+    border-radius: 8px;                 /* Afgeronde hoeken */
+    background: #fff;                   /* Witte achtergrond */
+    color: #1a1a18;                     /* Donkere tekst voor goede leesbaarheid */
+    font-size: 13px;                    /* Tekstgrootte */
+    cursor: pointer;                    /* Handje bij hover */
+    font-family: inherit;               /* Lettertype van parent-element gebruiken */
+    transition: background .15s;        /* Vloeiende hover-overgang */
+}
+
+.btn:hover {                            /* Hover-effect voor standaard knoppen */
+    background: #f1f0ec;                /* Licht beige achtergrond */
+}
+
+.btn-primary {                          /* Primaire actieknop */
+    background: #1a1a18;                /* Donkere achtergrond */
+    color: #fff;                        /* Witte tekst */
+    border-color: #1a1a18;              /* Rand gelijk aan achtergrond */
+}
+
+.btn-primary:hover {                    /* Hover-effect voor primaire knop */
+    background: #333;                   /* Iets lichtere donkere tint */
+}
+
+.btn-ghost {                            /* Subtiele knop zonder zichtbare rand */
+    border-color: transparent;          /* Rand verbergen */
+    background: transparent;            /* Transparante achtergrond */
+}
+
+.btn-ghost:hover {                      /* Hover-effect voor ghost-knoppen */
+    background: #f1f0ec;                /* Licht beige achtergrond */
+}
+
+.btn-ai-ready {                         /* Stijl wanneer een geldige API-key aanwezig is */
+    border-color: #86efac !important;   /* Lichtgroene rand */
+    color: #15803d !important;          /* Donkergroene tekst */
+}
 
     /* === API key dropdown === */
     .apikey-wrap { position: relative; }
