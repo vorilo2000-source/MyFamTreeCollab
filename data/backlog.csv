@@ -1,0 +1,67 @@
+id,phase,title,description,type,priority,status,assignee,tags
+F0-01,Fase 0,ZIP analyseren en alle bestanden inventariseren,,Feature,Low,Done,,audit
+F0-02,Fase 0,js/DeleteRow.js verwijderen (leeg bestand),,Tech Debt,Low,Done,,opschoning
+F0-03,Fase 0,js/schemaGlobal.js verwijderen (verouderd),,Tech Debt,Low,Done,,opschoning
+F0-04,Fase 0,Alle dubbele functies in kaart brengen,,Feature,Low,Done,,audit
+F0-05,Fase 0,Kapotte bestanden identificeren,,Bug,Low,Done,,audit
+F1-01,Fase 1,idGenerator.js herbouwen als centrale module (v2.0.0),,Improvement,Low,Done,,core
+F1-02,Fase 1,"utils.js aanmaken met safe(), formatDate(), parseBirthday()",,Feature,Low,Done,,core
+F1-03,Fase 1,Lokale safe() verwijderen uit alle bestanden,,Tech Debt,Low,Done,,opschoning
+F1-04,Fase 1,computeRelaties() naar centrale relatieEngine.js,,Improvement,Low,Done,,core
+F1-05,Fase 1,LiveSearch.js volledig in IIFE wikkelen,Bugfix: safe already declared,Bug,Low,Done,,bugfix
+F1-06,Fase 1,utils.js als eerste script toevoegen aan alle pagina's,,Improvement,Low,Done,,core
+F1-07,Fase 1,relatieEngine.js toevoegen aan manage.html,Ontbrak,Bug,Low,Done,,bugfix
+F2-01,Fase 2,export.js herschrijven als centrale module met CSV + JSON,,Improvement,Low,Done,,export
+F2-02,Fase 2,export.html repareren: storage.js + schema.js laden,,Bug,Low,Done,,export
+F2-03,Fase 2,export.html uitbreiden met JSON-knop,,Feature,Low,Done,,export
+F2-04,Fase 2,storage.html exportcode vervangen door centrale export.js,,Improvement,Low,Done,,export
+F2-05,Fase 2,Export JSON/CSV knoppen verwijderen uit storage.html,,Tech Debt,Low,Done,,opschoning
+F2-06,Fase 2,storage.js: migrate() niet meer bij elke get(),,Improvement,Low,Done,,storage
+F2-07,Fase 2,storage.js: migrate() geeft null bij ongeldig record,,Bug,Low,Done,,storage
+F2-08,Fase 2,storage.js: console.log bij laden verwijderd,,Tech Debt,Low,Done,,opschoning
+F2-09,Fase 2,js/LSD.js dubbele DOMContentLoaded,,Bug,Low,Cancelled,,
+F3-45,Fase 3,Popup-stijlen verplaatsen naar style.css,,Improvement,Medium,Open,,zoeken,css
+F3-46,Fase 3,Keyboard navigatie in zoekpopup,,Feature,Medium,Open,,zoeken,ux
+F3-47,Fase 3,Zoekgeschiedenis,,Feature,Low,Open,,zoeken
+F3-49,Fase 3,Relatie toevoegen vanuit manage.html,,Feature,High,Open,,relaties
+F3-50,Fase 3,Grootouders en kleinkinderen tonen in view.html,,Feature,Medium,Open,,relaties
+F3-51,Fase 3,Halfbroers/halfzussen correct onderscheiden,,Feature,Medium,Open,,relaties
+F3-52,Fase 3,Relatie-labels vertalen,,Improvement,Low,Open,,relaties,i18n
+F3-53,Fase 3,Verbindingslijnen tekenen (SVG of CSS),,Feature,High,Future,,stamboom,visualisatie
+F3-54,Fase 3,Foto/avatar toevoegen aan persoon-node,,Feature,High,Future,,stamboom
+F3-55,Fase 3,Zoom en pan op de stamboomweergave,,Feature,Medium,Future,,stamboom,ux
+F3-56,Fase 3,Uitklappen/inklappen van takken,,Feature,Low,Future,,stamboom
+F3-58,Fase 3,Levensspanne als balk weergeven,,Feature,Medium,Future,,tijdlijn
+F3-59,Fase 3,Schaalbare tijdas,,Feature,Medium,Future,,tijdlijn
+F3-60,Fase 3,Historische gebeurtenissen toevoegen,,Feature,Low,Future,,tijdlijn
+F3-63,Fase 3,Import preview tonen vóór opslaan,,Feature,Medium,Open,,import
+F3-64,Fase 3,GEDCOM-formaat importeren,,Feature,Medium,Open,,import
+F3-68,Fase 3,stamboom/stats.html JS verplaatsen naar apart stats.js,,Tech Debt,Medium,Open,,refactor
+F3-69,Fase 3,home/print.html implementeren,,Feature,Medium,Open,,
+F3-70,Fase 3,schema.js herschrijven met inline commentaar,,Tech Debt,Low,Open,,documentatie
+F8-17,Fase 8,Automatische namespace detectie op basis van URL,,Feature,Low,Future,,i18n
+F8-18,Fase 8,Missing key logging activeren in development,,Feature,Low,Future,,i18n,dev
+F9-01,Fase 9,Ontwerp bronnen-datamodel (Supabase tabel bronnen),,Feature,High,Open,,bronnen,supabase
+F9-02,Fase 9,stamboom/bronnen.html aanmaken — overzicht en beheer,,Feature,High,Open,,bronnen
+F9-03,Fase 9,js/bronnen.js aanmaken — CRUD voor bronnen,,Feature,High,Open,,bronnen
+F9-04,Fase 9,Bron koppelen aan persoon in manage.html,,Feature,Medium,Open,,bronnen
+F9-05,Fase 9,Bronnen tonen in view.html per persoon,,Feature,Medium,Open,,bronnen
+F9-06,Fase 9,"Brontypen: boek, archief, website, mondelinge overlevering",,Feature,Medium,Open,,bronnen
+F9-07,Fase 9,locales/{nl-en-es}/bronnen.json aanmaken,,Feature,Medium,Open,,bronnen,i18n
+F9-08,Fase 9,Extern archieflink valideren (URL check),,Feature,Low,Open,,bronnen
+F9-09,Fase 9,Bron exporteren als onderdeel van GEDCOM,,Feature,Low,Open,,bronnen,export
+F5-09,Fase 5,Promotiecodes voor cloud toegang,,Feature,Low,Future,,cloud
+F7-01,Fase 7,Stripe integratie,,Feature,Low,Future,,betaling
+F7-02,Fase 7,Ko-fi integratie,,Feature,Low,Future,,betaling
+F7-03,Fase 7,Prijsstelling uitwerken,,Feature,Low,Future,,betaling
+SEC-01,Beveiliging,admin_users view droppen — lekte auth.users via publieke API,,Security,Critical,Done,,security,supabase
+SEC-02,Beveiliging,RLS inschakelen op alle publieke tabellen (6 tabellen),,Security,Critical,Done,,security,supabase
+SEC-03,Beveiliging,Anon-rechten intrekken + authenticated grants minimaliseren,,Security,Critical,Done,,security,supabase
+SEC-04,Beveiliging,Editor-rol schrijfrecht op stambomen via stamboom_gedeeld.rol,RLS was al correct - dubbele policies opgeruimd,Security,Medium,Done,,security
+TD-01,Tech Schuld,js/Sandbox.js — testbestand in repo,,Tech Debt,Low,Open,,cleanup
+TD-02,Tech Schuld,js/script.js — doet alleen console.log,,Tech Debt,Medium,Open,,cleanup
+TD-03,Tech Schuld,js/LSD.js — dubbele DOMContentLoaded,,Tech Debt,Low,Open,,cleanup
+TD-04,Tech Schuld,Layout/*.html via fetch() — werkt niet op file://,,Tech Debt,Medium,Open,,
+TD-05,Tech Schuld,Popup-stijlen in LiveSearch.js hardcoded inline,,Tech Debt,Low,Open,,css
+TD-07,Tech Schuld,Resend zonder eigen domein — mail alleen naar Resend-account,,Tech Debt,Medium,Open,,mail
+TD-08,Tech Schuld,async/await mismatch — call-sites van storage.add() controleren,,Tech Debt,Medium,Open,,storage
