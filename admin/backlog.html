@@ -1,3 +1,22 @@
+<!-- ======================= admin/backlog.html v1.0.0 =======================
+    Backlog Manager — admin only
+
+    Wijzigingen v1.0.0 (sessie 35):
+     - Initiële versie
+     - Board- en lijstweergave
+     - Fases, filters, zoeken
+     - CSV export
+     - AI suggestie via Anthropic API (gebruiker voert eigen sleutel in)
+     - Toegangsbeveiliging via AdminGuard.protect('admin')
+     - Data geladen vanuit data/backlog.csv
+     - Data opgeslagen in localStorage (bl_items, bl_phases)
+     - Valt terug op CSV als localStorage leeg is
+
+    Afhankelijkheden:
+     - ../js/adminGuard.js
+     - ../data/backlog.csv
+     - Alpine.js v3.13.3 (CDN)
+    ======================================================================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,33 +70,32 @@ input:focus,select:focus,textarea:focus{border-color:#888}
 .filters input{flex:1;min-width:160px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:500px){.grid2{grid-template-columns:1fr}}
-/* priority colors */
 .p-critical{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
 .p-high{background:#fff7ed;color:#9a3412;border-color:#fdba74}
 .p-medium{background:#fefce8;color:#854d0e;border-color:#fde047}
 .p-low{background:#f0fdf4;color:#166534;border-color:#86efac}
-.dot-critical{background:#ef4444}
-.dot-high{background:#f97316}
-.dot-medium{background:#eab308}
-.dot-low{background:#22c55e}
-/* status colors */
+.dot-critical{background:#ef4444}.dot-high{background:#f97316}.dot-medium{background:#eab308}.dot-low{background:#22c55e}
 .s-open{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
 .s-inprogress{background:#faf5ff;color:#6d28d9;border-color:#c4b5fd}
 .s-done{background:#f0fdf4;color:#15803d;border-color:#86efac}
 .s-cancelled{background:#f3f4f6;color:#6b7280;border-color:#d1d5db}
 .s-future{background:#fdf4ff;color:#7e22ce;border-color:#e9d5ff}
+#accessDenied{display:none;text-align:center;padding:4rem 2rem}
+#page-content{display:none}
 </style>
 </head>
-<!-- Access denied message (hidden by default) -->
-<div id="accessDenied" style="display:none;text-align:center;padding:4rem 2rem">
+<body>
+
+<!-- Access denied -->
+<div id="accessDenied">
   <div style="font-size:32px;margin-bottom:12px">🔒</div>
   <div style="font-weight:500;font-size:17px;margin-bottom:8px">Toegang geweigerd</div>
   <div style="font-size:13px;color:#888">Deze pagina is alleen toegankelijk voor admins.</div>
 </div>
 
-<!-- Page content (shown only to admins) -->
-<div id="page-content" style="display:none">
-<body x-data="backlog()" x-init="init()">
+<!-- Page content -->
+<div id="page-content">
+<div x-data="backlog()" x-init="init()">
 
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:16px">
@@ -85,7 +103,6 @@ input:focus,select:focus,textarea:focus{border-color:#888}
     <span style="font-size:13px;color:#888" x-text="items.length + ' items · ' + stats.pct + '% complete'"></span>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
-    <!-- API Key -->
     <div style="position:relative">
       <button class="btn" @click="showKeyInput=!showKeyInput" :style="apiKey ? 'border-color:#86efac;color:#15803d' : ''">
         🔑 <span x-text="apiKey ? 'AI ready' : 'Set API key'"></span>
@@ -93,11 +110,11 @@ input:focus,select:focus,textarea:focus{border-color:#888}
       <div x-show="showKeyInput" @click.outside="showKeyInput=false" style="position:absolute;right:0;top:38px;background:#fff;border:0.5px solid #ccc;border-radius:10px;padding:14px;width:300px;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.08)">
         <label class="label">Anthropic API key</label>
         <input type="password" x-model="apiKey" placeholder="sk-ant-…" @change="saveKey()" style="margin-bottom:8px"/>
-        <p style="font-size:11px;color:#888;line-height:1.5">Your key is stored in localStorage and never sent anywhere except the Anthropic API.</p>
+        <p style="font-size:11px;color:#888;line-height:1.5">Je sleutel wordt opgeslagen in localStorage en alleen naar de Anthropic API gestuurd.</p>
       </div>
     </div>
     <button class="btn" @click="exportCSV()">⬇ Export CSV</button>
-    <button class="btn btn-primary" @click="openAdd()">+ Add item</button>
+    <button class="btn btn-primary" @click="openAdd()">+ Toevoegen</button>
   </div>
 </div>
 
@@ -105,12 +122,12 @@ input:focus,select:focus,textarea:focus{border-color:#888}
 
   <!-- Stats -->
   <div class="grid-stats">
-    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Total</div><div style="font-size:22px;font-weight:500" x-text="items.length"></div></div>
+    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Totaal</div><div style="font-size:22px;font-weight:500" x-text="items.length"></div></div>
     <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Open</div><div style="font-size:22px;font-weight:500" x-text="stats.open"></div></div>
-    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">In progress</div><div style="font-size:22px;font-weight:500" x-text="stats.inprog"></div></div>
-    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Done</div><div style="font-size:22px;font-weight:500" x-text="stats.done"></div></div>
+    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">In uitvoering</div><div style="font-size:22px;font-weight:500" x-text="stats.inprog"></div></div>
+    <div class="stat-card"><div style="font-size:12px;color:#888;margin-bottom:4px">Gedaan</div><div style="font-size:22px;font-weight:500" x-text="stats.done"></div></div>
     <div class="stat-card">
-      <div style="font-size:12px;color:#888;margin-bottom:4px">Progress</div>
+      <div style="font-size:12px;color:#888;margin-bottom:4px">Voortgang</div>
       <div style="font-size:22px;font-weight:500" x-text="stats.pct + '%'"></div>
       <div class="progress-bar"><div class="progress-fill" :style="'width:'+stats.pct+'%'"></div></div>
     </div>
@@ -118,7 +135,7 @@ input:focus,select:focus,textarea:focus{border-color:#888}
 
   <!-- Phases -->
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
-    <span style="font-size:12px;color:#888;font-weight:500">Phases:</span>
+    <span style="font-size:12px;color:#888;font-weight:500">Fases:</span>
     <template x-for="ph in phases" :key="ph">
       <span class="phase-pill" :class="filterPhase===ph?'active':''" @click="filterPhase = filterPhase===ph?'All':ph">
         <span x-text="ph"></span>
@@ -126,12 +143,12 @@ input:focus,select:focus,textarea:focus{border-color:#888}
       </span>
     </template>
     <template x-if="!showPhaseInput">
-      <button class="phase-pill" @click="showPhaseInput=true">+ New phase</button>
+      <button class="phase-pill" @click="showPhaseInput=true">+ Nieuwe fase</button>
     </template>
     <template x-if="showPhaseInput">
       <span style="display:flex;gap:4px;align-items:center">
-        <input x-model="newPhase" @keydown.enter="addPhase()" @keydown.escape="showPhaseInput=false" placeholder="Phase name" style="width:130px;padding:3px 8px;font-size:12px" x-ref="phaseInput" x-init="$nextTick(()=>$refs.phaseInput?.focus())"/>
-        <button class="btn" style="padding:3px 8px;font-size:12px" @click="addPhase()">Add</button>
+        <input x-model="newPhase" @keydown.enter="addPhase()" @keydown.escape="showPhaseInput=false" placeholder="Naam fase" style="width:130px;padding:3px 8px;font-size:12px" x-ref="phaseInput" x-init="$nextTick(()=>$refs.phaseInput?.focus())"/>
+        <button class="btn" style="padding:3px 8px;font-size:12px" @click="addPhase()">Toevoegen</button>
         <button class="btn-ghost btn" style="padding:3px 6px;font-size:12px" @click="showPhaseInput=false">✕</button>
       </span>
     </template>
@@ -139,18 +156,18 @@ input:focus,select:focus,textarea:focus{border-color:#888}
 
   <!-- Filters -->
   <div class="filters">
-    <input x-model="search" placeholder="Search items…" type="search"/>
+    <input x-model="search" placeholder="Zoeken…" type="search"/>
     <select x-model="filterStatus">
-      <option value="All">All statuses</option>
+      <option value="All">Alle statussen</option>
       <template x-for="s in statuses"><option :value="s" x-text="s"></option></template>
     </select>
     <select x-model="filterPriority">
-      <option value="All">All priorities</option>
+      <option value="All">Alle prioriteiten</option>
       <template x-for="p in priorities"><option :value="p" x-text="p"></option></template>
     </select>
     <div class="view-toggle">
       <button :class="view==='board'?'active':''" @click="view='board'">Board</button>
-      <button :class="view==='list'?'active':''" @click="view='list'">List</button>
+      <button :class="view==='list'?'active':''" @click="view='list'">Lijst</button>
     </div>
   </div>
 
@@ -158,9 +175,9 @@ input:focus,select:focus,textarea:focus{border-color:#888}
   <template x-if="items.length===0">
     <div class="empty">
       <div style="font-size:32px;margin-bottom:12px">📋</div>
-      <div style="font-weight:500;margin-bottom:6px">No items yet</div>
-      <div style="font-size:13px;color:#888;margin-bottom:20px">Create phases above, then add your first backlog item.</div>
-      <button class="btn btn-primary" @click="openAdd()">+ Add first item</button>
+      <div style="font-weight:500;margin-bottom:6px">Nog geen items</div>
+      <div style="font-size:13px;color:#888;margin-bottom:20px">Maak eerst een fase aan en voeg dan je eerste backlog item toe.</div>
+      <button class="btn btn-primary" @click="openAdd()">+ Eerste item toevoegen</button>
     </div>
   </template>
 
@@ -224,7 +241,7 @@ input:focus,select:focus,textarea:focus{border-color:#888}
       <table class="list-table">
         <thead>
           <tr>
-            <th>ID</th><th>Title</th><th>Phase</th><th>Type</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Tags</th><th></th>
+            <th>ID</th><th>Titel</th><th>Fase</th><th>Type</th><th>Prioriteit</th><th>Status</th><th>Toegewezen</th><th>Tags</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -235,7 +252,7 @@ input:focus,select:focus,textarea:focus{border-color:#888}
               <td style="color:#888" x-text="item.phase"></td>
               <td style="color:#888" x-text="item.type"></td>
               <td><span class="badge" :class="priorityClass(item.priority)"><span class="dot" :class="dotClass(item.priority)"></span><span x-text="item.priority"></span></span></td>
-              <td><span class="badge" :class="statusClass(item.status)"><span x-text="statusIcon(item.status)+' '+item.status"></span></span></td>
+              <td><span class="badge" :class="statusClass(item.status)" x-text="statusIcon(item.status)+' '+item.status"></span></td>
               <td style="color:#888" x-text="item.assignee"></td>
               <td>
                 <div style="display:flex;gap:3px;flex-wrap:wrap">
@@ -255,27 +272,26 @@ input:focus,select:focus,textarea:focus{border-color:#888}
     </div>
   </template>
 
-</div>
+</div><!-- /container -->
 
 <!-- Modal -->
 <template x-if="modal">
   <div class="modal-overlay" @click.self="closeModal()">
     <div class="modal">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
-        <h2 style="font-size:17px;font-weight:500" x-text="modalMode==='add'?'Add backlog item':'Edit item'"></h2>
+        <h2 style="font-size:17px;font-weight:500" x-text="modalMode==='add'?'Item toevoegen':'Item bewerken'"></h2>
         <button class="btn-ghost btn" style="font-size:18px;padding:4px 8px" @click="closeModal()">✕</button>
       </div>
-
       <div style="display:flex;flex-direction:column;gap:12px">
         <div>
-          <label class="label">Title *</label>
-          <input x-model="form.title" placeholder="Short, descriptive title"/>
+          <label class="label">Titel *</label>
+          <input x-model="form.title" placeholder="Korte, beschrijvende titel"/>
         </div>
         <div class="grid2">
           <div>
-            <label class="label">Phase</label>
+            <label class="label">Fase</label>
             <select x-model="form.phase">
-              <option value="">— none —</option>
+              <option value="">— geen —</option>
               <template x-for="p in phases"><option :value="p" x-text="p"></option></template>
             </select>
           </div>
@@ -286,7 +302,7 @@ input:focus,select:focus,textarea:focus{border-color:#888}
             </select>
           </div>
           <div>
-            <label class="label">Priority</label>
+            <label class="label">Prioriteit</label>
             <select x-model="form.priority">
               <template x-for="p in priorities"><option :value="p" x-text="p"></option></template>
             </select>
@@ -299,62 +315,49 @@ input:focus,select:focus,textarea:focus{border-color:#888}
           </div>
         </div>
         <div>
-          <label class="label">Assignee</label>
-          <input x-model="form.assignee" placeholder="Name or @handle"/>
+          <label class="label">Toegewezen aan</label>
+          <input x-model="form.assignee" placeholder="Naam of @handle"/>
         </div>
         <div>
           <label class="label">Tags</label>
           <input x-model="form.tags" placeholder="tag1, tag2, tag3"/>
         </div>
         <div>
-          <label class="label">Description</label>
-          <textarea x-model="form.description" placeholder="What needs to be done? Why?" rows="3" style="resize:vertical"></textarea>
+          <label class="label">Omschrijving</label>
+          <textarea x-model="form.description" placeholder="Wat moet er gedaan worden? Waarom?" rows="3" style="resize:vertical"></textarea>
         </div>
-
-        <!-- AI suggestion -->
         <div style="border-top:0.5px solid #e0dfd8;padding-top:12px">
           <button class="btn" :disabled="aiLoading || !form.title.trim() || !apiKey" @click="getAiSuggestion()" :style="(!form.title.trim()||!apiKey)?'opacity:.4;cursor:not-allowed':''">
-            <span x-text="aiLoading ? '…getting suggestion' : '✦ AI suggestion'"></span>
+            <span x-text="aiLoading ? '…bezig' : '✦ AI suggestie'"></span>
           </button>
           <template x-if="!apiKey">
-            <span style="font-size:11px;color:#f97316;margin-left:8px">Set your API key first</span>
+            <span style="font-size:11px;color:#f97316;margin-left:8px">Stel eerst je API key in</span>
           </template>
           <template x-if="aiSuggestion">
             <div class="ai-box" x-text="aiSuggestion"></div>
           </template>
         </div>
       </div>
-
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1.5rem">
-        <button class="btn" @click="closeModal()">Cancel</button>
-        <button class="btn btn-primary" :disabled="!form.title.trim()" @click="saveItem()">
-          <span x-text="modalMode==='add'?'Add item':'Save changes'"></span>
-        </button>
+        <button class="btn" @click="closeModal()">Annuleren</button>
+        <button class="btn btn-primary" :disabled="!form.title.trim()" @click="saveItem()" x-text="modalMode==='add'?'Toevoegen':'Opslaan'"></button>
       </div>
     </div>
   </div>
 </template>
 
+</div><!-- /x-data -->
+</div><!-- /page-content -->
+
 <script>
 AdminGuard.protect('admin');
+
 function backlog() {
   return {
-    items: [],
-    phases: [],
-    modal: false,
-    modalMode: 'add',
-    form: {},
-    search: '',
-    filterStatus: 'All',
-    filterPriority: 'All',
-    filterPhase: 'All',
-    view: 'board',
-    newPhase: '',
-    showPhaseInput: false,
-    showKeyInput: false,
-    apiKey: '',
-    aiLoading: false,
-    aiSuggestion: '',
+    items: [], phases: [], modal: false, modalMode: 'add', form: {},
+    search: '', filterStatus: 'All', filterPriority: 'All', filterPhase: 'All',
+    view: 'board', newPhase: '', showPhaseInput: false, showKeyInput: false,
+    apiKey: '', aiLoading: false, aiSuggestion: '',
     statuses: ['Open','In Progress','Done','Cancelled','Future'],
     priorities: ['Critical','High','Medium','Low'],
     types: ['Feature','Bug','Improvement','Security','Tech Debt','Other'],
@@ -366,6 +369,99 @@ function backlog() {
       this.phases = savedPhases ? JSON.parse(savedPhases) : ['Fase 0','Fase 1','Fase 2','Fase 3','Fase 8','Fase 9','Fase 10','Fase A','Fase 5','Fase 6','Fase 7','Beveiliging','Bugfixes','Analytics','Tech Schuld'];
       this.apiKey = localStorage.getItem('bl_apikey')||'';
       if (!saved) this.save();
+    },
+
+    save() {
+      localStorage.setItem('bl_items', JSON.stringify(this.items));
+      localStorage.setItem('bl_phases', JSON.stringify(this.phases));
+    },
+
+    saveKey() { localStorage.setItem('bl_apikey', this.apiKey); },
+    genId() { return Math.random().toString(36).slice(2,8).toUpperCase(); },
+    emptyForm() { return {id:'',phase:'',title:'',description:'',type:'Feature',priority:'Medium',status:'Open',assignee:'',tags:''}; },
+    openAdd() { this.form=this.emptyForm(); this.aiSuggestion=''; this.modalMode='add'; this.modal=true; },
+    openEdit(item) { this.form={...item}; this.aiSuggestion=''; this.modalMode='edit'; this.modal=true; },
+    closeModal() { this.modal=false; this.aiSuggestion=''; },
+
+    saveItem() {
+      if (!this.form.title.trim()) return;
+      const item = {...this.form, id: this.form.id||this.genId()};
+      if (this.modalMode==='add') this.items.push(item);
+      else this.items = this.items.map(i => i.id===item.id ? item : i);
+      this.save(); this.closeModal();
+    },
+
+    deleteItem(id) {
+      if (!confirm('Dit item verwijderen?')) return;
+      this.items = this.items.filter(i => i.id!==id);
+      this.save();
+    },
+
+    addPhase() {
+      const v = this.newPhase.trim();
+      if (v && !this.phases.includes(v)) { this.phases.push(v); this.save(); }
+      this.newPhase=''; this.showPhaseInput=false;
+    },
+
+    removePhase(ph) {
+      this.phases = this.phases.filter(p => p!==ph);
+      if (this.filterPhase===ph) this.filterPhase='All';
+      this.save();
+    },
+
+    get filtered() {
+      const q = this.search.toLowerCase();
+      return this.items.filter(i => {
+        const mq = !q || i.title.toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || i.id.toLowerCase().includes(q);
+        const ms = this.filterStatus==='All' || i.status===this.filterStatus;
+        const mp = this.filterPriority==='All' || i.priority===this.filterPriority;
+        const mph = this.filterPhase==='All' || i.phase===this.filterPhase;
+        return mq && ms && mp && mph;
+      });
+    },
+
+    byStatus(s) { return this.filtered.filter(i => i.status===s); },
+
+    get stats() {
+      const t = this.items.length;
+      return {
+        total: t,
+        done: this.items.filter(i=>i.status==='Done').length,
+        inprog: this.items.filter(i=>i.status==='In Progress').length,
+        open: this.items.filter(i=>i.status==='Open').length,
+        pct: t ? Math.round(this.items.filter(i=>i.status==='Done').length/t*100) : 0
+      };
+    },
+
+    priorityClass(p) { return {Critical:'p-critical',High:'p-high',Medium:'p-medium',Low:'p-low'}[p]||'p-medium'; },
+    dotClass(p) { return {Critical:'dot-critical',High:'dot-high',Medium:'dot-medium',Low:'dot-low'}[p]||'dot-medium'; },
+    statusClass(s) { return {'Open':'s-open','In Progress':'s-inprogress','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'}[s]||'s-open'; },
+    statusIcon(s) { return {'Open':'📋','In Progress':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮'}[s]||'📋'; },
+
+    exportCSV() {
+      const cols = ['id','phase','title','description','type','priority','status','assignee','tags'];
+      const rows = [cols.join(','), ...this.items.map(i => cols.map(c => '"'+(i[c]||'').replace(/"/g,'""')+'"').join(','))];
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));
+      a.download = 'backlog.csv'; a.click();
+    },
+
+    async getAiSuggestion() {
+      if (!this.form.title.trim() || !this.apiKey) return;
+      this.aiLoading=true; this.aiSuggestion='';
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':this.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body: JSON.stringify({
+            model:'claude-sonnet-4-20250514', max_tokens:800,
+            messages:[{role:'user', content:`Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags (komma-gescheiden)\n\nTitel: ${this.form.title}\nOmschrijving: ${this.form.description||'(geen)'}\nType: ${this.form.type}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`}]
+          })
+        });
+        const data = await res.json();
+        this.aiSuggestion = data.content?.[0]?.text || 'Geen suggestie ontvangen.';
+      } catch(e) { this.aiSuggestion = 'Fout: '+e.message; }
+      this.aiLoading=false;
     },
 
     defaultItems() { return [
@@ -435,103 +531,7 @@ function backlog() {
       {id:'TD-05',phase:'Tech Schuld',title:'Popup-stijlen in LiveSearch.js hardcoded inline',description:'',type:'Tech Debt',priority:'Low',status:'Open',assignee:'',tags:'css'},
       {id:'TD-07',phase:'Tech Schuld',title:'Resend zonder eigen domein — mail alleen naar Resend-account',description:'',type:'Tech Debt',priority:'Medium',status:'Open',assignee:'',tags:'mail'},
       {id:'TD-08',phase:'Tech Schuld',title:'async/await mismatch — call-sites van storage.add() controleren',description:'',type:'Tech Debt',priority:'Medium',status:'Open',assignee:'',tags:'storage'},
-    ]; },
-
-    save() {
-      localStorage.setItem('bl_items', JSON.stringify(this.items));
-      localStorage.setItem('bl_phases', JSON.stringify(this.phases));
-    },
-
-    saveKey() { localStorage.setItem('bl_apikey', this.apiKey); },
-
-    genId() { return Math.random().toString(36).slice(2,8).toUpperCase(); },
-
-    emptyForm() { return { id:'', phase:'', title:'', description:'', type:'Feature', priority:'Medium', status:'Open', assignee:'', tags:'' }; },
-
-    openAdd() { this.form = this.emptyForm(); this.aiSuggestion=''; this.modalMode='add'; this.modal=true; },
-    openEdit(item) { this.form = {...item}; this.aiSuggestion=''; this.modalMode='edit'; this.modal=true; },
-    closeModal() { this.modal=false; this.aiSuggestion=''; },
-
-    saveItem() {
-      if (!this.form.title.trim()) return;
-      const item = {...this.form, id: this.form.id || this.genId()};
-      if (this.modalMode==='add') this.items.push(item);
-      else this.items = this.items.map(i => i.id===item.id ? item : i);
-      this.save(); this.closeModal();
-    },
-
-    deleteItem(id) {
-      if (!confirm('Delete this item?')) return;
-      this.items = this.items.filter(i => i.id!==id);
-      this.save();
-    },
-
-    addPhase() {
-      const v = this.newPhase.trim();
-      if (v && !this.phases.includes(v)) { this.phases.push(v); this.save(); }
-      this.newPhase=''; this.showPhaseInput=false;
-    },
-
-    removePhase(ph) {
-      this.phases = this.phases.filter(p => p!==ph);
-      if (this.filterPhase===ph) this.filterPhase='All';
-      this.save();
-    },
-
-    get filtered() {
-      const q = this.search.toLowerCase();
-      return this.items.filter(i => {
-        const mq = !q || i.title.toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || i.id.toLowerCase().includes(q);
-        const ms = this.filterStatus==='All' || i.status===this.filterStatus;
-        const mp = this.filterPriority==='All' || i.priority===this.filterPriority;
-        const mph = this.filterPhase==='All' || i.phase===this.filterPhase;
-        return mq && ms && mp && mph;
-      });
-    },
-
-    byStatus(s) { return this.filtered.filter(i => i.status===s); },
-
-    get stats() {
-      const t = this.items.length;
-      return {
-        total: t,
-        done: this.items.filter(i=>i.status==='Done').length,
-        inprog: this.items.filter(i=>i.status==='In Progress').length,
-        open: this.items.filter(i=>i.status==='Open').length,
-        pct: t ? Math.round(this.items.filter(i=>i.status==='Done').length/t*100) : 0
-      };
-    },
-
-    priorityClass(p) { return {Critical:'p-critical',High:'p-high',Medium:'p-medium',Low:'p-low'}[p]||'p-medium'; },
-    dotClass(p) { return {Critical:'dot-critical',High:'dot-high',Medium:'dot-medium',Low:'dot-low'}[p]||'dot-medium'; },
-    statusClass(s) { return {'Open':'s-open','In Progress':'s-inprogress','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'}[s]||'s-open'; },
-    statusIcon(s) { return {'Open':'📋','In Progress':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮'}[s]||'📋'; },
-
-    exportCSV() {
-      const cols = ['id','phase','title','description','type','priority','status','assignee','tags'];
-      const rows = [cols.join(','), ...this.items.map(i => cols.map(c => '"'+(i[c]||'').replace(/"/g,'""')+'"').join(','))];
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([rows.join('\n')], {type:'text/csv'}));
-      a.download = 'backlog.csv'; a.click();
-    },
-
-    async getAiSuggestion() {
-      if (!this.form.title.trim() || !this.apiKey) return;
-      this.aiLoading=true; this.aiSuggestion='';
-      try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-api-key':this.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body: JSON.stringify({
-            model:'claude-sonnet-4-20250514', max_tokens:800,
-            messages:[{role:'user', content:`You are a product manager assistant. Given this backlog item, suggest:\n1) Recommended priority (Critical/High/Medium/Low) with a 1-sentence reason\n2) 2-3 concrete acceptance criteria\n3) Relevant tags (comma-separated)\n\nTitle: ${this.form.title}\nDescription: ${this.form.description||'(none)'}\nType: ${this.form.type}\n\nFormat:\nPRIORITY: [level] — [reason]\nACCEPTANCE CRITERIA:\n- …\nTAGS: …`}]
-          })
-        });
-        const data = await res.json();
-        this.aiSuggestion = data.content?.[0]?.text || 'No suggestion returned.';
-      } catch(e) { this.aiSuggestion = 'Error: '+e.message; }
-      this.aiLoading=false;
-    }
+    ]; }
   }
 }
 </script>
