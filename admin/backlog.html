@@ -440,32 +440,24 @@
     const V  = v  => v&&v.trim() ? v.trim() : '';   // Voor weergave en export
 
     // ── Initialisatie ──
-    async function init() {
+    function init() {
       apiKey = localStorage.getItem('bl_apikey') || '';
       _updateApiKeyUI();
 
       const savedItems = localStorage.getItem('bl_items');
       if (savedItems) {
-        // localStorage aanwezig: gebruik opgeslagen data — naam NIET overschrijven
+        // localStorage aanwezig: gebruik opgeslagen data
         items      = JSON.parse(savedItems);
         phases     = JSON.parse(localStorage.getItem('bl_phases')     || '[]');
         phaseDescs = JSON.parse(localStorage.getItem('bl_phasedescs') || '{}');
-        _loadProjInfo(); // Naam en versie uit localStorage laden
-      } else {
-        // Eerste keer: laad uit bestand — naam WEL overnemen
-        const md  = await _tryFetch('../data/BACKLOG.md');
-        if (md)  { _parseMD(md);  }
-        else     { const csv = await _tryFetch('../data/backlog.csv'); if (csv) _parseCSV(csv); }
-        // Projectinfo na parsen opslaan zodat volgende keer uit localStorage komt
-        _saveProjInfo();
+        _loadProjInfo();
       }
+      // Geen automatisch laden via fetch — gebruiker laadt zelf het juiste bestand via 📂 knop
       _bindEvents();
       render();
     }
 
-    async function _tryFetch(url){ try{const r=await fetch(url);return r.ok?r.text():null;}catch(e){return null;} }
-
-    function _genId(phase, type) {
+function _genId(phase, type) {
       const fl = (phase||'X')[0].toUpperCase();
       const tl = (type ||'X')[0].toUpperCase();
       const prefix = fl + tl + '-';
