@@ -53,7 +53,7 @@
     #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
     #page-content  { display:none; }
     main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
-    .dash-wrap { max-width:1200px; margin:0 auto; }
+    .dash-wrap { max-width:100%; margin:0; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
     /* Project header */
@@ -135,9 +135,11 @@
     .empty .empty-icon { font-size:32px; margin-bottom:12px; }
     .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
 
-    /* Board */
-    .board { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; }
-    .board-col-title { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+    /* Board: horizontaal scrollbaar, sticky kolomheaders */
+    .board-scroll { overflow-x:auto; padding-bottom:8px; }
+    .board { display:flex; gap:16px; min-width:max-content; align-items:flex-start; }
+    .board-col { width:240px; flex-shrink:0; }
+    .board-col-title { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; position:sticky; top:0; background:var(--bg-main); padding:8px 0 6px; z-index:2; }
     .board-col-items { display:flex; flex-direction:column; gap:8px; }
     .board-empty { font-family:var(--font-mono); font-size:0.75rem; color:rgba(255,255,255,0.15); padding:6px 0; }
 
@@ -451,8 +453,11 @@
       // Data wissen: wist alle bl_* sleutels en herlaadt pagina
       $('btn-clear-db').addEventListener('click', () => {
         if (!confirm('Alle backlog data wissen uit localStorage?\nDit kan niet ongedaan worden gemaakt.')) return;
-        ['bl_items','bl_phases','bl_phasedescs','bl_proj'].forEach(k => localStorage.removeItem(k));
-        location.reload(); // Herlaad zodat bestand opnieuw geladen wordt
+        // Verwijder alle sleutels die met 'bl_' beginnen
+        Object.keys(localStorage)
+          .filter(k => k.startsWith('bl_'))
+          .forEach(k => localStorage.removeItem(k));
+        location.reload();
       });
 
       $('btn-edit-proj').addEventListener('click', ()=>{
@@ -574,11 +579,15 @@
     }
 
     function _boardHTML(filtered){
-      return `<div class="board">${STATUSES.map(s=>{
+      // Toon alleen statussen die actief gefilterd zijn; als geen filter actief: alle statussen
+      const visibleStatuses = fStatus.size > 0 ? STATUSES.filter(s=>fStatus.has(s)) : STATUSES;
+      return `<div class="board-scroll"><div class="board">${visibleStatuses.map(s=>{
         const col=filtered.filter(i=>i.status===s);
-        return `<div><div class="board-col-title">${S_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
-        <div class="board-col-items">${col.length?col.map(_cardHTML).join(''):'<div class="board-empty">—</div>'}</div></div>`;
-      }).join('')}</div>`;
+        return `<div class="board-col">
+          <div class="board-col-title">${S_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
+          <div class="board-col-items">${col.length?col.map(_cardHTML).join(''):'<div class="board-empty">—</div>'}</div>
+        </div>`;
+      }).join('')}</div></div>`;
     }
 
     function _cardHTML(i){
