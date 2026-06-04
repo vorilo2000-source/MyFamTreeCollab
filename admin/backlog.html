@@ -195,11 +195,13 @@
     .s-open      {background:rgba(96,165,250,0.2); color:#60a5fa;border:1px solid #60a5fa;}
     .s-inprogress{background:rgba(167,139,250,0.2);color:#a78bfa;border:1px solid #a78bfa;}
     .s-done      {background:rgba(0,212,170,0.2);  color:var(--accent);border:1px solid var(--accent);}
+    .s-review    {background:rgba(0,212,170,0.2);  color:var(--accent);border:1px solid var(--accent);}     
     .s-cancelled {background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid rgba(255,255,255,0.15);}
     .s-future    {background:rgba(244,114,182,0.2);color:#f472b6;border:1px solid #f472b6;}
     .s-open-tbl      {background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-inprogress-tbl{background:#faf5ff;color:#6d28d9;border:1px solid #c4b5fd;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-done-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-review-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-cancelled-tbl {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-future-tbl    {background:#fdf4ff;color:#7e22ce; border:1px solid #e9d5ff;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
 
@@ -361,7 +363,7 @@
           <div>
             <label class="form-label">Status</label>
             <select class="form-input" id="f-status">
-              <option selected>Open</option><option>In Progress</option>
+              <option selected>Open</option><option>In Progress</option><option>Review</option>
               <option>Done</option><option>Cancelled</option><option>Future</option>
             </select>
           </div>
@@ -415,12 +417,12 @@
     let projName='', projVersion='', projDate='';
 
     // === Constanten ===
-    const STATUSES   = ['Open','In Progress','Done','Cancelled','Future'];
+    const STATUSES   = ['Open','In Progress','Review','Done','Cancelled','Future'];
     const PRIORITIES = ['Critical','High','Medium','Low'];
     const TYPES      = ['Feature','Bug','Improvement','Security','Tech Debt','Decision','Description','Other'];
-    const S_ICON = {'Open':'📋','In Progress':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮'};
-    const S_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
-    const S_TBL  = {'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
+    const S_ICON = {'Open':'📋','In Progress':'🛡️','Review':'🔄','Done':'✅','Cancelled':'❌','Future':'🔮'};
+    const S_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
+    const S_TBL  = {'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
     const P_CSS  = {'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
     const P_TBL  = {'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
     const D_CSS  = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
