@@ -1,12 +1,18 @@
-<!-- ======================= admin/backlog.html v5.0.0 =======================
+<!-- ======================= admin/backlog.html v5.1.0 =======================
     Backlog Manager — admin only
 
-   Wijzigingen v5.0.0 (sessie 35):
+    Wijzigingen v5.1.0 (sessie 35):
+     - Projectnaam niet meer overschreven bij herladen als localStorage al data heeft
+     - MD-parser schrijft naam/versie alleen bij eerste laden (geen localStorage)
+     - Knop 'Data wissen' toegevoegd — wist localStorage en herlaadt pagina
+     - Status 'Review' toegevoegd
+     - Types 'Decision' en 'Description' toegevoegd
+
+    Wijzigingen v5.0.0:
      - MD export tabelkolommen: id | tags | taak | description | ai | type | assigned | priority | status
      - Auto ID: [1e letter fase][1e letter type]-[eerstvolgende vrije 3-cijferig nummer]
      - ID bewerkbaar: inline klik in tabel + veld in modal
-     - Lege velden exporteren als "X"
-     - Volledige look & feel consistent met andere adminpagina's
+     - Lege velden exporteren leeg (V), alleen ID-generatie gebruikt X
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -29,7 +35,6 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* ── CSS variabelen: zelfde palet als analytics.html ── */
     :root {
       --bg-main:     #565656;
       --bg-card:     #3a3a3a;
@@ -45,35 +50,27 @@
       --shadow:      0 4px 20px rgba(0,0,0,0.35);
       --color-danger:#f08080;
     }
-
-    /* ── Toegangsblokken ── */
     #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
     #page-content  { display:none; }
-
-    /* ── Main ── */
     main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
     .dash-wrap { max-width:1200px; margin:0 auto; }
-
-    /* ── Animatie ── */
     @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ── Project header ── */
+    /* Project header */
     .proj-header { margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
     .proj-name { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 6px; display:flex; align-items:center; gap:12px; }
     .proj-edit-btn { font-family:var(--font-mono); font-size:0.75rem; background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent); border-radius:var(--radius); padding:3px 10px; cursor:pointer; transition:background .2s; }
     .proj-edit-btn:hover { background:rgba(0,212,170,0.28); }
     .proj-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
     .proj-meta b { color:var(--accent); }
-
-    /* ── Projectinfo edit paneel ── */
     .projinfo-dd { display:none; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.25rem; animation:fadeUp .3s ease; }
     .projinfo-dd.open { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
     @media(max-width:600px){ .projinfo-dd.open{ grid-template-columns:1fr; } }
 
-    /* ── Acties balk ── */
-    .bl-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; }
+    /* Acties */
+    .bl-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
 
-    /* ── Knoppen ── */
+    /* Knoppen */
     .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; }
     .btn:hover { background:var(--bg-card-alt); }
     .btn:disabled { opacity:.4; cursor:not-allowed; }
@@ -81,22 +78,24 @@
     .btn-accent:hover { background:rgba(0,212,170,0.28); }
     .btn-ghost { border-color:transparent; background:transparent; color:var(--text-muted); }
     .btn-ghost:hover { background:rgba(255,255,255,0.06); }
+    .btn-danger { background:rgba(240,128,128,0.15); color:var(--color-danger); border-color:var(--color-danger); }
+    .btn-danger:hover { background:rgba(240,128,128,0.28); }
     .btn-ai-ready { border-color:var(--accent)!important; color:var(--accent)!important; }
 
-    /* ── API key dropdown ── */
+    /* API key dropdown */
     .apikey-wrap { position:relative; }
     .apikey-dd { display:none; position:absolute; left:0; top:38px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; width:300px; z-index:60; box-shadow:var(--shadow); }
     .apikey-dd.open { display:block; animation:fadeUp .2s ease; }
     .apikey-dd p { font-size:11px; color:var(--text-muted); line-height:1.5; margin-top:6px; }
 
-    /* ── Form elementen ── */
+    /* Form */
     .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
     .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
     .form-input:focus { border-color:var(--accent); }
     select.form-input { cursor:pointer; }
     textarea.form-input { resize:vertical; }
 
-    /* ── Statistieken ── */
+    /* Statistieken */
     .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:1.75rem; }
     .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 20px 16px; box-shadow:var(--shadow); position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
     .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
@@ -105,24 +104,21 @@
     .progress-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; margin-top:8px; }
     .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s; }
 
-    /* ── Fase sectie: volledig in een kaart zodat niets buiten het scherm valt ── */
+    /* Fases */
     .phases-bar { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:1.25rem; display:flex; flex-direction:column; gap:10px; }
     .phases-bar-top { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
     .phases-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; }
-    /* Pills: wrappen netjes binnen de kaart */
     .phase-pills-wrap { display:flex; flex-wrap:wrap; gap:6px; }
     .phase-pill { font-family:var(--font-mono); font-size:0.75rem; padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; position:relative; white-space:nowrap; }
     .phase-pill:hover { border-color:var(--accent); color:var(--accent); }
     .phase-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
-    /* Tooltip: vast aan linkerkant als pill dicht bij rand zit */
-    .phase-pill[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:0; transform:none; background:#1a1a18; color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; border:1px solid var(--border); max-width:260px; overflow:hidden; text-overflow:ellipsis; }
-    .phase-pill[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 3px); left:16px; transform:none; border:4px solid transparent; border-top-color:#1a1a18; pointer-events:none; z-index:99; }
-    /* Invoerveld voor nieuwe fase: ook netjes in de kaart */
+    .phase-pill[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:0; background:#1a1a18; color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; border:1px solid var(--border); max-width:260px; overflow:hidden; text-overflow:ellipsis; }
+    .phase-pill[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 3px); left:16px; border:4px solid transparent; border-top-color:#1a1a18; pointer-events:none; z-index:99; }
     .phase-input-wrap { display:none; flex-wrap:wrap; gap:6px; align-items:center; padding-top:8px; border-top:1px solid var(--border); }
     .phase-input-wrap.open { display:flex; }
     .phase-input-wrap input { flex:1; min-width:120px; max-width:200px; }
 
-    /* ── Filter sectie ── */
+    /* Filters */
     .filter-section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.5rem; display:flex; flex-direction:column; gap:12px; animation:fadeUp .35s ease; }
     .filter-row { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; }
     .filter-row-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); min-width:80px; padding-top:5px; white-space:nowrap; }
@@ -130,24 +126,22 @@
     .filter-pill { font-family:var(--font-mono); font-size:0.72rem; padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; white-space:nowrap; }
     .filter-pill:hover { border-color:var(--accent); color:var(--accent); }
     .filter-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
-
-    /* ── Weergave toggle ── */
     .view-toggle { display:flex; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); overflow:hidden; }
     .view-toggle button { font-family:var(--font-mono); font-size:0.75rem; padding:5px 14px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; transition:background .15s; }
     .view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
 
-    /* ── Lege staat ── */
+    /* Lege staat */
     .empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); }
     .empty .empty-icon { font-size:32px; margin-bottom:12px; }
     .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
 
-    /* ── Board ── */
+    /* Board */
     .board { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; }
     .board-col-title { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
     .board-col-items { display:flex; flex-direction:column; gap:8px; }
     .board-empty { font-family:var(--font-mono); font-size:0.75rem; color:rgba(255,255,255,0.15); padding:6px 0; }
 
-    /* ── Kaart ── */
+    /* Kaart */
     .card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); animation:fadeUp .3s ease; }
     .card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
     .card-id { font-family:var(--font-mono); font-size:10px; color:var(--accent); opacity:.8; cursor:pointer; border-bottom:1px dashed rgba(0,212,170,0.3); }
@@ -157,29 +151,26 @@
     .card-desc { font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .card-footer { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
     .card-tags { margin-top:6px; display:flex; gap:4px; flex-wrap:wrap; }
-
-    /* ── Inline ID bewerken ── */
     .id-edit-input { font-family:var(--font-mono); font-size:10px; background:#2a2a2a; border:1px solid var(--accent); border-radius:4px; color:var(--accent); padding:1px 6px; width:90px; outline:none; }
 
-    /* ── Badges & tags ── */
+    /* Badges & tags */
     .badge { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
     .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
     .tag { font-family:var(--font-mono); font-size:0.65rem; padding:1px 7px; border-radius:4px; background:rgba(255,255,255,0.08); color:var(--text-muted); }
     .assignee-txt { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
 
-    /* ── Tabel ── */
+    /* Tabel */
     .list-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; max-height:680px; box-shadow:var(--shadow); animation:fadeUp .35s ease; }
     .list-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.78rem; }
     .list-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; text-align:left; color:#fff; padding:10px 12px; border-bottom:2px solid #0f5c35; font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:0.68rem; white-space:nowrap; }
     .list-table tbody td { padding:8px 12px; color:#1a1a1a; background:#c8c8c8; border-bottom:1px solid #aaa; vertical-align:middle; }
     .list-table tbody tr:last-child td { border-bottom:none; }
     .list-table tbody tr:hover td { background:#d8d8d8; }
-    /* Klikbaar ID in tabel */
     .tbl-id { font-family:var(--font-mono); font-size:0.72rem; color:#1a5c8a; cursor:pointer; border-bottom:1px dashed #1a5c8a; white-space:nowrap; }
     .tbl-id:hover { color:#0d3d5e; }
     .tbl-id-input { font-family:var(--font-mono); font-size:0.72rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:2px 6px; width:90px; outline:none; }
 
-    /* ── Prioriteit badges ── */
+    /* Prioriteit */
     .p-critical{background:rgba(240,128,128,0.2);color:#f08080;border:1px solid #f08080;}
     .p-high    {background:rgba(249,115,22,0.2); color:#fb923c;border:1px solid #fb923c;}
     .p-medium  {background:rgba(234,179,8,0.2);  color:#fbbf24;border:1px solid #fbbf24;}
@@ -191,21 +182,21 @@
     .dot-critical{background:#f08080} .dot-high{background:#fb923c}
     .dot-medium  {background:#fbbf24} .dot-low {background:#4ade80}
 
-    /* ── Status badges ── */
+    /* Status */
     .s-open      {background:rgba(96,165,250,0.2); color:#60a5fa;border:1px solid #60a5fa;}
     .s-inprogress{background:rgba(167,139,250,0.2);color:#a78bfa;border:1px solid #a78bfa;}
+    .s-review    {background:rgba(251,191,36,0.2); color:#fbbf24;border:1px solid #fbbf24;}
     .s-done      {background:rgba(0,212,170,0.2);  color:var(--accent);border:1px solid var(--accent);}
-    .s-review    {background:rgba(0,212,170,0.2);  color:var(--accent);border:1px solid var(--accent);}     
     .s-cancelled {background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid rgba(255,255,255,0.15);}
     .s-future    {background:rgba(244,114,182,0.2);color:#f472b6;border:1px solid #f472b6;}
     .s-open-tbl      {background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-inprogress-tbl{background:#faf5ff;color:#6d28d9;border:1px solid #c4b5fd;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-review-tbl    {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-done-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .s-review-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-cancelled-tbl {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-future-tbl    {background:#fdf4ff;color:#7e22ce; border:1px solid #e9d5ff;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
 
-    /* ── Modal ── */
+    /* Modal */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
     .modal-overlay.open { display:flex; }
     .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
@@ -214,16 +205,13 @@
     .modal-body { display:flex; flex-direction:column; gap:12px; }
     .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
     .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .form-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-    @media(max-width:500px){ .form-grid2,.form-grid3{ grid-template-columns:1fr; } }
+    @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
     .id-preview { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); opacity:.7; margin-top:4px; }
-
-    /* ── AI suggestie ── */
     .ai-section { border-top:1px solid var(--border); padding-top:12px; }
     .ai-warning { font-family:var(--font-mono); font-size:0.72rem; color:#fb923c; margin-left:8px; }
     .ai-box { margin-top:10px; font-family:var(--font-mono); font-size:0.75rem; background:#2a2a2a; border-radius:var(--radius); padding:10px 14px; white-space:pre-wrap; line-height:1.6; color:var(--text-muted); border:1px solid var(--border); }
 
-    /* ── Toegang geweigerd ── */
+    /* Toegang geweigerd */
     .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
     .access-denied h2 { font-size:1.2rem; color:var(--color-danger); margin-bottom:10px; font-family:var(--font-sans); }
     .access-denied p { font-size:0.9rem; color:var(--text-muted); line-height:1.6; }
@@ -280,20 +268,21 @@
           <button class="btn" id="btn-export-md">📝 MD exporteren</button>
           <label class="btn" style="cursor:pointer">📂 Laden (CSV/MD)<input type="file" id="input-file" accept=".csv,.md" style="display:none"/></label>
           <button class="btn btn-accent" id="btn-add">+ Toevoegen</button>
+          <!-- Scheidingslijn voor destructieve actie -->
+          <span style="flex:1"></span>
+          <button class="btn btn-danger" id="btn-clear-db" title="Wist alle backlog data uit localStorage">🗑 Data wissen</button>
         </div>
 
         <!-- Statistieken -->
         <div class="stat-grid" id="stat-grid"></div>
 
-        <!-- Fases: in kaart zodat pills nooit buiten scherm vallen -->
+        <!-- Fases -->
         <div class="phases-bar">
           <div class="phases-bar-top">
             <span class="phases-label">Fases</span>
             <button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button>
           </div>
-          <!-- Pills wrappen netjes binnen de kaart -->
           <div class="phase-pills-wrap" id="phase-pills"></div>
-          <!-- Invoerveld: verschijnt als aparte rij onderaan de kaart -->
           <div class="phase-input-wrap" id="phase-input-wrap">
             <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="padding:3px 8px;font-size:12px"/>
             <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving (tooltip)" style="padding:3px 8px;font-size:12px"/>
@@ -334,7 +323,6 @@
         <button class="btn btn-ghost" id="btn-modal-close" style="font-size:18px;padding:4px 8px">✕</button>
       </div>
       <div class="modal-body">
-        <!-- ID veld: auto-gegenereerd maar aanpasbaar -->
         <div>
           <label class="form-label">ID <span style="opacity:.5;font-size:0.68rem">(automatisch · aanpasbaar)</span></label>
           <input class="form-input" type="text" id="f-id" placeholder="Wordt automatisch gegenereerd"/>
@@ -342,26 +330,20 @@
         </div>
         <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="f-title" placeholder="Korte, beschrijvende titel"/></div>
         <div class="form-grid2">
-          <div>
-            <label class="form-label">Fase</label>
-            <select class="form-input" id="f-phase"></select>
-          </div>
-          <div>
-            <label class="form-label">Type</label>
+          <div><label class="form-label">Fase</label><select class="form-input" id="f-phase"></select></div>
+          <div><label class="form-label">Type</label>
             <select class="form-input" id="f-type">
               <option>Feature</option><option>Bug</option><option>Improvement</option>
-              <option>Security</option><option>Tech Debt</option><option>Decision</option>      
+              <option>Security</option><option>Tech Debt</option><option>Decision</option>
               <option>Description</option><option>Other</option>
             </select>
           </div>
-          <div>
-            <label class="form-label">Prioriteit</label>
+          <div><label class="form-label">Prioriteit</label>
             <select class="form-input" id="f-priority">
               <option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option>
             </select>
           </div>
-          <div>
-            <label class="form-label">Status</label>
+          <div><label class="form-label">Status</label>
             <select class="form-input" id="f-status">
               <option selected>Open</option><option>In Progress</option><option>Review</option>
               <option>Done</option><option>Cancelled</option><option>Future</option>
@@ -387,7 +369,6 @@
 
   <div id="footer-placeholder"></div>
 
-  <!-- Scripts: verplichte volgorde -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/auth.js"></script>
@@ -395,7 +376,6 @@
   <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
   <script>
-  // ── Layout laden → topbar → admin-check → Backlog.init() ──
   fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
     document.getElementById('topbar-placeholder').innerHTML=html;
     const s=document.createElement('script'); s.src='../js/topbar.js';
@@ -405,141 +385,130 @@
   fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; });
   fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{ document.getElementById('footer-placeholder').innerHTML=html; });
 
-  // ================================================================
-  // BACKLOG MODULE — vanilla JS
-  // ================================================================
   const Backlog = (() => {
-    // === State ===
     let items=[], phases=[], phaseDescs={};
     let view='board', search='', fPhase='All';
     let fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
     let editId=null, apiKey='';
     let projName='', projVersion='', projDate='';
 
-    // === Constanten ===
     const STATUSES   = ['Open','In Progress','Review','Done','Cancelled','Future'];
     const PRIORITIES = ['Critical','High','Medium','Low'];
     const TYPES      = ['Feature','Bug','Improvement','Security','Tech Debt','Decision','Description','Other'];
-    const S_ICON = {'Open':'📋','In Progress':'🔄','Review':'🛡️','Done':'✅','Cancelled':'❌','Future':'🔮'};
+    const S_ICON = {'Open':'📋','In Progress':'🔄','Review':'🔍','Done':'✅','Cancelled':'❌','Future':'🔮'};
     const S_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
     const S_TBL  = {'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
     const P_CSS  = {'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
     const P_TBL  = {'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
     const D_CSS  = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
 
-    const $=id=>document.getElementById(id); // DOM helper
-    const X=v=>v&&v.trim()?v.trim():'X';      // Alleen voor ID-generatie: leeg → 'X'
-    const V=v=>v&&v.trim()?v.trim():'';      // Voor weergave en export: leeg blijft leeg
+    const $  = id => document.getElementById(id);
+    const X  = v  => v&&v.trim() ? v.trim() : 'X'; // Alleen voor ID-generatie
+    const V  = v  => v&&v.trim() ? v.trim() : '';   // Voor weergave en export
 
     // ── Initialisatie ──
     async function init() {
-      apiKey=localStorage.getItem('bl_apikey')||'';
-      _loadProjInfo(); _updateApiKeyUI();
-      const saved=localStorage.getItem('bl_items');
-      if(saved){
-        items=JSON.parse(saved);
-        phases=JSON.parse(localStorage.getItem('bl_phases')||'[]');
-        phaseDescs=JSON.parse(localStorage.getItem('bl_phasedescs')||'{}');
+      apiKey = localStorage.getItem('bl_apikey') || '';
+      _updateApiKeyUI();
+
+      const savedItems = localStorage.getItem('bl_items');
+      if (savedItems) {
+        // localStorage aanwezig: gebruik opgeslagen data — naam NIET overschrijven
+        items      = JSON.parse(savedItems);
+        phases     = JSON.parse(localStorage.getItem('bl_phases')     || '[]');
+        phaseDescs = JSON.parse(localStorage.getItem('bl_phasedescs') || '{}');
+        _loadProjInfo(); // Naam en versie uit localStorage laden
       } else {
-        // Eerste keer: probeer BACKLOG.md, dan backlog.csv
-        const md=await _tryFetch('../data/BACKLOG.md');
-        if(md) _parseMD(md);
-        else { const csv=await _tryFetch('../data/backlog.csv'); if(csv)_parseCSV(csv); }
+        // Eerste keer: laad uit bestand — naam WEL overnemen
+        const md  = await _tryFetch('../data/BACKLOG.md');
+        if (md)  { _parseMD(md);  }
+        else     { const csv = await _tryFetch('../data/backlog.csv'); if (csv) _parseCSV(csv); }
+        // Projectinfo na parsen opslaan zodat volgende keer uit localStorage komt
+        _saveProjInfo();
       }
-      _bindEvents(); render();
+      _bindEvents();
+      render();
     }
 
-    // ── Fetch helper: geeft tekst of null bij fout ──
     async function _tryFetch(url){ try{const r=await fetch(url);return r.ok?r.text():null;}catch(e){return null;} }
 
-    // ── Auto ID genereren: [1e letter fase][1e letter type]-[eerstvolgende vrij nummer] ──
     function _genId(phase, type) {
-      const fl=(phase||'X')[0].toUpperCase();   // Eerste letter fase
-      const tl=(type||'X')[0].toUpperCase();    // Eerste letter type
-      const prefix=fl+tl+'-';                   // Prefix bv. "FF-" voor Fase1+Feature
-      // Alle bestaande nummers met dit prefix verzamelen
-      const used=new Set(items.filter(i=>i.id&&i.id.startsWith(prefix)).map(i=>parseInt(i.id.slice(prefix.length))||0));
-      let n=1;
-      while(used.has(n)) n++;                   // Eerstvolgende vrij nummer
-      return prefix+String(n).padStart(3,'0'); // Bv. "FF-001"
+      const fl = (phase||'X')[0].toUpperCase();
+      const tl = (type ||'X')[0].toUpperCase();
+      const prefix = fl + tl + '-';
+      const used = new Set(items.filter(i=>i.id&&i.id.startsWith(prefix)).map(i=>parseInt(i.id.slice(prefix.length))||0));
+      let n = 1; while(used.has(n)) n++;
+      return prefix + String(n).padStart(3,'0');
     }
 
-    // ── Events koppelen ──
     function _bindEvents() {
-      $('btn-add').addEventListener('click',()=>openModal());
-      $('btn-export-csv').addEventListener('click',exportCSV);
-      $('btn-export-md').addEventListener('click',exportMD);
-      $('input-file').addEventListener('change',importFile);
-      $('btn-clear-filters').addEventListener('click',clearFilters);
+      $('btn-add').addEventListener('click', ()=>openModal());
+      $('btn-export-csv').addEventListener('click', exportCSV);
+      $('btn-export-md').addEventListener('click', exportMD);
+      $('input-file').addEventListener('change', importFile);
+      $('btn-clear-filters').addEventListener('click', clearFilters);
 
-      // Projectinfo
-      $('btn-edit-proj').addEventListener('click',()=>{
+      // Data wissen: wist alle bl_* sleutels en herlaadt pagina
+      $('btn-clear-db').addEventListener('click', () => {
+        if (!confirm('Alle backlog data wissen uit localStorage?\nDit kan niet ongedaan worden gemaakt.')) return;
+        ['bl_items','bl_phases','bl_phasedescs','bl_proj'].forEach(k => localStorage.removeItem(k));
+        location.reload(); // Herlaad zodat bestand opnieuw geladen wordt
+      });
+
+      $('btn-edit-proj').addEventListener('click', ()=>{
         $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate;
         $('projinfo-dd').classList.toggle('open');
       });
-      $('btn-proj-save').addEventListener('click',()=>{
+      $('btn-proj-save').addEventListener('click', ()=>{
         projName=$('pi-name').value.trim(); projVersion=$('pi-version').value.trim(); projDate=$('pi-date').value;
         _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta();
       });
-      $('btn-proj-cancel').addEventListener('click',()=>$('projinfo-dd').classList.remove('open'));
+      $('btn-proj-cancel').addEventListener('click', ()=>$('projinfo-dd').classList.remove('open'));
 
-      // API key
-      $('btn-apikey').addEventListener('click',()=>$('apikey-dd').classList.toggle('open'));
-      $('input-apikey').value=apiKey;
-      $('input-apikey').addEventListener('change',e=>{ apiKey=e.target.value.trim(); localStorage.setItem('bl_apikey',apiKey); _updateApiKeyUI(); });
-      document.addEventListener('click',e=>{ if(!$('btn-apikey').contains(e.target)&&!$('apikey-dd').contains(e.target))$('apikey-dd').classList.remove('open'); });
+      $('btn-apikey').addEventListener('click', ()=>$('apikey-dd').classList.toggle('open'));
+      $('input-apikey').value = apiKey;
+      $('input-apikey').addEventListener('change', e=>{ apiKey=e.target.value.trim(); localStorage.setItem('bl_apikey',apiKey); _updateApiKeyUI(); });
+      document.addEventListener('click', e=>{ if(!$('btn-apikey').contains(e.target)&&!$('apikey-dd').contains(e.target)) $('apikey-dd').classList.remove('open'); });
 
-      // Fase invoer
-      $('btn-new-phase').addEventListener('click',()=>{ $('phase-input-wrap').classList.add('open'); $('btn-new-phase').style.display='none'; $('input-new-phase').focus(); });
-      $('btn-cancel-phase').addEventListener('click',_cancelPhaseInput);
-      $('btn-add-phase').addEventListener('click',_addPhase);
-      $('input-new-phase').addEventListener('keydown',e=>{ if(e.key==='Enter')_addPhase(); if(e.key==='Escape')_cancelPhaseInput(); });
+      $('btn-new-phase').addEventListener('click', ()=>{ $('phase-input-wrap').classList.add('open'); $('btn-new-phase').style.display='none'; $('input-new-phase').focus(); });
+      $('btn-cancel-phase').addEventListener('click', _cancelPhaseInput);
+      $('btn-add-phase').addEventListener('click', _addPhase);
+      $('input-new-phase').addEventListener('keydown', e=>{ if(e.key==='Enter')_addPhase(); if(e.key==='Escape')_cancelPhaseInput(); });
 
-      // Modal: auto ID bijwerken als fase of type wijzigt
-      $('f-phase').addEventListener('change',_updateAutoId);
-      $('f-type').addEventListener('change',_updateAutoId);
+      $('f-phase').addEventListener('change', _updateAutoId);
+      $('f-type').addEventListener('change',  _updateAutoId);
 
-      // Filters
-      $('input-search').addEventListener('input',e=>{ search=e.target.value; render(); });
-      $('btn-view-board').addEventListener('click',()=>{ view='board'; _updateViewToggle(); render(); });
-      $('btn-view-list').addEventListener('click', ()=>{ view='list';  _updateViewToggle(); render(); });
+      $('input-search').addEventListener('input', e=>{ search=e.target.value; render(); });
+      $('btn-view-board').addEventListener('click', ()=>{ view='board'; _updateViewToggle(); render(); });
+      $('btn-view-list').addEventListener('click',  ()=>{ view='list';  _updateViewToggle(); render(); });
 
-      // Modal
-      $('btn-modal-close').addEventListener('click',closeModal);
-      $('btn-modal-cancel').addEventListener('click',closeModal);
-      $('btn-modal-save').addEventListener('click',saveItem);
-      $('modal').addEventListener('click',e=>{ if(e.target===$('modal'))closeModal(); });
-
-      // AI
-      $('btn-ai').addEventListener('click',_getAiSuggestion);
+      $('btn-modal-close').addEventListener('click',  closeModal);
+      $('btn-modal-cancel').addEventListener('click', closeModal);
+      $('btn-modal-save').addEventListener('click',   saveItem);
+      $('modal').addEventListener('click', e=>{ if(e.target===$('modal')) closeModal(); });
+      $('btn-ai').addEventListener('click', _getAiSuggestion);
     }
 
-    // ── Auto ID bijwerken in modal preview ──
     function _updateAutoId() {
-      if(editId) return;                                // Niet bij bewerken
-      const phase=$('f-phase').value;
-      const type =$('f-type').value;
-      const id=_genId(phase,type);
-      if(!$('f-id').dataset.manual) $('f-id').value=id; // Alleen overschrijven als niet handmatig
-      $('id-preview').textContent=`→ ${id}`;
+      if (editId) return;
+      const id = _genId($('f-phase').value, $('f-type').value);
+      if (!$('f-id').dataset.manual) $('f-id').value = id;
+      $('id-preview').textContent = `→ ${id}`;
     }
 
-    // ── Hoofdrender ──
     function render(){ _renderMeta(); _renderStats(); _renderPhasePills(); _renderFilterPills(); _renderContent(); _updatePhasesInModal(); }
 
-    // ── Meta regel ──
     function _renderMeta(){
       const t=items.length, done=items.filter(i=>i.status==='Done').length, pct=t?Math.round(done/t*100):0;
-      $('proj-name-txt').textContent=projName||'Project';
-      $('proj-meta').innerHTML=
-        `${projVersion?`<span>📦 <b>${projVersion}</b></span>`:''}` +
-        `${projDate   ?`<span>📅 <b>${_fmtDate(projDate)}</b></span>`:''}` +
+      $('proj-name-txt').textContent = projName || 'Project';
+      $('proj-meta').innerHTML =
+        `${projVersion ? `<span>📦 <b>${projVersion}</b></span>` : ''}` +
+        `${projDate    ? `<span>📅 <b>${_fmtDate(projDate)}</b></span>` : ''}` +
         `<span>📋 <b>${t}</b> items</span><span>✅ <b>${pct}%</b> afgerond</span>`;
     }
 
     function _fmtDate(d){ if(!d)return''; const p=d.split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; }
 
-    // ── Statistieken ──
     function _renderStats(){
       const t=items.length, done=items.filter(i=>i.status==='Done').length, pct=t?Math.round(done/t*100):0;
       $('stat-grid').innerHTML=`
@@ -550,18 +519,16 @@
         <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
     }
 
-    // ── Fase pills ──
     function _renderPhasePills(){
-      $('phase-pills').innerHTML=phases.map(ph=>{
-        const desc=phaseDescs[ph]||'';
+      $('phase-pills').innerHTML = phases.map(ph=>{
+        const desc = phaseDescs[ph]||'';
         return `<span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}" ${desc?`data-tip="${desc}"`:''}>${ph} <span data-remove="${ph}" style="margin-left:5px;opacity:.4;cursor:pointer">×</span></span>`;
       }).join('');
       $('phase-pills').querySelectorAll('.phase-pill').forEach(el=>{
-        el.addEventListener('click',e=>{ if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;} fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; render(); });
+        el.addEventListener('click', e=>{ if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;} fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; render(); });
       });
     }
 
-    // ── Filter pills ──
     function _renderFilterPills(){
       const allTags=[...new Set(items.flatMap(i=>(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort();
       _buildPills('filter-status-pills',   STATUSES,   fStatus,   S_ICON);
@@ -570,47 +537,42 @@
       _buildPills('filter-tag-pills',      allTags,    fTags,     {});
     }
 
-    function _buildPills(cid,opts,activeSet,icons){
+    function _buildPills(cid, opts, activeSet, icons){
       const el=$(cid);
       el.innerHTML=opts.map(o=>`<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`).join('');
       el.querySelectorAll('.filter-pill').forEach(btn=>{
-        btn.addEventListener('click',()=>{ const v=btn.dataset.val; activeSet.has(v)?activeSet.delete(v):activeSet.add(v); render(); });
+        btn.addEventListener('click', ()=>{ const v=btn.dataset.val; activeSet.has(v)?activeSet.delete(v):activeSet.add(v); render(); });
       });
     }
 
     function clearFilters(){ search='';fPhase='All';fStatus.clear();fPriority.clear();fType.clear();fTags.clear();$('input-search').value='';render(); }
 
-    // ── Gefilterde items ──
     function _filtered(){
       const q=search.toLowerCase();
       return items.filter(i=>{
-        const mq=!q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q)||(i.assignee||'').toLowerCase().includes(q);
-        const ms=!fStatus.size||fStatus.has(i.status);
-        const mp=!fPriority.size||fPriority.has(i.priority);
-        const mt=!fType.size||fType.has(i.type);
-        const mph=fPhase==='All'||i.phase===fPhase;
-        const it=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-        const mta=!fTags.size||[...fTags].some(t=>it.includes(t));
+        const mq  = !q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q)||(i.assignee||'').toLowerCase().includes(q);
+        const ms  = !fStatus.size   || fStatus.has(i.status);
+        const mp  = !fPriority.size || fPriority.has(i.priority);
+        const mt  = !fType.size     || fType.has(i.type);
+        const mph = fPhase==='All'  || i.phase===fPhase;
+        const it  = (i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+        const mta = !fTags.size     || [...fTags].some(t=>it.includes(t));
         return mq&&ms&&mp&&mt&&mph&&mta;
       });
     }
 
-    // ── Inhoud renderen ──
     function _renderContent(){
       const filtered=_filtered();
       if(!items.length){
         $('bl-content').innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Nog geen items. Laad een CSV/MD bestand of voeg je eerste item toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste item toevoegen</button></div>`;
-        $('btn-add-empty').addEventListener('click',()=>openModal()); return;
+        $('btn-add-empty').addEventListener('click', ()=>openModal()); return;
       }
-      $('bl-content').innerHTML=view==='board'?_boardHTML(filtered):_listHTML(filtered);
-      // Bewerk / verwijder knoppen
-      $('bl-content').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.edit)));
-      $('bl-content').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>_deleteItem(b.dataset.delete)));
-      // Inline ID bewerken in tabel
-      $('bl-content').querySelectorAll('.tbl-id').forEach(el=>el.addEventListener('click',()=>_inlineEditId(el)));
+      $('bl-content').innerHTML = view==='board' ? _boardHTML(filtered) : _listHTML(filtered);
+      $('bl-content').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>openModal(b.dataset.edit)));
+      $('bl-content').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click', ()=>_deleteItem(b.dataset.delete)));
+      $('bl-content').querySelectorAll('.tbl-id,.card-id').forEach(el=>el.addEventListener('click', ()=>_inlineEditId(el)));
     }
 
-    // ── Board HTML ──
     function _boardHTML(filtered){
       return `<div class="board">${STATUSES.map(s=>{
         const col=filtered.filter(i=>i.status===s);
@@ -619,7 +581,6 @@
       }).join('')}</div>`;
     }
 
-    // ── Kaart HTML ──
     function _cardHTML(i){
       const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
       return `<div class="card">
@@ -634,6 +595,7 @@
         ${i.description?`<div class="card-desc">${i.description}</div>`:''}
         <div class="card-footer">
           <span class="badge ${P_CSS[i.priority]||'p-medium'}"><span class="dot ${D_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span>
+          <span class="badge ${S_CSS[i.status]||'s-open'}">${S_ICON[i.status]||''} ${i.status}</span>
           ${i.phase?`<span class="badge s-cancelled" style="font-size:0.65rem">${i.phase}</span>`:''}
           ${i.assignee?`<span class="assignee-txt">👤 ${i.assignee}</span>`:''}
         </div>
@@ -641,19 +603,15 @@
       </div>`;
     }
 
-    // ── Lijst HTML: kolommen id | tags | taak | description | ai | type | assigned | priority | status ──
     function _listHTML(filtered){
       if(!filtered.length) return `<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem 0;text-align:center">Geen items gevonden.</p>`;
       return `<div class="list-wrap"><table class="list-table">
-        <thead><tr>
-          <th>ID</th><th>Tags</th><th>Taak</th><th>Omschrijving</th>
-          <th>AI suggestie</th><th>Type</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th>
-        </tr></thead>
+        <thead><tr><th>ID</th><th>Tags</th><th>Taak</th><th>Omschrijving</th><th>AI suggestie</th><th>Type</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
         <tbody>${filtered.map(i=>{
           const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
           return `<tr>
             <td><span class="tbl-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span></td>
-            <td>${tags.map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')||'—'}</td>
+            <td>${tags.map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')||''}</td>
             <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title||''}</td>
             <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.description||''}</td>
             <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;font-size:0.72rem">${i.ai||''}</td>
@@ -668,41 +626,35 @@
         }).join('')}</tbody></table></div>`;
     }
 
-    // ── Inline ID bewerken (tabel en kaart) ──
     function _inlineEditId(el){
       const oldId=el.dataset.id;
       const input=document.createElement('input');
       input.className='tbl-id-input id-edit-input';
       input.value=oldId;
-      el.replaceWith(input);
-      input.focus(); input.select();
-
+      el.replaceWith(input); input.focus(); input.select();
       const commit=()=>{
         const newId=input.value.trim();
         if(newId&&newId!==oldId){
           if(items.find(i=>i.id===newId)){ alert('ID "'+newId+'" bestaat al.'); input.focus(); return; }
-          items=items.map(i=>i.id===oldId?{...i,id:newId}:i); // ID bijwerken
-          _save();
+          items=items.map(i=>i.id===oldId?{...i,id:newId}:i); _save();
         }
-        render(); // Opnieuw renderen na commit
+        render();
       };
       input.addEventListener('blur', commit);
-      input.addEventListener('keydown',e=>{ if(e.key==='Enter')commit(); if(e.key==='Escape'){render();} });
+      input.addEventListener('keydown', e=>{ if(e.key==='Enter')commit(); if(e.key==='Escape')render(); });
     }
 
-    // ── Modal openen ──
     function openModal(id){
       editId=id||null;
-      $('modal-title').textContent=id?'Item bewerken':'Item toevoegen';
-      $('btn-modal-save').textContent=id?'Opslaan':'Toevoegen';
+      $('modal-title').textContent    = id ? 'Item bewerken' : 'Item toevoegen';
+      $('btn-modal-save').textContent = id ? 'Opslaan' : 'Toevoegen';
       $('ai-box').style.display='none'; $('ai-box').textContent='';
-      $('ai-warning').style.display=apiKey?'none':'inline';
-      $('f-id').dataset.manual=''; // Reset handmatige override
+      $('ai-warning').style.display = apiKey ? 'none' : 'inline';
+      $('f-id').dataset.manual='';
       _updatePhasesInModal();
       if(id){
         const item=items.find(i=>i.id===id); if(!item)return;
-        $('f-id').value=item.id;
-        $('f-id').dataset.manual='1'; // Bestaand ID: niet auto-overschrijven
+        $('f-id').value=item.id; $('f-id').dataset.manual='1';
         $('id-preview').textContent='';
         $('f-title').value=item.title||''; $('f-phase').value=item.phase||'';
         $('f-type').value=item.type||'Feature'; $('f-priority').value=item.priority||'Medium';
@@ -712,40 +664,25 @@
       } else {
         ['f-title','f-assignee','f-tags','f-description','f-ai'].forEach(fid=>$(fid).value='');
         $('f-type').value='Feature'; $('f-priority').value='Medium'; $('f-status').value='Open'; $('f-phase').value='';
-        _updateAutoId(); // Genereer auto ID voor nieuw item
+        _updateAutoId();
       }
-      // Markeer als handmatig als gebruiker ID aanpast
-      $('f-id').addEventListener('input',()=>{ $('f-id').dataset.manual='1'; });
+      $('f-id').addEventListener('input', ()=>{ $('f-id').dataset.manual='1'; });
       $('modal').classList.add('open'); $('f-title').focus();
     }
 
     function closeModal(){ $('modal').classList.remove('open'); editId=null; }
 
-    // ── Item opslaan ──
     function saveItem(){
       const title=$('f-title').value.trim(); if(!title){$('f-title').focus();return;}
       const id=$('f-id').value.trim()||_genId($('f-phase').value,$('f-type').value);
-      // Controleer of ID al bestaat bij nieuw item
       if(!editId&&items.find(i=>i.id===id)){ alert('ID "'+id+'" bestaat al. Pas het aan.'); $('f-id').focus(); return; }
-      const item={
-        id, title,
-        phase:       $('f-phase').value,
-        type:        $('f-type').value,
-        priority:    $('f-priority').value,
-        status:      $('f-status').value,
-        assignee:    $('f-assignee').value.trim(),
-        tags:        $('f-tags').value.trim(),
-        description: $('f-description').value.trim(),
-        ai:          $('f-ai').value.trim(),
-      };
-      if(editId) items=items.map(i=>i.id===editId?item:i);
-      else items.push(item);
+      const item={id,title,phase:$('f-phase').value,type:$('f-type').value,priority:$('f-priority').value,status:$('f-status').value,assignee:$('f-assignee').value.trim(),tags:$('f-tags').value.trim(),description:$('f-description').value.trim(),ai:$('f-ai').value.trim()};
+      if(editId) items=items.map(i=>i.id===editId?item:i); else items.push(item);
       _save(); closeModal(); render();
     }
 
     function _deleteItem(id){ if(!confirm('Dit item verwijderen?'))return; items=items.filter(i=>i.id!==id); _save(); render(); }
 
-    // ── Fase beheer ──
     function _addPhase(){
       const v=$('input-new-phase').value.trim(), d=$('input-new-phase-desc').value.trim();
       if(v&&!phases.includes(v)){ phases.push(v); if(d)phaseDescs[v]=d; _save(); }
@@ -755,23 +692,26 @@
     function _cancelPhaseInput(){ $('input-new-phase').value=''; $('input-new-phase-desc').value=''; $('phase-input-wrap').classList.remove('open'); $('btn-new-phase').style.display=''; }
     function _updatePhasesInModal(){ $('f-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join(''); }
     function _updateViewToggle(){ $('btn-view-board').classList.toggle('active',view==='board'); $('btn-view-list').classList.toggle('active',view==='list'); }
-
-    // ── Projectinfo ──
     function _saveProjInfo(){ localStorage.setItem('bl_proj',JSON.stringify({projName,projVersion,projDate})); }
     function _loadProjInfo(){ const p=JSON.parse(localStorage.getItem('bl_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; }
     function _updateApiKeyUI(){ $('apikey-label').textContent=apiKey?'AI gereed':'API key instellen'; $('btn-apikey').classList.toggle('btn-ai-ready',!!apiKey); }
     function _save(){ localStorage.setItem('bl_items',JSON.stringify(items)); localStorage.setItem('bl_phases',JSON.stringify(phases)); localStorage.setItem('bl_phasedescs',JSON.stringify(phaseDescs)); }
 
-    // ── Bestand importeren ──
     function importFile(e){
       const file=e.target.files[0]; if(!file)return;
-      if(!confirm('Huidige data vervangen door '+file.name+'?')){ e.target.value='';return; }
+      if(!confirm('Huidige data vervangen door '+file.name+'?\nProjectnaam en versie worden ook uit het bestand gelezen.')){ e.target.value='';return; }
       const reader=new FileReader();
-      reader.onload=ev=>{ if(file.name.endsWith('.md'))_parseMD(ev.target.result); else _parseCSV(ev.target.result); e.target.value=''; alert(items.length+' items geladen uit '+file.name); render(); };
+      reader.onload=ev=>{
+        // Bij handmatig laden WEL naam/versie overnemen uit bestand
+        if(file.name.endsWith('.md')) _parseMD(ev.target.result,true);
+        else _parseCSV(ev.target.result);
+        e.target.value='';
+        alert(items.length+' items geladen uit '+file.name);
+        render();
+      };
       reader.readAsText(file);
     }
 
-    // ── CSV parser ──
     function _parseCSV(text){
       const rows=text.trim().split('\n'), headers=rows[0].split(',').map(h=>h.trim());
       items=rows.slice(1).map(row=>{
@@ -783,63 +723,54 @@
       const seen=new Set(); phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p)); _save();
     }
 
-    // ── Markdown parser ──
-    function _parseMD(text){
+    // forceNameUpdate=true bij handmatig laden, false (default) bij automatisch eerste laden via init
+    function _parseMD(text, forceNameUpdate=false){
       items=[]; phases=[]; phaseDescs={};
+      let parsedName='', parsedVersion='';
       const lines=text.split('\n'); let curPhase='',curDesc='';
 
       for(const line of lines){
-        // Eerste regel: # BACKLOG.md — Projectnaam  of  # Projectnaam
         if(line.startsWith('# ')){
           const raw=line.replace(/^#\s*/,'').trim();
           const dash=raw.indexOf('—');
-          // Naam staat na het streepje, of is de hele regel als er geen streepje is
-          const name=dash>-1 ? raw.slice(dash+1).trim() : raw.replace(/^BACKLOG\.md/i,'').trim();
-          if(name) projName=name;
+          parsedName = dash>-1 ? raw.slice(dash+1).trim() : raw.replace(/^BACKLOG\.md/i,'').trim();
           continue;
         }
-        // Versieregel: > Versie: v1.0.0 · ...
         if(line.startsWith('> Versie:')){
           const m=line.match(/Versie:\s*([^\s·]+)/);
-          if(m&&m[1]&&m[1]!=='—') projVersion=m[1];
+          if(m&&m[1]&&m[1]!=='—') parsedVersion=m[1];
           continue;
         }
-        // ### sub-fase
         if(line.startsWith('###')){ const raw=line.replace(/^###\s*/,'').trim(); const d=raw.indexOf('—'); curPhase=d>-1?raw.slice(0,d).trim():raw; curDesc=d>-1?raw.slice(d+1).trim():''; if(curPhase&&!phases.includes(curPhase))phases.push(curPhase); if(curDesc)phaseDescs[curPhase]=curDesc; continue; }
-        // ## fase
         if(line.startsWith('##')&&!line.startsWith('###')){ const raw=line.replace(/^##\s*/,'').trim().replace(/[✅🔄📋🔮].*/,'').trim(); const d=raw.indexOf('—'); curPhase=d>-1?raw.slice(0,d).trim():raw; curDesc=d>-1?raw.slice(d+1).trim():''; if(curPhase&&!phases.includes(curPhase))phases.push(curPhase); if(curDesc)phaseDescs[curPhase]=curDesc; continue; }
-        // Tabelrij
         if(line.startsWith('|')&&!line.includes('---')){
           const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
           if(!cells.length||cells[0]==='ID'||cells[0]==='Taak')continue;
           let id='',prio='Medium',title='',status='Open',tags='',type='Feature',desc='',ai='',assignee='';
-          if(cells.length>=9){ // Nieuwe volledige kolomindeling: id|tags|taak|desc|ai|type|assigned|priority|status
-            id=cells[0]; tags=cells[1]==='X'?'':cells[1]; title=cells[2]; desc=cells[3]==='X'?'':cells[3];
-            ai=cells[4]==='X'?'':cells[4]; type=cells[5]==='X'?'Feature':cells[5];
-            assignee=cells[6]==='X'?'':cells[6]; prio=_mapPrio(cells[7]); status=_mapStatus(cells[8]);
-          } else if(cells.length>=4&&['🔴','🟡','🟢'].some(e=>cells[1].includes(e))){
-            id=cells[0]; prio=_mapPrio(cells[1]); title=cells[2]; status=_mapStatus(cells[3]); tags=cells[4]||'';
-          } else if(cells.length>=3){
-            id=cells[0]; title=cells[1]; status=_mapStatus(cells[2]);
-          }
+          if(cells.length>=9){ id=cells[0];tags=cells[1];title=cells[2];desc=cells[3];ai=cells[4];type=cells[5]||'Feature';assignee=cells[6];prio=_mapPrio(cells[7]);status=_mapStatus(cells[8]); }
+          else if(cells.length>=4&&['🔴','🟡','🟢'].some(e=>cells[1].includes(e))){ id=cells[0];prio=_mapPrio(cells[1]);title=cells[2];status=_mapStatus(cells[3]);tags=cells[4]||''; }
+          else if(cells.length>=3){ id=cells[0];title=cells[1];status=_mapStatus(cells[2]); }
           if(id&&title)items.push({id,phase:curPhase,title,description:desc,ai,type,priority:prio,status,assignee,tags});
         }
       }
+
+      // Naam alleen schrijven bij eerste laden (init) of bij handmatig laden
+      if(parsedName)  projName    = parsedName;
+      if(parsedVersion) projVersion = parsedVersion;
+      _saveProjInfo();
       _save();
     }
 
-    function _mapStatus(s){ if(!s||s==='X')return'Open'; if(s.includes('✅')||s.toLowerCase().includes('gedaan'))return'Done'; if(s.includes('🔄')||s.toLowerCase().includes('uitvoering'))return'In Progress'; if(s.includes('❌')||s.toLowerCase().includes('geannuleerd'))return'Cancelled'; if(s.includes('🔮')||s.toLowerCase().includes('toekomst'))return'Future'; return'Open'; }
-    function _mapPrio(s){ if(!s||s==='X')return'Medium'; if(s.includes('🔴'))return'High'; if(s.includes('🟡'))return'Medium'; if(s.includes('🟢'))return'Low'; if(s.toLowerCase().includes('critical'))return'Critical'; return'Medium'; }
+    function _mapStatus(s){ if(!s)return'Open'; if(s.includes('✅')||s.toLowerCase().includes('gedaan'))return'Done'; if(s.includes('🔄')||s.toLowerCase().includes('uitvoering'))return'In Progress'; if(s.toLowerCase().includes('review'))return'Review'; if(s.includes('❌')||s.toLowerCase().includes('geannuleerd'))return'Cancelled'; if(s.includes('🔮')||s.toLowerCase().includes('toekomst'))return'Future'; return'Open'; }
+    function _mapPrio(s){ if(!s)return'Medium'; if(s.includes('🔴'))return'High'; if(s.includes('🟡'))return'Medium'; if(s.includes('🟢'))return'Low'; if(s.toLowerCase().includes('critical'))return'Critical'; return'Medium'; }
 
-    // ── CSV exporteren ──
     function exportCSV(){
       const cols=['id','phase','tags','title','description','ai','type','assignee','priority','status'];
       const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+V(i[c]).replace(/"/g,'""')+'"').join(','))];
-      const csvName=(V(projName)||'backlog').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.csv';
-      _download(csvName,rows.join('\n'),'text/csv');
+      const name=(V(projName)||'backlog').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.csv';
+      _download(name,rows.join('\n'),'text/csv');
     }
 
-    // ── Markdown exporteren: id | tags | taak | description | ai | type | assigned | priority | status ──
     function exportMD(){
       let md=`# BACKLOG.md — ${V(projName)||'Project'}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
       md+=`> Versie: ${V(projVersion)||'—'} · ${items.length} items\n\n`;
@@ -857,29 +788,20 @@
         });
         md+='\n';
       }
-      const mdName=(V(projName)||'BACKLOG').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
-      _download(mdName,md,'text/markdown');
+      const name=(V(projName)||'BACKLOG').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
+      _download(name,md,'text/markdown');
     }
 
     function _download(filename,content,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); }
 
-    // ── AI suggestie ophalen ──
     async function _getAiSuggestion(){
       const title=$('f-title').value.trim(); if(!title||!apiKey)return;
       $('btn-ai').textContent='…bezig'; $('btn-ai').disabled=true; $('ai-box').style.display='none';
       try{
-        const res=await fetch('https://api.anthropic.com/v1/messages',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:
-            `Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`
-          }]})
-        });
+        const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:`Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`}]})});
         const data=await res.json();
-        const suggestion=data.content?.[0]?.text||'Geen suggestie ontvangen.';
-        $('ai-box').textContent=suggestion;
-        $('ai-box').style.display='block';
-        $('f-ai').value=suggestion; // AI suggestie opslaan in het veld
+        const s=data.content?.[0]?.text||'Geen suggestie ontvangen.';
+        $('ai-box').textContent=s; $('ai-box').style.display='block'; $('f-ai').value=s;
       }catch(e){ $('ai-box').textContent='Fout: '+e.message; $('ai-box').style.display='block'; }
       $('btn-ai').textContent='✦ AI suggestie ophalen'; $('btn-ai').disabled=false;
     }
