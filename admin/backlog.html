@@ -244,7 +244,20 @@
     .ai-warning { font-family:var(--font-mono); font-size:0.72rem; color:#fb923c; margin-left:8px; }
     .ai-box { margin-top:10px; font-family:var(--font-mono); font-size:0.75rem; background:#2a2a2a; border-radius:var(--radius); padding:10px 14px; white-space:pre-wrap; line-height:1.6; color:var(--text-muted); border:1px solid var(--border); }
 
-    /* Toegang geweigerd */
+    /* Log viewer markdown rendering */
+    .log-h1 { font-family:var(--font-mono); font-size:1.3rem; font-weight:600; color:var(--accent); margin:0 0 4px; }
+    .log-h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:1.5rem 0 4px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+    .log-h3 { font-family:var(--font-mono); font-size:0.85rem; font-weight:600; color:var(--text-primary); margin:1rem 0 4px; }
+    .log-meta { font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem; }
+    .log-p { font-size:0.88rem; margin:0.4rem 0; color:var(--text-primary); }
+    .log-li { font-size:0.85rem; margin:2px 0 2px 1.2rem; color:var(--text-primary); list-style:disc; }
+    .log-hr { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+    .log-code { font-family:var(--font-mono); font-size:0.78rem; background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:4px; color:var(--accent); }
+    .log-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.75rem; margin:0.75rem 0; }
+    .log-table th { background:#1a7a4a; color:#fff; padding:6px 10px; text-align:left; font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:0.68rem; }
+    .log-table td { padding:6px 10px; background:#c8c8c8; color:#1a1a1a; border-bottom:1px solid #aaa; }
+    .log-table tr:last-child td { border-bottom:none; }
+    .log-blockquote { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); border-left:3px solid var(--accent); padding-left:12px; margin:0.5rem 0; }
     .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
     .access-denied h2 { font-size:1.2rem; color:var(--color-danger); margin-bottom:10px; font-family:var(--font-sans); }
     .access-denied p { font-size:0.9rem; color:var(--text-muted); line-height:1.6; }
@@ -307,7 +320,7 @@
         </div>
 
         <!-- Statistieken -->
-        <div class="stat-grid" id="stat-grid"></div>
+        <div id="stat-grid" class="stat-grid"></div>
 
         <!-- Fases -->
         <div class="phases-bar">
@@ -343,6 +356,21 @@
 
         <!-- Inhoud -->
         <div id="bl-content"></div>
+
+        </div><!-- /section-backlog -->
+
+        <!-- Log sectie -->
+        <div id="section-log" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap;">
+            <label class="btn" style="cursor:pointer">📂 Log laden (MD)
+              <input type="file" id="input-log" accept=".md" style="display:none"/>
+            </label>
+            <span id="log-filename" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted)"></span>
+          </div>
+          <div id="log-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-family:var(--font-sans);line-height:1.7;color:var(--text-primary);max-height:calc(100vh - 280px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,212,170,0.4) rgba(255,255,255,0.05);">
+            <p style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);text-align:center;padding:3rem 0">Laad een PROJECT_LOG.md bestand via de knop hierboven.</p>
+          </div>
+        </div>
 
       </div>
     </main>
