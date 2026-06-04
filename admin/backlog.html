@@ -135,12 +135,43 @@
     .empty .empty-icon { font-size:32px; margin-bottom:12px; }
     .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
 
-    /* Board: horizontaal scrollbaar, sticky kolomheaders */
-    .board-scroll { overflow-x:auto; padding-bottom:8px; }
-    .board { display:flex; gap:16px; min-width:max-content; align-items:flex-start; }
-    .board-col { width:240px; flex-shrink:0; }
-    .board-col-title { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; position:sticky; top:0; background:var(--bg-main); padding:8px 0 6px; z-index:2; }
-    .board-col-items { display:flex; flex-direction:column; gap:8px; }
+    /* Board: vaste hoogte container met beide scrollbalken zichtbaar */
+    .board-scroll {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: calc(100vh - 320px); /* Beschikbare hoogte onder filters */
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-main);
+      /* Altijd scrollbalken tonen zodat ze zichtbaar zijn als indicator */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,212,170,0.4) rgba(255,255,255,0.05);
+    }
+    .board-scroll::-webkit-scrollbar { width:8px; height:8px; }
+    .board-scroll::-webkit-scrollbar-track { background:rgba(255,255,255,0.04); border-radius:4px; }
+    .board-scroll::-webkit-scrollbar-thumb { background:rgba(0,212,170,0.4); border-radius:4px; }
+    .board-scroll::-webkit-scrollbar-thumb:hover { background:rgba(0,212,170,0.7); }
+    .board-scroll::-webkit-scrollbar-corner { background:rgba(255,255,255,0.04); }
+
+    /* Board: horizontale flex van kolommen */
+    .board { display:flex; gap:0; min-width:max-content; align-items:flex-start; }
+
+    /* Elke kolom: vaste breedte, padding */
+    .board-col { width:260px; flex-shrink:0; padding:0 12px; border-right:1px solid var(--border); }
+    .board-col:last-child { border-right:none; }
+
+    /* Sticky kolomtitel binnen de scrollcontainer */
+    .board-col-title {
+      font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase;
+      letter-spacing:1px; color:var(--text-muted);
+      display:flex; align-items:center; gap:6px;
+      position:sticky; top:0; z-index:2;
+      background:var(--bg-main);
+      padding:12px 0 8px;
+      border-bottom:1px solid var(--border);
+      margin-bottom:10px;
+    }
+    .board-col-items { display:flex; flex-direction:column; gap:8px; padding-bottom:16px; }
     .board-empty { font-family:var(--font-mono); font-size:0.75rem; color:rgba(255,255,255,0.15); padding:6px 0; }
 
     /* Kaart */
