@@ -415,7 +415,8 @@
     const D_CSS  = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
 
     const $=id=>document.getElementById(id); // DOM helper
-    const X=v=>v&&v.trim()?v.trim():'X';     // Lege velden vervangen door 'X'
+    const X=v=>v&&v.trim()?v.trim():'X';      // Alleen voor ID-generatie: leeg → 'X'
+    const V=v=>v&&v.trim()?v.trim():'';      // Voor weergave en export: leeg blijft leeg
 
     // ── Initialisatie ──
     async function init() {
@@ -640,13 +641,13 @@
           return `<tr>
             <td><span class="tbl-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span></td>
             <td>${tags.map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')||'—'}</td>
-            <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${X(i.title)}</td>
-            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${X(i.description)}</td>
-            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;font-size:0.72rem">${X(i.ai)}</td>
-            <td>${X(i.type)}</td>
-            <td>${X(i.assignee)}</td>
-            <td><span class="${P_TBL[i.priority]||'p-medium-tbl'}">${X(i.priority)}</span></td>
-            <td><span class="${S_TBL[i.status]||'s-open-tbl'}">${S_ICON[i.status]||''} ${X(i.status)}</span></td>
+            <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title||''}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.description||''}</td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;font-size:0.72rem">${i.ai||''}</td>
+            <td>${i.type||''}</td>
+            <td>${i.assignee||''}</td>
+            <td><span class="${P_TBL[i.priority]||'p-medium-tbl'}">${i.priority||''}</span></td>
+            <td><span class="${S_TBL[i.status]||'s-open-tbl'}">${S_ICON[i.status]||''} ${i.status||''}</span></td>
             <td style="white-space:nowrap">
               <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px">✏️</button>
               <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px">🗑</button>
@@ -804,15 +805,15 @@
     // ── CSV exporteren ──
     function exportCSV(){
       const cols=['id','phase','tags','title','description','ai','type','assignee','priority','status'];
-      const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+X(i[c]).replace(/"/g,'""')+'"').join(','))];
-      const csvName=(projName||'backlog').replace(/\s+/g,'-')+(projVersion?'-'+projVersion:'')+'.csv';
+      const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+V(i[c]).replace(/"/g,'""')+'"').join(','))];
+      const csvName=(V(projName)||'backlog').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.csv';
       _download(csvName,rows.join('\n'),'text/csv');
     }
 
     // ── Markdown exporteren: id | tags | taak | description | ai | type | assigned | priority | status ──
     function exportMD(){
-      let md=`# BACKLOG.md — ${X(projName)}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
-      md+=`> Versie: ${X(projVersion)} · ${items.length} items\n\n`;
+      let md=`# BACKLOG.md — ${V(projName)||'Project'}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
+      md+=`> Versie: ${V(projVersion)||'—'} · ${items.length} items\n\n`;
       const byPhase={};
       items.forEach(i=>{ const ph=i.phase||'Overig'; (byPhase[ph]=byPhase[ph]||[]).push(i); });
       for(const ph of [...phases,...Object.keys(byPhase).filter(p=>!phases.includes(p))]){
@@ -823,11 +824,11 @@
         md+=`|----|------|------|--------------|-------------|------|------------|-----------|--------|\n`;
         byPhase[ph].forEach(i=>{
           const pIcon={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡';
-          md+=`| ${X(i.id)} | ${X(i.tags)} | ${X(i.title)} | ${X(i.description)} | ${X(i.ai)} | ${X(i.type)} | ${X(i.assignee)} | ${pIcon} ${X(i.priority)} | ${S_ICON[i.status]||'📋'} ${X(i.status)} |\n`;
+          md+=`| ${V(i.id)} | ${V(i.tags)} | ${V(i.title)} | ${V(i.description)} | ${V(i.ai)} | ${V(i.type)} | ${V(i.assignee)} | ${pIcon} ${V(i.priority)} | ${S_ICON[i.status]||'📋'} ${V(i.status)} |\n`;
         });
         md+='\n';
       }
-      const mdName=(projName||'BACKLOG').replace(/\s+/g,'-')+(projVersion?'-'+projVersion:'')+'.md';
+      const mdName=(V(projName)||'BACKLOG').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
       _download(mdName,md,'text/markdown');
     }
 
