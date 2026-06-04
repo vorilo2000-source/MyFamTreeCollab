@@ -805,7 +805,8 @@
     function exportCSV(){
       const cols=['id','phase','tags','title','description','ai','type','assignee','priority','status'];
       const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+X(i[c]).replace(/"/g,'""')+'"').join(','))];
-      _download('backlog.csv',rows.join('\n'),'text/csv');
+      const csvName=(projName||'backlog').replace(/\s+/g,'-')+(projVersion?'-'+projVersion:'')+'.csv';
+      _download(csvName,rows.join('\n'),'text/csv');
     }
 
     // ── Markdown exporteren: id | tags | taak | description | ai | type | assigned | priority | status ──
@@ -826,7 +827,8 @@
         });
         md+='\n';
       }
-      _download('BACKLOG.md',md,'text/markdown');
+      const mdName=(projName||'BACKLOG').replace(/\s+/g,'-')+(projVersion?'-'+projVersion:'')+'.md';
+      _download(mdName,md,'text/markdown');
     }
 
     function _download(filename,content,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); }
