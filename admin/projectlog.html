@@ -1,0 +1,355 @@
+<!-- ======================= admin/projectlog.html v1.0.0 =======================
+    Project Log Viewer — admin only
+
+    Wijzigingen v1.0.0 (sessie 37):
+     - Initiële versie
+     - Laadt PROJECT_LOG.md via 📂 knop
+     - Sessies als uitklapbare kaarten
+     - Zoeken op sessietitel of inhoud
+     - Log bewaard in localStorage (bl_log)
+     - Zelfde look & feel als backlog.html en analytics.html
+     - Toegangsbeveiliging via AdminGuard.protect('admin')
+
+    Afhankelijkheden:
+     - ../js/utils.js · ../js/auth.js
+     - /MyFamTreeCollab/js/adminGuard.js
+     - /MyFamTreeCollab/js/siteAnalytics.js
+     - ../js/topbar.js (via fetch)
+    ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Log — Admin</title>
+  <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CSS variabelen: zelfde palet als analytics.html ── */
+    :root {
+      --bg-main:     #565656;
+      --bg-card:     #3a3a3a;
+      --bg-card-alt: #444444;
+      --accent:      #00d4aa;
+      --accent-dim:  rgba(0,212,170,0.15);
+      --text-primary:#f0f0f0;
+      --text-muted:  #aaa;
+      --border:      rgba(255,255,255,0.08);
+      --font-mono:   'IBM Plex Mono', monospace;
+      --font-sans:   'IBM Plex Sans', sans-serif;
+      --radius:      8px;
+      --shadow:      0 4px 20px rgba(0,0,0,0.35);
+      --color-danger:#f08080;
+    }
+
+    /* ── Toegangsblokken ── */
+    #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
+    #page-content  { display:none; }
+
+    /* ── Main ── */
+    main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
+    .dash-wrap { max-width:900px; margin:0 auto; }
+
+    /* ── Animatie ── */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Header ── */
+    .log-header { margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
+    .log-title { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 6px; }
+    .log-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
+    .log-meta b { color:var(--accent); }
+
+    /* ── Acties ── */
+    .log-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
+
+    /* ── Knoppen ── */
+    .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; }
+    .btn:hover { background:var(--bg-card-alt); }
+    .btn-accent { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+    .btn-accent:hover { background:rgba(0,212,170,0.28); }
+    .btn-ghost { border-color:transparent; background:transparent; color:var(--text-muted); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.06); }
+    .btn-danger { background:rgba(240,128,128,0.15); color:var(--color-danger); border-color:var(--color-danger); }
+    .btn-danger:hover { background:rgba(240,128,128,0.28); }
+
+    /* ── Zoekbalk ── */
+    .search-bar { width:100%; font-family:var(--font-mono); font-size:0.82rem; padding:8px 14px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; margin-bottom:1.25rem; box-sizing:border-box; }
+    .search-bar:focus { border-color:var(--accent); }
+
+    /* ── Lege staat ── */
+    .log-empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); font-family:var(--font-mono); font-size:0.85rem; color:var(--text-muted); animation:fadeUp .3s ease; }
+
+    /* ── Sessiekaart ── */
+    .log-session { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; animation:fadeUp .3s ease; box-shadow:var(--shadow); }
+    .log-session-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; cursor:pointer; user-select:none; transition:background .15s; gap:12px; }
+    .log-session-header:hover { background:var(--bg-card-alt); }
+    .log-session-header::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); border-radius:var(--radius) 0 0 var(--radius); }
+    .log-session { position:relative; }
+    .log-session-left { display:flex; flex-direction:column; gap:3px; flex:1; }
+    .log-session-title { font-family:var(--font-mono); font-size:0.88rem; font-weight:600; color:var(--accent); }
+    .log-session-date { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
+    .log-session-toggle { font-size:0.75rem; color:var(--text-muted); transition:transform .2s; flex-shrink:0; }
+    .log-session.open .log-session-toggle { transform:rotate(180deg); }
+    .log-session-body { display:none; padding:0 18px 18px; border-top:1px solid var(--border); }
+    .log-session.open .log-session-body { display:block; }
+
+    /* ── Markdown content ── */
+    .log-md { padding-top:12px; }
+    .log-md h3 { font-family:var(--font-mono); font-size:0.82rem; color:var(--accent); margin:16px 0 6px; text-transform:uppercase; letter-spacing:0.5px; }
+    .log-md p { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.7; margin:4px 0 8px; }
+    .log-md ul { padding-left:18px; margin:4px 0 12px; }
+    .log-md li { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.7; margin-bottom:2px; }
+    .log-md code { font-family:var(--font-mono); font-size:0.75rem; background:rgba(0,212,170,0.1); color:var(--accent); padding:1px 6px; border-radius:4px; }
+    .log-md strong { color:var(--text-primary); font-weight:600; }
+    .log-md table { width:100%; border-collapse:separate; border-spacing:0; margin:10px 0 16px; font-family:var(--font-mono); font-size:0.72rem; border-radius:var(--radius); overflow:hidden; }
+    .log-md thead th { background:#1a7a4a; color:#fff; padding:8px 12px; text-align:left; font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #0f5c35; }
+    .log-md tbody td { padding:7px 12px; background:#c8c8c8; color:#1a1a1a; border-bottom:1px solid #aaa; }
+    .log-md tbody tr:last-child td { border-bottom:none; }
+    .log-md tbody tr:hover td { background:#d8d8d8; }
+
+    /* ── Toegang geweigerd ── */
+    .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
+    .access-denied h2 { font-size:1.2rem; color:var(--color-danger); margin-bottom:10px; font-family:var(--font-sans); }
+    .access-denied p { font-size:0.9rem; color:var(--text-muted); line-height:1.6; }
+  </style>
+</head>
+<body>
+
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+
+  <div id="topbar-placeholder"></div>
+  <div id="navbar-placeholder"></div>
+
+  <div id="accessDenied">
+    <div class="access-denied">
+      <h2>Geen toegang</h2>
+      <p>Deze pagina is alleen toegankelijk voor administrators.<br>Log in met een admin-account om verder te gaan.</p>
+    </div>
+  </div>
+
+  <div id="page-content">
+    <main>
+      <div class="dash-wrap">
+
+        <!-- Header -->
+        <div class="log-header">
+          <div class="log-title">📖 Project Log</div>
+          <div class="log-meta" id="log-meta"></div>
+        </div>
+
+        <!-- Acties -->
+        <div class="log-actions">
+          <label class="btn" style="cursor:pointer">
+            📂 PROJECT_LOG.md laden
+            <input type="file" id="input-log-file" accept=".md" style="display:none"/>
+          </label>
+          <button class="btn btn-accent" id="btn-expand-all">▼ Alles uitklappen</button>
+          <button class="btn btn-ghost" id="btn-collapse-all">▲ Alles inklappen</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-danger" id="btn-clear-log" title="Wist de opgeslagen log uit localStorage">🗑 Log wissen</button>
+        </div>
+
+        <!-- Zoeken -->
+        <input type="search" class="search-bar" id="input-search" placeholder="Zoeken in sessietitels en inhoud…"/>
+
+        <!-- Sessiekaarten -->
+        <div id="log-content">
+          <div class="log-empty">Laad een PROJECT_LOG.md bestand via de knop hierboven.</div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <!-- Scripts: verplichte volgorde -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
+  <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+
+  <script>
+  // ── Layout laden → topbar → admin-check → Log.init() ──
+  fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
+    document.getElementById('topbar-placeholder').innerHTML=html;
+    const s=document.createElement('script'); s.src='../js/topbar.js';
+    s.onload=()=>AdminGuard.protect('admin').then(ok=>{ if(ok) Log.init(); });
+    document.body.appendChild(s);
+  });
+  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; });
+  fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{ document.getElementById('footer-placeholder').innerHTML=html; });
+
+  // ================================================================
+  // PROJECT LOG MODULE — vanilla JS
+  // ================================================================
+  const Log = (() => {
+    const $=id=>document.getElementById(id);
+    let sessions=[];   // geparsede sessies
+    let search='';     // actieve zoekterm
+
+    // ── Initialisatie ──
+    function init() {
+      $('input-log-file').addEventListener('change', _loadFile);
+      $('input-search').addEventListener('input', e=>{ search=e.target.value; _renderSessions(); });
+      $('btn-expand-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.add('open')); });
+      $('btn-collapse-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.remove('open')); });
+      $('btn-clear-log').addEventListener('click', ()=>{
+        if(!confirm('Opgeslagen log wissen?')) return;
+        localStorage.removeItem('bl_log');
+        sessions=[]; search=''; $('input-search').value='';
+        $('log-meta').innerHTML='';
+        $('log-content').innerHTML='<div class="log-empty">Laad een PROJECT_LOG.md bestand via de knop hierboven.</div>';
+      });
+      // Herstel uit localStorage
+      const saved=localStorage.getItem('bl_log');
+      if(saved) _parse(saved);
+    }
+
+    // ── Bestand laden ──
+    function _loadFile(e) {
+      const file=e.target.files[0]; if(!file)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{ localStorage.setItem('bl_log',ev.target.result); _parse(ev.target.result); e.target.value=''; };
+      reader.readAsText(file);
+    }
+
+    // ── MD parsen naar sessie-objecten ──
+    function _parse(text) {
+      const lines=text.split('\n');
+      sessions=[];
+      let cur=null;
+
+      // Meta uit koptekst
+      const titleLine  = lines.find(l=>l.startsWith('# '));
+      const updatedLine= lines.find(l=>l.startsWith('## Bijgewerkt:'));
+      const parts=[];
+      if(titleLine)   parts.push(titleLine.replace(/^#\s*/,'').trim());
+      if(updatedLine) parts.push(updatedLine.replace(/^##\s*/,'').trim());
+      $('log-meta').innerHTML=parts.map(p=>`<span><b>${_esc(p)}</b></span>`).join('');
+
+      for(const line of lines) {
+        // Sessie-koptekst: ## Sessie X ...
+        if(line.startsWith('## ')&&line.toLowerCase().includes('sessie')) {
+          if(cur) sessions.push(cur);
+          cur={ title:line.replace(/^##\s*/,'').trim(), date:'', rawLines:[] };
+          continue;
+        }
+        if(!cur) continue;
+        // Datum
+        if(line.startsWith('**Datum:**')){ cur.date=line.replace('**Datum:**','').trim(); continue; }
+        cur.rawLines.push(line);
+      }
+      if(cur) sessions.push(cur);
+      _renderSessions();
+    }
+
+    // ── Sessies renderen (met zoekfilter) ──
+    function _renderSessions() {
+      const q=search.toLowerCase().trim();
+      const filtered=sessions.filter(s=>{
+        if(!q) return true;
+        return s.title.toLowerCase().includes(q) || s.rawLines.join('\n').toLowerCase().includes(q);
+      });
+
+      if(!filtered.length) {
+        $('log-content').innerHTML=`<div class="log-empty">${q?'Geen sessies gevonden voor "'+_esc(q)+'"':'Geen sessies gevonden.'}</div>`;
+        return;
+      }
+
+      $('log-content').innerHTML=filtered.map((s,i)=>`
+        <div class="log-session" id="log-s-${i}">
+          <div class="log-session-header" data-idx="${i}">
+            <div class="log-session-left">
+              <div class="log-session-title">${_esc(s.title)}</div>
+              ${s.date?`<div class="log-session-date">📅 ${_esc(s.date)}</div>`:''}
+            </div>
+            <span class="log-session-toggle">▼</span>
+          </div>
+          <div class="log-session-body">
+            <div class="log-md">${_mdToHtml(s.rawLines.join('\n'))}</div>
+          </div>
+        </div>`).join('');
+
+      // Toggle handlers
+      $('log-content').querySelectorAll('.log-session-header').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          document.getElementById('log-s-'+el.dataset.idx).classList.toggle('open');
+        });
+      });
+
+      // Eerste sessie standaard uitklappen
+      const first=$('log-content').querySelector('.log-session');
+      if(first) first.classList.add('open');
+    }
+
+    // ── Eenvoudige MD → HTML converter ──
+    function _mdToHtml(text) {
+      const lines=text.split('\n');
+      let html='', inList=false, inTable=false, tableRows=[];
+
+      const flushTable=()=>{
+        if(!tableRows.length){inTable=false;return;}
+        html+=`<table><thead><tr>${tableRows[0].map(c=>`<th>${_inline(c)}</th>`).join('')}</tr></thead><tbody>`;
+        // Rij 1 is headers, rij 2 is scheidingslijn (---)
+        tableRows.slice(2).forEach(row=>{ html+=`<tr>${row.map(c=>`<td>${_inline(c)}</td>`).join('')}</tr>`; });
+        html+=`</tbody></table>`;
+        tableRows=[]; inTable=false;
+      };
+
+      for(const line of lines) {
+        // Tabelrij
+        if(line.startsWith('|')) {
+          if(inList){html+='</ul>';inList=false;}
+          inTable=true;
+          tableRows.push(line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1));
+          continue;
+        }
+        if(inTable) flushTable();
+
+        // Lege regel
+        if(!line.trim()){
+          if(inList){html+='</ul>';inList=false;}
+          continue;
+        }
+        // ### koptekst
+        if(line.startsWith('### ')){ if(inList){html+='</ul>';inList=false;} html+=`<h3>${_inline(line.slice(4))}</h3>`; continue; }
+        // Lijstitem
+        if(line.match(/^[-*]\s/)){
+          if(!inList){html+='<ul>';inList=true;}
+          html+=`<li>${_inline(line.replace(/^[-*]\s/,''))}</li>`;
+          continue;
+        }
+        if(inList){html+='</ul>';inList=false;}
+        // Sla ## en --- regels over
+        if(line.startsWith('## ')||line.startsWith('---')||line.startsWith('> ')) continue;
+        // Paragraaf
+        if(line.trim()) html+=`<p>${_inline(line)}</p>`;
+      }
+      if(inList) html+='</ul>';
+      if(inTable) flushTable();
+      return html;
+    }
+
+    // Inline markdown: **bold**, `code`
+    function _inline(t) {
+      return _esc(t)
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/`([^`]+)`/g,'<code>$1</code>');
+    }
+
+    function _esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    return { init };
+  })();
+  </script>
+
+</body>
+</html>
