@@ -1,7 +1,49 @@
 # MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-06-01
+## Bijgewerkt: 2026-06-05
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 37 — Backlog Manager (admin/backlog.html)
+
+**Datum:** 2026-06-04
+
+### Doel
+Volledig werkende backlog manager als adminpagina, consistent met de bestaande admin look & feel.
+
+### admin/backlog.html — v5.1.0
+- Vanilla JS, geen framework — consistent met rest van project
+- Laadvolgorde identiek aan analytics.html: supabase → utils → auth → adminGuard → siteAnalytics → topbar → AdminGuard.protect()
+- Board- en lijstweergave met sticky kolomheaders en scrollbare container
+- Alleen actieve statuskolommen tonen in boardweergave (gefilterd via statusfilter pills)
+- Multi-select filters voor status, prioriteit, type en tags via klikbare pills
+- Fasefilter als pills met tooltip (beschrijving uit MD fase-header na `—`)
+- Auto ID: [1e letter fase][1e letter type]-[3-cijferig volgnummer], inline aanpasbaar
+- Projectnaam + versie + datum in header, bewerkbaar via inline paneel
+- Projectnaam en versie worden ingelezen uit eerste regel van MD bij laden
+- MD én CSV laden via 📂 knop (bestandsnaam vrij te kiezen)
+- MD én CSV exporteren met bestandsnaam = projectnaam-versie.md/.csv
+- AI suggestie via Anthropic API (gebruiker voert eigen sleutel in via UI)
+- Data wissen knop: verwijdert alle `bl_*` localStorage sleutels
+- Lege velden blijven leeg in UI en export (geen X-vervanging)
+- Toegangsbeveiliging via AdminGuard.protect('admin')
+- Aparte tab voor Project Log naast Backlog tab
+
+### BACKLOG.md — v1.0.0 (opgeschoond)
+- WINOTS en DP9ZZF rijen verwijderd
+- F8-57 t/m F8-62 hersteld als normale rij
+- Fase 10 beschrijving verplaatst naar fase-header als tooltip
+- Bugfixes sectie hernoemd en type gecorrigeerd naar Bug
+- Datumtypefout gecorrigeerd (2026-0529 → 2026-05-29)
+
+### Versie-overzicht
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `admin/backlog.html` | — | v5.1.0 | Nieuw — backlog manager |
+| `BACKLOG.md` | — | v1.0.0 | Opgeschoond en klaar voor backlog.html |
+| `PROJECT_LOG.md` | v1.0.0 | v1.1.0 | Sessie 37 toegevoegd |
 
 ---
 
@@ -22,39 +64,6 @@ Consistente kleurcodering over manage, view en timeline via één centrale bron 
 - `--color-vader`: `#e8f5e9` → `#C49A6C` (bruin — synchroon met colorHelper.js)
 - `--color-moeder`: `#e8f5e9` → `#7ccc86` (groen — synchroon met colorHelper.js)
 - `--color-PHKindID`: `#bbdefb` → `#e5f2ff` (synchroon met colorHelper.js)
-
-### Tree.css — v2.1.0 → v2.2.0
-- Eigen `:root` variabelen verwijderd — kleuren komen nu uit RelationColors.css
-- CSS klassen bijgewerkt: `kind1/kind2/kind3` vervangen door `KindID/HKindID/MHKindID/PHKindID`
-- RelationColors.css vóór Tree.css geladen in alle pagina's
-
-### manage.js — v2.7.0 → v2.8.0
-- Kleurgradiënt op `td` cellen gezet i.p.v. `tr` — CSS specificiteitsconflict opgelost
-- `Array.from(tr.cells).forEach()` na COLUMNS-loop — alle cellen bestaan dan al
-- Inline commentaar op elke coderegel toegevoegd
-
-### manage.html — v2.6.1 → v2.7.0
-- `tr.VHoofdID` en `tr.MHoofdID` aparte CSS regels — waren samengevoegd waardoor beide bruin kleurden
-- RelationColors.css vóór Tree.css geladen
-
-### view.js — v1.7.0 → v1.8.0
-- `createTreeNode()` krijgt `index` parameter mee
-- `ColorHelper.applyRelationColor()` toegepast voor index 1 en hoger
-- Partners, vaders, moeders krijgen oplopende index
-
-### timeline.js — v2.5.0 → v2.7.0
-- v2.6.0: `colorIndex` parameter aan `addRow()` toegevoegd
-- v2.7.0: `COLOR` object relatie-kleuren vervangen door `ColorHelper.BASE_COLORS` via `getBaseColor()`
-- Canvas-specifieke kleuren (tick, barText, connLine etc.) blijven hardcoded in `COLOR`
-- `needsDarkText()` drempelwaarde: 160 → 128 voor correcte tekstkleur op lichte balkjes
-- `drawBarLabel()`: altijd `COLOR.barTextDark` (zwart) voor leesbaarheid op lichte nodes
-
-### Handleiding — kleurensectie toegevoegd
-- Nieuwe sectie 5 "Kleurcodering" in NL, EN en ES
-- Kleurstalen als inline `<span>` met achtergrondkleur
-- Tabel met alle relatiekleuren + omschrijving
-- Rijen voor 2e/3e vader, moeder, partner (20% lichter per stap)
-- Inhoudsopgave bijgewerkt in alle drie talen
 
 ### Versie-overzicht
 
@@ -81,19 +90,13 @@ Consistente kleurcodering over manage, view en timeline via één centrale bron 
 - `js/import.js` v2.2.0 → v2.3.0
 - Duplicate check via Set van bestaande IDs
 - Modal met 4 keuzes: Overslaan / Overschrijven / Toch alles / Annuleren
-- Geen HTML aanpassingen nodig — modal dynamisch gebouwd
 
 ### F3-48 — Meerdere partners, vaders en moeders
-- `js/manage.js` v2.5.1 → v2.6.1: multi-ID widget (buildMultiIDCell / buildMultiIDRow / readMultiIDCell)
-- `stamboom/manage.html` v2.5.0 → v2.6.0: window.ManageTable.buildHeader() na loadNamespace
-- `js/view.js` v1.6.5 → v1.7.0: findMultiple() helper, alle directe findPerson() calls vervangen
-- `js/timeline.js` v2.4.0 → v2.5.0: findMultiple() helper, collectAncestorLevel en nakomelingen bijgewerkt
-- `js/relatieEngine.js` v2.4.0 → v2.5.0: parsePartners() + includes() voor alle VaderID/MoederID/PartnerID checks
-
-### Handleiding
-- `bronnen/handleiding-nl.html` v2.4.0 → v2.5.0: sectie 4 en 11 bijgewerkt
-- `bronnen/handleiding-en.html` v2.4.0 → v2.5.0: sectie 4 en 11 bijgewerkt
-- `bronnen/handleiding-es.html` v2.4.0 → v2.5.0: sectie 4 en 11 bijgewerkt
+- `js/manage.js` v2.5.1 → v2.6.1: multi-ID widget
+- `stamboom/manage.html` v2.5.0 → v2.6.0
+- `js/view.js` v1.6.5 → v1.7.0: findMultiple() helper
+- `js/timeline.js` v2.4.0 → v2.5.0: findMultiple() helper
+- `js/relatieEngine.js` v2.4.0 → v2.5.0: parsePartners()
 
 ### Versie-overzicht
 
@@ -111,48 +114,54 @@ Consistente kleurcodering over manage, view en timeline via één centrale bron 
 
 ---
 
-## Sessie 34
-- import.js v2.1.0 → v2.2.0: TD-11/F8-56 legacy CSV-detectie via schema.normalizeHeader()
+## Sessie 34 — Import legacy CSV + SEC-04 + opschoning
+
+**Datum:** 2026-05-29
+
+- `import.js` v2.1.0 → v2.2.0: TD-11/F8-56 legacy CSV-detectie via schema.normalizeHeader()
 - AN-21: stamboom/account.html bestaat niet → ❌ Geannuleerd
 - TD-09: lang-link handlers al verwijderd → ✅ Gedaan
-- SEC-04: editor UPDATE policy op stambomen bestond al, cloudSync.js correct
-  Dubbele RLS policies opgeruimd: 4 policies verwijderd op stambomen + stamboom_gedeeld
+- SEC-04: editor UPDATE policy bestond al, dubbele RLS policies opgeruimd
 - BACKLOG.md bijgewerkt
 
 ---
 
-## Sessie 33 — TD-11/F8-56 + AN-21 + TD-09 opgeschoond
-- import.js v2.1.0 → v2.2.0: legacy CSV-detectie via schema.normalizeHeader()
-- AN-21: stamboom/account.html bestaat niet → ❌ Geannuleerd
-- TD-09: lang-link handlers al verwijderd in eerdere sessie → ✅ Gedaan
-- Parser gebruikt nu schema.normalizeHeader() voor headertype-detectie
-- Legacy CSV (19 kolommen) correct herkend en gemigreerd via schema.fromCSV()
-- Velden buiten schema.fields (Huwelijksdatum, Huwelijksplaats, etc.) worden genegeerd
+## Sessie 33 — TD-11/F8-56 + opschoning
+
+**Datum:** 2026-05-29
+
+- Parser gebruikt schema.normalizeHeader() voor headertype-detectie
+- Legacy CSV (19 kolommen) correct herkend via schema.fromCSV()
 - Events-structuur besproken: aparte tabel, GEDCOM-compatibel, fase 4
 
 ---
 
-## Sessie 32 — Supabase analyse pagina + admin toegangsbeveiliging (voorbereiding)
+## Sessie 32 — Supabase analyse pagina
 
 **Datum:** 2026-05-28
 
-admin/supabase-analyse.html nieuw (v3.2.0), Navbar.html v1.3.0, locales common.json bijgewerkt.
+- `admin/supabase-analyse.html` nieuw (v3.2.0)
+- Navbar.html v1.3.0
+- locales common.json bijgewerkt
 
 ---
 
-## Sessie 31 — Bugfix: admin/developer menu verdwenen na Supabase security-fix
+## Sessie 31 — Bugfix: admin/developer menu verdwenen
 
 **Datum:** 2026-05-26
 
-BF-57/58/59 opgelost. RLS policies herschreven, admin_users view hersteld zonder auth.users join.
+- BF-57/58/59 opgelost
+- RLS policies herschreven
+- admin_users view hersteld zonder auth.users join
 
 ---
 
-## Sessie 30 — i18n uitgerold op abonnementen-pagina's
+## Sessie 30 — i18n abonnementen-pagina's
 
 **Datum:** 2026-05-25
 
-BF-56 race condition opgelost. Namespaces overzicht/prijzen/vergelijk/voordelen aangemaakt.
+- BF-56 race condition opgelost
+- Namespaces overzicht/prijzen/vergelijk/voordelen aangemaakt
 
 ---
 
@@ -160,48 +169,55 @@ BF-56 race condition opgelost. Namespaces overzicht/prijzen/vergelijk/voordelen 
 
 **Datum:** 2026-05-22
 
-RLS ingeschakeld op 6 tabellen, admin_users view gedropt, anon-rechten ingetrokken.
+- RLS ingeschakeld op 6 tabellen
+- admin_users view gedropt
+- Anon-rechten ingetrokken
 
 ---
 
-## Sessie 28 — Bugfix: tabelheaders vertalen bij taalwissel (template.html)
+## Sessie 28 — Bugfix: tabelheaders vertalen
 
 **Datum:** 2026-05-20
 
-bronnen/template.html v2.2.0 → v2.3.0: bouwTabel() functie + languageChanged listener.
+- `bronnen/template.html` v2.2.0 → v2.3.0: bouwTabel() + languageChanged listener
 
 ---
 
-## Sessie 27 — i18n uitrollen op bronnen, gemeenschap en develop pagina's
+## Sessie 27 — i18n bronnen, gemeenschap, develop
 
 **Datum:** 2026-05-19
 
-i18n namespace uitgerold op bronnen/, gemeenschap/, develop/. Handleiding meertalig. Navbar v1.2.0.
+- i18n namespace uitgerold op bronnen/, gemeenschap/, develop/
+- Handleiding meertalig, Navbar v1.2.0
 
 ---
 
-## Sessie 26 — i18n uitrollen op Stamboom-menu pagina's + auth namespace
+## Sessie 26 — i18n Stamboom-menu + auth namespace
 
 **Datum:** 2026-05-15
 
-stamboom/*.html gerefactord, auth namespace aangemaakt, topbar modal via i18n.
+- stamboom/*.html gerefactord
+- auth namespace aangemaakt
+- topbar modal via i18n
 
 ---
 
-## Sessie 25 — i18n uitrollen op Start-menu pagina's + docs vertaling
+## Sessie 25 — i18n Start-menu + docs vertaling
 
 **Datum:** 2026-05-12
 
-Navbar, Footer, about, print, import, export, create gerefactord. Docs drietalig.
+- Navbar, Footer, about, print, import, export, create gerefactord
+- Docs drietalig
 
 ---
 
-## Sessie 24 — i18next meertalige architectuur (index.html)
+## Sessie 24 — i18next meertalige architectuur
 
 **Datum:** 2026-05-10
 
-js/i18n.js v1.0.0 aangemaakt. locales/{nl,en,es}/{common,home}.json aangemaakt.
+- `js/i18n.js` v1.0.0 aangemaakt
+- `locales/{nl,en,es}/{common,home}.json` aangemaakt
 
 ---
 
-## Sessies 1–24 — Zie eerdere PROJECT_LOG.md entries
+## Sessies 1–23 — Zie eerdere PROJECT_LOG.md entries
