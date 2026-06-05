@@ -335,14 +335,8 @@
           <button class="btn btn-danger" id="btn-clear-db" title="Wist alle backlog data uit localStorage">🗑 Data wissen</button>
         </div>
 
-        <!-- Tab balk -->
-        <div class="tab-bar">
-          <button class="tab-btn active" id="tab-btn-backlog">📋 Backlog</button>
-          <button class="tab-btn" id="tab-btn-log">📖 Project Log</button>
-        </div>
-
-        <!-- Tab: Backlog -->
-        <div class="tab-panel active" id="tab-backlog">
+        <!-- Statistieken -->
+        <div class="stat-grid" id="stat-grid"></div>
 
         <!-- Fases -->
         <div class="phases-bar">
@@ -378,21 +372,6 @@
 
         <!-- Inhoud -->
         <div id="bl-content"></div>
-
-        </div><!-- /tab-backlog -->
-
-        <!-- Tab: Project Log -->
-        <div class="tab-panel" id="tab-log">
-          <div class="log-actions">
-            <label class="btn" style="cursor:pointer">📂 PROJECT_LOG.md laden
-              <input type="file" id="input-log-file" accept=".md" style="display:none"/>
-            </label>
-            <span class="log-meta" id="log-meta"></span>
-          </div>
-          <div id="log-content">
-            <div class="log-empty">Laad een PROJECT_LOG.md via de knop hierboven.</div>
-          </div>
-        </div><!-- /tab-log -->
 
       </div>
     </main>
@@ -462,7 +441,7 @@
   fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
     document.getElementById('topbar-placeholder').innerHTML=html;
     const s=document.createElement('script'); s.src='../js/topbar.js';
-    s.onload=()=>          AdminGuard.protect('admin').then(ok=>{ if(ok) { Backlog.init(); ProjectLog.init(); } });
+    s.onload=()=>          AdminGuard.protect('admin').then(ok=>{ if(ok) Backlog.init(); });
     document.body.appendChild(s);
   });
   fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; });
