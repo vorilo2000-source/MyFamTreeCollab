@@ -335,8 +335,14 @@
           <button class="btn btn-danger" id="btn-clear-db" title="Wist alle backlog data uit localStorage">🗑 Data wissen</button>
         </div>
 
-        <!-- Statistieken -->
-        <div class="stat-grid" id="stat-grid"></div>
+        <!-- Tab balk -->
+        <div class="tab-bar">
+          <button class="tab-btn active" id="tab-btn-backlog">📋 Backlog</button>
+          <button class="tab-btn" id="tab-btn-log">📖 Project Log</button>
+        </div>
+
+        <!-- Tab: Backlog -->
+        <div class="tab-panel active" id="tab-backlog">
 
         <!-- Fases -->
         <div class="phases-bar">
@@ -372,6 +378,21 @@
 
         <!-- Inhoud -->
         <div id="bl-content"></div>
+
+        </div><!-- /tab-backlog -->
+
+        <!-- Tab: Project Log -->
+        <div class="tab-panel" id="tab-log">
+          <div class="log-actions">
+            <label class="btn" style="cursor:pointer">📂 PROJECT_LOG.md laden
+              <input type="file" id="input-log-file" accept=".md" style="display:none"/>
+            </label>
+            <span class="log-meta" id="log-meta"></span>
+          </div>
+          <div id="log-content">
+            <div class="log-empty">Laad een PROJECT_LOG.md via de knop hierboven.</div>
+          </div>
+        </div><!-- /tab-log -->
 
       </div>
     </main>
@@ -441,7 +462,7 @@
   fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
     document.getElementById('topbar-placeholder').innerHTML=html;
     const s=document.createElement('script'); s.src='../js/topbar.js';
-    s.onload=()=>AdminGuard.protect('admin').then(ok=>{ if(ok) Backlog.init(); });
+    s.onload=()=>          AdminGuard.protect('admin').then(ok=>{ if(ok) { Backlog.init(); ProjectLog.init(); } });
     document.body.appendChild(s);
   });
   fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; });
@@ -866,6 +887,164 @@ function _genId(phase, type) {
       }catch(e){ $('ai-box').textContent='Fout: '+e.message; $('ai-box').style.display='block'; }
       $('btn-ai').textContent='✦ AI suggestie ophalen'; $('btn-ai').disabled=false;
     }
+
+    return { init };
+  })();
+
+  // ================================================================
+  // PROJECT LOG MODULE — parseert PROJECT_LOG.md naar uitklapbare sessiekaarten
+  // ================================================================
+  const ProjectLog = (() => {
+    const $=id=>document.getElementById(id);
+
+    function init() {
+      // Tab wisselen
+      $('tab-btn-backlog').addEventListener('click', ()=>_switchTab('backlog'));
+      $('tab-btn-log').addEventListener('click',     ()=>_switchTab('log'));
+      // Log bestand laden
+      $('input-log-file').addEventListener('change', _loadFile);
+      // Herstel log uit localStorage als aanwezig
+      const saved=localStorage.getItem('bl_log');
+      if(saved) _render(saved);
+    }
+
+    function _switchTab(name) {
+      // Alle tabs en knoppen deactiveren
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      // Geselecteerde tab activeren
+      $('tab-panel' in document ? 'tab-'+name : 'tab-'+name).classList.add('active');
+      document.getElementById('tab-'+name).classList.add('active');
+      $('tab-btn-'+name).classList.add('active');
+    }
+
+    function _loadFile(e) {
+      const file=e.target.files[0]; if(!file)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        const text=ev.target.result;
+        localStorage.setItem('bl_log', text);  // Bewaren voor volgende keer
+        _render(text);
+        e.target.value='';
+      };
+      reader.readAsText(file);
+    }
+
+    function _render(text) {
+      const lines=text.split('\n');
+      const sessions=[];
+      let cur=null;
+
+      for(const line of lines) {
+        // Sessie-koptekst: ## Sessie X — Titel
+        if(line.startsWith('## ') && line.toLowerCase().includes('sessie')) {
+          if(cur) sessions.push(cur);
+          cur={ title: line.replace(/^##\s*/,'').trim(), date:'', body:[] };
+          continue;
+        }
+        if(!cur) continue;
+        // Datum regel
+        if(line.startsWith('**Datum:**')) {
+          cur.date=line.replace('**Datum:**','').trim();
+          continue;
+        }
+        cur.body.push(line);
+      }
+      if(cur) sessions.push(cur);
+
+      // Meta info uit eerste regels
+      const titleLine=lines.find(l=>l.startsWith('# '));
+      const updatedLine=lines.find(l=>l.startsWith('## Bijgewerkt:'));
+      const metaParts=[];
+      if(titleLine) metaParts.push(titleLine.replace(/^#\s*/,'').trim());
+      if(updatedLine) metaParts.push(updatedLine.replace(/^##\s*/,'').trim());
+      $('log-meta').textContent=metaParts.join(' · ');
+
+      if(!sessions.length) {
+        $('log-content').innerHTML='<div class="log-empty">Geen sessies gevonden in dit bestand.</div>';
+        return;
+      }
+
+      $('log-content').innerHTML=sessions.map((s,i)=>`
+        <div class="log-session" id="log-s-${i}">
+          <div class="log-session-header" data-idx="${i}">
+            <div>
+              <div class="log-session-title">${_esc(s.title)}</div>
+              ${s.date?`<div class="log-session-date">📅 ${_esc(s.date)}</div>`:''}
+            </div>
+            <span class="log-session-toggle">▼</span>
+          </div>
+          <div class="log-session-body">
+            <div class="log-md">${_mdToHtml(s.body.join('\n'))}</div>
+          </div>
+        </div>`).join('');
+
+      // Toggle klikhandlers
+      $('log-content').querySelectorAll('.log-session-header').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          const session=document.getElementById('log-s-'+el.dataset.idx);
+          session.classList.toggle('open');
+        });
+      });
+    }
+
+    // Eenvoudige MD → HTML converter voor log-inhoud
+    function _mdToHtml(text) {
+      const lines=text.split('\n');
+      let html='', inList=false, inTable=false, tableRows=[];
+
+      const flushTable=()=>{
+        if(!tableRows.length){inTable=false;return;}
+        html+=`<table><thead><tr>${tableRows[0].map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+        tableRows.slice(2).forEach(row=>{ html+=`<tr>${row.map(c=>`<td>${c}</td>`).join('')}</tr>`; });
+        html+=`</tbody></table>`;
+        tableRows=[]; inTable=false;
+      };
+
+      for(const line of lines) {
+        // Tabel
+        if(line.startsWith('|')) {
+          inTable=true;
+          if(inList){html+='</ul>';inList=false;}
+          tableRows.push(line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1));
+          continue;
+        }
+        if(inTable) flushTable();
+
+        // Lege regel
+        if(!line.trim()){
+          if(inList){html+='</ul>';inList=false;}
+          continue;
+        }
+        // ### koptekst
+        if(line.startsWith('### ')) { html+=`<h3>${_inline(line.slice(4))}</h3>`; continue; }
+        // Lijstitem
+        if(line.startsWith('- ')) {
+          if(!inList){html+='<ul>';inList=true;}
+          html+=`<li>${_inline(line.slice(2))}</li>`;
+          continue;
+        }
+        if(inList){html+='</ul>';inList=false;}
+        // Horizontale lijn
+        if(line.startsWith('---')){continue;}
+        // Gewone paragraaf (geen ##, geen >)
+        if(!line.startsWith('## ')&&!line.startsWith('> ')) {
+          html+=`<p>${_inline(line)}</p>`;
+        }
+      }
+      if(inList) html+='</ul>';
+      if(inTable) flushTable();
+      return html;
+    }
+
+    // Inline markdown: **bold**, `code`
+    function _inline(t) {
+      return _esc(t)
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/`([^`]+)`/g,'<code>$1</code>');
+    }
+
+    function _esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     return { init };
   })();
