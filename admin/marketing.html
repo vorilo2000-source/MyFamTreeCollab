@@ -1,15 +1,13 @@
-<!-- ======================= admin/marketing.html v1.0.0 =======================
+<!-- ======================= admin/marketing.html v2.0.0 =======================
     Marketing & Communicatieplan — admin only
 
-    Wijzigingen v1.0.0 (sessie 37):
-     - Initiële versie
+    Wijzigingen v2.0.0 (sessie 37):
+     - Volledig herschreven op basis van backlog.html v5.1.0
+     - Zelfde functionaliteit: board/lijst, filters, modal, CSV/MD export, data wissen
      - Tabs: Taken | Contentkalender | KPI's | Kanalen | Templates
-     - Taken per fase als kaarten met status-pills (zelfde als backlog.html)
-     - Status inline aanpasbaar, opgeslagen in localStorage (mk_*)
-     - Laden van Marketing.md via 📂 knop
-     - Exporteren als .md met bijgewerkte statussen
-     - Zelfde look & feel als backlog.html en analytics.html
-     - Toegangsbeveiliging via AdminGuard.protect('admin')
+     - KPI's bewerkbaar en opgeslagen in localStorage (mk_kpi_*)
+     - Templates kopieerbaar naar klembord
+     - localStorage prefix: mk_* (geen conflict met backlog bl_*)
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -46,33 +44,164 @@
       --shadow:      0 4px 20px rgba(0,0,0,0.35);
       --color-danger:#f08080;
     }
-
     #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
     #page-content  { display:none; }
-
     main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
-    .dash-wrap { max-width:1100px; margin:0 auto; }
-
+    .dash-wrap { max-width:100%; margin:0; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
-    /* Header */
-    .mk-header { margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
-    .mk-title { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 4px; }
-    .mk-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
-    .mk-meta b { color:var(--accent); }
+    /* Project header */
+    .proj-header { margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
+    .proj-name { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 6px; display:flex; align-items:center; gap:12px; }
+    .proj-edit-btn { font-family:var(--font-mono); font-size:0.75rem; background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent); border-radius:var(--radius); padding:3px 10px; cursor:pointer; transition:background .2s; }
+    .proj-edit-btn:hover { background:rgba(0,212,170,0.28); }
+    .proj-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
+    .proj-meta b { color:var(--accent); }
+    .projinfo-dd { display:none; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.25rem; animation:fadeUp .3s ease; }
+    .projinfo-dd.open { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    @media(max-width:600px){ .projinfo-dd.open{ grid-template-columns:1fr; } }
 
     /* Acties */
-    .mk-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
+    .bl-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
 
     /* Knoppen */
     .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; }
     .btn:hover { background:var(--bg-card-alt); }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
     .btn-accent { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
     .btn-accent:hover { background:rgba(0,212,170,0.28); }
     .btn-ghost { border-color:transparent; background:transparent; color:var(--text-muted); }
     .btn-ghost:hover { background:rgba(255,255,255,0.06); }
     .btn-danger { background:rgba(240,128,128,0.15); color:var(--color-danger); border-color:var(--color-danger); }
     .btn-danger:hover { background:rgba(240,128,128,0.28); }
+
+    /* Form */
+    .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
+    .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
+    .form-input:focus { border-color:var(--accent); }
+    select.form-input { cursor:pointer; }
+    textarea.form-input { resize:vertical; }
+
+    /* Statistieken */
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:1.75rem; }
+    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 20px 16px; box-shadow:var(--shadow); position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+    .stat-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:8px; }
+    .stat-value { font-family:var(--font-mono); font-size:2rem; font-weight:600; color:var(--text-primary); line-height:1; }
+    .progress-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; margin-top:8px; }
+    .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s; }
+
+    /* Fases (kanalen in marketing) */
+    .phases-bar { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:1.25rem; display:flex; flex-direction:column; gap:10px; }
+    .phases-bar-top { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+    .phases-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; }
+    .phase-pills-wrap { display:flex; flex-wrap:wrap; gap:6px; }
+    .phase-pill { font-family:var(--font-mono); font-size:0.75rem; padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; position:relative; white-space:nowrap; }
+    .phase-pill:hover { border-color:var(--accent); color:var(--accent); }
+    .phase-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+    .phase-pill[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:0; background:#1a1a18; color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; border:1px solid var(--border); max-width:260px; overflow:hidden; text-overflow:ellipsis; }
+    .phase-pill[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 3px); left:16px; border:4px solid transparent; border-top-color:#1a1a18; pointer-events:none; z-index:99; }
+    .phase-input-wrap { display:none; flex-wrap:wrap; gap:6px; align-items:center; padding-top:8px; border-top:1px solid var(--border); }
+    .phase-input-wrap.open { display:flex; }
+    .phase-input-wrap input { flex:1; min-width:120px; max-width:200px; }
+
+    /* Filters */
+    .filter-section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.5rem; display:flex; flex-direction:column; gap:12px; animation:fadeUp .35s ease; }
+    .filter-row { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+    .filter-row-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); min-width:80px; padding-top:5px; white-space:nowrap; }
+    .pills-wrap { display:flex; gap:6px; flex-wrap:wrap; }
+    .filter-pill { font-family:var(--font-mono); font-size:0.72rem; padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .filter-pill:hover { border-color:var(--accent); color:var(--accent); }
+    .filter-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+    .view-toggle { display:flex; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); overflow:hidden; }
+    .view-toggle button { font-family:var(--font-mono); font-size:0.75rem; padding:5px 14px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; transition:background .15s; }
+    .view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
+
+    /* Lege staat */
+    .empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); }
+    .empty .empty-icon { font-size:32px; margin-bottom:12px; }
+    .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
+
+    /* Board */
+    .board-scroll { overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 320px); border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-main); scrollbar-width:thin; scrollbar-color:rgba(0,212,170,0.4) rgba(255,255,255,0.05); }
+    .board-scroll::-webkit-scrollbar { width:8px; height:8px; }
+    .board-scroll::-webkit-scrollbar-track { background:rgba(255,255,255,0.04); border-radius:4px; }
+    .board-scroll::-webkit-scrollbar-thumb { background:rgba(0,212,170,0.4); border-radius:4px; }
+    .board-scroll::-webkit-scrollbar-thumb:hover { background:rgba(0,212,170,0.7); }
+    .board-scroll::-webkit-scrollbar-corner { background:rgba(255,255,255,0.04); }
+    .board { display:flex; gap:0; min-width:max-content; align-items:flex-start; }
+    .board-col { width:260px; flex-shrink:0; padding:0 12px; border-right:1px solid var(--border); }
+    .board-col:last-child { border-right:none; }
+    .board-col-title { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:flex; align-items:center; gap:6px; position:sticky; top:0; z-index:2; background:var(--bg-main); padding:12px 0 8px; border-bottom:1px solid var(--border); margin-bottom:10px; }
+    .board-col-items { display:flex; flex-direction:column; gap:8px; padding-bottom:16px; }
+    .board-empty { font-family:var(--font-mono); font-size:0.75rem; color:rgba(255,255,255,0.15); padding:6px 0; }
+
+    /* Kaart */
+    .card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); animation:fadeUp .3s ease; }
+    .card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+    .card-id { font-family:var(--font-mono); font-size:10px; color:var(--accent); opacity:.8; cursor:pointer; border-bottom:1px dashed rgba(0,212,170,0.3); }
+    .card-id:hover { opacity:1; }
+    .card-actions { display:flex; gap:2px; }
+    .card-title { font-weight:600; font-size:0.85rem; margin-bottom:4px; line-height:1.4; color:var(--text-primary); }
+    .card-desc { font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .card-footer { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+    .card-tags { margin-top:6px; display:flex; gap:4px; flex-wrap:wrap; }
+    .id-edit-input { font-family:var(--font-mono); font-size:10px; background:#2a2a2a; border:1px solid var(--accent); border-radius:4px; color:var(--accent); padding:1px 6px; width:90px; outline:none; }
+
+    /* Badges & tags */
+    .badge { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
+    .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+    .tag { font-family:var(--font-mono); font-size:0.65rem; padding:1px 7px; border-radius:4px; background:rgba(255,255,255,0.08); color:var(--text-muted); }
+    .assignee-txt { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
+
+    /* Tabel */
+    .list-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; max-height:680px; box-shadow:var(--shadow); animation:fadeUp .35s ease; }
+    .list-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.78rem; }
+    .list-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; text-align:left; color:#fff; padding:10px 12px; border-bottom:2px solid #0f5c35; font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:0.68rem; white-space:nowrap; }
+    .list-table tbody td { padding:8px 12px; color:#1a1a1a; background:#c8c8c8; border-bottom:1px solid #aaa; vertical-align:middle; }
+    .list-table tbody tr:last-child td { border-bottom:none; }
+    .list-table tbody tr:hover td { background:#d8d8d8; }
+    .tbl-id { font-family:var(--font-mono); font-size:0.72rem; color:#1a5c8a; cursor:pointer; border-bottom:1px dashed #1a5c8a; white-space:nowrap; }
+    .tbl-id:hover { color:#0d3d5e; }
+    .tbl-id-input { font-family:var(--font-mono); font-size:0.72rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:2px 6px; width:90px; outline:none; }
+
+    /* Prioriteit */
+    .p-critical{background:rgba(240,128,128,0.2);color:#f08080;border:1px solid #f08080;}
+    .p-high    {background:rgba(249,115,22,0.2); color:#fb923c;border:1px solid #fb923c;}
+    .p-medium  {background:rgba(234,179,8,0.2);  color:#fbbf24;border:1px solid #fbbf24;}
+    .p-low     {background:rgba(34,197,94,0.2);  color:#4ade80;border:1px solid #4ade80;}
+    .p-critical-tbl{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .p-high-tbl    {background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .p-medium-tbl  {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .p-low-tbl     {background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .dot-critical{background:#f08080} .dot-high{background:#fb923c}
+    .dot-medium  {background:#fbbf24} .dot-low {background:#4ade80}
+
+    /* Status */
+    .s-open      {background:rgba(96,165,250,0.2); color:#60a5fa;border:1px solid #60a5fa;}
+    .s-inprogress{background:rgba(167,139,250,0.2);color:#a78bfa;border:1px solid #a78bfa;}
+    .s-review    {background:rgba(251,191,36,0.2); color:#fbbf24;border:1px solid #fbbf24;}
+    .s-done      {background:rgba(0,212,170,0.2);  color:var(--accent);border:1px solid var(--accent);}
+    .s-cancelled {background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid rgba(255,255,255,0.15);}
+    .s-future    {background:rgba(244,114,182,0.2);color:#f472b6;border:1px solid #f472b6;}
+    .s-open-tbl      {background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-inprogress-tbl{background:#faf5ff;color:#6d28d9;border:1px solid #c4b5fd;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-review-tbl    {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-done-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-cancelled-tbl {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-future-tbl    {background:#fdf4ff;color:#7e22ce; border:1px solid #e9d5ff;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:12px; }
+    .modal-header h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:0; }
+    .modal-body { display:flex; flex-direction:column; gap:12px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
+    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
+    .id-preview { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); opacity:.7; margin-top:4px; }
 
     /* Tabs */
     .tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; flex-wrap:wrap; }
@@ -82,52 +211,24 @@
     .tab-panel { display:none; }
     .tab-panel.active { display:block; }
 
-    /* Stat kaarten */
-    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:1.5rem; }
-    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow); position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
-    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
-    .stat-label { font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:6px; }
-    .stat-value { font-family:var(--font-mono); font-size:1.8rem; font-weight:600; color:var(--text-primary); line-height:1; }
-    .progress-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; margin-top:6px; }
-    .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s; }
-
-    /* Fase sectie */
-    .fase-section { margin-bottom:2rem; }
-    .fase-title { font-family:var(--font-mono); font-size:0.88rem; font-weight:600; color:var(--accent); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
-    .fase-desc { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); margin-bottom:12px; line-height:1.6; padding:10px 14px; background:var(--accent-dim); border-radius:var(--radius); border-left:3px solid var(--accent); }
-
-    /* Taakkaart */
-    .task-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:8px; display:grid; grid-template-columns:1fr auto; gap:12px; align-items:start; animation:fadeUp .3s ease; box-shadow:var(--shadow); }
-    .task-main { display:flex; flex-direction:column; gap:4px; }
-    .task-title { font-family:var(--font-sans); font-weight:600; font-size:0.85rem; color:var(--text-primary); line-height:1.4; }
-    .task-uitleg { font-family:var(--font-sans); font-size:0.78rem; color:var(--text-muted); line-height:1.6; margin-top:2px; }
-    .task-result { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); margin-top:4px; }
-    .task-week { font-family:var(--font-mono); font-size:0.68rem; color:var(--text-muted); margin-top:2px; }
-    .task-side { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
-
-    /* Status badge + selector */
-    .status-select { font-family:var(--font-mono); font-size:0.72rem; padding:3px 8px; border-radius:20px; border:1px solid; cursor:pointer; outline:none; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%23aaa'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 6px center; padding-right:20px; }
-    .st-open     { background:rgba(96,165,250,0.15);  color:#60a5fa; border-color:#60a5fa; }
-    .st-done     { background:rgba(0,212,170,0.15);   color:var(--accent); border-color:var(--accent); }
-    .st-progress { background:rgba(167,139,250,0.15); color:#a78bfa; border-color:#a78bfa; }
-    .st-cancelled{ background:rgba(255,255,255,0.06); color:var(--text-muted); border-color:rgba(255,255,255,0.2); }
-
-    /* Tabel (KPI's, contentkalender, kanalen) */
+    /* Extra tabellen */
     .mk-table-wrap { border:1px solid var(--border); border-radius:var(--radius); overflow:auto; margin-bottom:1.5rem; box-shadow:var(--shadow); }
     .mk-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.78rem; }
     .mk-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; color:#fff; padding:10px 14px; text-align:left; font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #0f5c35; white-space:nowrap; }
     .mk-table tbody td { padding:9px 14px; background:#c8c8c8; color:#1a1a1a; border-bottom:1px solid #aaa; vertical-align:top; line-height:1.5; }
     .mk-table tbody tr:last-child td { border-bottom:none; }
     .mk-table tbody tr:hover td { background:#d8d8d8; }
-    .mk-table code { background:#e5e7eb; padding:1px 5px; border-radius:3px; font-size:0.72rem; }
+    .kpi-input { font-family:var(--font-mono); font-size:0.75rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:3px 8px; width:90px; outline:none; color:#1a1a1a; }
 
-    /* KPI input velden */
-    .kpi-input { font-family:var(--font-mono); font-size:0.75rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:3px 8px; width:80px; outline:none; color:#1a1a1a; }
-    .kpi-input:focus { border-color:#0f5c35; }
-
-    /* Template sectie */
-    .template-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; animation:fadeUp .3s ease; }
-    .template-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; }
+    /* Kanaal & template kaarten */
+    .channel-card,.template-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; position:relative; overflow:hidden; }
+    .channel-card::before,.template-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+    .channel-card { padding:16px 18px; }
+    .channel-name { font-family:var(--font-mono); font-size:0.9rem; font-weight:600; color:var(--accent); margin-bottom:8px; }
+    .channel-meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+    .channel-tag { font-family:var(--font-mono); font-size:0.68rem; padding:2px 8px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); }
+    .channel-desc { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.6; }
+    .template-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; transition:background .15s; }
     .template-header:hover { background:var(--bg-card-alt); }
     .template-title { font-family:var(--font-mono); font-size:0.85rem; font-weight:600; color:var(--accent); }
     .template-toggle { font-size:0.75rem; color:var(--text-muted); transition:transform .2s; }
@@ -135,19 +236,10 @@
     .template-body { display:none; padding:0 16px 16px; border-top:1px solid var(--border); }
     .template-card.open .template-body { display:block; }
     .template-text { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.8; white-space:pre-wrap; margin-top:12px; }
-    .template-copy { margin-top:10px; }
 
     /* Info box */
-    .info-box { background:var(--accent-dim); border:1px solid var(--accent); border-radius:var(--radius); padding:12px 16px; font-family:var(--font-sans); font-size:0.82rem; color:var(--text-primary); line-height:1.6; margin-bottom:1.5rem; }
+    .info-box { background:var(--accent-dim); border:1px solid var(--accent); border-radius:var(--radius); padding:12px 16px; font-family:var(--font-sans); font-size:0.82rem; color:var(--text-primary); line-height:1.6; margin-bottom:1.25rem; }
     .info-box b { color:var(--accent); }
-
-    /* Kanaal kaart */
-    .channel-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-bottom:10px; animation:fadeUp .3s ease; position:relative; overflow:hidden; }
-    .channel-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
-    .channel-name { font-family:var(--font-mono); font-size:0.9rem; font-weight:600; color:var(--accent); margin-bottom:8px; }
-    .channel-meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
-    .channel-tag { font-family:var(--font-mono); font-size:0.68rem; padding:2px 8px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); }
-    .channel-desc { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.6; }
 
     /* Toegang geweigerd */
     .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
@@ -174,37 +266,57 @@
     <main>
       <div class="dash-wrap">
 
-        <!-- Header -->
-        <div class="mk-header">
-          <div class="mk-title">📣 Marketing & Communicatieplan</div>
-          <div class="mk-meta">
-            <span>📦 <b>MyFamTreeCollab</b></span>
-            <span>🗓 <b>Versie 1.0 · Mei 2026</b></span>
-            <span>👥 <b>Families & Genealogie-hobbyisten</b></span>
-            <span>💰 <b>Organisch — nul betaalde advertenties</b></span>
-            <span>⏱ <b>12 weken lanceringsplan</b></span>
+        <!-- Project header -->
+        <div class="proj-header">
+          <div class="proj-name">
+            <span id="proj-name-txt">📣 Marketing & Communicatieplan</span>
+            <button class="proj-edit-btn" id="btn-edit-proj">✏️ bewerken</button>
           </div>
+          <div class="projinfo-dd" id="projinfo-dd">
+            <div><label class="form-label">Titel</label><input class="form-input" type="text" id="pi-name" placeholder="Marketing & Communicatieplan"/></div>
+            <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0"/></div>
+            <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
+            <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn" id="btn-proj-cancel">Annuleren</button>
+              <button class="btn btn-accent" id="btn-proj-save">Opslaan</button>
+            </div>
+          </div>
+          <div class="proj-meta" id="proj-meta"></div>
         </div>
 
         <!-- Kernboodschap -->
         <div class="info-box">
           💬 <b>Kernboodschap:</b> "Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat."
-          <br><br>
-          <b>USP 1</b> — Privacy first: data blijft lokaal in de browser &nbsp;·&nbsp;
-          <b>USP 2</b> — Geen betaalde account nodig voor basisfunctionaliteit &nbsp;·&nbsp;
-          <b>USP 3</b> — Open standaarden: CSV, JSON en GEDCOM &nbsp;·&nbsp;
-          <b>USP 4</b> — Samenwerken mogelijk via cloud (optioneel)
+          &nbsp;·&nbsp; <b>Budget:</b> Organisch &nbsp;·&nbsp; <b>Horizon:</b> 12 weken lanceringsplan
         </div>
 
         <!-- Acties -->
-        <div class="mk-actions">
-          <button class="btn" id="btn-export-md">💾 Exporteren als .md</button>
+        <div class="bl-actions">
+          <button class="btn" id="btn-export-csv">💾 CSV opslaan</button>
+          <button class="btn" id="btn-export-md">📝 MD exporteren</button>
+          <label class="btn" style="cursor:pointer">📂 Laden (CSV/MD)<input type="file" id="input-file" accept=".csv,.md" style="display:none"/></label>
+          <button class="btn btn-accent" id="btn-add">+ Taak toevoegen</button>
           <span style="flex:1"></span>
-          <button class="btn btn-danger" id="btn-clear" title="Wist alle opgeslagen statussen en KPI's">🗑 Data wissen</button>
+          <button class="btn btn-danger" id="btn-clear-db">🗑 Data wissen</button>
         </div>
 
         <!-- Statistieken -->
         <div class="stat-grid" id="stat-grid"></div>
+
+        <!-- Fase pills -->
+        <div class="phases-bar">
+          <div class="phases-bar-top">
+            <span class="phases-label">Fases</span>
+            <button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button>
+          </div>
+          <div class="phase-pills-wrap" id="phase-pills"></div>
+          <div class="phase-input-wrap" id="phase-input-wrap">
+            <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="padding:3px 8px;font-size:12px"/>
+            <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving (tooltip)" style="padding:3px 8px;font-size:12px"/>
+            <button class="btn btn-accent" id="btn-add-phase" style="padding:4px 10px">+</button>
+            <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">✕</button>
+          </div>
+        </div>
 
         <!-- Tabs -->
         <div class="tab-bar">
@@ -215,8 +327,26 @@
           <button class="tab-btn" data-tab="templates">✉️ Templates</button>
         </div>
 
-        <!-- Tab: Taken -->
-        <div class="tab-panel active" id="tab-taken"></div>
+        <!-- Tab: Taken (board/lijst met filters) -->
+        <div class="tab-panel active" id="tab-taken">
+          <!-- Filters -->
+          <div class="filter-section">
+            <div class="filter-row">
+              <span class="filter-row-label">Zoeken</span>
+              <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID, toegewezen…" style="flex:1;min-width:200px"/>
+              <div class="view-toggle">
+                <button id="btn-view-board" class="active">Board</button>
+                <button id="btn-view-list">Lijst</button>
+              </div>
+              <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.72rem;padding:4px 12px">✕ Wissen</button>
+            </div>
+            <div class="filter-row"><span class="filter-row-label">Status</span><div class="pills-wrap" id="filter-status-pills"></div></div>
+            <div class="filter-row"><span class="filter-row-label">Prioriteit</span><div class="pills-wrap" id="filter-priority-pills"></div></div>
+            <div class="filter-row"><span class="filter-row-label">Type</span><div class="pills-wrap" id="filter-type-pills"></div></div>
+            <div class="filter-row"><span class="filter-row-label">Tags</span><div class="pills-wrap" id="filter-tag-pills"></div></div>
+          </div>
+          <div id="bl-content"></div>
+        </div>
 
         <!-- Tab: Contentkalender -->
         <div class="tab-panel" id="tab-kalender">
@@ -230,9 +360,7 @@
 
         <!-- Tab: KPI's -->
         <div class="tab-panel" id="tab-kpi">
-          <div class="info-box" style="margin-bottom:1rem">
-            📝 Vul de werkelijke cijfers in na week 4, 8 en 12. Worden automatisch opgeslagen.
-          </div>
+          <div class="info-box">📝 Vul de werkelijke cijfers in na week 4, 8 en 12. Worden automatisch opgeslagen.</div>
           <div class="mk-table-wrap">
             <table class="mk-table">
               <thead><tr><th>Metric</th><th>Doel W4</th><th>Werkelijk W4</th><th>Doel W8</th><th>Werkelijk W8</th><th>Doel W12</th><th>Werkelijk W12</th></tr></thead>
@@ -244,9 +372,7 @@
         <!-- Tab: Kanalen -->
         <div class="tab-panel" id="tab-kanalen">
           <div id="kanalen-content"></div>
-          <div class="info-box">
-            ⚠️ <b>Let op:</b> Controleer altijd de groepsregels vóór je een link plaatst. Sommige groepen staan geen externe links toe.
-          </div>
+          <div class="info-box">⚠️ <b>Let op:</b> Controleer altijd de groepsregels vóór je een link plaatst.</div>
           <div class="mk-table-wrap">
             <table class="mk-table">
               <thead><tr><th>Facebook Groep</th><th>Land / Taal</th><th>Geschatte leden</th></tr></thead>
@@ -270,6 +396,52 @@
     </main>
   </div>
 
+  <!-- Modal: taak toevoegen of bewerken -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Taak toevoegen</h2>
+        <button class="btn btn-ghost" id="btn-modal-close" style="font-size:18px;padding:4px 8px">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <label class="form-label">ID <span style="opacity:.5;font-size:0.68rem">(automatisch · aanpasbaar)</span></label>
+          <input class="form-input" type="text" id="f-id" placeholder="Wordt automatisch gegenereerd"/>
+          <div class="id-preview" id="id-preview"></div>
+        </div>
+        <div><label class="form-label">Taak *</label><input class="form-input" type="text" id="f-title" placeholder="Korte, beschrijvende taakbenaming"/></div>
+        <div class="form-grid2">
+          <div><label class="form-label">Fase</label><select class="form-input" id="f-phase"></select></div>
+          <div><label class="form-label">Kanaal / Type</label>
+            <select class="form-input" id="f-type">
+              <option>Facebook</option><option>Reddit</option><option>Product Hunt</option>
+              <option>YouTube</option><option>Email</option><option>Website</option><option>Overig</option>
+            </select>
+          </div>
+          <div><label class="form-label">Prioriteit</label>
+            <select class="form-input" id="f-priority">
+              <option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option>
+            </select>
+          </div>
+          <div><label class="form-label">Status</label>
+            <select class="form-input" id="f-status">
+              <option selected>Open</option><option>In Progress</option><option>Review</option>
+              <option>Done</option><option>Cancelled</option><option>Future</option>
+            </select>
+          </div>
+        </div>
+        <div><label class="form-label">Toegewezen aan</label><input class="form-input" type="text" id="f-assignee" placeholder="Naam of @handle"/></div>
+        <div><label class="form-label">Week</label><input class="form-input" type="text" id="f-tags" placeholder="W1, W2–3, W5 …"/></div>
+        <div><label class="form-label">Uitleg</label><textarea class="form-input" id="f-description" rows="3" placeholder="Wat moet er gedaan worden? Waarom?"></textarea></div>
+        <div><label class="form-label">Verwacht resultaat</label><textarea class="form-input" id="f-ai" rows="2" placeholder="Wat levert deze taak op?"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-modal-cancel">Annuleren</button>
+        <button class="btn btn-accent" id="btn-modal-save">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
   <div id="footer-placeholder"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -288,56 +460,31 @@
   fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; });
   fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{ document.getElementById('footer-placeholder').innerHTML=html; });
 
+  // ================================================================
+  // MARKETING MODULE — gebaseerd op Backlog module structuur
+  // localStorage prefix: mk_* (geen conflict met bl_*)
+  // ================================================================
   const Marketing = (() => {
-    const $=id=>document.getElementById(id);
+    let items=[], phases=[], phaseDescs={};
+    let view='board', search='', fPhase='All';
+    let fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
+    let editId=null;
+    let projName='', projVersion='', projDate='';
 
-    // ── Taken data ──
-    const FASES = [
-      {
-        id:'f1', title:'Fase 1 — Fundering', week:'Week 1–2',
-        desc:'Zorg dat de basis op orde is vóór je begint met promoten. Een slechte eerste indruk is moeilijk te herstellen.',
-        taken:[
-          {id:'t01',taak:'Landingspagina optimaliseren',uitleg:'`index.html` moet binnen 10 sec duidelijk maken wat de tool doet en voor wie. Herschrijf de hero-tekst met de kernboodschap.',resultaat:'Bezoekers begrijpen meteen de waarde',week:'W1'},
-          {id:'t02',taak:'Screenshot / screencapture maken',uitleg:'Maak 1 goede screenshot én een 30-sec screencapture van de tool in actie. Gebruik dit in alle communicatie.',resultaat:'Visueel materiaal voor posts en lancering',week:'W1'},
-          {id:'t03',taak:'Accounts aanmaken',uitleg:'Facebook pagina MyFamTreeCollab, Reddit account, Product Hunt profiel claimen.',resultaat:'Kanalen klaar voor gebruik',week:'W1'},
-          {id:'t04',taak:'Deel-knop toevoegen aan app',uitleg:'Kleine "Deel deze tool" knop in de interface. Verlaagt drempel voor mond-tot-mond.',resultaat:'Organische verspreiding vergemakkelijkt',week:'W2'},
-          {id:'t05',taak:'5 Facebook-groepen joinen',uitleg:'Lid worden van NL/BE genealogie-groepen: Stamboomonderzoek België, Genealogie Vlaanderen, etc.',resultaat:'Aanwezigheid in doelgroepgemeenschappen',week:'W2'},
-        ]
-      },
-      {
-        id:'f2', title:'Fase 2 — Community instappen', week:'Week 3–4',
-        desc:'Eerst geven, dan vragen. Word zichtbaar als iemand die kennis deelt — niet als iemand die iets verkoopt.',
-        taken:[
-          {id:'t06',taak:'Facebook: dagelijks reageren',uitleg:'Elke dag 1 helpende reactie plaatsen in genealogie-groepen. Geen promotie, wel zichtbaarheid opbouwen.',resultaat:'Naam bekend in community',week:'W3–4'},
-          {id:'t07',taak:'Reddit: waardevolle posts',uitleg:'2x per week een tip of vraag plaatsen op r/genealogy of r/belgium. Profiel opbouwen voor lanceringspost.',resultaat:'Reddit karma + zichtbaarheid',week:'W3–4'},
-          {id:'t08',taak:'Lanceringspost schrijven',uitleg:'Tekst voorbereiden voor Reddit + Facebook. Eerlijk, geen verkooptaal, open voor feedback.',resultaat:'Post klaar voor week 5',week:'W4'},
-          {id:'t09',taak:'Product Hunt voorbereiding',uitleg:'Productomschrijving schrijven, screenshots uploaden, 5 contacten vragen om op lanceringsdag te stemmen.',resultaat:'Product Hunt klaar voor lancering',week:'W4'},
-        ]
-      },
-      {
-        id:'f3', title:'Fase 3 — Lancering', week:'Week 5',
-        desc:'Alles komt samen. Publiceer op meerdere kanalen in dezelfde week voor maximaal effect.',
-        taken:[
-          {id:'t10',taak:'Reddit lanceringspost',uitleg:'Post op r/genealogy EN r/belgium op maandag. Link naar GitHub Pages. Reageer op alle comments binnen 24 uur.',resultaat:'Eerste echte gebruikers + feedback',week:'W5'},
-          {id:'t11',taak:'Facebook lanceringspost',uitleg:'Post op eigen pagina + delen in 3 relevante groepen (check groepsregels voor links).',resultaat:'Bereik in Belgische/Nederlandse doelgroep',week:'W5'},
-          {id:'t12',taak:'Product Hunt lancering',uitleg:'Publiceer op dinsdag (beste dag). Vraag netwerk om te stemmen. Reageer op alle comments.',resultaat:'Internationale zichtbaarheid',week:'W5'},
-          {id:'t13',taak:'Feedback verzamelen',uitleg:'Noteer alle feedback uit comments. Maak backlog-items aan voor de meest genoemde verbeterpunten.',resultaat:'Verbeterpunten voor sprint na lancering',week:'W5'},
-        ]
-      },
-      {
-        id:'f4', title:'Fase 4 — Consistentie opbouwen', week:'Week 6–12',
-        desc:'Na de lancering begint het echte werk: consistent aanwezig blijven en het kanaal opbouwen.',
-        taken:[
-          {id:'t14',taak:'Facebook contentkalender',uitleg:'2 posts/week: maandag = genealogie tip, donderdag = feature spotlight of gebruikersvraag.',resultaat:'Groeiend publiek op Facebook pagina',week:'W6–12'},
-          {id:'t15',taak:'Reddit: wekelijkse post',uitleg:'1 post/week met echte waarde. Afwisselen: tip, vraag, update, case study.',resultaat:'Actieve Reddit aanwezigheid',week:'W6–12'},
-          {id:'t16',taak:'Gebruikersverhalen verzamelen',uitleg:'Vraag actieve gebruikers of ze hun verhaal willen delen. Gebruik als content op Facebook en Reddit.',resultaat:'Social proof + authentieke content',week:'W7–10'},
-          {id:'t17',taak:'YouTube Short / Reel',uitleg:'Maak 1 video: "Hoe bouw je een stamboom in 5 minuten met MyFamTreeCollab". Schermopname volstaat.',resultaat:'Visueel kanaal aanboren',week:'W8'},
-          {id:'t18',taak:'Genealogie-blogs contacteren',uitleg:'Stuur 3–5 NL genealogie-bloggers een korte persoonlijke mail met de tool. Vraag om review, geen betaling.',resultaat:'Externe backlinks + nieuwe doelgroep',week:'W9–10'},
-          {id:'t19',taak:'Terugkijken & bijsturen',uitleg:'Na week 12: welk kanaal leverde het meeste op? Verdubbel daar op. Stop met wat niet werkt.',resultaat:'Gefocuste strategie voor fase 2',week:'W12'},
-        ]
-      }
-    ];
+    const STATUSES   = ['Open','In Progress','Review','Done','Cancelled','Future'];
+    const PRIORITIES = ['Critical','High','Medium','Low'];
+    const TYPES      = ['Facebook','Reddit','Product Hunt','YouTube','Email','Website','Overig'];
+    const S_ICON = {'Open':'📋','In Progress':'🔄','Review':'🔍','Done':'✅','Cancelled':'❌','Future':'🔮'};
+    const S_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
+    const S_TBL  = {'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
+    const P_CSS  = {'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
+    const P_TBL  = {'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
+    const D_CSS  = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
 
+    const $  = id => document.getElementById(id);
+    const V  = v  => v&&v.trim() ? v.trim() : '';
+
+    // Vaste data
     const KALENDER = [
       {week:'6',ma:'Hoe kies je de juiste ID-structuur voor je stamboom?',do:'Feature: CSV-export — wat kun je ermee?',reddit:'"Ik bouwde een privacy-first stamboomtool — feedback gevraagd"'},
       {week:'7',ma:'Wat is GEDCOM en waarom is het belangrijk?',do:'Vraag: Hoeveel generaties heeft jouw stamboom?',reddit:'Tip-post: "Hoe structureer je familiedata zonder dure software"'},
@@ -347,64 +494,47 @@
       {week:'11',ma:'Privacy bij het online delen van stamboomdata',do:'Vraag: Welke feature willen jullie het meest?',reddit:'Post: "Roadmap — dit bouwen we als volgende"'},
       {week:'12',ma:'Hoe maak je een backup van je stamboom?',do:'Terugblik: wat hebben we geleerd?',reddit:'Post: "Week 12 — dit is wat werkte"'},
     ];
-
     const KPIS = [
-      {metric:'GitHub Pages bezoekers/maand', doel4:'50–100', doel8:'200–400', doel12:'500+'},
-      {metric:'Facebook pagina volgers',       doel4:'20',     doel8:'75',     doel12:'150+'},
-      {metric:'Reddit lanceringspost upvotes', doel4:'10–25',  doel8:'—',      doel12:'—'},
-      {metric:'Product Hunt stemmen',          doel4:'10–30',  doel8:'—',      doel12:'—'},
-      {metric:'Actieve gebruikers (schatting)',doel4:'5–15',   doel8:'25–50',  doel12:'75+'},
-      {metric:'Gebruikersfeedback items',      doel4:'5+',     doel8:'15+',    doel12:'25+'},
+      {metric:'GitHub Pages bezoekers/maand',doel4:'50–100',doel8:'200–400',doel12:'500+'},
+      {metric:'Facebook pagina volgers',      doel4:'20',    doel8:'75',     doel12:'150+'},
+      {metric:'Reddit lanceringspost upvotes',doel4:'10–25', doel8:'—',      doel12:'—'},
+      {metric:'Product Hunt stemmen',         doel4:'10–30', doel8:'—',      doel12:'—'},
+      {metric:'Actieve gebruikers (schatting)',doel4:'5–15',  doel8:'25–50',  doel12:'75+'},
+      {metric:'Gebruikersfeedback items',     doel4:'5+',    doel8:'15+',    doel12:'25+'},
     ];
-
     const KANALEN = [
       {naam:'Facebook',taal:'NL (primair) · EN (secundair)',freq:'2 posts/week',toon:'Vriendelijk, laagdrempelig, geen jargon',doel:'Bereik in Belgische en Nederlandse markt'},
       {naam:'Reddit',taal:'EN op r/genealogy · NL op r/belgium en r/thenetherlands',freq:'1 post/week na lancering',toon:'Technisch, eerlijk, open source-mentaliteit',doel:'Hobbyisten bereiken, internationale zichtbaarheid'},
       {naam:'Product Hunt',taal:'EN',freq:'Eenmalig — week 5 (dinsdag)',toon:'Tagline: "Free family tree tool — your data stays local"',doel:'Internationale zichtbaarheid, vroege adopters'},
       {naam:'YouTube / Reels',taal:'NL',freq:'Week 8+',toon:'Schermopname, max 60 sec, authentiek',doel:'Visueel kanaal — "Bouw je eerste stamboom in 5 minuten"'},
     ];
-
     const TEMPLATES = [
-      {
-        id:'tpl1', titel:'Reddit (Engels — r/genealogy)',
-        tekst:`Titel: I built a free, privacy-first family tree tool — no account required
-
-Hey r/genealogy,
-
-I've been working on a free family tree web app for the past year. The main thing that bothered me about existing tools was that your data is either locked in their system or requires a paid account to do anything useful.
-
-With MyFamTreeCollab, your data stays in your browser by default. No account needed for the basics. You can export to CSV, JSON, and GEDCOM whenever you want.
-
-It also supports NL/EN/ES and has optional cloud sync if you want to collaborate with family.
-
-Still very much in MVP stage, so I'd love honest feedback — what's missing, what's broken, what would make you actually use it.
-
-Link: https://vorilo2000-source.github.io/MyFamTreeCollab/index.html
-
-Thanks for taking a look.`
-      },
-      {
-        id:'tpl2', titel:'Facebook (Nederlands)',
-        tekst:`Ik heb het afgelopen jaar een gratis stamboomtool gebouwd — en ik zoek eerlijke feedback.
-
-MyFamTreeCollab laat je een stamboom opbouwen zonder account aan te maken en zonder dat je data ergens naartoe gaat. Alles blijft lokaal in je browser. Je kunt exporteren naar CSV of GEDCOM wanneer je wilt.
-
-Het is nog een MVP, dus niet alles is perfect. Maar het werkt, het is gratis, en je bent eigenaar van je eigen data.
-
-Probeer het hier: https://vorilo2000-source.github.io/MyFamTreeCollab/index.html
-
-Wat vinden jullie? Wat mist er nog?`
-      }
+      {id:'t1',titel:'Reddit (Engels — r/genealogy)',tekst:`Titel: I built a free, privacy-first family tree tool — no account required\n\nHey r/genealogy,\n\nI've been working on a free family tree web app for the past year. The main thing that bothered me about existing tools was that your data is either locked in their system or requires a paid account to do anything useful.\n\nWith MyFamTreeCollab, your data stays in your browser by default. No account needed for the basics. You can export to CSV, JSON, and GEDCOM whenever you want.\n\nIt also supports NL/EN/ES and has optional cloud sync if you want to collaborate with family.\n\nStill very much in MVP stage, so I'd love honest feedback — what's missing, what's broken, what would make you actually use it.\n\nLink: https://vorilo2000-source.github.io/MyFamTreeCollab/index.html\n\nThanks for taking a look.`},
+      {id:'t2',titel:'Facebook (Nederlands)',tekst:`Ik heb het afgelopen jaar een gratis stamboomtool gebouwd — en ik zoek eerlijke feedback.\n\nMyFamTreeCollab laat je een stamboom opbouwen zonder account aan te maken en zonder dat je data ergens naartoe gaat. Alles blijft lokaal in je browser. Je kunt exporteren naar CSV of GEDCOM wanneer je wilt.\n\nHet is nog een MVP, dus niet alles is perfect. Maar het werkt, het is gratis, en je bent eigenaar van je eigen data.\n\nProbeer het hier: https://vorilo2000-source.github.io/MyFamTreeCollab/index.html\n\nWat vinden jullie? Wat mist er nog?`},
     ];
 
-    // Status opties
-    const ST_OPTS = ['📋 Open','🔄 In Progress','✅ Done','❌ Cancelled'];
-    const ST_CSS  = {'📋 Open':'st-open','🔄 In Progress':'st-progress','✅ Done':'st-done','❌ Cancelled':'st-cancelled'};
-
-    function _getStatus(id){ return localStorage.getItem('mk_st_'+id)||'📋 Open'; }
-    function _setStatus(id,v){ localStorage.setItem('mk_st_'+id,v); _renderStats(); }
-    function _getKpi(id){ return localStorage.getItem('mk_kpi_'+id)||''; }
-    function _setKpi(id,v){ localStorage.setItem('mk_kpi_'+id,v); }
+    // Default taken uit het marketing plan
+    const DEFAULT_ITEMS = [
+      {id:'MF1-001',phase:'Fase 1 — Fundering',title:'Landingspagina optimaliseren',description:'index.html moet binnen 10 sec duidelijk maken wat de tool doet en voor wie. Herschrijf de hero-tekst met de kernboodschap.',ai:'Bezoekers begrijpen meteen de waarde',type:'Website',priority:'High',status:'Open',assignee:'',tags:'W1'},
+      {id:'MF1-002',phase:'Fase 1 — Fundering',title:'Screenshot / screencapture maken',description:'Maak 1 goede screenshot én een 30-sec screencapture van de tool in actie.',ai:'Visueel materiaal voor posts en lancering',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W1'},
+      {id:'MF1-003',phase:'Fase 1 — Fundering',title:'Accounts aanmaken',description:'Facebook pagina MyFamTreeCollab, Reddit account, Product Hunt profiel claimen.',ai:'Kanalen klaar voor gebruik',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W1'},
+      {id:'MF1-004',phase:'Fase 1 — Fundering',title:'Deel-knop toevoegen aan app',description:'Kleine "Deel deze tool" knop in de interface. Verlaagt drempel voor mond-tot-mond.',ai:'Organische verspreiding vergemakkelijkt',type:'Website',priority:'Medium',status:'Open',assignee:'',tags:'W2'},
+      {id:'MF1-005',phase:'Fase 1 — Fundering',title:'5 Facebook-groepen joinen',description:'Lid worden van NL/BE genealogie-groepen: Stamboomonderzoek België, Genealogie Vlaanderen, etc.',ai:'Aanwezigheid in doelgroepgemeenschappen',type:'Facebook',priority:'Medium',status:'Open',assignee:'',tags:'W2'},
+      {id:'MF2-001',phase:'Fase 2 — Community',title:'Facebook: dagelijks reageren',description:'Elke dag 1 helpende reactie plaatsen in genealogie-groepen. Geen promotie, wel zichtbaarheid opbouwen.',ai:'Naam bekend in community',type:'Facebook',priority:'High',status:'Open',assignee:'',tags:'W3–4'},
+      {id:'MF2-002',phase:'Fase 2 — Community',title:'Reddit: waardevolle posts',description:'2x per week een tip of vraag plaatsen op r/genealogy of r/belgium.',ai:'Reddit karma + zichtbaarheid',type:'Reddit',priority:'High',status:'Open',assignee:'',tags:'W3–4'},
+      {id:'MF2-003',phase:'Fase 2 — Community',title:'Lanceringspost schrijven',description:'Tekst voorbereiden voor Reddit + Facebook. Eerlijk, geen verkooptaal, open voor feedback.',ai:'Post klaar voor week 5',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W4'},
+      {id:'MF2-004',phase:'Fase 2 — Community',title:'Product Hunt voorbereiding',description:'Productomschrijving schrijven, screenshots uploaden, 5 contacten vragen om op lanceringsdag te stemmen.',ai:'Product Hunt klaar voor lancering',type:'Product Hunt',priority:'High',status:'Open',assignee:'',tags:'W4'},
+      {id:'MF3-001',phase:'Fase 3 — Lancering',title:'Reddit lanceringspost',description:'Post op r/genealogy EN r/belgium op maandag. Link naar GitHub Pages. Reageer op alle comments binnen 24 uur.',ai:'Eerste echte gebruikers + feedback',type:'Reddit',priority:'Critical',status:'Open',assignee:'',tags:'W5'},
+      {id:'MF3-002',phase:'Fase 3 — Lancering',title:'Facebook lanceringspost',description:'Post op eigen pagina + delen in 3 relevante groepen (check groepsregels voor links).',ai:'Bereik in Belgische/Nederlandse doelgroep',type:'Facebook',priority:'Critical',status:'Open',assignee:'',tags:'W5'},
+      {id:'MF3-003',phase:'Fase 3 — Lancering',title:'Product Hunt lancering',description:'Publiceer op dinsdag (beste dag). Vraag netwerk om te stemmen. Reageer op alle comments.',ai:'Internationale zichtbaarheid',type:'Product Hunt',priority:'Critical',status:'Open',assignee:'',tags:'W5'},
+      {id:'MF3-004',phase:'Fase 3 — Lancering',title:'Feedback verzamelen',description:'Noteer alle feedback uit comments. Maak backlog-items aan voor de meest genoemde verbeterpunten.',ai:'Verbeterpunten voor sprint na lancering',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W5'},
+      {id:'MF4-001',phase:'Fase 4 — Consistentie',title:'Facebook contentkalender uitvoeren',description:'2 posts/week: maandag = genealogie tip, donderdag = feature spotlight of gebruikersvraag.',ai:'Groeiend publiek op Facebook pagina',type:'Facebook',priority:'High',status:'Open',assignee:'',tags:'W6–12'},
+      {id:'MF4-002',phase:'Fase 4 — Consistentie',title:'Reddit: wekelijkse post',description:'1 post/week met echte waarde. Afwisselen: tip, vraag, update, case study.',ai:'Actieve Reddit aanwezigheid',type:'Reddit',priority:'High',status:'Open',assignee:'',tags:'W6–12'},
+      {id:'MF4-003',phase:'Fase 4 — Consistentie',title:'Gebruikersverhalen verzamelen',description:'Vraag actieve gebruikers of ze hun verhaal willen delen. Gebruik als content op Facebook en Reddit.',ai:'Social proof + authentieke content',type:'Overig',priority:'Medium',status:'Open',assignee:'',tags:'W7–10'},
+      {id:'MF4-004',phase:'Fase 4 — Consistentie',title:'YouTube Short / Reel maken',description:'Maak 1 video: "Hoe bouw je een stamboom in 5 minuten met MyFamTreeCollab". Schermopname volstaat.',ai:'Visueel kanaal aanboren',type:'YouTube',priority:'Medium',status:'Open',assignee:'',tags:'W8'},
+      {id:'MF4-005',phase:'Fase 4 — Consistentie',title:'Genealogie-blogs contacteren',description:'Stuur 3–5 NL genealogie-bloggers een korte persoonlijke mail. Vraag om review, geen betaling.',ai:'Externe backlinks + nieuwe doelgroep',type:'Email',priority:'Medium',status:'Open',assignee:'',tags:'W9–10'},
+      {id:'MF4-006',phase:'Fase 4 — Consistentie',title:'Terugkijken & bijsturen',description:'Na week 12: welk kanaal leverde het meeste op? Verdubbel daar op. Stop met wat niet werkt.',ai:'Gefocuste strategie voor fase 2',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W12'},
+    ];
 
     function init() {
       // Tabs
@@ -417,169 +547,398 @@ Wat vinden jullie? Wat mist er nog?`
         });
       });
 
-      $('btn-export-md').addEventListener('click', exportMD);
-      $('btn-clear').addEventListener('click',()=>{
-        if(!confirm('Alle statussen en KPI-data wissen?')) return;
-        Object.keys(localStorage).filter(k=>k.startsWith('mk_')).forEach(k=>localStorage.removeItem(k));
-        init();
-      });
+      _loadProjInfo(); _updateApiKeyUI();
 
-      _renderStats();
-      _renderTaken();
+      const saved=localStorage.getItem('mk_items');
+      if(saved){
+        items=JSON.parse(saved);
+        phases=JSON.parse(localStorage.getItem('mk_phases')||'[]');
+        phaseDescs=JSON.parse(localStorage.getItem('mk_phasedescs')||'{}');
+      } else {
+        // Eerste keer: laad default taken
+        items=[...DEFAULT_ITEMS];
+        const seen=new Set();
+        phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
+        _save();
+      }
+
+      _bindEvents();
       _renderKalender();
       _renderKpi();
       _renderKanalen();
       _renderTemplates();
+      render();
     }
 
-    function _renderStats() {
-      const all=FASES.flatMap(f=>f.taken);
-      const total=all.length;
-      const done=all.filter(t=>_getStatus(t.id).includes('Done')).length;
-      const prog=all.filter(t=>_getStatus(t.id).includes('Progress')).length;
-      const open=all.filter(t=>_getStatus(t.id).includes('Open')).length;
-      const pct=total?Math.round(done/total*100):0;
+    function _genId(phase,type){
+      const fl=(phase||'M')[0].toUpperCase();
+      const tl=(type||'O')[0].toUpperCase();
+      const prefix='M'+fl+tl+'-';
+      const used=new Set(items.filter(i=>i.id&&i.id.startsWith(prefix)).map(i=>parseInt(i.id.slice(prefix.length))||0));
+      let n=1; while(used.has(n))n++;
+      return prefix+String(n).padStart(3,'0');
+    }
+
+    function _bindEvents(){
+      $('btn-add').addEventListener('click',()=>openModal());
+      $('btn-export-csv').addEventListener('click',exportCSV);
+      $('btn-export-md').addEventListener('click',exportMD);
+      $('input-file').addEventListener('change',importFile);
+      $('btn-clear-filters').addEventListener('click',clearFilters);
+      $('btn-clear-db').addEventListener('click',()=>{
+        if(!confirm('Alle marketing data wissen?\nDit kan niet ongedaan worden gemaakt.'))return;
+        Object.keys(localStorage).filter(k=>k.startsWith('mk_')).forEach(k=>localStorage.removeItem(k));
+        location.reload();
+      });
+
+      $('btn-edit-proj').addEventListener('click',()=>{
+        $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate;
+        $('projinfo-dd').classList.toggle('open');
+      });
+      $('btn-proj-save').addEventListener('click',()=>{
+        projName=$('pi-name').value.trim(); projVersion=$('pi-version').value.trim(); projDate=$('pi-date').value;
+        _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta();
+      });
+      $('btn-proj-cancel').addEventListener('click',()=>$('projinfo-dd').classList.remove('open'));
+
+      $('btn-new-phase').addEventListener('click',()=>{ $('phase-input-wrap').classList.add('open'); $('btn-new-phase').style.display='none'; $('input-new-phase').focus(); });
+      $('btn-cancel-phase').addEventListener('click',_cancelPhaseInput);
+      $('btn-add-phase').addEventListener('click',_addPhase);
+      $('input-new-phase').addEventListener('keydown',e=>{ if(e.key==='Enter')_addPhase(); if(e.key==='Escape')_cancelPhaseInput(); });
+
+      $('f-phase').addEventListener('change',_updateAutoId);
+      $('f-type').addEventListener('change',_updateAutoId);
+
+      $('input-search').addEventListener('input',e=>{ search=e.target.value; render(); });
+      $('btn-view-board').addEventListener('click',()=>{ view='board'; _updateViewToggle(); render(); });
+      $('btn-view-list').addEventListener('click', ()=>{ view='list';  _updateViewToggle(); render(); });
+
+      $('btn-modal-close').addEventListener('click',closeModal);
+      $('btn-modal-cancel').addEventListener('click',closeModal);
+      $('btn-modal-save').addEventListener('click',saveItem);
+      $('modal').addEventListener('click',e=>{ if(e.target===$('modal'))closeModal(); });
+    }
+
+    function _updateAutoId(){
+      if(editId)return;
+      const id=_genId($('f-phase').value,$('f-type').value);
+      if(!$('f-id').dataset.manual) $('f-id').value=id;
+      $('id-preview').textContent=`→ ${id}`;
+    }
+
+    function render(){ _renderMeta(); _renderStats(); _renderPhasePills(); _renderFilterPills(); _renderContent(); _updatePhasesInModal(); }
+
+    function _renderMeta(){
+      const t=items.length,done=items.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
+      $('proj-name-txt').textContent=(projName||'📣 Marketing & Communicatieplan');
+      $('proj-meta').innerHTML=
+        `${projVersion?`<span>📦 <b>${projVersion}</b></span>`:''}` +
+        `${projDate?`<span>📅 <b>${_fmtDate(projDate)}</b></span>`:''}` +
+        `<span>📋 <b>${t}</b> taken</span><span>✅ <b>${pct}%</b> afgerond</span>`;
+    }
+
+    function _fmtDate(d){ if(!d)return''; const p=d.split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; }
+
+    function _renderStats(){
+      const t=items.length,done=items.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
       $('stat-grid').innerHTML=`
-        <div class="stat-card"><div class="stat-label">Taken totaal</div><div class="stat-value">${total}</div></div>
-        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${open}</div></div>
-        <div class="stat-card"><div class="stat-label">In progress</div><div class="stat-value">${prog}</div></div>
+        <div class="stat-card"><div class="stat-label">Totaal</div><div class="stat-value">${t}</div></div>
+        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${items.filter(i=>i.status==='Open').length}</div></div>
+        <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${items.filter(i=>i.status==='In Progress').length}</div></div>
         <div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">${done}</div></div>
-        <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
+        <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
     }
 
-    function _renderTaken() {
-      $('tab-taken').innerHTML=FASES.map(f=>`
-        <div class="fase-section">
-          <div class="fase-title">📌 ${_esc(f.title)} <span style="font-weight:400;color:var(--text-muted);font-size:0.72rem">${f.week}</span></div>
-          <div class="fase-desc">${_esc(f.desc)}</div>
-          ${f.taken.map(t=>{
-            const st=_getStatus(t.id);
-            const css=ST_CSS[st]||'st-open';
-            return `<div class="task-card">
-              <div class="task-main">
-                <div class="task-title">${_esc(t.taak)}</div>
-                <div class="task-uitleg">${_esc(t.uitleg)}</div>
-                <div class="task-result">→ ${_esc(t.resultaat)}</div>
-                <div class="task-week">📅 ${t.week}</div>
-              </div>
-              <div class="task-side">
-                <select class="status-select ${css}" data-tid="${t.id}">
-                  ${ST_OPTS.map(o=>`<option value="${o}" ${o===st?'selected':''}>${o}</option>`).join('')}
-                </select>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>`).join('');
+    function _renderPhasePills(){
+      $('phase-pills').innerHTML=phases.map(ph=>{
+        const desc=phaseDescs[ph]||'';
+        return `<span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}" ${desc?`data-tip="${desc}"`:''}>${ph} <span data-remove="${ph}" style="margin-left:5px;opacity:.4;cursor:pointer">×</span></span>`;
+      }).join('');
+      $('phase-pills').querySelectorAll('.phase-pill').forEach(el=>{
+        el.addEventListener('click',e=>{ if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;} fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; render(); });
+      });
+    }
 
-      $('tab-taken').querySelectorAll('.status-select').forEach(sel=>{
-        sel.addEventListener('change',e=>{
-          const v=e.target.value;
-          e.target.className='status-select '+(ST_CSS[v]||'st-open');
-          _setStatus(e.target.dataset.tid,v);
+    function _renderFilterPills(){
+      const allTags=[...new Set(items.flatMap(i=>(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort();
+      _buildPills('filter-status-pills',   STATUSES,   fStatus,   S_ICON);
+      _buildPills('filter-priority-pills', PRIORITIES, fPriority, {});
+      _buildPills('filter-type-pills',     TYPES,      fType,     {});
+      _buildPills('filter-tag-pills',      allTags,    fTags,     {});
+    }
+
+    function _buildPills(cid,opts,activeSet,icons){
+      const el=$(cid);
+      el.innerHTML=opts.map(o=>`<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`).join('');
+      el.querySelectorAll('.filter-pill').forEach(btn=>{
+        btn.addEventListener('click',()=>{ const v=btn.dataset.val; activeSet.has(v)?activeSet.delete(v):activeSet.add(v); render(); });
+      });
+    }
+
+    function clearFilters(){ search='';fPhase='All';fStatus.clear();fPriority.clear();fType.clear();fTags.clear();$('input-search').value='';render(); }
+
+    function _filtered(){
+      const q=search.toLowerCase();
+      return items.filter(i=>{
+        const mq=!q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q)||(i.assignee||'').toLowerCase().includes(q);
+        const ms=!fStatus.size||fStatus.has(i.status);
+        const mp=!fPriority.size||fPriority.has(i.priority);
+        const mt=!fType.size||fType.has(i.type);
+        const mph=fPhase==='All'||i.phase===fPhase;
+        const it=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+        const mta=!fTags.size||[...fTags].some(t=>it.includes(t));
+        return mq&&ms&&mp&&mt&&mph&&mta;
+      });
+    }
+
+    function _renderContent(){
+      const filtered=_filtered();
+      if(!items.length){
+        $('bl-content').innerHTML=`<div class="empty"><div class="empty-icon">📣</div><p>Nog geen taken. Voeg je eerste marketingtaak toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste taak toevoegen</button></div>`;
+        $('btn-add-empty').addEventListener('click',()=>openModal()); return;
+      }
+      $('bl-content').innerHTML=view==='board'?_boardHTML(filtered):_listHTML(filtered);
+      $('bl-content').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.edit)));
+      $('bl-content').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>_deleteItem(b.dataset.delete)));
+      $('bl-content').querySelectorAll('.tbl-id,.card-id').forEach(el=>el.addEventListener('click',()=>_inlineEditId(el)));
+    }
+
+    function _boardHTML(filtered){
+      const vis=fStatus.size>0?STATUSES.filter(s=>fStatus.has(s)):STATUSES;
+      return `<div class="board-scroll"><div class="board">${vis.map(s=>{
+        const col=filtered.filter(i=>i.status===s);
+        return `<div class="board-col"><div class="board-col-title">${S_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
+        <div class="board-col-items">${col.length?col.map(_cardHTML).join(''):'<div class="board-empty">—</div>'}</div></div>`;
+      }).join('')}</div></div>`;
+    }
+
+    function _cardHTML(i){
+      const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+      return `<div class="card">
+        <div class="card-header"><span class="card-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span>
+          <div class="card-actions">
+            <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px;font-size:11px">✏️</button>
+            <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px;font-size:11px">🗑</button>
+          </div></div>
+        <div class="card-title">${i.title}</div>
+        ${i.description?`<div class="card-desc">${i.description}</div>`:''}
+        <div class="card-footer">
+          <span class="badge ${P_CSS[i.priority]||'p-medium'}"><span class="dot ${D_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span>
+          <span class="badge ${S_CSS[i.status]||'s-open'}">${S_ICON[i.status]||''} ${i.status}</span>
+          ${i.phase?`<span class="badge s-cancelled" style="font-size:0.65rem">${i.phase}</span>`:''}
+          ${i.assignee?`<span class="assignee-txt">👤 ${i.assignee}</span>`:''}
+        </div>
+        ${tags.length?`<div class="card-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
+      </div>`;
+    }
+
+    function _listHTML(filtered){
+      if(!filtered.length) return `<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem 0;text-align:center">Geen taken gevonden.</p>`;
+      return `<div class="list-wrap"><table class="list-table">
+        <thead><tr><th>ID</th><th>Week</th><th>Taak</th><th>Uitleg</th><th>Resultaat</th><th>Kanaal</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
+        <tbody>${filtered.map(i=>{
+          return `<tr>
+            <td><span class="tbl-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span></td>
+            <td style="white-space:nowrap">${i.tags||''}</td>
+            <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title||''}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.description||''}</td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.ai||''}</td>
+            <td>${i.type||''}</td>
+            <td>${i.assignee||''}</td>
+            <td><span class="${P_TBL[i.priority]||'p-medium-tbl'}">${i.priority||''}</span></td>
+            <td><span class="${S_TBL[i.status]||'s-open-tbl'}">${S_ICON[i.status]||''} ${i.status||''}</span></td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px">✏️</button>
+              <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px">🗑</button>
+            </td></tr>`;
+        }).join('')}</tbody></table></div>`;
+    }
+
+    function _inlineEditId(el){
+      const oldId=el.dataset.id;
+      const input=document.createElement('input');
+      input.className='tbl-id-input id-edit-input'; input.value=oldId;
+      el.replaceWith(input); input.focus(); input.select();
+      const commit=()=>{
+        const newId=input.value.trim();
+        if(newId&&newId!==oldId){
+          if(items.find(i=>i.id===newId)){ alert('ID "'+newId+'" bestaat al.'); input.focus(); return; }
+          items=items.map(i=>i.id===oldId?{...i,id:newId}:i); _save();
+        }
+        render();
+      };
+      input.addEventListener('blur',commit);
+      input.addEventListener('keydown',e=>{ if(e.key==='Enter')commit(); if(e.key==='Escape')render(); });
+    }
+
+    function openModal(id){
+      editId=id||null;
+      $('modal-title').textContent=id?'Taak bewerken':'Taak toevoegen';
+      $('btn-modal-save').textContent=id?'Opslaan':'Toevoegen';
+      $('f-id').dataset.manual='';
+      _updatePhasesInModal();
+      if(id){
+        const item=items.find(i=>i.id===id); if(!item)return;
+        $('f-id').value=item.id; $('f-id').dataset.manual='1';
+        $('id-preview').textContent='';
+        $('f-title').value=item.title||''; $('f-phase').value=item.phase||'';
+        $('f-type').value=item.type||'Facebook'; $('f-priority').value=item.priority||'Medium';
+        $('f-status').value=item.status||'Open'; $('f-assignee').value=item.assignee||'';
+        $('f-tags').value=item.tags||''; $('f-description').value=item.description||'';
+        $('f-ai').value=item.ai||'';
+      } else {
+        ['f-title','f-assignee','f-tags','f-description','f-ai'].forEach(fid=>$(fid).value='');
+        $('f-type').value='Facebook'; $('f-priority').value='Medium'; $('f-status').value='Open'; $('f-phase').value='';
+        _updateAutoId();
+      }
+      $('f-id').addEventListener('input',()=>{ $('f-id').dataset.manual='1'; });
+      $('modal').classList.add('open'); $('f-title').focus();
+    }
+
+    function closeModal(){ $('modal').classList.remove('open'); editId=null; }
+
+    function saveItem(){
+      const title=$('f-title').value.trim(); if(!title){$('f-title').focus();return;}
+      const id=$('f-id').value.trim()||_genId($('f-phase').value,$('f-type').value);
+      if(!editId&&items.find(i=>i.id===id)){ alert('ID "'+id+'" bestaat al.'); $('f-id').focus(); return; }
+      const item={id,title,phase:$('f-phase').value,type:$('f-type').value,priority:$('f-priority').value,status:$('f-status').value,assignee:$('f-assignee').value.trim(),tags:$('f-tags').value.trim(),description:$('f-description').value.trim(),ai:$('f-ai').value.trim()};
+      if(editId) items=items.map(i=>i.id===editId?item:i); else items.push(item);
+      _save(); closeModal(); render();
+    }
+
+    function _deleteItem(id){ if(!confirm('Deze taak verwijderen?'))return; items=items.filter(i=>i.id!==id); _save(); render(); }
+
+    function _addPhase(){
+      const v=$('input-new-phase').value.trim(),d=$('input-new-phase-desc').value.trim();
+      if(v&&!phases.includes(v)){ phases.push(v); if(d)phaseDescs[v]=d; _save(); }
+      _cancelPhaseInput(); render();
+    }
+    function _removePhase(ph){ phases=phases.filter(p=>p!==ph); if(fPhase===ph)fPhase='All'; _save(); render(); }
+    function _cancelPhaseInput(){ $('input-new-phase').value=''; $('input-new-phase-desc').value=''; $('phase-input-wrap').classList.remove('open'); $('btn-new-phase').style.display=''; }
+    function _updatePhasesInModal(){ $('f-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join(''); }
+    function _updateViewToggle(){ $('btn-view-board').classList.toggle('active',view==='board'); $('btn-view-list').classList.toggle('active',view==='list'); }
+    function _saveProjInfo(){ localStorage.setItem('mk_proj',JSON.stringify({projName,projVersion,projDate})); }
+    function _loadProjInfo(){ const p=JSON.parse(localStorage.getItem('mk_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; }
+    function _updateApiKeyUI(){} // Geen AI in marketing
+    function _save(){ localStorage.setItem('mk_items',JSON.stringify(items)); localStorage.setItem('mk_phases',JSON.stringify(phases)); localStorage.setItem('mk_phasedescs',JSON.stringify(phaseDescs)); }
+
+    function importFile(e){
+      const file=e.target.files[0]; if(!file)return;
+      if(!confirm('Huidige taken vervangen door '+file.name+'?')){ e.target.value='';return; }
+      const reader=new FileReader();
+      reader.onload=ev=>{ if(file.name.endsWith('.md'))_parseMD(ev.target.result); else _parseCSV(ev.target.result); e.target.value=''; alert(items.length+' taken geladen.'); render(); };
+      reader.readAsText(file);
+    }
+
+    function _parseCSV(text){
+      const rows=text.trim().split('\n'),headers=rows[0].split(',').map(h=>h.trim());
+      items=rows.slice(1).map(row=>{
+        const vals=[]; let cur='',inQ=false;
+        for(const ch of row){ if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;} }
+        vals.push(cur.trim());
+        const obj={}; headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj;
+      }).filter(i=>i.id);
+      const seen=new Set(); phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p)); _save();
+    }
+
+    function _parseMD(text){
+      items=[]; phases=[]; phaseDescs={};
+      const lines=text.split('\n'); let curPhase='';
+      for(const line of lines){
+        if(line.startsWith('## ')&&!line.startsWith('###')){ curPhase=line.replace(/^##\s*/,'').trim().split('—')[0].trim(); if(curPhase&&!phases.includes(curPhase))phases.push(curPhase); continue; }
+        if(line.startsWith('|')&&!line.includes('---')){
+          const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
+          if(!cells.length||cells[0]==='Taak'||cells[0]==='ID')continue;
+          if(cells.length>=9){ const id=cells[0],tags=cells[1],title=cells[2],desc=cells[3],ai=cells[4],type=cells[5],assignee=cells[6],prio=_mapPrio(cells[7]),status=_mapStatus(cells[8]); if(id&&title)items.push({id,phase:curPhase,title,description:desc,ai,type:type||'Overig',priority:prio,status,assignee,tags}); }
+        }
+      }
+      _save();
+    }
+
+    function _mapStatus(s){ if(!s)return'Open'; if(s.includes('✅'))return'Done'; if(s.includes('🔄'))return'In Progress'; if(s.includes('❌'))return'Cancelled'; if(s.includes('🔮'))return'Future'; return'Open'; }
+    function _mapPrio(s){ if(!s)return'Medium'; if(s.includes('🔴'))return'High'; if(s.includes('🟡'))return'Medium'; if(s.includes('🟢'))return'Low'; return'Medium'; }
+
+    function exportCSV(){
+      const cols=['id','phase','tags','title','description','ai','type','assignee','priority','status'];
+      const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+V(i[c]).replace(/"/g,'""')+'"').join(','))];
+      const name=(V(projName)||'marketing').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.csv';
+      _download(name,rows.join('\n'),'text/csv');
+    }
+
+    function exportMD(){
+      let md=`# MyFamTreeCollab — Marketing & Communicatieplan\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
+      md+=`> Versie: ${V(projVersion)||'—'} · ${items.length} taken\n\n`;
+      const byPhase={};
+      items.forEach(i=>{ const ph=i.phase||'Overig'; (byPhase[ph]=byPhase[ph]||[]).push(i); });
+      for(const ph of [...phases,...Object.keys(byPhase).filter(p=>!phases.includes(p))]){
+        if(!byPhase[ph])continue;
+        md+=`## ${ph}\n\n| ID | Week | Taak | Uitleg | Resultaat | Kanaal | Toegewezen | Prioriteit | Status |\n|----|------|------|--------|-----------|--------|------------|-----------|--------|\n`;
+        byPhase[ph].forEach(i=>{
+          const pIcon={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡';
+          md+=`| ${V(i.id)} | ${V(i.tags)} | ${V(i.title)} | ${V(i.description)} | ${V(i.ai)} | ${V(i.type)} | ${V(i.assignee)} | ${pIcon} ${V(i.priority)} | ${S_ICON[i.status]||'📋'} ${V(i.status)} |\n`;
         });
-      });
+        md+='\n';
+      }
+      // Contentkalender
+      md+=`## Contentkalender — Week 6–12\n\n| Week | Maandag | Donderdag | Reddit |\n|------|---------|-----------|--------|\n`;
+      KALENDER.forEach(r=>{ md+=`| W${r.week} | ${r.ma} | ${r.do} | ${r.reddit} |\n`; });
+      md+='\n';
+      // KPI's
+      md+=`## KPI's\n\n| Metric | Doel W4 | Werkelijk W4 | Doel W8 | Werkelijk W8 | Doel W12 | Werkelijk W12 |\n|--------|---------|-------------|---------|-------------|---------|-------------|\n`;
+      KPIS.forEach((k,i)=>{ md+=`| ${k.metric} | ${k.doel4} | ${localStorage.getItem('mk_kpi_w4_'+i)||'—'} | ${k.doel8} | ${localStorage.getItem('mk_kpi_w8_'+i)||'—'} | ${k.doel12} | ${localStorage.getItem('mk_kpi_w12_'+i)||'—'} |\n`; });
+      const name=(V(projName)||'Marketing').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
+      _download(name,md,'text/markdown');
     }
 
-    function _renderKalender() {
-      $('kalender-body').innerHTML=KALENDER.map(r=>`<tr>
-        <td><b>W${r.week}</b></td>
-        <td>${_esc(r.ma)}</td>
-        <td>${_esc(r.do)}</td>
-        <td>${_esc(r.reddit)}</td>
-      </tr>`).join('');
+    function _download(filename,content,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); }
+
+    function _renderKalender(){
+      $('kalender-body').innerHTML=KALENDER.map(r=>`<tr><td><b>W${r.week}</b></td><td>${r.ma}</td><td>${r.do}</td><td>${r.reddit}</td></tr>`).join('');
     }
 
-    function _renderKpi() {
+    function _renderKpi(){
       $('kpi-body').innerHTML=KPIS.map((k,i)=>`<tr>
-        <td><b>${_esc(k.metric)}</b></td>
-        <td>${_esc(k.doel4)}</td>
-        <td><input class="kpi-input" data-kid="w4_${i}" value="${_esc(_getKpi('w4_'+i))}" placeholder="—"/></td>
-        <td>${_esc(k.doel8)}</td>
-        <td><input class="kpi-input" data-kid="w8_${i}" value="${_esc(_getKpi('w8_'+i))}" placeholder="—"/></td>
-        <td>${_esc(k.doel12)}</td>
-        <td><input class="kpi-input" data-kid="w12_${i}" value="${_esc(_getKpi('w12_'+i))}" placeholder="—"/></td>
+        <td><b>${k.metric}</b></td><td>${k.doel4}</td>
+        <td><input class="kpi-input" data-kid="w4_${i}" value="${localStorage.getItem('mk_kpi_w4_'+i)||''}" placeholder="—"/></td>
+        <td>${k.doel8}</td>
+        <td><input class="kpi-input" data-kid="w8_${i}" value="${localStorage.getItem('mk_kpi_w8_'+i)||''}" placeholder="—"/></td>
+        <td>${k.doel12}</td>
+        <td><input class="kpi-input" data-kid="w12_${i}" value="${localStorage.getItem('mk_kpi_w12_'+i)||''}" placeholder="—"/></td>
       </tr>`).join('');
-
       $('kpi-body').querySelectorAll('.kpi-input').forEach(inp=>{
-        inp.addEventListener('change',e=>_setKpi(e.target.dataset.kid,e.target.value));
+        inp.addEventListener('change',e=>localStorage.setItem('mk_kpi_'+e.target.dataset.kid,e.target.value));
       });
     }
 
-    function _renderKanalen() {
+    function _renderKanalen(){
       $('kanalen-content').innerHTML=KANALEN.map(k=>`
         <div class="channel-card">
-          <div class="channel-name">${_esc(k.naam)}</div>
-          <div class="channel-meta">
-            <span class="channel-tag">🌐 ${_esc(k.taal)}</span>
-            <span class="channel-tag">📅 ${_esc(k.freq)}</span>
-          </div>
-          <div class="channel-desc"><b>Toon:</b> ${_esc(k.toon)}<br><b>Doel:</b> ${_esc(k.doel)}</div>
+          <div class="channel-name">${k.naam}</div>
+          <div class="channel-meta"><span class="channel-tag">🌐 ${k.taal}</span><span class="channel-tag">📅 ${k.freq}</span></div>
+          <div class="channel-desc"><b style="color:var(--accent)">Toon:</b> ${k.toon}<br><b style="color:var(--accent)">Doel:</b> ${k.doel}</div>
         </div>`).join('');
     }
 
-    function _renderTemplates() {
+    function _renderTemplates(){
       $('templates-content').innerHTML=TEMPLATES.map((t,i)=>`
         <div class="template-card" id="tpl-${i}">
-          <div class="template-header" data-idx="${i}">
-            <span class="template-title">✉️ ${_esc(t.titel)}</span>
-            <span class="template-toggle">▼</span>
-          </div>
+          <div class="template-header" data-idx="${i}"><span class="template-title">✉️ ${t.titel}</span><span class="template-toggle">▼</span></div>
           <div class="template-body">
-            <div class="template-text">${_esc(t.tekst)}</div>
-            <div class="template-copy">
-              <button class="btn btn-accent" data-copy="${i}">📋 Kopiëren</button>
-            </div>
+            <div class="template-text">${t.tekst}</div>
+            <div style="margin-top:10px"><button class="btn btn-accent" data-copy="${i}">📋 Kopiëren</button></div>
           </div>
         </div>`).join('');
-
       $('templates-content').querySelectorAll('.template-header').forEach(h=>{
         h.addEventListener('click',()=>document.getElementById('tpl-'+h.dataset.idx).classList.toggle('open'));
       });
       $('templates-content').querySelectorAll('[data-copy]').forEach(btn=>{
         btn.addEventListener('click',()=>{
-          const idx=parseInt(btn.dataset.copy);
-          navigator.clipboard.writeText(TEMPLATES[idx].tekst).then(()=>{
-            btn.textContent='✅ Gekopieerd!';
-            setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
+          navigator.clipboard.writeText(TEMPLATES[parseInt(btn.dataset.copy)].tekst).then(()=>{
+            btn.textContent='✅ Gekopieerd!'; setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
           });
         });
       });
     }
-
-    function exportMD() {
-      let md=`# MyFamTreeCollab — Marketing & Communicatieplan\n## Versie 1.0 | Mei 2026\n\n`;
-      md+=`> **Doelgroep:** Families & Genealogie-hobbyisten  \n`;
-      md+=`> **Budget:** Organisch (nul betaalde advertenties)  \n`;
-      md+=`> **Horizon:** 12 weken lanceringsplan\n\n---\n\n`;
-
-      FASES.forEach(f=>{
-        md+=`## ${f.title} (${f.week})\n\n${f.desc}\n\n`;
-        md+=`| Taak | Uitleg | Resultaat | Week | Status |\n|------|--------|-----------|------|--------|\n`;
-        f.taken.forEach(t=>{
-          md+=`| ${t.taak} | ${t.uitleg} | ${t.resultaat} | ${t.week} | ${_getStatus(t.id)} |\n`;
-        });
-        md+='\n';
-      });
-
-      md+=`## Contentkalender — Week 6–12\n\n`;
-      md+=`| Week | Maandag | Donderdag | Reddit |\n|------|---------|-----------|--------|\n`;
-      KALENDER.forEach(r=>{ md+=`| W${r.week} | ${r.ma} | ${r.do} | ${r.reddit} |\n`; });
-      md+='\n';
-
-      md+=`## KPI's\n\n`;
-      md+=`| Metric | Doel W4 | Werkelijk W4 | Doel W8 | Werkelijk W8 | Doel W12 | Werkelijk W12 |\n`;
-      md+=`|--------|---------|-------------|---------|-------------|---------|-------------|\n`;
-      KPIS.forEach((k,i)=>{
-        md+=`| ${k.metric} | ${k.doel4} | ${_getKpi('w4_'+i)||'—'} | ${k.doel8} | ${_getKpi('w8_'+i)||'—'} | ${k.doel12} | ${_getKpi('w12_'+i)||'—'} |\n`;
-      });
-
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));
-      a.download='MyFamTreeCollab-Marketing-v1.0.md'; a.click();
-    }
-
-    function _esc(t){ return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     return { init };
   })();
