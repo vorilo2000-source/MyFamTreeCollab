@@ -1,18 +1,21 @@
-<!-- ======================= admin/marketing.html v2.0.0 =======================
+<!-- ======================= admin/marketing.html v3.0.0 =======================
     Marketing & Communicatieplan — admin only
 
-    Wijzigingen v2.0.0 (sessie 37):
-     - Volledig herschreven op basis van backlog.html v5.1.0
-     - Zelfde functionaliteit: board/lijst, filters, modal, CSV/MD export, data wissen
-     - Tabs: Taken | Contentkalender | KPI's | Kanalen | Templates
-     - KPI's bewerkbaar en opgeslagen in localStorage (mk_kpi_*)
-     - Templates kopieerbaar naar klembord
-     - localStorage prefix: mk_* (geen conflict met backlog bl_*)
+    Wijzigingen v3.0.0 (sessie 37):
+     - Volledig herschreven — geen hardcoded data meer
+     - Standaard dataformaat: marketing.md met secties [TAKEN][KALENDER][KPI][KANALEN][TEMPLATES]
+     - Taken: start/einddatum + gepubliceerd checkbox
+     - Kalender: maand/week/dag weergave, taken + kalender-events
+     - KPI's: bewerkbaar, opgeslagen in localStorage
+     - Kanalen: bewerkbaar via modal
+     - Templates: bewerkbaar via modal, markdown preview, kopieerknop
+     - Markdown editor in alle forms: bold, lijst, tabel toolbar
+     - Import/export als één marketing.md bestand
+     - localStorage prefix: mk_*
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
-     - /MyFamTreeCollab/js/adminGuard.js
-     - /MyFamTreeCollab/js/siteAnalytics.js
+     - /MyFamTreeCollab/js/adminGuard.js · /MyFamTreeCollab/js/siteAnalytics.js
      - ../js/topbar.js (via fetch)
     ======================================================================= -->
 <!DOCTYPE html>
@@ -22,160 +25,145 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Marketing & Communicatie — Admin</title>
   <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-
   <style>
-    :root {
-      --bg-main:     #565656;
-      --bg-card:     #3a3a3a;
-      --bg-card-alt: #444444;
-      --accent:      #00d4aa;
-      --accent-dim:  rgba(0,212,170,0.15);
-      --text-primary:#f0f0f0;
-      --text-muted:  #aaa;
-      --border:      rgba(255,255,255,0.08);
-      --font-mono:   'IBM Plex Mono', monospace;
-      --font-sans:   'IBM Plex Sans', sans-serif;
-      --radius:      8px;
-      --shadow:      0 4px 20px rgba(0,0,0,0.35);
-      --color-danger:#f08080;
-    }
-    #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
-    #page-content  { display:none; }
-    main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
-    .dash-wrap { max-width:100%; margin:0; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    :root{--bg-main:#565656;--bg-card:#3a3a3a;--bg-card-alt:#444;--accent:#00d4aa;--accent-dim:rgba(0,212,170,0.15);--text-primary:#f0f0f0;--text-muted:#aaa;--border:rgba(255,255,255,0.08);--font-mono:'IBM Plex Mono',monospace;--font-sans:'IBM Plex Sans',sans-serif;--radius:8px;--shadow:0 4px 20px rgba(0,0,0,0.35);--danger:#f08080;}
+    #accessDenied{display:none;text-align:center;padding:4rem 2rem;color:var(--text-primary);}
+    #page-content{display:none;}
+    main{background:var(--bg-main);min-height:100vh;padding:150px 20px 64px;font-family:var(--font-sans);color:var(--text-primary);}
+    .wrap{max-width:100%;margin:0;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-    /* Project header */
-    .proj-header { margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
-    .proj-name { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 6px; display:flex; align-items:center; gap:12px; }
-    .proj-edit-btn { font-family:var(--font-mono); font-size:0.75rem; background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent); border-radius:var(--radius); padding:3px 10px; cursor:pointer; transition:background .2s; }
-    .proj-edit-btn:hover { background:rgba(0,212,170,0.28); }
-    .proj-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
-    .proj-meta b { color:var(--accent); }
-    .projinfo-dd { display:none; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.25rem; animation:fadeUp .3s ease; }
-    .projinfo-dd.open { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-    @media(max-width:600px){ .projinfo-dd.open{ grid-template-columns:1fr; } }
+    /* Header */
+    .proj-header{margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:1rem;}
+    .proj-name{font-family:var(--font-mono);font-size:1.4rem;font-weight:600;color:var(--accent);margin:0 0 4px;display:flex;align-items:center;gap:10px;}
+    .proj-edit-btn{font-family:var(--font-mono);font-size:0.72rem;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:var(--radius);padding:3px 10px;cursor:pointer;}
+    .proj-meta{font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);display:flex;gap:14px;flex-wrap:wrap;}
+    .proj-meta b{color:var(--accent);}
+    .projinfo-dd{display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:1rem;}
+    .projinfo-dd.open{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 
-    /* Acties */
-    .bl-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
-
-    /* Knoppen */
-    .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; }
-    .btn:hover { background:var(--bg-card-alt); }
-    .btn:disabled { opacity:.4; cursor:not-allowed; }
-    .btn-accent { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
-    .btn-accent:hover { background:rgba(0,212,170,0.28); }
-    .btn-ghost { border-color:transparent; background:transparent; color:var(--text-muted); }
-    .btn-ghost:hover { background:rgba(255,255,255,0.06); }
-    .btn-danger { background:rgba(240,128,128,0.15); color:var(--color-danger); border-color:var(--color-danger); }
-    .btn-danger:hover { background:rgba(240,128,128,0.28); }
+    /* Buttons */
+    .btn{font-family:var(--font-mono);font-size:0.78rem;display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1px solid rgba(255,255,255,0.2);border-radius:var(--radius);background:var(--bg-card);color:var(--text-primary);cursor:pointer;transition:background .15s;}
+    .btn:hover{background:var(--bg-card-alt);}
+    .btn:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-accent{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+    .btn-accent:hover{background:rgba(0,212,170,0.28);}
+    .btn-ghost{border-color:transparent;background:transparent;color:var(--text-muted);}
+    .btn-ghost:hover{background:rgba(255,255,255,0.06);}
+    .btn-danger{background:rgba(240,128,128,0.15);color:var(--danger);border-color:var(--danger);}
+    .btn-sm{padding:3px 10px;font-size:0.7rem;}
 
     /* Form */
-    .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
-    .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
-    .form-input:focus { border-color:var(--accent); }
-    select.form-input { cursor:pointer; }
-    textarea.form-input { resize:vertical; }
+    .form-label{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:3px;}
+    .form-input{font-family:var(--font-mono);font-size:0.8rem;width:100%;padding:6px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);background:#2a2a2a;color:var(--text-primary);outline:none;box-sizing:border-box;}
+    .form-input:focus{border-color:var(--accent);}
+    select.form-input{cursor:pointer;}
+    textarea.form-input{resize:vertical;min-height:80px;}
 
-    /* Statistieken */
-    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:1.75rem; }
-    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 20px 16px; box-shadow:var(--shadow); position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
-    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
-    .stat-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:8px; }
-    .stat-value { font-family:var(--font-mono); font-size:2rem; font-weight:600; color:var(--text-primary); line-height:1; }
-    .progress-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; margin-top:8px; }
-    .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s; }
+    /* Markdown editor */
+    .md-editor-wrap{border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);overflow:hidden;}
+    .md-toolbar{display:flex;gap:4px;padding:6px 8px;background:#222;border-bottom:1px solid rgba(255,255,255,0.1);flex-wrap:wrap;}
+    .md-btn{font-family:var(--font-mono);font-size:0.72rem;padding:2px 8px;border:1px solid rgba(255,255,255,0.15);border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;}
+    .md-btn:hover{background:rgba(255,255,255,0.08);color:var(--text-primary);}
+    .md-editor-wrap textarea{border:none;border-radius:0;background:#2a2a2a;}
+    .md-preview{background:#222;padding:10px 12px;font-family:var(--font-sans);font-size:0.82rem;color:var(--text-muted);line-height:1.7;border-top:1px solid rgba(255,255,255,0.1);min-height:60px;}
+    .md-preview strong{color:var(--text-primary);}
+    .md-preview code{font-family:var(--font-mono);font-size:0.75rem;background:rgba(0,212,170,0.1);color:var(--accent);padding:1px 5px;border-radius:3px;}
+    .md-preview ul{padding-left:16px;margin:4px 0;}
+    .md-preview table{width:100%;border-collapse:collapse;margin:6px 0;font-size:0.78rem;}
+    .md-preview th{background:#1a7a4a;color:#fff;padding:5px 8px;text-align:left;}
+    .md-preview td{padding:5px 8px;background:#c8c8c8;color:#1a1a1a;border-bottom:1px solid #aaa;}
 
-    /* Fases (kanalen in marketing) */
-    .phases-bar { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:1.25rem; display:flex; flex-direction:column; gap:10px; }
-    .phases-bar-top { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
-    .phases-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; }
-    .phase-pills-wrap { display:flex; flex-wrap:wrap; gap:6px; }
-    .phase-pill { font-family:var(--font-mono); font-size:0.75rem; padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; position:relative; white-space:nowrap; }
-    .phase-pill:hover { border-color:var(--accent); color:var(--accent); }
-    .phase-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
-    .phase-pill[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:0; background:#1a1a18; color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; border:1px solid var(--border); max-width:260px; overflow:hidden; text-overflow:ellipsis; }
-    .phase-pill[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 3px); left:16px; border:4px solid transparent; border-top-color:#1a1a18; pointer-events:none; z-index:99; }
-    .phase-input-wrap { display:none; flex-wrap:wrap; gap:6px; align-items:center; padding-top:8px; border-top:1px solid var(--border); }
-    .phase-input-wrap.open { display:flex; }
-    .phase-input-wrap input { flex:1; min-width:120px; max-width:200px; }
+    /* Stats */
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.5rem;}
+    .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden;animation:fadeUp .4s ease both;}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
+    .stat-label{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;}
+    .stat-value{font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:var(--text-primary);line-height:1;}
+    .progress-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;margin-top:6px;}
+    .progress-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .4s;}
+
+    /* Acties */
+    .bl-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;}
+
+    /* Fase pills */
+    .phases-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:1.25rem;display:flex;flex-direction:column;gap:8px;}
+    .phases-bar-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .phases-label{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);}
+    .phase-pills-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+    .phase-pill{font-family:var(--font-mono);font-size:0.72rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+    .phase-pill:hover{border-color:var(--accent);color:var(--accent);}
+    .phase-pill.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+    .phase-input-wrap{display:none;flex-wrap:wrap;gap:6px;align-items:center;padding-top:8px;border-top:1px solid var(--border);}
+    .phase-input-wrap.open{display:flex;}
+    .phase-input-wrap input{flex:1;min-width:120px;max-width:180px;}
 
     /* Filters */
-    .filter-section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.5rem; display:flex; flex-direction:column; gap:12px; animation:fadeUp .35s ease; }
-    .filter-row { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; }
-    .filter-row-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); min-width:80px; padding-top:5px; white-space:nowrap; }
-    .pills-wrap { display:flex; gap:6px; flex-wrap:wrap; }
-    .filter-pill { font-family:var(--font-mono); font-size:0.72rem; padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; white-space:nowrap; }
-    .filter-pill:hover { border-color:var(--accent); color:var(--accent); }
-    .filter-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
-    .view-toggle { display:flex; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); overflow:hidden; }
-    .view-toggle button { font-family:var(--font-mono); font-size:0.75rem; padding:5px 14px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; transition:background .15s; }
-    .view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
+    .filter-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:1.25rem;display:flex;flex-direction:column;gap:10px;}
+    .filter-row{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+    .filter-row-label{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);min-width:80px;padding-top:4px;white-space:nowrap;}
+    .pills-wrap{display:flex;gap:5px;flex-wrap:wrap;}
+    .filter-pill{font-family:var(--font-mono);font-size:0.68rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+    .filter-pill:hover{border-color:var(--accent);color:var(--accent);}
+    .filter-pill.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+    .view-toggle{display:flex;border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);overflow:hidden;}
+    .view-toggle button{font-family:var(--font-mono);font-size:0.72rem;padding:5px 12px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;}
+    .view-toggle button.active{background:var(--accent-dim);color:var(--accent);}
+
+    /* Tabs */
+    .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap;}
+    .tab-btn{font-family:var(--font-mono);font-size:0.75rem;padding:8px 16px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+    .tab-btn:hover{color:var(--text-primary);}
+    .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
 
     /* Lege staat */
-    .empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); }
-    .empty .empty-icon { font-size:32px; margin-bottom:12px; }
-    .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
+    .empty{text-align:center;padding:3rem 2rem;border:1px solid var(--border);border-radius:var(--radius);}
+    .empty p{font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);margin:8px 0 16px;}
 
     /* Board */
-    .board-scroll { overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 320px); border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-main); scrollbar-width:thin; scrollbar-color:rgba(0,212,170,0.4) rgba(255,255,255,0.05); }
-    .board-scroll::-webkit-scrollbar { width:8px; height:8px; }
-    .board-scroll::-webkit-scrollbar-track { background:rgba(255,255,255,0.04); border-radius:4px; }
-    .board-scroll::-webkit-scrollbar-thumb { background:rgba(0,212,170,0.4); border-radius:4px; }
-    .board-scroll::-webkit-scrollbar-thumb:hover { background:rgba(0,212,170,0.7); }
-    .board-scroll::-webkit-scrollbar-corner { background:rgba(255,255,255,0.04); }
-    .board { display:flex; gap:0; min-width:max-content; align-items:flex-start; }
-    .board-col { width:260px; flex-shrink:0; padding:0 12px; border-right:1px solid var(--border); }
-    .board-col:last-child { border-right:none; }
-    .board-col-title { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:flex; align-items:center; gap:6px; position:sticky; top:0; z-index:2; background:var(--bg-main); padding:12px 0 8px; border-bottom:1px solid var(--border); margin-bottom:10px; }
-    .board-col-items { display:flex; flex-direction:column; gap:8px; padding-bottom:16px; }
-    .board-empty { font-family:var(--font-mono); font-size:0.75rem; color:rgba(255,255,255,0.15); padding:6px 0; }
+    .board-scroll{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 300px);border:1px solid var(--border);border-radius:var(--radius);scrollbar-width:thin;scrollbar-color:rgba(0,212,170,0.4) rgba(255,255,255,0.05);}
+    .board-scroll::-webkit-scrollbar{width:8px;height:8px;}
+    .board-scroll::-webkit-scrollbar-thumb{background:rgba(0,212,170,0.4);border-radius:4px;}
+    .board{display:flex;gap:0;min-width:max-content;align-items:flex-start;}
+    .board-col{width:250px;flex-shrink:0;padding:0 10px;border-right:1px solid var(--border);}
+    .board-col:last-child{border-right:none;}
+    .board-col-title{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:flex;align-items:center;gap:5px;position:sticky;top:0;z-index:2;background:var(--bg-main);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+    .board-col-items{display:flex;flex-direction:column;gap:6px;padding-bottom:14px;}
+    .board-empty{font-family:var(--font-mono);font-size:0.72rem;color:rgba(255,255,255,0.15);padding:4px 0;}
 
-    /* Kaart */
-    .card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow); animation:fadeUp .3s ease; }
-    .card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
-    .card-id { font-family:var(--font-mono); font-size:10px; color:var(--accent); opacity:.8; cursor:pointer; border-bottom:1px dashed rgba(0,212,170,0.3); }
-    .card-id:hover { opacity:1; }
-    .card-actions { display:flex; gap:2px; }
-    .card-title { font-weight:600; font-size:0.85rem; margin-bottom:4px; line-height:1.4; color:var(--text-primary); }
-    .card-desc { font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .card-footer { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-    .card-tags { margin-top:6px; display:flex; gap:4px; flex-wrap:wrap; }
-    .id-edit-input { font-family:var(--font-mono); font-size:10px; background:#2a2a2a; border:1px solid var(--accent); border-radius:4px; color:var(--accent); padding:1px 6px; width:90px; outline:none; }
+    /* Taakkaart */
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow);animation:fadeUp .3s ease;}
+    .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+    .card-id{font-family:var(--font-mono);font-size:10px;color:var(--accent);opacity:.7;cursor:pointer;border-bottom:1px dashed rgba(0,212,170,0.3);}
+    .card-title{font-weight:600;font-size:0.82rem;margin-bottom:3px;line-height:1.4;color:var(--text-primary);}
+    .card-dates{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);margin-bottom:4px;display:flex;gap:8px;align-items:center;}
+    .card-pub{font-size:0.65rem;padding:1px 6px;border-radius:99px;border:1px solid;}
+    .card-pub.yes{background:rgba(0,212,170,0.15);color:var(--accent);border-color:var(--accent);}
+    .card-pub.no{background:rgba(255,255,255,0.05);color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
+    .card-footer{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:4px;}
+    .card-tags{margin-top:4px;display:flex;gap:3px;flex-wrap:wrap;}
+    .id-edit-input{font-family:var(--font-mono);font-size:10px;background:#2a2a2a;border:1px solid var(--accent);border-radius:4px;color:var(--accent);padding:1px 5px;width:90px;outline:none;}
 
-    /* Badges & tags */
-    .badge { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
-    .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-    .tag { font-family:var(--font-mono); font-size:0.65rem; padding:1px 7px; border-radius:4px; background:rgba(255,255,255,0.08); color:var(--text-muted); }
-    .assignee-txt { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
-
-    /* Tabel */
-    .list-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; max-height:680px; box-shadow:var(--shadow); animation:fadeUp .35s ease; }
-    .list-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.78rem; }
-    .list-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; text-align:left; color:#fff; padding:10px 12px; border-bottom:2px solid #0f5c35; font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:0.68rem; white-space:nowrap; }
-    .list-table tbody td { padding:8px 12px; color:#1a1a1a; background:#c8c8c8; border-bottom:1px solid #aaa; vertical-align:middle; }
-    .list-table tbody tr:last-child td { border-bottom:none; }
-    .list-table tbody tr:hover td { background:#d8d8d8; }
-    .tbl-id { font-family:var(--font-mono); font-size:0.72rem; color:#1a5c8a; cursor:pointer; border-bottom:1px dashed #1a5c8a; white-space:nowrap; }
-    .tbl-id:hover { color:#0d3d5e; }
-    .tbl-id-input { font-family:var(--font-mono); font-size:0.72rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:2px 6px; width:90px; outline:none; }
+    /* Badges */
+    .badge{display:inline-flex;align-items:center;gap:3px;font-family:var(--font-mono);font-size:0.65rem;font-weight:600;padding:2px 7px;border-radius:10px;}
+    .dot{width:5px;height:5px;border-radius:50%;display:inline-block;}
+    .tag{font-family:var(--font-mono);font-size:0.62rem;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:var(--text-muted);}
 
     /* Prioriteit */
     .p-critical{background:rgba(240,128,128,0.2);color:#f08080;border:1px solid #f08080;}
     .p-high    {background:rgba(249,115,22,0.2); color:#fb923c;border:1px solid #fb923c;}
     .p-medium  {background:rgba(234,179,8,0.2);  color:#fbbf24;border:1px solid #fbbf24;}
     .p-low     {background:rgba(34,197,94,0.2);  color:#4ade80;border:1px solid #4ade80;}
-    .p-critical-tbl{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .p-high-tbl    {background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .p-medium-tbl  {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .p-low-tbl     {background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .dot-critical{background:#f08080} .dot-high{background:#fb923c}
-    .dot-medium  {background:#fbbf24} .dot-low {background:#4ade80}
+    .p-critical-tbl{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .p-high-tbl    {background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .p-medium-tbl  {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .p-low-tbl     {background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .dot-critical{background:#f08080}.dot-high{background:#fb923c}.dot-medium{background:#fbbf24}.dot-low{background:#4ade80}
 
     /* Status */
     .s-open      {background:rgba(96,165,250,0.2); color:#60a5fa;border:1px solid #60a5fa;}
@@ -184,260 +172,403 @@
     .s-done      {background:rgba(0,212,170,0.2);  color:var(--accent);border:1px solid var(--accent);}
     .s-cancelled {background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid rgba(255,255,255,0.15);}
     .s-future    {background:rgba(244,114,182,0.2);color:#f472b6;border:1px solid #f472b6;}
-    .s-open-tbl      {background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .s-inprogress-tbl{background:#faf5ff;color:#6d28d9;border:1px solid #c4b5fd;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .s-review-tbl    {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .s-done-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .s-cancelled-tbl {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .s-future-tbl    {background:#fdf4ff;color:#7e22ce; border:1px solid #e9d5ff;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-open-tbl      {background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .s-inprogress-tbl{background:#faf5ff;color:#6d28d9;border:1px solid #c4b5fd;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .s-review-tbl    {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .s-done-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .s-cancelled-tbl {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .s-future-tbl    {background:#fdf4ff;color:#7e22ce; border:1px solid #e9d5ff;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
 
-    /* Modal */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
-    .modal-overlay.open { display:flex; }
-    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:12px; }
-    .modal-header h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:0; }
-    .modal-body { display:flex; flex-direction:column; gap:12px; }
-    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
-    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
-    .id-preview { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); opacity:.7; margin-top:4px; }
+    /* Lijst tabel */
+    .list-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:680px;box-shadow:var(--shadow);}
+    .list-table{width:100%;border-collapse:separate;border-spacing:0;font-family:var(--font-mono);font-size:0.75rem;}
+    .list-table thead th{position:sticky;top:0;z-index:1;background:#1a7a4a;color:#fff;padding:9px 11px;text-align:left;border-bottom:2px solid #0f5c35;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:0.65rem;white-space:nowrap;}
+    .list-table tbody td{padding:7px 11px;color:#1a1a1a;background:#c8c8c8;border-bottom:1px solid #aaa;vertical-align:middle;}
+    .list-table tbody tr:last-child td{border-bottom:none;}
+    .list-table tbody tr:hover td{background:#d8d8d8;}
+    .tbl-id{font-family:var(--font-mono);font-size:0.68rem;color:#1a5c8a;cursor:pointer;border-bottom:1px dashed #1a5c8a;white-space:nowrap;}
+    .tbl-id-input{font-family:var(--font-mono);font-size:0.68rem;background:#fff;border:1px solid #1a7a4a;border-radius:4px;padding:2px 5px;width:90px;outline:none;}
 
-    /* Tabs */
-    .tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; flex-wrap:wrap; }
-    .tab-btn { font-family:var(--font-mono); font-size:0.78rem; padding:9px 18px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; white-space:nowrap; }
-    .tab-btn:hover { color:var(--text-primary); }
-    .tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
-    .tab-panel { display:none; }
-    .tab-panel.active { display:block; }
+    /* Kalender */
+    .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;}
+    .cal-nav-title{font-family:var(--font-mono);font-size:1rem;font-weight:600;color:var(--accent);flex:1;}
+    .cal-view-toggle{display:flex;border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);overflow:hidden;}
+    .cal-view-toggle button{font-family:var(--font-mono);font-size:0.72rem;padding:5px 12px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;}
+    .cal-view-toggle button.active{background:var(--accent-dim);color:var(--accent);}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:1rem;}
+    .cal-day-header{font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;color:var(--text-muted);text-align:center;padding:6px 0;letter-spacing:1px;}
+    .cal-cell{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;min-height:80px;padding:4px;cursor:pointer;transition:background .15s;}
+    .cal-cell:hover{background:var(--bg-card-alt);}
+    .cal-cell.today{border-color:var(--accent);}
+    .cal-cell.other-month{opacity:.35;}
+    .cal-cell-num{font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);margin-bottom:3px;}
+    .cal-event{font-family:var(--font-sans);font-size:0.62rem;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+    .cal-event.taak{background:rgba(96,165,250,0.25);color:#93c5fd;}
+    .cal-event.taak.done{background:rgba(0,212,170,0.2);color:var(--accent);}
+    .cal-event.kalender-event{background:rgba(167,139,250,0.25);color:#c4b5fd;}
+    .cal-event.gepubliceerd{background:rgba(0,212,170,0.3);color:var(--accent);font-weight:600;}
+    /* Week view */
+    .week-grid{display:grid;grid-template-columns:60px repeat(7,1fr);gap:2px;}
+    .week-time{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);text-align:right;padding:3px 6px 0 0;}
+    .week-cell{background:var(--bg-card);border:1px solid var(--border);min-height:40px;padding:2px 4px;}
+    /* Dag view */
+    .day-list{display:flex;flex-direction:column;gap:6px;}
+    .day-event-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;display:flex;gap:12px;align-items:flex-start;}
+    .day-event-time{font-family:var(--font-mono);font-size:0.72rem;color:var(--accent);min-width:60px;}
+    .day-event-title{font-weight:600;font-size:0.82rem;}
+    .day-event-type{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);}
 
-    /* Extra tabellen */
-    .mk-table-wrap { border:1px solid var(--border); border-radius:var(--radius); overflow:auto; margin-bottom:1.5rem; box-shadow:var(--shadow); }
-    .mk-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.78rem; }
-    .mk-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; color:#fff; padding:10px 14px; text-align:left; font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #0f5c35; white-space:nowrap; }
-    .mk-table tbody td { padding:9px 14px; background:#c8c8c8; color:#1a1a1a; border-bottom:1px solid #aaa; vertical-align:top; line-height:1.5; }
-    .mk-table tbody tr:last-child td { border-bottom:none; }
-    .mk-table tbody tr:hover td { background:#d8d8d8; }
-    .kpi-input { font-family:var(--font-mono); font-size:0.75rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:3px 8px; width:90px; outline:none; color:#1a1a1a; }
+    /* KPI tabel */
+    .mk-table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;margin-bottom:1.25rem;box-shadow:var(--shadow);}
+    .mk-table{width:100%;border-collapse:separate;border-spacing:0;font-family:var(--font-mono);font-size:0.75rem;}
+    .mk-table thead th{position:sticky;top:0;z-index:1;background:#1a7a4a;color:#fff;padding:9px 12px;text-align:left;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #0f5c35;white-space:nowrap;}
+    .mk-table tbody td{padding:8px 12px;background:#c8c8c8;color:#1a1a1a;border-bottom:1px solid #aaa;vertical-align:middle;}
+    .mk-table tbody tr:last-child td{border-bottom:none;}
+    .mk-table tbody tr:hover td{background:#d8d8d8;}
+    .kpi-input{font-family:var(--font-mono);font-size:0.72rem;background:#fff;border:1px solid #1a7a4a;border-radius:4px;padding:3px 7px;width:80px;outline:none;color:#1a1a1a;}
 
-    /* Kanaal & template kaarten */
-    .channel-card,.template-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; position:relative; overflow:hidden; }
-    .channel-card::before,.template-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
-    .channel-card { padding:16px 18px; }
-    .channel-name { font-family:var(--font-mono); font-size:0.9rem; font-weight:600; color:var(--accent); margin-bottom:8px; }
-    .channel-meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
-    .channel-tag { font-family:var(--font-mono); font-size:0.68rem; padding:2px 8px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); color:var(--text-muted); }
-    .channel-desc { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.6; }
-    .template-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; transition:background .15s; }
-    .template-header:hover { background:var(--bg-card-alt); }
-    .template-title { font-family:var(--font-mono); font-size:0.85rem; font-weight:600; color:var(--accent); }
-    .template-toggle { font-size:0.75rem; color:var(--text-muted); transition:transform .2s; }
-    .template-card.open .template-toggle { transform:rotate(180deg); }
-    .template-body { display:none; padding:0 16px 16px; border-top:1px solid var(--border); }
-    .template-card.open .template-body { display:block; }
-    .template-text { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.8; white-space:pre-wrap; margin-top:12px; }
+    /* Kanalen & Templates kaarten */
+    .data-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;position:relative;overflow:hidden;animation:fadeUp .3s ease;}
+    .data-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
+    .data-card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
+    .data-card-title{font-family:var(--font-mono);font-size:0.85rem;font-weight:600;color:var(--accent);}
+    .data-card-body{padding:0 16px 14px;border-top:1px solid var(--border);}
+    .data-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+    .data-card-tag{font-family:var(--font-mono);font-size:0.65rem;padding:2px 7px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);color:var(--text-muted);}
+    .data-card-desc{font-family:var(--font-sans);font-size:0.8rem;color:var(--text-muted);line-height:1.6;}
+    /* Template uitklap */
+    .tpl-header{cursor:pointer;user-select:none;}
+    .tpl-header:hover .data-card-title{color:#fff;}
+    .tpl-toggle{font-size:0.72rem;color:var(--text-muted);transition:transform .2s;}
+    .data-card.open .tpl-toggle{transform:rotate(180deg);}
+    .tpl-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border);}
+    .data-card.open .tpl-body{display:block;}
+    .tpl-text{font-family:var(--font-sans);font-size:0.8rem;color:var(--text-muted);line-height:1.8;white-space:pre-wrap;margin-top:10px;}
 
     /* Info box */
-    .info-box { background:var(--accent-dim); border:1px solid var(--accent); border-radius:var(--radius); padding:12px 16px; font-family:var(--font-sans); font-size:0.82rem; color:var(--text-primary); line-height:1.6; margin-bottom:1.25rem; }
-    .info-box b { color:var(--accent); }
+    .info-box{background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-sans);font-size:0.8rem;color:var(--text-primary);line-height:1.6;margin-bottom:1.25rem;}
+    .info-box b{color:var(--accent);}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:100;padding:16px;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow);animation:fadeUp .25s ease;}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:10px;}
+    .modal-header h2{font-family:var(--font-mono);font-size:0.95rem;font-weight:600;color:var(--accent);margin:0;}
+    .modal-body{display:flex;flex-direction:column;gap:10px;}
+    .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;border-top:1px solid var(--border);padding-top:10px;}
+    .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    @media(max-width:520px){.form-grid2,.form-grid3{grid-template-columns:1fr;}}
+    .id-preview{font-family:var(--font-mono);font-size:0.68rem;color:var(--accent);opacity:.7;margin-top:3px;}
+    .pub-checkbox{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);cursor:pointer;}
+    .pub-checkbox input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
 
     /* Toegang geweigerd */
-    .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
-    .access-denied h2 { font-size:1.2rem; color:var(--color-danger); margin-bottom:10px; font-family:var(--font-sans); }
-    .access-denied p { font-size:0.9rem; color:var(--text-muted); line-height:1.6; }
+    .access-denied{background:var(--bg-card);border:1px solid var(--danger);border-radius:var(--radius);padding:32px;text-align:center;max-width:480px;margin:60px auto;}
+    .access-denied h2{font-size:1.1rem;color:var(--danger);margin-bottom:10px;font-family:var(--font-sans);}
+    .access-denied p{font-size:0.88rem;color:var(--text-muted);line-height:1.6;}
   </style>
 </head>
 <body>
-
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init();</script>
-
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script>
   <div id="topbar-placeholder"></div>
   <div id="navbar-placeholder"></div>
 
-  <div id="accessDenied">
-    <div class="access-denied">
-      <h2>Geen toegang</h2>
-      <p>Deze pagina is alleen toegankelijk voor administrators.<br>Log in met een admin-account om verder te gaan.</p>
-    </div>
-  </div>
+  <div id="accessDenied"><div class="access-denied"><h2>Geen toegang</h2><p>Deze pagina is alleen toegankelijk voor administrators.</p></div></div>
 
   <div id="page-content">
-    <main>
-      <div class="dash-wrap">
+    <main><div class="wrap">
 
-        <!-- Project header -->
-        <div class="proj-header">
-          <div class="proj-name">
-            <span id="proj-name-txt">📣 Marketing & Communicatieplan</span>
-            <button class="proj-edit-btn" id="btn-edit-proj">✏️ bewerken</button>
-          </div>
-          <div class="projinfo-dd" id="projinfo-dd">
-            <div><label class="form-label">Titel</label><input class="form-input" type="text" id="pi-name" placeholder="Marketing & Communicatieplan"/></div>
-            <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0"/></div>
-            <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
-            <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
-              <button class="btn" id="btn-proj-cancel">Annuleren</button>
-              <button class="btn btn-accent" id="btn-proj-save">Opslaan</button>
-            </div>
-          </div>
-          <div class="proj-meta" id="proj-meta"></div>
-        </div>
-
-        <!-- Kernboodschap -->
-        <div class="info-box">
-          💬 <b>Kernboodschap:</b> "Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat."
-          &nbsp;·&nbsp; <b>Budget:</b> Organisch &nbsp;·&nbsp; <b>Horizon:</b> 12 weken lanceringsplan
-        </div>
-
-        <!-- Acties -->
-        <div class="bl-actions">
-          <button class="btn" id="btn-export-csv">💾 CSV opslaan</button>
-          <button class="btn" id="btn-export-md">📝 MD exporteren</button>
-          <label class="btn" style="cursor:pointer">📂 Laden (CSV/MD)<input type="file" id="input-file" accept=".csv,.md" style="display:none"/></label>
-          <button class="btn btn-accent" id="btn-add">+ Taak toevoegen</button>
-          <span style="flex:1"></span>
-          <button class="btn btn-danger" id="btn-clear-db">🗑 Data wissen</button>
-        </div>
-
-        <!-- Statistieken -->
-        <div class="stat-grid" id="stat-grid"></div>
-
-        <!-- Fase pills -->
-        <div class="phases-bar">
-          <div class="phases-bar-top">
-            <span class="phases-label">Fases</span>
-            <button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button>
-          </div>
-          <div class="phase-pills-wrap" id="phase-pills"></div>
-          <div class="phase-input-wrap" id="phase-input-wrap">
-            <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="padding:3px 8px;font-size:12px"/>
-            <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving (tooltip)" style="padding:3px 8px;font-size:12px"/>
-            <button class="btn btn-accent" id="btn-add-phase" style="padding:4px 10px">+</button>
-            <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">✕</button>
+      <!-- Project header -->
+      <div class="proj-header">
+        <div class="proj-name"><span id="proj-name-txt">📣 Marketing & Communicatieplan</span><button class="proj-edit-btn" id="btn-edit-proj">✏️ bewerken</button></div>
+        <div class="projinfo-dd" id="projinfo-dd">
+          <div><label class="form-label">Titel</label><input class="form-input" type="text" id="pi-name" placeholder="Marketing & Communicatieplan"/></div>
+          <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0"/></div>
+          <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
+          <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn" id="btn-proj-cancel">Annuleren</button>
+            <button class="btn btn-accent" id="btn-proj-save">Opslaan</button>
           </div>
         </div>
-
-        <!-- Tabs -->
-        <div class="tab-bar">
-          <button class="tab-btn active" data-tab="taken">📋 Taken</button>
-          <button class="tab-btn" data-tab="kalender">📅 Contentkalender</button>
-          <button class="tab-btn" data-tab="kpi">📊 KPI's</button>
-          <button class="tab-btn" data-tab="kanalen">📡 Kanalen</button>
-          <button class="tab-btn" data-tab="templates">✉️ Templates</button>
-        </div>
-
-        <!-- Tab: Taken (board/lijst met filters) -->
-        <div class="tab-panel active" id="tab-taken">
-          <!-- Filters -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <span class="filter-row-label">Zoeken</span>
-              <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID, toegewezen…" style="flex:1;min-width:200px"/>
-              <div class="view-toggle">
-                <button id="btn-view-board" class="active">Board</button>
-                <button id="btn-view-list">Lijst</button>
-              </div>
-              <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.72rem;padding:4px 12px">✕ Wissen</button>
-            </div>
-            <div class="filter-row"><span class="filter-row-label">Status</span><div class="pills-wrap" id="filter-status-pills"></div></div>
-            <div class="filter-row"><span class="filter-row-label">Prioriteit</span><div class="pills-wrap" id="filter-priority-pills"></div></div>
-            <div class="filter-row"><span class="filter-row-label">Type</span><div class="pills-wrap" id="filter-type-pills"></div></div>
-            <div class="filter-row"><span class="filter-row-label">Tags</span><div class="pills-wrap" id="filter-tag-pills"></div></div>
-          </div>
-          <div id="bl-content"></div>
-        </div>
-
-        <!-- Tab: Contentkalender -->
-        <div class="tab-panel" id="tab-kalender">
-          <div class="mk-table-wrap">
-            <table class="mk-table">
-              <thead><tr><th>Week</th><th>Maandag — tip</th><th>Donderdag — feature/vraag</th><th>Reddit</th></tr></thead>
-              <tbody id="kalender-body"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab: KPI's -->
-        <div class="tab-panel" id="tab-kpi">
-          <div class="info-box">📝 Vul de werkelijke cijfers in na week 4, 8 en 12. Worden automatisch opgeslagen.</div>
-          <div class="mk-table-wrap">
-            <table class="mk-table">
-              <thead><tr><th>Metric</th><th>Doel W4</th><th>Werkelijk W4</th><th>Doel W8</th><th>Werkelijk W8</th><th>Doel W12</th><th>Werkelijk W12</th></tr></thead>
-              <tbody id="kpi-body"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab: Kanalen -->
-        <div class="tab-panel" id="tab-kanalen">
-          <div id="kanalen-content"></div>
-          <div class="info-box">⚠️ <b>Let op:</b> Controleer altijd de groepsregels vóór je een link plaatst.</div>
-          <div class="mk-table-wrap">
-            <table class="mk-table">
-              <thead><tr><th>Facebook Groep</th><th>Land / Taal</th><th>Geschatte leden</th></tr></thead>
-              <tbody>
-                <tr><td>Stamboomonderzoek Nederland</td><td>NL</td><td>15.000+</td></tr>
-                <tr><td>Genealogie Vlaanderen</td><td>BE-NL</td><td>8.000+</td></tr>
-                <tr><td>Stamboomonderzoek België</td><td>BE</td><td>5.000+</td></tr>
-                <tr><td>Familiegeschiedenis & Genealogie</td><td>NL/BE</td><td>10.000+</td></tr>
-                <tr><td>Oud-foto's en familiegeschiedenis</td><td>NL/BE</td><td>Variabel</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab: Templates -->
-        <div class="tab-panel" id="tab-templates">
-          <div id="templates-content"></div>
-        </div>
-
+        <div class="proj-meta" id="proj-meta"></div>
       </div>
-    </main>
+
+      <div class="info-box">💬 <b>Kernboodschap:</b> "Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat." · <b>Budget:</b> Organisch · <b>Horizon:</b> 12 weken</div>
+
+      <!-- Acties -->
+      <div class="bl-actions">
+        <button class="btn" id="btn-export-md">💾 Opslaan als .md</button>
+        <label class="btn" style="cursor:pointer">📂 Laden (.md)<input type="file" id="input-file" accept=".md" style="display:none"/></label>
+        <button class="btn btn-accent" id="btn-add-taak">+ Taak toevoegen</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-danger" id="btn-clear-db">🗑 Data wissen</button>
+      </div>
+
+      <!-- Statistieken -->
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <!-- Fase pills -->
+      <div class="phases-bar">
+        <div class="phases-bar-top"><span class="phases-label">Fases</span><button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button></div>
+        <div class="phase-pills-wrap" id="phase-pills"></div>
+        <div class="phase-input-wrap" id="phase-input-wrap">
+          <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="padding:3px 8px;font-size:12px"/>
+          <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving" style="padding:3px 8px;font-size:12px"/>
+          <button class="btn btn-accent" id="btn-add-phase" style="padding:4px 10px">+</button>
+          <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">✕</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="taken">📋 Taken</button>
+        <button class="tab-btn" data-tab="kalender">📅 Kalender</button>
+        <button class="tab-btn" data-tab="kpi">📊 KPI's</button>
+        <button class="tab-btn" data-tab="kanalen">📡 Kanalen</button>
+        <button class="tab-btn" data-tab="templates">✉️ Templates</button>
+      </div>
+
+      <!-- Tab: Taken -->
+      <div class="tab-panel active" id="tab-taken">
+        <div class="filter-section">
+          <div class="filter-row">
+            <span class="filter-row-label">Zoeken</span>
+            <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID…" style="flex:1;min-width:180px"/>
+            <div class="view-toggle">
+              <button id="btn-view-board" class="active">Board</button>
+              <button id="btn-view-list">Lijst</button>
+            </div>
+            <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.68rem;padding:4px 10px">✕ Wissen</button>
+          </div>
+          <div class="filter-row"><span class="filter-row-label">Status</span><div class="pills-wrap" id="fp-status"></div></div>
+          <div class="filter-row"><span class="filter-row-label">Prioriteit</span><div class="pills-wrap" id="fp-priority"></div></div>
+          <div class="filter-row"><span class="filter-row-label">Kanaal</span><div class="pills-wrap" id="fp-type"></div></div>
+          <div class="filter-row"><span class="filter-row-label">Tags</span><div class="pills-wrap" id="fp-tags"></div></div>
+        </div>
+        <div id="bl-content"></div>
+      </div>
+
+      <!-- Tab: Kalender -->
+      <div class="tab-panel" id="tab-kalender">
+        <div class="cal-nav">
+          <button class="btn" id="cal-prev">‹</button>
+          <div class="cal-nav-title" id="cal-title"></div>
+          <button class="btn" id="cal-next">›</button>
+          <button class="btn btn-accent" id="btn-add-event">+ Event toevoegen</button>
+          <div class="cal-view-toggle">
+            <button data-calview="month" class="active">Maand</button>
+            <button data-calview="week">Week</button>
+            <button data-calview="day">Dag</button>
+          </div>
+        </div>
+        <div id="cal-content"></div>
+        <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+          <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);">Legenda:</span>
+          <span class="cal-event taak" style="white-space:nowrap">● Taak</span>
+          <span class="cal-event taak done" style="white-space:nowrap">● Taak gedaan</span>
+          <span class="cal-event kalender-event" style="white-space:nowrap">● Event</span>
+          <span class="cal-event gepubliceerd" style="white-space:nowrap">✓ Gepubliceerd</span>
+        </div>
+      </div>
+
+      <!-- Tab: KPI's -->
+      <div class="tab-panel" id="tab-kpi">
+        <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;">
+          <button class="btn btn-accent" id="btn-add-kpi">+ KPI toevoegen</button>
+        </div>
+        <div class="info-box">📝 Vul werkelijke cijfers in na week 4, 8 en 12. Worden automatisch opgeslagen.</div>
+        <div class="mk-table-wrap"><table class="mk-table">
+          <thead><tr><th>Metric</th><th>Doel W4</th><th>Werkelijk W4</th><th>Doel W8</th><th>Werkelijk W8</th><th>Doel W12</th><th>Werkelijk W12</th><th></th></tr></thead>
+          <tbody id="kpi-body"></tbody>
+        </table></div>
+      </div>
+
+      <!-- Tab: Kanalen -->
+      <div class="tab-panel" id="tab-kanalen">
+        <div style="display:flex;gap:8px;margin-bottom:1rem;">
+          <button class="btn btn-accent" id="btn-add-kanaal">+ Kanaal toevoegen</button>
+        </div>
+        <div id="kanalen-content"></div>
+        <div class="info-box" style="margin-top:1rem;">⚠️ <b>Let op:</b> Controleer altijd groepsregels vóór je een link plaatst.</div>
+      </div>
+
+      <!-- Tab: Templates -->
+      <div class="tab-panel" id="tab-templates">
+        <div style="display:flex;gap:8px;margin-bottom:1rem;">
+          <button class="btn btn-accent" id="btn-add-template">+ Template toevoegen</button>
+        </div>
+        <div id="templates-content"></div>
+      </div>
+
+    </div></main>
   </div>
 
-  <!-- Modal: taak toevoegen of bewerken -->
-  <div class="modal-overlay" id="modal">
+  <!-- Modal: Taak -->
+  <div class="modal-overlay" id="modal-taak">
     <div class="modal">
-      <div class="modal-header">
-        <h2 id="modal-title">Taak toevoegen</h2>
-        <button class="btn btn-ghost" id="btn-modal-close" style="font-size:18px;padding:4px 8px">✕</button>
-      </div>
+      <div class="modal-header"><h2 id="mt-title">Taak toevoegen</h2><button class="btn btn-ghost" id="btn-mt-close" style="font-size:18px;padding:4px 8px">✕</button></div>
       <div class="modal-body">
-        <div>
-          <label class="form-label">ID <span style="opacity:.5;font-size:0.68rem">(automatisch · aanpasbaar)</span></label>
-          <input class="form-input" type="text" id="f-id" placeholder="Wordt automatisch gegenereerd"/>
-          <div class="id-preview" id="id-preview"></div>
-        </div>
-        <div><label class="form-label">Taak *</label><input class="form-input" type="text" id="f-title" placeholder="Korte, beschrijvende taakbenaming"/></div>
+        <div><label class="form-label">ID <span style="opacity:.5;font-size:0.65rem">(auto · aanpasbaar)</span></label><input class="form-input" type="text" id="ft-id"/><div class="id-preview" id="ft-id-preview"></div></div>
+        <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="ft-title" placeholder="Korte, beschrijvende taakbenaming"/></div>
         <div class="form-grid2">
-          <div><label class="form-label">Fase</label><select class="form-input" id="f-phase"></select></div>
+          <div><label class="form-label">Fase</label><select class="form-input" id="ft-phase"></select></div>
           <div><label class="form-label">Kanaal / Type</label>
-            <select class="form-input" id="f-type">
+            <select class="form-input" id="ft-type">
               <option>Facebook</option><option>Reddit</option><option>Product Hunt</option>
               <option>YouTube</option><option>Email</option><option>Website</option><option>Overig</option>
             </select>
           </div>
+          <div><label class="form-label">Startdatum</label><input class="form-input" type="date" id="ft-startdate"/></div>
+          <div><label class="form-label">Einddatum</label><input class="form-input" type="date" id="ft-enddate"/></div>
           <div><label class="form-label">Prioriteit</label>
-            <select class="form-input" id="f-priority">
+            <select class="form-input" id="ft-priority">
               <option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option>
             </select>
           </div>
           <div><label class="form-label">Status</label>
-            <select class="form-input" id="f-status">
+            <select class="form-input" id="ft-status">
               <option selected>Open</option><option>In Progress</option><option>Review</option>
               <option>Done</option><option>Cancelled</option><option>Future</option>
             </select>
           </div>
         </div>
-        <div><label class="form-label">Toegewezen aan</label><input class="form-input" type="text" id="f-assignee" placeholder="Naam of @handle"/></div>
-        <div><label class="form-label">Week</label><input class="form-input" type="text" id="f-tags" placeholder="W1, W2–3, W5 …"/></div>
-        <div><label class="form-label">Uitleg</label><textarea class="form-input" id="f-description" rows="3" placeholder="Wat moet er gedaan worden? Waarom?"></textarea></div>
-        <div><label class="form-label">Verwacht resultaat</label><textarea class="form-input" id="f-ai" rows="2" placeholder="Wat levert deze taak op?"></textarea></div>
+        <div><label class="form-label">Toegewezen aan</label><input class="form-input" type="text" id="ft-assignee" placeholder="Naam of @handle"/></div>
+        <div><label class="form-label">Tags / Week</label><input class="form-input" type="text" id="ft-tags" placeholder="W1, W2-3 …"/></div>
+        <div>
+          <label class="form-label">Omschrijving</label>
+          <div class="md-editor-wrap">
+            <div class="md-toolbar">
+              <button class="md-btn" data-md="bold" title="Vet">B</button>
+              <button class="md-btn" data-md="italic" title="Cursief">I</button>
+              <button class="md-btn" data-md="list" title="Lijst">≡</button>
+              <button class="md-btn" data-md="table" title="Tabel">⊞</button>
+              <button class="md-btn" data-md="code" title="Code">&lt;/&gt;</button>
+              <button class="md-btn" data-md="preview" title="Preview" id="btn-md-preview-desc">👁</button>
+            </div>
+            <textarea class="form-input" id="ft-description" rows="4" placeholder="Wat moet er gedaan worden? Markdown ondersteund."></textarea>
+            <div class="md-preview" id="md-preview-desc" style="display:none"></div>
+          </div>
+        </div>
+        <div><label class="form-label">Verwacht resultaat</label><input class="form-input" type="text" id="ft-result" placeholder="Wat levert deze taak op?"/></div>
+        <label class="pub-checkbox"><input type="checkbox" id="ft-pub"/> Gepubliceerd (verschijnt als afgevinkt in kalender)</label>
       </div>
       <div class="modal-footer">
-        <button class="btn" id="btn-modal-cancel">Annuleren</button>
-        <button class="btn btn-accent" id="btn-modal-save">Toevoegen</button>
+        <button class="btn" id="btn-mt-cancel">Annuleren</button>
+        <button class="btn btn-accent" id="btn-mt-save">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Kalender Event -->
+  <div class="modal-overlay" id="modal-event">
+    <div class="modal">
+      <div class="modal-header"><h2 id="me-title">Event toevoegen</h2><button class="btn btn-ghost" id="btn-me-close" style="font-size:18px;padding:4px 8px">✕</button></div>
+      <div class="modal-body">
+        <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="fe-title" placeholder="Event naam"/></div>
+        <div class="form-grid2">
+          <div><label class="form-label">Datum *</label><input class="form-input" type="date" id="fe-date"/></div>
+          <div><label class="form-label">Kanaal / Type</label>
+            <select class="form-input" id="fe-type">
+              <option>Facebook</option><option>Reddit</option><option>Product Hunt</option>
+              <option>YouTube</option><option>Email</option><option>Website</option><option>Overig</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Beschrijving</label>
+          <div class="md-editor-wrap">
+            <div class="md-toolbar">
+              <button class="md-btn" data-md="bold">B</button>
+              <button class="md-btn" data-md="italic">I</button>
+              <button class="md-btn" data-md="list">≡</button>
+              <button class="md-btn" data-md="preview" id="btn-md-preview-ev">👁</button>
+            </div>
+            <textarea class="form-input" id="fe-desc" rows="3" placeholder="Beschrijving van het event…"></textarea>
+            <div class="md-preview" id="md-preview-ev" style="display:none"></div>
+          </div>
+        </div>
+        <label class="pub-checkbox"><input type="checkbox" id="fe-pub"/> Gepubliceerd</label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-me-cancel">Annuleren</button>
+        <button class="btn btn-accent" id="btn-me-save">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: KPI -->
+  <div class="modal-overlay" id="modal-kpi">
+    <div class="modal">
+      <div class="modal-header"><h2 id="mk-title">KPI toevoegen</h2><button class="btn btn-ghost" id="btn-mk-close" style="font-size:18px">✕</button></div>
+      <div class="modal-body">
+        <div><label class="form-label">Metric *</label><input class="form-input" type="text" id="fk-metric" placeholder="bv. GitHub Pages bezoekers/maand"/></div>
+        <div class="form-grid3">
+          <div><label class="form-label">Doel W4</label><input class="form-input" type="text" id="fk-d4" placeholder="50-100"/></div>
+          <div><label class="form-label">Doel W8</label><input class="form-input" type="text" id="fk-d8" placeholder="200-400"/></div>
+          <div><label class="form-label">Doel W12</label><input class="form-input" type="text" id="fk-d12" placeholder="500+"/></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-mk-cancel">Annuleren</button>
+        <button class="btn btn-accent" id="btn-mk-save">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Kanaal -->
+  <div class="modal-overlay" id="modal-kanaal">
+    <div class="modal">
+      <div class="modal-header"><h2 id="mkn-title">Kanaal toevoegen</h2><button class="btn btn-ghost" id="btn-mkn-close" style="font-size:18px">✕</button></div>
+      <div class="modal-body">
+        <div><label class="form-label">Kanaal naam *</label><input class="form-input" type="text" id="fkn-naam" placeholder="bv. Facebook"/></div>
+        <div class="form-grid2">
+          <div><label class="form-label">Taal</label><input class="form-input" type="text" id="fkn-taal" placeholder="NL / EN"/></div>
+          <div><label class="form-label">Frequentie</label><input class="form-input" type="text" id="fkn-freq" placeholder="2 posts/week"/></div>
+        </div>
+        <div><label class="form-label">Toon</label><input class="form-input" type="text" id="fkn-toon" placeholder="Vriendelijk, laagdrempelig…"/></div>
+        <div><label class="form-label">Doel</label><input class="form-input" type="text" id="fkn-doel" placeholder="Wat wil je bereiken?"/></div>
+        <div><label class="form-label">Groepen / Subreddits</label><input class="form-input" type="text" id="fkn-groepen" placeholder="r/genealogy, Stamboomonderzoek NL…"/></div>
+        <div><label class="form-label">Notities</label><textarea class="form-input" id="fkn-notities" rows="2" placeholder="Aanvullende opmerkingen…"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-mkn-cancel">Annuleren</button>
+        <button class="btn btn-accent" id="btn-mkn-save">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Template -->
+  <div class="modal-overlay" id="modal-template">
+    <div class="modal">
+      <div class="modal-header"><h2 id="mtp-title">Template toevoegen</h2><button class="btn btn-ghost" id="btn-mtp-close" style="font-size:18px">✕</button></div>
+      <div class="modal-body">
+        <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="ftp-titel" placeholder="bv. Reddit lanceringspost (EN)"/></div>
+        <div><label class="form-label">Kanaal</label>
+          <select class="form-input" id="ftp-kanaal">
+            <option>Facebook</option><option>Reddit</option><option>Product Hunt</option>
+            <option>YouTube</option><option>Email</option><option>Website</option><option>Overig</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Tekst (markdown)</label>
+          <div class="md-editor-wrap">
+            <div class="md-toolbar">
+              <button class="md-btn" data-md="bold">B</button>
+              <button class="md-btn" data-md="italic">I</button>
+              <button class="md-btn" data-md="list">≡</button>
+              <button class="md-btn" data-md="table">⊞</button>
+              <button class="md-btn" data-md="preview" id="btn-md-preview-tpl">👁</button>
+            </div>
+            <textarea class="form-input" id="ftp-tekst" rows="8" placeholder="Schrijf je post-template hier…"></textarea>
+            <div class="md-preview" id="md-preview-tpl" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-mtp-cancel">Annuleren</button>
+        <button class="btn btn-accent" id="btn-mtp-save">Toevoegen</button>
       </div>
     </div>
   </div>
@@ -449,257 +580,269 @@
   <script src="../js/auth.js"></script>
   <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
   <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
-
   <script>
   fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
     document.getElementById('topbar-placeholder').innerHTML=html;
-    const s=document.createElement('script'); s.src='../js/topbar.js';
-    s.onload=()=>AdminGuard.protect('admin').then(ok=>{ if(ok) Marketing.init(); });
+    const s=document.createElement('script');s.src='../js/topbar.js';
+    s.onload=()=>AdminGuard.protect('admin').then(ok=>{if(ok)Mkt.init();});
     document.body.appendChild(s);
   });
-  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; });
-  fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{ document.getElementById('footer-placeholder').innerHTML=html; });
+  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{document.getElementById('navbar-placeholder').innerHTML=html;});
+  fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{document.getElementById('footer-placeholder').innerHTML=html;});
 
-  // ================================================================
-  // MARKETING MODULE — gebaseerd op Backlog module structuur
-  // localStorage prefix: mk_* (geen conflict met bl_*)
-  // ================================================================
-  const Marketing = (() => {
-    let items=[], phases=[], phaseDescs={};
-    let view='board', search='', fPhase='All';
-    let fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
-    let editId=null;
-    let projName='', projVersion='', projDate='';
+  const Mkt=(()=>{
+    // === State ===
+    let taken=[],phases=[],phaseDescs={};
+    let events=[],kpis=[],kanalen=[],templates=[];
+    let projName='',projVersion='',projDate='';
+    let view='board',search='',fPhase='All';
+    let fStatus=new Set(),fPriority=new Set(),fType=new Set(),fTags=new Set();
+    let editTaakId=null,editEventIdx=null,editKpiIdx=null,editKanaalIdx=null,editTplIdx=null;
+    let calView='month',calDate=new Date();
 
-    const STATUSES   = ['Open','In Progress','Review','Done','Cancelled','Future'];
-    const PRIORITIES = ['Critical','High','Medium','Low'];
-    const TYPES      = ['Facebook','Reddit','Product Hunt','YouTube','Email','Website','Overig'];
-    const S_ICON = {'Open':'📋','In Progress':'🔄','Review':'🔍','Done':'✅','Cancelled':'❌','Future':'🔮'};
-    const S_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
-    const S_TBL  = {'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
-    const P_CSS  = {'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
-    const P_TBL  = {'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
-    const D_CSS  = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
+    // === Constanten ===
+    const STATUSES  =['Open','In Progress','Review','Done','Cancelled','Future'];
+    const PRIORITIES=['Critical','High','Medium','Low'];
+    const TYPES     =['Facebook','Reddit','Product Hunt','YouTube','Email','Website','Overig'];
+    const S_ICON={'Open':'📋','In Progress':'🔄','Review':'🔍','Done':'✅','Cancelled':'❌','Future':'🔮'};
+    const S_CSS ={'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
+    const S_TBL ={'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
+    const P_CSS ={'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
+    const P_TBL ={'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
+    const D_CSS ={'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
+    const DAYS  =['Ma','Di','Wo','Do','Vr','Za','Zo'];
+    const MONTHS=['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
 
-    const $  = id => document.getElementById(id);
-    const V  = v  => v&&v.trim() ? v.trim() : '';
+    const $=id=>document.getElementById(id);
+    const V=v=>v&&v.trim()?v.trim():'';
 
-    // Vaste data
-    const KALENDER = [
-      {week:'6',ma:'Hoe kies je de juiste ID-structuur voor je stamboom?',do:'Feature: CSV-export — wat kun je ermee?',reddit:'"Ik bouwde een privacy-first stamboomtool — feedback gevraagd"'},
-      {week:'7',ma:'Wat is GEDCOM en waarom is het belangrijk?',do:'Vraag: Hoeveel generaties heeft jouw stamboom?',reddit:'Tip-post: "Hoe structureer je familiedata zonder dure software"'},
-      {week:'8',ma:'Bronnen vermelden bij genealogie-onderzoek',do:'Feature: Meertalig — NL/EN/ES uitgelegd',reddit:'Update: "We hebben X gebruikers — dit leerden we"'},
-      {week:'9',ma:'Verschil tussen roepnaam en doopnaam',do:'Gebruikersverhaal (indien beschikbaar)',reddit:'Vraag: "Wat mist jullie in gratis genealogie-tools?"'},
-      {week:'10',ma:'Hoe importeer je een bestaande stamboom?',do:'Feature: Samenwerken via cloud',reddit:'Post: link naar YouTube Short'},
-      {week:'11',ma:'Privacy bij het online delen van stamboomdata',do:'Vraag: Welke feature willen jullie het meest?',reddit:'Post: "Roadmap — dit bouwen we als volgende"'},
-      {week:'12',ma:'Hoe maak je een backup van je stamboom?',do:'Terugblik: wat hebben we geleerd?',reddit:'Post: "Week 12 — dit is wat werkte"'},
-    ];
-    const KPIS = [
-      {metric:'GitHub Pages bezoekers/maand',doel4:'50–100',doel8:'200–400',doel12:'500+'},
-      {metric:'Facebook pagina volgers',      doel4:'20',    doel8:'75',     doel12:'150+'},
-      {metric:'Reddit lanceringspost upvotes',doel4:'10–25', doel8:'—',      doel12:'—'},
-      {metric:'Product Hunt stemmen',         doel4:'10–30', doel8:'—',      doel12:'—'},
-      {metric:'Actieve gebruikers (schatting)',doel4:'5–15',  doel8:'25–50',  doel12:'75+'},
-      {metric:'Gebruikersfeedback items',     doel4:'5+',    doel8:'15+',    doel12:'25+'},
-    ];
-    const KANALEN = [
-      {naam:'Facebook',taal:'NL (primair) · EN (secundair)',freq:'2 posts/week',toon:'Vriendelijk, laagdrempelig, geen jargon',doel:'Bereik in Belgische en Nederlandse markt'},
-      {naam:'Reddit',taal:'EN op r/genealogy · NL op r/belgium en r/thenetherlands',freq:'1 post/week na lancering',toon:'Technisch, eerlijk, open source-mentaliteit',doel:'Hobbyisten bereiken, internationale zichtbaarheid'},
-      {naam:'Product Hunt',taal:'EN',freq:'Eenmalig — week 5 (dinsdag)',toon:'Tagline: "Free family tree tool — your data stays local"',doel:'Internationale zichtbaarheid, vroege adopters'},
-      {naam:'YouTube / Reels',taal:'NL',freq:'Week 8+',toon:'Schermopname, max 60 sec, authentiek',doel:'Visueel kanaal — "Bouw je eerste stamboom in 5 minuten"'},
-    ];
-    const TEMPLATES = [
-      {id:'t1',titel:'Reddit (Engels — r/genealogy)',tekst:`Titel: I built a free, privacy-first family tree tool — no account required\n\nHey r/genealogy,\n\nI've been working on a free family tree web app for the past year. The main thing that bothered me about existing tools was that your data is either locked in their system or requires a paid account to do anything useful.\n\nWith MyFamTreeCollab, your data stays in your browser by default. No account needed for the basics. You can export to CSV, JSON, and GEDCOM whenever you want.\n\nIt also supports NL/EN/ES and has optional cloud sync if you want to collaborate with family.\n\nStill very much in MVP stage, so I'd love honest feedback — what's missing, what's broken, what would make you actually use it.\n\nLink: https://vorilo2000-source.github.io/MyFamTreeCollab/index.html\n\nThanks for taking a look.`},
-      {id:'t2',titel:'Facebook (Nederlands)',tekst:`Ik heb het afgelopen jaar een gratis stamboomtool gebouwd — en ik zoek eerlijke feedback.\n\nMyFamTreeCollab laat je een stamboom opbouwen zonder account aan te maken en zonder dat je data ergens naartoe gaat. Alles blijft lokaal in je browser. Je kunt exporteren naar CSV of GEDCOM wanneer je wilt.\n\nHet is nog een MVP, dus niet alles is perfect. Maar het werkt, het is gratis, en je bent eigenaar van je eigen data.\n\nProbeer het hier: https://vorilo2000-source.github.io/MyFamTreeCollab/index.html\n\nWat vinden jullie? Wat mist er nog?`},
-    ];
-
-    // Default taken uit het marketing plan
-    const DEFAULT_ITEMS = [
-      {id:'MF1-001',phase:'Fase 1 — Fundering',title:'Landingspagina optimaliseren',description:'index.html moet binnen 10 sec duidelijk maken wat de tool doet en voor wie. Herschrijf de hero-tekst met de kernboodschap.',ai:'Bezoekers begrijpen meteen de waarde',type:'Website',priority:'High',status:'Open',assignee:'',tags:'W1'},
-      {id:'MF1-002',phase:'Fase 1 — Fundering',title:'Screenshot / screencapture maken',description:'Maak 1 goede screenshot én een 30-sec screencapture van de tool in actie.',ai:'Visueel materiaal voor posts en lancering',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W1'},
-      {id:'MF1-003',phase:'Fase 1 — Fundering',title:'Accounts aanmaken',description:'Facebook pagina MyFamTreeCollab, Reddit account, Product Hunt profiel claimen.',ai:'Kanalen klaar voor gebruik',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W1'},
-      {id:'MF1-004',phase:'Fase 1 — Fundering',title:'Deel-knop toevoegen aan app',description:'Kleine "Deel deze tool" knop in de interface. Verlaagt drempel voor mond-tot-mond.',ai:'Organische verspreiding vergemakkelijkt',type:'Website',priority:'Medium',status:'Open',assignee:'',tags:'W2'},
-      {id:'MF1-005',phase:'Fase 1 — Fundering',title:'5 Facebook-groepen joinen',description:'Lid worden van NL/BE genealogie-groepen: Stamboomonderzoek België, Genealogie Vlaanderen, etc.',ai:'Aanwezigheid in doelgroepgemeenschappen',type:'Facebook',priority:'Medium',status:'Open',assignee:'',tags:'W2'},
-      {id:'MF2-001',phase:'Fase 2 — Community',title:'Facebook: dagelijks reageren',description:'Elke dag 1 helpende reactie plaatsen in genealogie-groepen. Geen promotie, wel zichtbaarheid opbouwen.',ai:'Naam bekend in community',type:'Facebook',priority:'High',status:'Open',assignee:'',tags:'W3–4'},
-      {id:'MF2-002',phase:'Fase 2 — Community',title:'Reddit: waardevolle posts',description:'2x per week een tip of vraag plaatsen op r/genealogy of r/belgium.',ai:'Reddit karma + zichtbaarheid',type:'Reddit',priority:'High',status:'Open',assignee:'',tags:'W3–4'},
-      {id:'MF2-003',phase:'Fase 2 — Community',title:'Lanceringspost schrijven',description:'Tekst voorbereiden voor Reddit + Facebook. Eerlijk, geen verkooptaal, open voor feedback.',ai:'Post klaar voor week 5',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W4'},
-      {id:'MF2-004',phase:'Fase 2 — Community',title:'Product Hunt voorbereiding',description:'Productomschrijving schrijven, screenshots uploaden, 5 contacten vragen om op lanceringsdag te stemmen.',ai:'Product Hunt klaar voor lancering',type:'Product Hunt',priority:'High',status:'Open',assignee:'',tags:'W4'},
-      {id:'MF3-001',phase:'Fase 3 — Lancering',title:'Reddit lanceringspost',description:'Post op r/genealogy EN r/belgium op maandag. Link naar GitHub Pages. Reageer op alle comments binnen 24 uur.',ai:'Eerste echte gebruikers + feedback',type:'Reddit',priority:'Critical',status:'Open',assignee:'',tags:'W5'},
-      {id:'MF3-002',phase:'Fase 3 — Lancering',title:'Facebook lanceringspost',description:'Post op eigen pagina + delen in 3 relevante groepen (check groepsregels voor links).',ai:'Bereik in Belgische/Nederlandse doelgroep',type:'Facebook',priority:'Critical',status:'Open',assignee:'',tags:'W5'},
-      {id:'MF3-003',phase:'Fase 3 — Lancering',title:'Product Hunt lancering',description:'Publiceer op dinsdag (beste dag). Vraag netwerk om te stemmen. Reageer op alle comments.',ai:'Internationale zichtbaarheid',type:'Product Hunt',priority:'Critical',status:'Open',assignee:'',tags:'W5'},
-      {id:'MF3-004',phase:'Fase 3 — Lancering',title:'Feedback verzamelen',description:'Noteer alle feedback uit comments. Maak backlog-items aan voor de meest genoemde verbeterpunten.',ai:'Verbeterpunten voor sprint na lancering',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W5'},
-      {id:'MF4-001',phase:'Fase 4 — Consistentie',title:'Facebook contentkalender uitvoeren',description:'2 posts/week: maandag = genealogie tip, donderdag = feature spotlight of gebruikersvraag.',ai:'Groeiend publiek op Facebook pagina',type:'Facebook',priority:'High',status:'Open',assignee:'',tags:'W6–12'},
-      {id:'MF4-002',phase:'Fase 4 — Consistentie',title:'Reddit: wekelijkse post',description:'1 post/week met echte waarde. Afwisselen: tip, vraag, update, case study.',ai:'Actieve Reddit aanwezigheid',type:'Reddit',priority:'High',status:'Open',assignee:'',tags:'W6–12'},
-      {id:'MF4-003',phase:'Fase 4 — Consistentie',title:'Gebruikersverhalen verzamelen',description:'Vraag actieve gebruikers of ze hun verhaal willen delen. Gebruik als content op Facebook en Reddit.',ai:'Social proof + authentieke content',type:'Overig',priority:'Medium',status:'Open',assignee:'',tags:'W7–10'},
-      {id:'MF4-004',phase:'Fase 4 — Consistentie',title:'YouTube Short / Reel maken',description:'Maak 1 video: "Hoe bouw je een stamboom in 5 minuten met MyFamTreeCollab". Schermopname volstaat.',ai:'Visueel kanaal aanboren',type:'YouTube',priority:'Medium',status:'Open',assignee:'',tags:'W8'},
-      {id:'MF4-005',phase:'Fase 4 — Consistentie',title:'Genealogie-blogs contacteren',description:'Stuur 3–5 NL genealogie-bloggers een korte persoonlijke mail. Vraag om review, geen betaling.',ai:'Externe backlinks + nieuwe doelgroep',type:'Email',priority:'Medium',status:'Open',assignee:'',tags:'W9–10'},
-      {id:'MF4-006',phase:'Fase 4 — Consistentie',title:'Terugkijken & bijsturen',description:'Na week 12: welk kanaal leverde het meeste op? Verdubbel daar op. Stop met wat niet werkt.',ai:'Gefocuste strategie voor fase 2',type:'Overig',priority:'High',status:'Open',assignee:'',tags:'W12'},
-    ];
-
-    function init() {
-      // Tabs
-      document.querySelectorAll('.tab-btn').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-          document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-          btn.classList.add('active');
-          $('tab-'+btn.dataset.tab).classList.add('active');
-        });
-      });
-
-      _loadProjInfo(); _updateApiKeyUI();
-
-      const saved=localStorage.getItem('mk_items');
-      if(saved){
-        items=JSON.parse(saved);
-        phases=JSON.parse(localStorage.getItem('mk_phases')||'[]');
+    // === Init ===
+    function init(){
+      _loadProjInfo();
+      const s=localStorage.getItem('mk_items');
+      if(s){
+        taken    =JSON.parse(s);
+        phases   =JSON.parse(localStorage.getItem('mk_phases')||'[]');
         phaseDescs=JSON.parse(localStorage.getItem('mk_phasedescs')||'{}');
-      } else {
-        // Eerste keer: laad default taken
-        items=[...DEFAULT_ITEMS];
-        const seen=new Set();
-        phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
-        _save();
+        events   =JSON.parse(localStorage.getItem('mk_events')||'[]');
+        kpis     =JSON.parse(localStorage.getItem('mk_kpis')||'[]');
+        kanalen  =JSON.parse(localStorage.getItem('mk_kanalen')||'[]');
+        templates=JSON.parse(localStorage.getItem('mk_templates')||'[]');
       }
-
       _bindEvents();
-      _renderKalender();
-      _renderKpi();
-      _renderKanalen();
-      _renderTemplates();
-      render();
-    }
-
-    function _genId(phase,type){
-      const fl=(phase||'M')[0].toUpperCase();
-      const tl=(type||'O')[0].toUpperCase();
-      const prefix='M'+fl+tl+'-';
-      const used=new Set(items.filter(i=>i.id&&i.id.startsWith(prefix)).map(i=>parseInt(i.id.slice(prefix.length))||0));
-      let n=1; while(used.has(n))n++;
-      return prefix+String(n).padStart(3,'0');
+      _renderAll();
     }
 
     function _bindEvents(){
-      $('btn-add').addEventListener('click',()=>openModal());
-      $('btn-export-csv').addEventListener('click',exportCSV);
+      // Tabs
+      document.querySelectorAll('.tab-btn').forEach(b=>{
+        b.addEventListener('click',()=>{
+          document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          $('tab-'+b.dataset.tab).classList.add('active');
+          if(b.dataset.tab==='kalender') _renderCal();
+        });
+      });
+
+      // Projectinfo
+      $('btn-edit-proj').addEventListener('click',()=>{ $('pi-name').value=projName;$('pi-version').value=projVersion;$('pi-date').value=projDate;$('projinfo-dd').classList.toggle('open'); });
+      $('btn-proj-save').addEventListener('click',()=>{ projName=$('pi-name').value.trim();projVersion=$('pi-version').value.trim();projDate=$('pi-date').value;_saveProjInfo();$('projinfo-dd').classList.remove('open');_renderMeta(); });
+      $('btn-proj-cancel').addEventListener('click',()=>$('projinfo-dd').classList.remove('open'));
+
+      // Acties
       $('btn-export-md').addEventListener('click',exportMD);
-      $('input-file').addEventListener('change',importFile);
-      $('btn-clear-filters').addEventListener('click',clearFilters);
+      $('input-file').addEventListener('change',importMD);
       $('btn-clear-db').addEventListener('click',()=>{
-        if(!confirm('Alle marketing data wissen?\nDit kan niet ongedaan worden gemaakt.'))return;
+        if(!confirm('Alle marketing data wissen?'))return;
         Object.keys(localStorage).filter(k=>k.startsWith('mk_')).forEach(k=>localStorage.removeItem(k));
         location.reload();
       });
 
-      $('btn-edit-proj').addEventListener('click',()=>{
-        $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate;
-        $('projinfo-dd').classList.toggle('open');
-      });
-      $('btn-proj-save').addEventListener('click',()=>{
-        projName=$('pi-name').value.trim(); projVersion=$('pi-version').value.trim(); projDate=$('pi-date').value;
-        _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta();
-      });
-      $('btn-proj-cancel').addEventListener('click',()=>$('projinfo-dd').classList.remove('open'));
-
-      $('btn-new-phase').addEventListener('click',()=>{ $('phase-input-wrap').classList.add('open'); $('btn-new-phase').style.display='none'; $('input-new-phase').focus(); });
+      // Fase
+      $('btn-new-phase').addEventListener('click',()=>{$('phase-input-wrap').classList.add('open');$('btn-new-phase').style.display='none';$('input-new-phase').focus();});
       $('btn-cancel-phase').addEventListener('click',_cancelPhaseInput);
       $('btn-add-phase').addEventListener('click',_addPhase);
-      $('input-new-phase').addEventListener('keydown',e=>{ if(e.key==='Enter')_addPhase(); if(e.key==='Escape')_cancelPhaseInput(); });
+      $('input-new-phase').addEventListener('keydown',e=>{if(e.key==='Enter')_addPhase();if(e.key==='Escape')_cancelPhaseInput();});
 
-      $('f-phase').addEventListener('change',_updateAutoId);
-      $('f-type').addEventListener('change',_updateAutoId);
+      // Filters
+      $('input-search').addEventListener('input',e=>{search=e.target.value;_renderTaken();});
+      $('btn-view-board').addEventListener('click',()=>{view='board';_toggleView();_renderTaken();});
+      $('btn-view-list').addEventListener('click', ()=>{view='list'; _toggleView();_renderTaken();});
+      $('btn-clear-filters').addEventListener('click',()=>{search='';fPhase='All';fStatus.clear();fPriority.clear();fType.clear();fTags.clear();$('input-search').value='';_renderAll();});
 
-      $('input-search').addEventListener('input',e=>{ search=e.target.value; render(); });
-      $('btn-view-board').addEventListener('click',()=>{ view='board'; _updateViewToggle(); render(); });
-      $('btn-view-list').addEventListener('click', ()=>{ view='list';  _updateViewToggle(); render(); });
+      // Taak modal
+      $('btn-add-taak').addEventListener('click',()=>_openTaakModal());
+      $('btn-mt-close').addEventListener('click',()=>_closeModal('modal-taak'));
+      $('btn-mt-cancel').addEventListener('click',()=>_closeModal('modal-taak'));
+      $('btn-mt-save').addEventListener('click',_saveTaak);
+      $('modal-taak').addEventListener('click',e=>{if(e.target===$('modal-taak'))_closeModal('modal-taak');});
+      $('ft-phase').addEventListener('change',_updateAutoId);
+      $('ft-type').addEventListener('change',_updateAutoId);
+      $('ft-id').addEventListener('input',()=>{$('ft-id').dataset.manual='1';});
+      _bindMdToolbar('ft-description','md-preview-desc','btn-md-preview-desc');
 
-      $('btn-modal-close').addEventListener('click',closeModal);
-      $('btn-modal-cancel').addEventListener('click',closeModal);
-      $('btn-modal-save').addEventListener('click',saveItem);
-      $('modal').addEventListener('click',e=>{ if(e.target===$('modal'))closeModal(); });
+      // Kalender event modal
+      $('btn-add-event').addEventListener('click',()=>_openEventModal());
+      $('btn-me-close').addEventListener('click',()=>_closeModal('modal-event'));
+      $('btn-me-cancel').addEventListener('click',()=>_closeModal('modal-event'));
+      $('btn-me-save').addEventListener('click',_saveEvent);
+      $('modal-event').addEventListener('click',e=>{if(e.target===$('modal-event'))_closeModal('modal-event');});
+      _bindMdToolbar('fe-desc','md-preview-ev','btn-md-preview-ev');
+
+      // Kalender navigatie
+      $('cal-prev').addEventListener('click',()=>_calNav(-1));
+      $('cal-next').addEventListener('click',()=>_calNav(1));
+      document.querySelectorAll('.cal-view-toggle button').forEach(b=>{
+        b.addEventListener('click',()=>{
+          document.querySelectorAll('.cal-view-toggle button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active'); calView=b.dataset.calview; _renderCal();
+        });
+      });
+
+      // KPI modal
+      $('btn-add-kpi').addEventListener('click',()=>_openKpiModal());
+      $('btn-mk-close').addEventListener('click',()=>_closeModal('modal-kpi'));
+      $('btn-mk-cancel').addEventListener('click',()=>_closeModal('modal-kpi'));
+      $('btn-mk-save').addEventListener('click',_saveKpi);
+
+      // Kanaal modal
+      $('btn-add-kanaal').addEventListener('click',()=>_openKanaalModal());
+      $('btn-mkn-close').addEventListener('click',()=>_closeModal('modal-kanaal'));
+      $('btn-mkn-cancel').addEventListener('click',()=>_closeModal('modal-kanaal'));
+      $('btn-mkn-save').addEventListener('click',_saveKanaal);
+
+      // Template modal
+      $('btn-add-template').addEventListener('click',()=>_openTplModal());
+      $('btn-mtp-close').addEventListener('click',()=>_closeModal('modal-template'));
+      $('btn-mtp-cancel').addEventListener('click',()=>_closeModal('modal-template'));
+      $('btn-mtp-save').addEventListener('click',_saveTpl);
+      _bindMdToolbar('ftp-tekst','md-preview-tpl','btn-md-preview-tpl');
     }
 
-    function _updateAutoId(){
-      if(editId)return;
-      const id=_genId($('f-phase').value,$('f-type').value);
-      if(!$('f-id').dataset.manual) $('f-id').value=id;
-      $('id-preview').textContent=`→ ${id}`;
+    // === Markdown toolbar ===
+    function _bindMdToolbar(textareaId,previewId,previewBtnId){
+      const ta=$( textareaId),prev=$(previewId),prevBtn=$(previewBtnId);
+      document.querySelectorAll(`#modal-taak .md-btn[data-md], #modal-event .md-btn[data-md], #modal-template .md-btn[data-md]`).forEach(btn=>{
+        // gebonden per modal
+      });
+      // Bind per textarea parent
+      const wrap=ta.closest('.md-editor-wrap');
+      wrap.querySelectorAll('.md-btn[data-md]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const md=btn.dataset.md;
+          if(md==='preview'){
+            const show=prev.style.display==='none';
+            prev.style.display=show?'block':'none';
+            ta.style.display=show?'none':'block';
+            if(show) prev.innerHTML=_mdToHtml(ta.value);
+            return;
+          }
+          _insertMd(ta,md);
+        });
+      });
     }
 
-    function render(){ _renderMeta(); _renderStats(); _renderPhasePills(); _renderFilterPills(); _renderContent(); _updatePhasesInModal(); }
+    function _insertMd(ta,type){
+      const s=ta.selectionStart,e=ta.selectionEnd,v=ta.value,sel=v.slice(s,e);
+      let ins='';
+      if(type==='bold')   ins=`**${sel||'vet tekst'}**`;
+      if(type==='italic') ins=`_${sel||'cursief'}_`;
+      if(type==='list')   ins=`\n- ${sel||'item'}\n- item\n`;
+      if(type==='code')   ins=`\`${sel||'code'}\``;
+      if(type==='table')  ins=`\n| Kolom 1 | Kolom 2 | Kolom 3 |\n|---------|---------|----------|\n| Cel 1   | Cel 2   | Cel 3   |\n`;
+      ta.value=v.slice(0,s)+ins+v.slice(e);
+      ta.focus(); ta.selectionStart=ta.selectionEnd=s+ins.length;
+    }
 
+    // === Render alles ===
+    function _renderAll(){
+      _renderMeta(); _renderStats(); _renderPhasePills();
+      _renderFilterPills(); _renderTaken();
+      _renderKpi(); _renderKanalen(); _renderTemplates();
+      _updatePhasesInModal();
+    }
+
+    // === Meta ===
     function _renderMeta(){
-      const t=items.length,done=items.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
-      $('proj-name-txt').textContent=(projName||'📣 Marketing & Communicatieplan');
+      const t=taken.length,done=taken.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
+      $('proj-name-txt').textContent=projName||'📣 Marketing & Communicatieplan';
       $('proj-meta').innerHTML=
         `${projVersion?`<span>📦 <b>${projVersion}</b></span>`:''}` +
-        `${projDate?`<span>📅 <b>${_fmtDate(projDate)}</b></span>`:''}` +
+        `${projDate   ?`<span>📅 <b>${_fmtDate(projDate)}</b></span>`:''}` +
         `<span>📋 <b>${t}</b> taken</span><span>✅ <b>${pct}%</b> afgerond</span>`;
     }
 
-    function _fmtDate(d){ if(!d)return''; const p=d.split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; }
+    function _fmtDate(d){if(!d)return'';const p=d.split('-');return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d;}
 
+    // === Stats ===
     function _renderStats(){
-      const t=items.length,done=items.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
+      const t=taken.length,done=taken.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
       $('stat-grid').innerHTML=`
-        <div class="stat-card"><div class="stat-label">Totaal</div><div class="stat-value">${t}</div></div>
-        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${items.filter(i=>i.status==='Open').length}</div></div>
-        <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${items.filter(i=>i.status==='In Progress').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Totaal taken</div><div class="stat-value">${t}</div></div>
+        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${taken.filter(i=>i.status==='Open').length}</div></div>
+        <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${taken.filter(i=>i.status==='In Progress').length}</div></div>
         <div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">${done}</div></div>
-        <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
+        <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
+        <div class="stat-card"><div class="stat-label">Events gepland</div><div class="stat-value">${events.length}</div></div>`;
     }
 
+    // === Fase pills ===
     function _renderPhasePills(){
-      $('phase-pills').innerHTML=phases.map(ph=>{
-        const desc=phaseDescs[ph]||'';
-        return `<span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}" ${desc?`data-tip="${desc}"`:''}>${ph} <span data-remove="${ph}" style="margin-left:5px;opacity:.4;cursor:pointer">×</span></span>`;
-      }).join('');
+      $('phase-pills').innerHTML=phases.map(ph=>`
+        <span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}">${ph}
+          <span data-remove="${ph}" style="margin-left:4px;opacity:.4;cursor:pointer">×</span>
+        </span>`).join('');
       $('phase-pills').querySelectorAll('.phase-pill').forEach(el=>{
-        el.addEventListener('click',e=>{ if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;} fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; render(); });
+        el.addEventListener('click',e=>{
+          if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;}
+          fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; _renderTaken();
+        });
       });
     }
 
+    // === Filter pills ===
     function _renderFilterPills(){
-      const allTags=[...new Set(items.flatMap(i=>(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort();
-      _buildPills('filter-status-pills',   STATUSES,   fStatus,   S_ICON);
-      _buildPills('filter-priority-pills', PRIORITIES, fPriority, {});
-      _buildPills('filter-type-pills',     TYPES,      fType,     {});
-      _buildPills('filter-tag-pills',      allTags,    fTags,     {});
+      const allTags=[...new Set(taken.flatMap(i=>(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort();
+      _buildPills('fp-status',   STATUSES,  fStatus,   S_ICON);
+      _buildPills('fp-priority', PRIORITIES,fPriority, {});
+      _buildPills('fp-type',     TYPES,     fType,     {});
+      _buildPills('fp-tags',     allTags,   fTags,     {});
     }
 
     function _buildPills(cid,opts,activeSet,icons){
       const el=$(cid);
       el.innerHTML=opts.map(o=>`<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`).join('');
       el.querySelectorAll('.filter-pill').forEach(btn=>{
-        btn.addEventListener('click',()=>{ const v=btn.dataset.val; activeSet.has(v)?activeSet.delete(v):activeSet.add(v); render(); });
+        btn.addEventListener('click',()=>{const v=btn.dataset.val;activeSet.has(v)?activeSet.delete(v):activeSet.add(v);_renderFilterPills();_renderTaken();});
       });
     }
 
-    function clearFilters(){ search='';fPhase='All';fStatus.clear();fPriority.clear();fType.clear();fTags.clear();$('input-search').value='';render(); }
-
+    // === Gefilterde taken ===
     function _filtered(){
       const q=search.toLowerCase();
-      return items.filter(i=>{
-        const mq=!q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q)||(i.assignee||'').toLowerCase().includes(q);
-        const ms=!fStatus.size||fStatus.has(i.status);
-        const mp=!fPriority.size||fPriority.has(i.priority);
-        const mt=!fType.size||fType.has(i.type);
-        const mph=fPhase==='All'||i.phase===fPhase;
+      return taken.filter(i=>{
+        const mq=!q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q);
+        const ms=!fStatus.size   ||fStatus.has(i.status);
+        const mp=!fPriority.size ||fPriority.has(i.priority);
+        const mt=!fType.size     ||fType.has(i.type);
+        const mph=fPhase==='All' ||i.phase===fPhase;
         const it=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-        const mta=!fTags.size||[...fTags].some(t=>it.includes(t));
+        const mta=!fTags.size    ||[...fTags].some(t=>it.includes(t));
         return mq&&ms&&mp&&mt&&mph&&mta;
       });
     }
 
-    function _renderContent(){
+    // === Taken renderen ===
+    function _renderTaken(){
       const filtered=_filtered();
-      if(!items.length){
-        $('bl-content').innerHTML=`<div class="empty"><div class="empty-icon">📣</div><p>Nog geen taken. Voeg je eerste marketingtaak toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste taak toevoegen</button></div>`;
-        $('btn-add-empty').addEventListener('click',()=>openModal()); return;
+      if(!taken.length){
+        $('bl-content').innerHTML=`<div class="empty"><div style="font-size:28px;margin-bottom:8px">📣</div><p>Nog geen taken. Laad een .md bestand of voeg je eerste taak toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste taak toevoegen</button></div>`;
+        $('btn-add-empty').addEventListener('click',()=>_openTaakModal()); return;
       }
       $('bl-content').innerHTML=view==='board'?_boardHTML(filtered):_listHTML(filtered);
-      $('bl-content').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.edit)));
-      $('bl-content').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>_deleteItem(b.dataset.delete)));
+      $('bl-content').querySelectorAll('[data-edit-taak]').forEach(b=>b.addEventListener('click',()=>_openTaakModal(b.dataset.editTaak)));
+      $('bl-content').querySelectorAll('[data-delete-taak]').forEach(b=>b.addEventListener('click',()=>_deleteTaak(b.dataset.deleteTaak)));
       $('bl-content').querySelectorAll('.tbl-id,.card-id').forEach(el=>el.addEventListener('click',()=>_inlineEditId(el)));
     }
 
@@ -713,235 +856,434 @@
     }
 
     function _cardHTML(i){
-      const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+      const pub=i.gepubliceerd==='ja'||i.gepubliceerd===true;
       return `<div class="card">
-        <div class="card-header"><span class="card-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span>
-          <div class="card-actions">
-            <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px;font-size:11px">✏️</button>
-            <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px;font-size:11px">🗑</button>
+        <div class="card-header"><span class="card-id" data-id="${i.id}">${i.id}</span>
+          <div style="display:flex;gap:2px;">
+            <button class="btn btn-ghost" data-edit-taak="${i.id}" style="padding:2px 5px;font-size:11px">✏️</button>
+            <button class="btn btn-ghost" data-delete-taak="${i.id}" style="padding:2px 5px;font-size:11px">🗑</button>
           </div></div>
         <div class="card-title">${i.title}</div>
-        ${i.description?`<div class="card-desc">${i.description}</div>`:''}
+        <div class="card-dates">
+          ${i.startdate?`📅 ${i.startdate}`:''} ${i.enddate&&i.enddate!==i.startdate?`→ ${i.enddate}`:''}
+          <span class="card-pub ${pub?'yes':'no'}">${pub?'✓ Gepubliceerd':'○ Concept'}</span>
+        </div>
+        ${i.description?`<div class="card-desc">${i.description.slice(0,80)}${i.description.length>80?'…':''}</div>`:''}
         <div class="card-footer">
           <span class="badge ${P_CSS[i.priority]||'p-medium'}"><span class="dot ${D_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span>
           <span class="badge ${S_CSS[i.status]||'s-open'}">${S_ICON[i.status]||''} ${i.status}</span>
-          ${i.phase?`<span class="badge s-cancelled" style="font-size:0.65rem">${i.phase}</span>`:''}
-          ${i.assignee?`<span class="assignee-txt">👤 ${i.assignee}</span>`:''}
+          ${i.phase?`<span class="badge s-cancelled" style="font-size:0.62rem">${i.phase}</span>`:''}
         </div>
-        ${tags.length?`<div class="card-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
+        ${i.tags?`<div class="card-tags">${i.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
       </div>`;
     }
 
     function _listHTML(filtered){
-      if(!filtered.length) return `<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem 0;text-align:center">Geen taken gevonden.</p>`;
-      return `<div class="list-wrap"><table class="list-table">
-        <thead><tr><th>ID</th><th>Week</th><th>Taak</th><th>Uitleg</th><th>Resultaat</th><th>Kanaal</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
+      if(!filtered.length)return`<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.78rem;padding:1rem 0;text-align:center">Geen taken gevonden.</p>`;
+      return`<div class="list-wrap"><table class="list-table">
+        <thead><tr><th>ID</th><th>Titel</th><th>Fase</th><th>Kanaal</th><th>Start</th><th>Eind</th><th>Pub</th><th>Tags</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
         <tbody>${filtered.map(i=>{
-          return `<tr>
-            <td><span class="tbl-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span></td>
-            <td style="white-space:nowrap">${i.tags||''}</td>
-            <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title||''}</td>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.description||''}</td>
-            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.ai||''}</td>
-            <td>${i.type||''}</td>
-            <td>${i.assignee||''}</td>
+          const pub=i.gepubliceerd==='ja'||i.gepubliceerd===true;
+          return`<tr>
+            <td><span class="tbl-id" data-id="${i.id}">${i.id}</span></td>
+            <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</td>
+            <td>${i.phase||''}</td><td>${i.type||''}</td>
+            <td style="white-space:nowrap">${i.startdate||''}</td>
+            <td style="white-space:nowrap">${i.enddate||''}</td>
+            <td>${pub?'✅':'○'}</td>
+            <td>${(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')}</td>
             <td><span class="${P_TBL[i.priority]||'p-medium-tbl'}">${i.priority||''}</span></td>
             <td><span class="${S_TBL[i.status]||'s-open-tbl'}">${S_ICON[i.status]||''} ${i.status||''}</span></td>
             <td style="white-space:nowrap">
-              <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px">✏️</button>
-              <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px">🗑</button>
+              <button class="btn btn-ghost" data-edit-taak="${i.id}" style="padding:2px 5px">✏️</button>
+              <button class="btn btn-ghost" data-delete-taak="${i.id}" style="padding:2px 5px">🗑</button>
             </td></tr>`;
         }).join('')}</tbody></table></div>`;
     }
 
-    function _inlineEditId(el){
-      const oldId=el.dataset.id;
-      const input=document.createElement('input');
-      input.className='tbl-id-input id-edit-input'; input.value=oldId;
-      el.replaceWith(input); input.focus(); input.select();
-      const commit=()=>{
-        const newId=input.value.trim();
-        if(newId&&newId!==oldId){
-          if(items.find(i=>i.id===newId)){ alert('ID "'+newId+'" bestaat al.'); input.focus(); return; }
-          items=items.map(i=>i.id===oldId?{...i,id:newId}:i); _save();
-        }
-        render();
-      };
-      input.addEventListener('blur',commit);
-      input.addEventListener('keydown',e=>{ if(e.key==='Enter')commit(); if(e.key==='Escape')render(); });
+    // === Kalender ===
+    function _renderCal(){
+      const y=calDate.getFullYear(),m=calDate.getMonth();
+      if(calView==='month'){
+        $('cal-title').textContent=`${MONTHS[m]} ${y}`;
+        _renderCalMonth(y,m);
+      } else if(calView==='week'){
+        const mon=_getMonday(calDate);
+        $('cal-title').textContent=`Week van ${mon.toLocaleDateString('nl-BE')}`;
+        _renderCalWeek(mon);
+      } else {
+        $('cal-title').textContent=calDate.toLocaleDateString('nl-BE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+        _renderCalDay(calDate);
+      }
     }
 
-    function openModal(id){
-      editId=id||null;
-      $('modal-title').textContent=id?'Taak bewerken':'Taak toevoegen';
-      $('btn-modal-save').textContent=id?'Opslaan':'Toevoegen';
-      $('f-id').dataset.manual='';
+    function _renderCalMonth(y,m){
+      const first=new Date(y,m,1),last=new Date(y,m+1,0);
+      let startDay=(first.getDay()+6)%7; // Maandag = 0
+      let html=`<div class="cal-grid">${DAYS.map(d=>`<div class="cal-day-header">${d}</div>`).join('')}`;
+      // Lege cellen voor
+      for(let i=0;i<startDay;i++){
+        const d=new Date(y,m,i-startDay+1);
+        html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${d.getDate()}</div></div>`;
+      }
+      for(let d=1;d<=last.getDate();d++){
+        const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday=dateStr===_today();
+        const dayTaken=taken.filter(i=>i.startdate&&i.startdate<=dateStr&&(!i.enddate||i.enddate>=dateStr));
+        const dayEvents=events.filter(e=>e.date===dateStr);
+        html+=`<div class="cal-cell ${isToday?'today':''}" data-date="${dateStr}">
+          <div class="cal-cell-num">${d}</div>
+          ${dayTaken.slice(0,2).map(i=>`<div class="cal-event taak ${i.status==='Done'?'done':''} ${i.gepubliceerd==='ja'?'gepubliceerd':''}" data-edit-taak="${i.id}" title="${i.title}">${i.gepubliceerd==='ja'?'✓ ':''} ${i.title}</div>`).join('')}
+          ${dayTaken.length>2?`<div class="cal-event taak" style="opacity:.5">+${dayTaken.length-2} meer</div>`:''}
+          ${dayEvents.slice(0,2).map((e,ei)=>`<div class="cal-event ${e.gepubliceerd==='ja'?'gepubliceerd':'kalender-event'}" data-edit-event="${ei}" title="${e.title}">${e.gepubliceerd==='ja'?'✓ ':''} ${e.title}</div>`).join('')}
+        </div>`;
+      }
+      // Lege cellen na
+      const lastDay=(last.getDay()+6)%7;
+      for(let i=1;i<7-lastDay;i++) html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${i}</div></div>`;
+      html+='</div>';
+      $('cal-content').innerHTML=html;
+      // Events
+      $('cal-content').querySelectorAll('[data-edit-taak]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();_openTaakModal(el.dataset.editTaak);}));
+      $('cal-content').querySelectorAll('[data-edit-event]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();_openEventModal(parseInt(el.dataset.editEvent));}));
+      $('cal-content').querySelectorAll('.cal-cell').forEach(el=>{
+        el.addEventListener('click',()=>{
+          const d=el.dataset.date;
+          if(d){$('fe-date').value=d;_openEventModal();}
+        });
+      });
+    }
+
+    function _renderCalWeek(mon){
+      let html=`<div class="week-grid">`;
+      html+=`<div></div>`;
+      for(let d=0;d<7;d++){
+        const day=new Date(mon);day.setDate(mon.getDate()+d);
+        const isToday=_dateStr(day)===_today();
+        html+=`<div style="font-family:var(--font-mono);font-size:0.68rem;text-align:center;padding:4px;color:${isToday?'var(--accent)':'var(--text-muted)'}">${DAYS[d]} ${day.getDate()}</div>`;
+      }
+      for(let h=8;h<20;h++){
+        html+=`<div class="week-time">${h}:00</div>`;
+        for(let d=0;d<7;d++){
+          const day=new Date(mon);day.setDate(mon.getDate()+d);
+          const ds=_dateStr(day);
+          const dayTaken=taken.filter(i=>i.startdate===ds);
+          const dayEvents=events.filter(e=>e.date===ds);
+          html+=`<div class="week-cell">${h===8?[...dayTaken.map(i=>`<div class="cal-event taak ${i.gepubliceerd==='ja'?'gepubliceerd':''}" style="margin-bottom:2px" data-edit-taak="${i.id}">${i.gepubliceerd==='ja'?'✓ ':''} ${i.title}</div>`),
+            ...dayEvents.map((e,ei)=>`<div class="cal-event kalender-event" data-edit-event="${ei}">${e.gepubliceerd==='ja'?'✓ ':''} ${e.title}</div>`)].join(''):''}
+          </div>`;
+        }
+      }
+      html+='</div>';
+      $('cal-content').innerHTML=html;
+      $('cal-content').querySelectorAll('[data-edit-taak]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();_openTaakModal(el.dataset.editTaak);}));
+    }
+
+    function _renderCalDay(date){
+      const ds=_dateStr(date);
+      const dayTaken=taken.filter(i=>i.startdate&&i.startdate<=ds&&(!i.enddate||i.enddate>=ds));
+      const dayEvents=events.filter(e=>e.date===ds);
+      const all=[
+        ...dayTaken.map(i=>({title:i.title,type:i.type,pub:i.gepubliceerd==='ja',isTaak:true,id:i.id})),
+        ...dayEvents.map((e,ei)=>({title:e.title,type:e.type,pub:e.gepubliceerd==='ja',isTaak:false,idx:ei}))
+      ];
+      if(!all.length){$('cal-content').innerHTML=`<div class="empty"><p>Geen taken of events op deze dag.</p></div>`;return;}
+      $('cal-content').innerHTML=`<div class="day-list">${all.map(item=>`
+        <div class="day-event-card">
+          <div class="day-event-time">${item.pub?'✓ Pub':'○'}</div>
+          <div><div class="day-event-title">${item.title}</div><div class="day-event-type">${item.type}${item.isTaak?' · Taak':' · Event'}</div></div>
+          <div style="margin-left:auto">
+            <button class="btn btn-sm" data-edit="${item.isTaak?'taak':'event'}" data-ref="${item.isTaak?item.id:item.idx}">✏️</button>
+          </div>
+        </div>`).join('')}</div>`;
+      $('cal-content').querySelectorAll('[data-edit]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          if(btn.dataset.edit==='taak') _openTaakModal(btn.dataset.ref);
+          else _openEventModal(parseInt(btn.dataset.ref));
+        });
+      });
+    }
+
+    function _calNav(dir){
+      if(calView==='month')     calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1);
+      else if(calView==='week') calDate=new Date(calDate.getTime()+dir*7*864e5);
+      else                      calDate=new Date(calDate.getTime()+dir*864e5);
+      _renderCal();
+    }
+
+    function _getMonday(d){const day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);return new Date(d.getFullYear(),d.getMonth(),diff);}
+    function _today(){return _dateStr(new Date());}
+    function _dateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+    // === KPI ===
+    function _renderKpi(){
+      $('kpi-body').innerHTML=kpis.map((k,i)=>`<tr>
+        <td><b>${k.metric}</b></td>
+        <td>${k.doel4}</td>
+        <td><input class="kpi-input" data-ki="${i}" data-kf="w4" value="${k.w4||''}" placeholder="—"/></td>
+        <td>${k.doel8}</td>
+        <td><input class="kpi-input" data-ki="${i}" data-kf="w8" value="${k.w8||''}" placeholder="—"/></td>
+        <td>${k.doel12}</td>
+        <td><input class="kpi-input" data-ki="${i}" data-kf="w12" value="${k.w12||''}" placeholder="—"/></td>
+        <td><button class="btn btn-ghost btn-sm" data-edit-kpi="${i}">✏️</button> <button class="btn btn-ghost btn-sm" data-delete-kpi="${i}">🗑</button></td>
+      </tr>`).join('');
+      $('kpi-body').querySelectorAll('.kpi-input').forEach(inp=>{
+        inp.addEventListener('change',e=>{
+          kpis[parseInt(e.target.dataset.ki)][e.target.dataset.kf]=e.target.value;
+          _saveAll();
+        });
+      });
+      $('kpi-body').querySelectorAll('[data-edit-kpi]').forEach(b=>b.addEventListener('click',()=>_openKpiModal(parseInt(b.dataset.editKpi))));
+      $('kpi-body').querySelectorAll('[data-delete-kpi]').forEach(b=>b.addEventListener('click',()=>{kpis.splice(parseInt(b.dataset.deleteKpi),1);_saveAll();_renderKpi();}));
+    }
+
+    // === Kanalen ===
+    function _renderKanalen(){
+      $('kanalen-content').innerHTML=kanalen.length?kanalen.map((k,i)=>`
+        <div class="data-card">
+          <div class="data-card-header">
+            <div class="data-card-title">${k.naam}</div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" data-edit-kanaal="${i}">✏️</button>
+              <button class="btn btn-ghost btn-sm" data-delete-kanaal="${i}">🗑</button>
+            </div>
+          </div>
+          <div class="data-card-body">
+            <div class="data-card-meta">
+              <span class="data-card-tag">🌐 ${k.taal}</span>
+              <span class="data-card-tag">📅 ${k.freq}</span>
+            </div>
+            <div class="data-card-desc"><b style="color:var(--accent)">Toon:</b> ${k.toon}<br><b style="color:var(--accent)">Doel:</b> ${k.doel}${k.groepen?`<br><b style="color:var(--accent)">Groepen:</b> ${k.groepen}`:''}${k.notities?`<br><span style="opacity:.7">${k.notities}</span>`:''}</div>
+          </div>
+        </div>`).join(''):`<div class="empty"><p>Nog geen kanalen. Voeg je eerste kanaal toe.</p></div>`;
+      $('kanalen-content').querySelectorAll('[data-edit-kanaal]').forEach(b=>b.addEventListener('click',()=>_openKanaalModal(parseInt(b.dataset.editKanaal))));
+      $('kanalen-content').querySelectorAll('[data-delete-kanaal]').forEach(b=>b.addEventListener('click',()=>{kanalen.splice(parseInt(b.dataset.deleteKanaal),1);_saveAll();_renderKanalen();}));
+    }
+
+    // === Templates ===
+    function _renderTemplates(){
+      $('templates-content').innerHTML=templates.length?templates.map((t,i)=>`
+        <div class="data-card" id="tpl-${i}">
+          <div class="data-card-header tpl-header" data-tpl="${i}">
+            <div><div class="data-card-title">✉️ ${t.titel}</div><span class="data-card-tag" style="display:inline-block;margin-top:4px">${t.kanaal}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="btn btn-ghost btn-sm" data-edit-tpl="${i}">✏️</button>
+              <button class="btn btn-ghost btn-sm" data-delete-tpl="${i}">🗑</button>
+              <span class="tpl-toggle">▼</span>
+            </div>
+          </div>
+          <div class="tpl-body">
+            <div class="tpl-text">${t.tekst}</div>
+            <div style="margin-top:10px;display:flex;gap:8px;">
+              <button class="btn btn-accent btn-sm" data-copy-tpl="${i}">📋 Kopiëren</button>
+            </div>
+          </div>
+        </div>`).join(''):`<div class="empty"><p>Nog geen templates. Voeg je eerste template toe.</p></div>`;
+      $('templates-content').querySelectorAll('.tpl-header').forEach(h=>{
+        h.addEventListener('click',e=>{if(e.target.closest('button'))return;document.getElementById('tpl-'+h.dataset.tpl).classList.toggle('open');});
+      });
+      $('templates-content').querySelectorAll('[data-edit-tpl]').forEach(b=>b.addEventListener('click',()=>_openTplModal(parseInt(b.dataset.editTpl))));
+      $('templates-content').querySelectorAll('[data-delete-tpl]').forEach(b=>b.addEventListener('click',()=>{templates.splice(parseInt(b.dataset.deleteTpl),1);_saveAll();_renderTemplates();}));
+      $('templates-content').querySelectorAll('[data-copy-tpl]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          navigator.clipboard.writeText(templates[parseInt(btn.dataset.copyTpl)].tekst).then(()=>{btn.textContent='✅ Gekopieerd!';setTimeout(()=>btn.textContent='📋 Kopiëren',2000);});
+        });
+      });
+    }
+
+    // === Modals ===
+    function _closeModal(id){$(id).classList.remove('open');editTaakId=editEventIdx=editKpiIdx=editKanaalIdx=editTplIdx=null;}
+
+    function _openTaakModal(id){
+      editTaakId=id||null;
+      $('mt-title').textContent=id?'Taak bewerken':'Taak toevoegen';
+      $('btn-mt-save').textContent=id?'Opslaan':'Toevoegen';
+      $('ft-id').dataset.manual='';
       _updatePhasesInModal();
       if(id){
-        const item=items.find(i=>i.id===id); if(!item)return;
-        $('f-id').value=item.id; $('f-id').dataset.manual='1';
-        $('id-preview').textContent='';
-        $('f-title').value=item.title||''; $('f-phase').value=item.phase||'';
-        $('f-type').value=item.type||'Facebook'; $('f-priority').value=item.priority||'Medium';
-        $('f-status').value=item.status||'Open'; $('f-assignee').value=item.assignee||'';
-        $('f-tags').value=item.tags||''; $('f-description').value=item.description||'';
-        $('f-ai').value=item.ai||'';
+        const item=taken.find(i=>i.id===id);if(!item)return;
+        $('ft-id').value=item.id;$('ft-id').dataset.manual='1';$('ft-id-preview').textContent='';
+        $('ft-title').value=item.title||'';$('ft-phase').value=item.phase||'';
+        $('ft-type').value=item.type||'Facebook';$('ft-priority').value=item.priority||'Medium';
+        $('ft-status').value=item.status||'Open';$('ft-assignee').value=item.assignee||'';
+        $('ft-tags').value=item.tags||'';$('ft-description').value=item.description||'';
+        $('ft-result').value=item.ai||'';
+        $('ft-startdate').value=item.startdate||'';$('ft-enddate').value=item.enddate||'';
+        $('ft-pub').checked=item.gepubliceerd==='ja';
       } else {
-        ['f-title','f-assignee','f-tags','f-description','f-ai'].forEach(fid=>$(fid).value='');
-        $('f-type').value='Facebook'; $('f-priority').value='Medium'; $('f-status').value='Open'; $('f-phase').value='';
+        ['ft-title','ft-assignee','ft-tags','ft-description','ft-result','ft-startdate','ft-enddate'].forEach(fid=>$(fid).value='');
+        $('ft-type').value='Facebook';$('ft-priority').value='Medium';$('ft-status').value='Open';$('ft-phase').value='';$('ft-pub').checked=false;
         _updateAutoId();
       }
-      $('f-id').addEventListener('input',()=>{ $('f-id').dataset.manual='1'; });
-      $('modal').classList.add('open'); $('f-title').focus();
+      // Reset preview
+      $('md-preview-desc').style.display='none';$('ft-description').style.display='block';
+      $('modal-taak').classList.add('open');$('ft-title').focus();
     }
 
-    function closeModal(){ $('modal').classList.remove('open'); editId=null; }
-
-    function saveItem(){
-      const title=$('f-title').value.trim(); if(!title){$('f-title').focus();return;}
-      const id=$('f-id').value.trim()||_genId($('f-phase').value,$('f-type').value);
-      if(!editId&&items.find(i=>i.id===id)){ alert('ID "'+id+'" bestaat al.'); $('f-id').focus(); return; }
-      const item={id,title,phase:$('f-phase').value,type:$('f-type').value,priority:$('f-priority').value,status:$('f-status').value,assignee:$('f-assignee').value.trim(),tags:$('f-tags').value.trim(),description:$('f-description').value.trim(),ai:$('f-ai').value.trim()};
-      if(editId) items=items.map(i=>i.id===editId?item:i); else items.push(item);
-      _save(); closeModal(); render();
+    function _saveTaak(){
+      const title=$('ft-title').value.trim();if(!title){$('ft-title').focus();return;}
+      const id=$('ft-id').value.trim()||_genId($('ft-phase').value,$('ft-type').value);
+      if(!editTaakId&&taken.find(i=>i.id===id)){alert('ID bestaat al.');$('ft-id').focus();return;}
+      const item={id,title,phase:$('ft-phase').value,type:$('ft-type').value,priority:$('ft-priority').value,status:$('ft-status').value,
+        assignee:$('ft-assignee').value.trim(),tags:$('ft-tags').value.trim(),
+        description:$('ft-description').value.trim(),ai:$('ft-result').value.trim(),
+        startdate:$('ft-startdate').value,enddate:$('ft-enddate').value,
+        gepubliceerd:$('ft-pub').checked?'ja':'nee'};
+      if(editTaakId) taken=taken.map(i=>i.id===editTaakId?item:i); else taken.push(item);
+      _saveAll();_closeModal('modal-taak');_renderAll();
     }
 
-    function _deleteItem(id){ if(!confirm('Deze taak verwijderen?'))return; items=items.filter(i=>i.id!==id); _save(); render(); }
+    function _deleteTaak(id){if(!confirm('Taak verwijderen?'))return;taken=taken.filter(i=>i.id!==id);_saveAll();_renderAll();}
 
-    function _addPhase(){
-      const v=$('input-new-phase').value.trim(),d=$('input-new-phase-desc').value.trim();
-      if(v&&!phases.includes(v)){ phases.push(v); if(d)phaseDescs[v]=d; _save(); }
-      _cancelPhaseInput(); render();
+    function _openEventModal(idx){
+      editEventIdx=idx!=null?idx:null;
+      $('me-title').textContent=idx!=null?'Event bewerken':'Event toevoegen';
+      $('btn-me-save').textContent=idx!=null?'Opslaan':'Toevoegen';
+      if(idx!=null){const e=events[idx];$('fe-title').value=e.title;$('fe-date').value=e.date;$('fe-type').value=e.type||'Overig';$('fe-desc').value=e.beschrijving||'';$('fe-pub').checked=e.gepubliceerd==='ja';}
+      else{['fe-title','fe-desc'].forEach(id=>$(id).value='');$('fe-type').value='Overig';$('fe-pub').checked=false;}
+      $('md-preview-ev').style.display='none';$('fe-desc').style.display='block';
+      $('modal-event').classList.add('open');$('fe-title').focus();
     }
-    function _removePhase(ph){ phases=phases.filter(p=>p!==ph); if(fPhase===ph)fPhase='All'; _save(); render(); }
-    function _cancelPhaseInput(){ $('input-new-phase').value=''; $('input-new-phase-desc').value=''; $('phase-input-wrap').classList.remove('open'); $('btn-new-phase').style.display=''; }
-    function _updatePhasesInModal(){ $('f-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join(''); }
-    function _updateViewToggle(){ $('btn-view-board').classList.toggle('active',view==='board'); $('btn-view-list').classList.toggle('active',view==='list'); }
-    function _saveProjInfo(){ localStorage.setItem('mk_proj',JSON.stringify({projName,projVersion,projDate})); }
-    function _loadProjInfo(){ const p=JSON.parse(localStorage.getItem('mk_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; }
-    function _updateApiKeyUI(){} // Geen AI in marketing
-    function _save(){ localStorage.setItem('mk_items',JSON.stringify(items)); localStorage.setItem('mk_phases',JSON.stringify(phases)); localStorage.setItem('mk_phasedescs',JSON.stringify(phaseDescs)); }
 
-    function importFile(e){
-      const file=e.target.files[0]; if(!file)return;
-      if(!confirm('Huidige taken vervangen door '+file.name+'?')){ e.target.value='';return; }
+    function _saveEvent(){
+      const title=$('fe-title').value.trim(),date=$('fe-date').value;
+      if(!title||!date){alert('Titel en datum zijn verplicht.');return;}
+      const ev={title,date,type:$('fe-type').value,beschrijving:$('fe-desc').value.trim(),gepubliceerd:$('fe-pub').checked?'ja':'nee'};
+      if(editEventIdx!=null) events[editEventIdx]=ev; else events.push(ev);
+      _saveAll();_closeModal('modal-event');if($('tab-kalender').classList.contains('active'))_renderCal();
+    }
+
+    function _openKpiModal(idx){
+      editKpiIdx=idx!=null?idx:null;
+      $('mk-title').textContent=idx!=null?'KPI bewerken':'KPI toevoegen';
+      $('btn-mk-save').textContent=idx!=null?'Opslaan':'Toevoegen';
+      if(idx!=null){const k=kpis[idx];$('fk-metric').value=k.metric;$('fk-d4').value=k.doel4;$('fk-d8').value=k.doel8;$('fk-d12').value=k.doel12;}
+      else{['fk-metric','fk-d4','fk-d8','fk-d12'].forEach(id=>$(id).value='');}
+      $('modal-kpi').classList.add('open');$('fk-metric').focus();
+    }
+
+    function _saveKpi(){
+      const metric=$('fk-metric').value.trim();if(!metric)return;
+      const k={metric,doel4:$('fk-d4').value.trim(),doel8:$('fk-d8').value.trim(),doel12:$('fk-d12').value.trim(),w4:'',w8:'',w12:''};
+      if(editKpiIdx!=null){k.w4=kpis[editKpiIdx].w4;k.w8=kpis[editKpiIdx].w8;k.w12=kpis[editKpiIdx].w12;kpis[editKpiIdx]=k;}
+      else kpis.push(k);
+      _saveAll();_closeModal('modal-kpi');_renderKpi();
+    }
+
+    function _openKanaalModal(idx){
+      editKanaalIdx=idx!=null?idx:null;
+      $('mkn-title').textContent=idx!=null?'Kanaal bewerken':'Kanaal toevoegen';
+      $('btn-mkn-save').textContent=idx!=null?'Opslaan':'Toevoegen';
+      if(idx!=null){const k=kanalen[idx];$('fkn-naam').value=k.naam;$('fkn-taal').value=k.taal;$('fkn-freq').value=k.freq;$('fkn-toon').value=k.toon;$('fkn-doel').value=k.doel;$('fkn-groepen').value=k.groepen||'';$('fkn-notities').value=k.notities||'';}
+      else{['fkn-naam','fkn-taal','fkn-freq','fkn-toon','fkn-doel','fkn-groepen','fkn-notities'].forEach(id=>$(id).value='');}
+      $('modal-kanaal').classList.add('open');$('fkn-naam').focus();
+    }
+
+    function _saveKanaal(){
+      const naam=$('fkn-naam').value.trim();if(!naam)return;
+      const k={naam,taal:$('fkn-taal').value.trim(),freq:$('fkn-freq').value.trim(),toon:$('fkn-toon').value.trim(),doel:$('fkn-doel').value.trim(),groepen:$('fkn-groepen').value.trim(),notities:$('fkn-notities').value.trim()};
+      if(editKanaalIdx!=null) kanalen[editKanaalIdx]=k; else kanalen.push(k);
+      _saveAll();_closeModal('modal-kanaal');_renderKanalen();
+    }
+
+    function _openTplModal(idx){
+      editTplIdx=idx!=null?idx:null;
+      $('mtp-title').textContent=idx!=null?'Template bewerken':'Template toevoegen';
+      $('btn-mtp-save').textContent=idx!=null?'Opslaan':'Toevoegen';
+      if(idx!=null){const t=templates[idx];$('ftp-titel').value=t.titel;$('ftp-kanaal').value=t.kanaal;$('ftp-tekst').value=t.tekst;}
+      else{['ftp-titel','ftp-tekst'].forEach(id=>$(id).value='');$('ftp-kanaal').value='Facebook';}
+      $('md-preview-tpl').style.display='none';$('ftp-tekst').style.display='block';
+      $('modal-template').classList.add('open');$('ftp-titel').focus();
+    }
+
+    function _saveTpl(){
+      const titel=$('ftp-titel').value.trim();if(!titel)return;
+      const t={titel,kanaal:$('ftp-kanaal').value,tekst:$('ftp-tekst').value.trim()};
+      if(editTplIdx!=null) templates[editTplIdx]=t; else templates.push(t);
+      _saveAll();_closeModal('modal-template');_renderTemplates();
+    }
+
+    // === ID generatie ===
+    function _genId(phase,type){
+      const fl=(phase||'M')[0].toUpperCase(),tl=(type||'O')[0].toUpperCase();
+      const prefix='M'+fl+tl+'-';
+      const used=new Set(taken.filter(i=>i.id&&i.id.startsWith(prefix)).map(i=>parseInt(i.id.slice(prefix.length))||0));
+      let n=1;while(used.has(n))n++;
+      return prefix+String(n).padStart(3,'0');
+    }
+
+    function _updateAutoId(){
+      if(editTaakId)return;
+      const id=_genId($('ft-phase').value,$('ft-type').value);
+      if(!$('ft-id').dataset.manual)$('ft-id').value=id;
+      $('ft-id-preview').textContent=`→ ${id}`;
+    }
+
+    function _inlineEditId(el){
+      const oldId=el.dataset.id;
+      const input=document.createElement('input');input.className='tbl-id-input id-edit-input';input.value=oldId;
+      el.replaceWith(input);input.focus();input.select();
+      const commit=()=>{
+        const newId=input.value.trim();
+        if(newId&&newId!==oldId){if(taken.find(i=>i.id===newId)){alert('ID bestaat al.');input.focus();return;}taken=taken.map(i=>i.id===oldId?{...i,id:newId}:i);_saveAll();}
+        _renderTaken();
+      };
+      input.addEventListener('blur',commit);
+      input.addEventListener('keydown',e=>{if(e.key==='Enter')commit();if(e.key==='Escape')_renderTaken();});
+    }
+
+    // === Fase beheer ===
+    function _addPhase(){const v=$('input-new-phase').value.trim(),d=$('input-new-phase-desc').value.trim();if(v&&!phases.includes(v)){phases.push(v);if(d)phaseDescs[v]=d;_saveAll();}_cancelPhaseInput();_renderPhasePills();}
+    function _removePhase(ph){phases=phases.filter(p=>p!==ph);if(fPhase===ph)fPhase='All';_saveAll();_renderPhasePills();}
+    function _cancelPhaseInput(){$('input-new-phase').value='';$('input-new-phase-desc').value='';$('phase-input-wrap').classList.remove('open');$('btn-new-phase').style.display='';}
+    function _updatePhasesInModal(){if($('ft-phase'))$('ft-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join('');}
+    function _toggleView(){$('btn-view-board').classList.toggle('active',view==='board');$('btn-view-list').classList.toggle('active',view==='list');}
+
+    // === Persistentie ===
+    function _saveAll(){
+      localStorage.setItem('mk_items',JSON.stringify(taken));
+      localStorage.setItem('mk_phases',JSON.stringify(phases));
+      localStorage.setItem('mk_phasedescs',JSON.stringify(phaseDescs));
+      localStorage.setItem('mk_events',JSON.stringify(events));
+      localStorage.setItem('mk_kpis',JSON.stringify(kpis));
+      localStorage.setItem('mk_kanalen',JSON.stringify(kanalen));
+      localStorage.setItem('mk_templates',JSON.stringify(templates));
+    }
+    function _saveProjInfo(){localStorage.setItem('mk_proj',JSON.stringify({projName,projVersion,projDate}));}
+    function _loadProjInfo(){const p=JSON.parse(localStorage.getItem('mk_proj')||'{}');projName=p.projName||'';projVersion=p.projVersion||'';projDate=p.projDate||'';}
+
+    // === Markdown renderer (simpel) ===
+    function _mdToHtml(t){
+      if(!t)return'';
+      let html='',inList=false,inTable=false,rows=[];
+      const flush=()=>{if(!rows.length){inTable=false;return;}html+=`<table><thead><tr>${rows[0].map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;rows.slice(2).forEach(r=>{html+=`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`;});html+=`</tbody></table>`;rows=[];inTable=false;};
+      t.split('\n').forEach(line=>{
+        if(line.startsWith('|')){inTable=true;if(inList){html+='</ul>';inList=false;}rows.push(line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1));return;}
+        if(inTable)flush();
+        if(!line.trim()){if(inList){html+='</ul>';inList=false;}return;}
+        if(line.startsWith('- ')){if(!inList){html+='<ul>';inList=true;}html+=`<li>${_inlineHtml(line.slice(2))}</li>`;return;}
+        if(inList){html+='</ul>';inList=false;}
+        if(line.startsWith('---'))return;
+        html+=`<p>${_inlineHtml(line)}</p>`;
+      });
+      if(inList)html+='</ul>';if(inTable)flush();
+      return html;
+    }
+    function _inlineHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/_(.+?)_/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>');}
+
+    // === Import MD ===
+    function importMD(e){
+      const file=e.target.files[0];if(!file)return;
+      if(!confirm('Alle huidige data vervangen door '+file.name+'?')){e.target.value='';return;}
       const reader=new FileReader();
-      reader.onload=ev=>{ if(file.name.endsWith('.md'))_parseMD(ev.target.result); else _parseCSV(ev.target.result); e.target.value=''; alert(items.length+' taken geladen.'); render(); };
+      reader.onload=ev=>{_parseMD(ev.target.result);e.target.value='';alert('Geladen: '+taken.length+' taken, '+events.length+' events, '+kpis.length+' KPI\'s, '+kanalen.length+' kanalen, '+templates.length+' templates.');_renderAll();};
       reader.readAsText(file);
     }
 
-    function _parseCSV(text){
-      const rows=text.trim().split('\n'),headers=rows[0].split(',').map(h=>h.trim());
-      items=rows.slice(1).map(row=>{
-        const vals=[]; let cur='',inQ=false;
-        for(const ch of row){ if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;} }
-        vals.push(cur.trim());
-        const obj={}; headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj;
-      }).filter(i=>i.id);
-      const seen=new Set(); phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p)); _save();
-    }
-
     function _parseMD(text){
-      items=[]; phases=[]; phaseDescs={};
-      const lines=text.split('\n'); let curPhase='';
-      for(const line of lines){
-        if(line.startsWith('## ')&&!line.startsWith('###')){ curPhase=line.replace(/^##\s*/,'').trim().split('—')[0].trim(); if(curPhase&&!phases.includes(curPhase))phases.push(curPhase); continue; }
-        if(line.startsWith('|')&&!line.includes('---')){
-          const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
-          if(!cells.length||cells[0]==='Taak'||cells[0]==='ID')continue;
-          if(cells.length>=9){ const id=cells[0],tags=cells[1],title=cells[2],desc=cells[3],ai=cells[4],type=cells[5],assignee=cells[6],prio=_mapPrio(cells[7]),status=_mapStatus(cells[8]); if(id&&title)items.push({id,phase:curPhase,title,description:desc,ai,type:type||'Overig',priority:prio,status,assignee,tags}); }
-        }
-      }
-      _save();
-    }
+      taken=[];phases=[];phaseDescs={};events=[];kpis=[];kanalen=[];templates=[];
+      const lines=text.split('\n');
+      let section='',curPhase='',tplBuf=[],tplTitle='',tplKanaal='',inTpl=false;
 
-    function _mapStatus(s){ if(!s)return'Open'; if(s.includes('✅'))return'Done'; if(s.includes('🔄'))return'In Progress'; if(s.includes('❌'))return'Cancelled'; if(s.includes('🔮'))return'Future'; return'Open'; }
-    function _mapPrio(s){ if(!s)return'Medium'; if(s.includes('🔴'))return'High'; if(s.includes('🟡'))return'Medium'; if(s.includes('🟢'))return'Low'; return'Medium'; }
-
-    function exportCSV(){
-      const cols=['id','phase','tags','title','description','ai','type','assignee','priority','status'];
-      const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+V(i[c]).replace(/"/g,'""')+'"').join(','))];
-      const name=(V(projName)||'marketing').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.csv';
-      _download(name,rows.join('\n'),'text/csv');
-    }
-
-    function exportMD(){
-      let md=`# MyFamTreeCollab — Marketing & Communicatieplan\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
-      md+=`> Versie: ${V(projVersion)||'—'} · ${items.length} taken\n\n`;
-      const byPhase={};
-      items.forEach(i=>{ const ph=i.phase||'Overig'; (byPhase[ph]=byPhase[ph]||[]).push(i); });
-      for(const ph of [...phases,...Object.keys(byPhase).filter(p=>!phases.includes(p))]){
-        if(!byPhase[ph])continue;
-        md+=`## ${ph}\n\n| ID | Week | Taak | Uitleg | Resultaat | Kanaal | Toegewezen | Prioriteit | Status |\n|----|------|------|--------|-----------|--------|------------|-----------|--------|\n`;
-        byPhase[ph].forEach(i=>{
-          const pIcon={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡';
-          md+=`| ${V(i.id)} | ${V(i.tags)} | ${V(i.title)} | ${V(i.description)} | ${V(i.ai)} | ${V(i.type)} | ${V(i.assignee)} | ${pIcon} ${V(i.priority)} | ${S_ICON[i.status]||'📋'} ${V(i.status)} |\n`;
-        });
-        md+='\n';
-      }
-      // Contentkalender
-      md+=`## Contentkalender — Week 6–12\n\n| Week | Maandag | Donderdag | Reddit |\n|------|---------|-----------|--------|\n`;
-      KALENDER.forEach(r=>{ md+=`| W${r.week} | ${r.ma} | ${r.do} | ${r.reddit} |\n`; });
-      md+='\n';
-      // KPI's
-      md+=`## KPI's\n\n| Metric | Doel W4 | Werkelijk W4 | Doel W8 | Werkelijk W8 | Doel W12 | Werkelijk W12 |\n|--------|---------|-------------|---------|-------------|---------|-------------|\n`;
-      KPIS.forEach((k,i)=>{ md+=`| ${k.metric} | ${k.doel4} | ${localStorage.getItem('mk_kpi_w4_'+i)||'—'} | ${k.doel8} | ${localStorage.getItem('mk_kpi_w8_'+i)||'—'} | ${k.doel12} | ${localStorage.getItem('mk_kpi_w12_'+i)||'—'} |\n`; });
-      const name=(V(projName)||'Marketing').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
-      _download(name,md,'text/markdown');
-    }
-
-    function _download(filename,content,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click(); }
-
-    function _renderKalender(){
-      $('kalender-body').innerHTML=KALENDER.map(r=>`<tr><td><b>W${r.week}</b></td><td>${r.ma}</td><td>${r.do}</td><td>${r.reddit}</td></tr>`).join('');
-    }
-
-    function _renderKpi(){
-      $('kpi-body').innerHTML=KPIS.map((k,i)=>`<tr>
-        <td><b>${k.metric}</b></td><td>${k.doel4}</td>
-        <td><input class="kpi-input" data-kid="w4_${i}" value="${localStorage.getItem('mk_kpi_w4_'+i)||''}" placeholder="—"/></td>
-        <td>${k.doel8}</td>
-        <td><input class="kpi-input" data-kid="w8_${i}" value="${localStorage.getItem('mk_kpi_w8_'+i)||''}" placeholder="—"/></td>
-        <td>${k.doel12}</td>
-        <td><input class="kpi-input" data-kid="w12_${i}" value="${localStorage.getItem('mk_kpi_w12_'+i)||''}" placeholder="—"/></td>
-      </tr>`).join('');
-      $('kpi-body').querySelectorAll('.kpi-input').forEach(inp=>{
-        inp.addEventListener('change',e=>localStorage.setItem('mk_kpi_'+e.target.dataset.kid,e.target.value));
-      });
-    }
-
-    function _renderKanalen(){
-      $('kanalen-content').innerHTML=KANALEN.map(k=>`
-        <div class="channel-card">
-          <div class="channel-name">${k.naam}</div>
-          <div class="channel-meta"><span class="channel-tag">🌐 ${k.taal}</span><span class="channel-tag">📅 ${k.freq}</span></div>
-          <div class="channel-desc"><b style="color:var(--accent)">Toon:</b> ${k.toon}<br><b style="color:var(--accent)">Doel:</b> ${k.doel}</div>
-        </div>`).join('');
-    }
-
-    function _renderTemplates(){
-      $('templates-content').innerHTML=TEMPLATES.map((t,i)=>`
-        <div class="template-card" id="tpl-${i}">
-          <div class="template-header" data-idx="${i}"><span class="template-title">✉️ ${t.titel}</span><span class="template-toggle">▼</span></div>
-          <div class="template-body">
-            <div class="template-text">${t.tekst}</div>
-            <div style="margin-top:10px"><button class="btn btn-accent" data-copy="${i}">📋 Kopiëren</button></div>
-          </div>
-        </div>`).join('');
-      $('templates-content').querySelectorAll('.template-header').forEach(h=>{
-        h.addEventListener('click',()=>document.getElementById('tpl-'+h.dataset.idx).classList.toggle('open'));
-      });
-      $('templates-content').querySelectorAll('[data-copy]').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          navigator.clipboard.writeText(TEMPLATES[parseInt(btn.dataset.copy)].tekst).then(()=>{
-            btn.textContent='✅ Gekopieerd!'; setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
-          });
-        });
-      });
-    }
-
-    return { init };
-  })();
-  </script>
-</body>
-</html>
+      // Projectinfo
+      const h1=lines.find(l=>l.sta
