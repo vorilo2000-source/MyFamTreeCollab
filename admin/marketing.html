@@ -1286,4 +1286,118 @@
       let section='',curPhase='',tplBuf=[],tplTitle='',tplKanaal='',inTpl=false;
 
       // Projectinfo
-      const h1=lines.find(l=>l.sta
+      const h1=lines.find(l=>l.startsWith('# '));
+      if(h1){const raw=h1.replace(/^#\s*/,'').trim();const d=raw.indexOf('—');projName=d>-1?raw.slice(d+1).trim():raw;}
+      const ver=lines.find(l=>l.startsWith('> Versie:'));
+      if(ver){const m=ver.match(/Versie:\s*([^\s·]+)/);if(m&&m[1]&&m[1]!=='—')projVersion=m[1];}
+      _saveProjInfo();
+
+      for(let li=0;li<lines.length;li++){
+        const line=lines[li];
+
+        // Sectie headers
+        if(line.match(/^\[TAKEN\]$/))    {section='taken';continue;}
+        if(line.match(/^\[KALENDER\]$/)) {section='kalender';continue;}
+        if(line.match(/^\[KPI\]$/))      {section='kpi';continue;}
+        if(line.match(/^\[KANALEN\]$/))  {section='kanalen';continue;}
+        if(line.match(/^\[TEMPLATES\]$/)){section='templates';continue;}
+
+        // TEMPLATES: complexer — lees blokken
+        if(section==='templates'){
+          if(line.startsWith('### ')){
+            if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
+            tplTitle=line.replace(/^###\s*/,'').trim();tplKanaal='Overig';tplBuf=[];inTpl=true;continue;
+          }
+          if(inTpl&&line.startsWith('---')&&tplTitle){templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});tplTitle='';tplBuf=[];inTpl=false;continue;}
+          if(inTpl) tplBuf.push(line);
+          continue;
+        }
+
+        // Tabelrijen
+        if(line.startsWith('|')&&!line.includes('---')){
+          const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
+          if(!cells.length||cells[0]==='ID'||cells[0]==='Metric'||cells[0]==='Kanaal'||cells[0]==='Datum'||cells[0]==='Titel')continue;
+
+          if(section==='taken'&&cells.length>=10){
+            const [id,titel,type,start,eind,pub,prio,status,assign,tags,...rest]=cells;
+            const desc=rest[0]||'',result=rest[1]||'';
+            if(id&&titel){
+              if(!phases.includes(curPhase)&&curPhase)phases.push(curPhase);
+              taken.push({id,title:titel,phase:curPhase,type:type||'Overig',startdate:start,enddate:eind,gepubliceerd:pub,priority:_mapPrio(prio),status:_mapStatus(status),assignee:assign,tags,description:desc,ai:result});
+            }
+          }
+          if(section==='kalender'&&cells.length>=4){
+            const [datum,titel,type,beschrijving,pub]=cells;
+            if(datum&&titel) events.push({date:datum,title:titel,type:type||'Overig',beschrijving,gepubliceerd:pub==='ja'?'ja':'nee'});
+          }
+          if(section==='kpi'&&cells.length>=7){
+            const [metric,d4,,d8,,d12,]=cells;
+            if(metric) kpis.push({metric,doel4:d4,doel8:d8,doel12:d12,w4:'',w8:'',w12:''});
+          }
+          if(section==='kanalen'&&cells.length>=4){
+            const [naam,taal,freq,toon,doel,groepen,notities]=cells;
+            if(naam) kanalen.push({naam,taal,freq,toon,doel,groepen:groepen||'',notities:notities||''});
+          }
+          continue;
+        }
+
+        // Fase koptekst binnen TAKEN sectie
+        if(section==='taken'&&line.startsWith('## ')&&!line.includes('[')){ curPhase=line.replace(/^##\s*/,'').trim(); }
+      }
+      // Laatste template
+      if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
+      // Fases afleiden uit taken
+      const seen=new Set();phases=taken.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
+      _saveAll();
+    }
+
+    function _mapStatus(s){if(!s)return'Open';if(s.includes('✅'))return'Done';if(s.includes('🔄'))return'In Progress';if(s.includes('🔍'))return'Review';if(s.includes('❌'))return'Cancelled';if(s.includes('🔮'))return'Future';return'Open';}
+    function _mapPrio(s){if(!s)return'Medium';if(s.includes('🔴'))return'High';if(s.includes('🟡'))return'Medium';if(s.includes('🟢'))return'Low';if(s.toLowerCase().includes('critical'))return'Critical';return'Medium';}
+
+    // === Export MD ===
+    function exportMD(){
+      let md=`# MyFamTreeCollab — ${V(projName)||'Marketing & Communicatieplan'}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
+      md+=`> Versie: ${V(projVersion)||'—'} · Project: MyFamTreeCollab · Horizon: 12 weken\n\n---\n\n`;
+
+      // TAKEN
+      md+=`## [TAKEN]\n\n`;
+      const byPhase={};
+      taken.forEach(i=>{const ph=i.phase||'Overig';(byPhase[ph]=byPhase[ph]||[]).push(i);});
+      for(const ph of [...phases,...Object.keys(byPhase).filter(p=>!phases.includes(p))]){
+        if(!byPhase[ph])continue;
+        md+=`## ${ph}\n\n| ID | Titel | Type | Startdatum | Einddatum | Gepubliceerd | Prioriteit | Status | Toegewezen | Tags | Omschrijving | Resultaat |\n|----|-------|------|------------|-----------|-------------|-----------|--------|------------|------|-------------|----------|\n`;
+        byPhase[ph].forEach(i=>{
+          const p={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡';
+          md+=`| ${V(i.id)} | ${V(i.title)} | ${V(i.type)} | ${V(i.startdate)} | ${V(i.enddate)} | ${i.gepubliceerd||'nee'} | ${p} ${V(i.priority)} | ${S_ICON[i.status]||'📋'} ${V(i.status)} | ${V(i.assignee)} | ${V(i.tags)} | ${V(i.description).replace(/\n/g,' ')} | ${V(i.ai)} |\n`;
+        });
+        md+='\n';
+      }
+
+      // KALENDER
+      md+=`## [KALENDER]\n\n| Datum | Titel | Type | Beschrijving | Gepubliceerd |\n|-------|-------|------|-------------|-------------|\n`;
+      events.forEach(e=>{md+=`| ${e.date} | ${e.title} | ${e.type} | ${(e.beschrijving||'').replace(/\n/g,' ')} | ${e.gepubliceerd} |\n`;});
+      md+='\n';
+
+      // KPI
+      md+=`## [KPI]\n\n| Metric | Doel W4 | Werkelijk W4 | Doel W8 | Werkelijk W8 | Doel W12 | Werkelijk W12 |\n|--------|---------|-------------|---------|-------------|---------|---------------|\n`;
+      kpis.forEach(k=>{md+=`| ${k.metric} | ${k.doel4} | ${k.w4||''} | ${k.doel8} | ${k.w8||''} | ${k.doel12} | ${k.w12||''} |\n`;});
+      md+='\n';
+
+      // KANALEN
+      md+=`## [KANALEN]\n\n| Kanaal | Taal | Frequentie | Toon | Doel | Subreddits / Groepen | Notities |\n|--------|------|-----------|------|------|---------------------|----------|\n`;
+      kanalen.forEach(k=>{md+=`| ${k.naam} | ${k.taal} | ${k.freq} | ${k.toon} | ${k.doel} | ${k.groepen||''} | ${k.notities||''} |\n`;});
+      md+='\n';
+
+      // TEMPLATES
+      md+=`## [TEMPLATES]\n\n`;
+      templates.forEach(t=>{md+=`### ${t.titel}\n\n${t.tekst}\n\n---\n\n`;});
+
+      const name=(V(projName)||'Marketing').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
+      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download=name;a.click();
+    }
+
+    return{init};
+  })();
+  </script>
+</body>
+</html>
