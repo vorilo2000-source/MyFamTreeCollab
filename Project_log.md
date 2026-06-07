@@ -1,5 +1,85 @@
 # MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-06-05
+## Bijgewerkt: 2026-06-07
+
+> Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 37 — Admin toolset: Backlog, Project Log, Marketing
+
+**Datum:** 2026-06-04 t/m 2026-06-07
+
+### Doel
+Volledig werkende admin toolset: backlog manager, project log viewer en marketing & communicatieplan — consistent met de bestaande admin look & feel.
+
+### admin/backlog.html — v5.1.0
+- Vanilla JS, geen framework
+- Laadvolgorde identiek aan analytics.html
+- Board- en lijstweergave met sticky kolomheaders en scrollbare container
+- Alleen actieve statuskolommen tonen (gefilterd via statusfilter pills)
+- Multi-select filters voor status, prioriteit, type en tags
+- Fasefilter als pills met tooltip (beschrijving uit MD fase-header na `—`)
+- Auto ID: [1e letter fase][1e letter type]-[3-cijferig volgnummer]
+- ID inline aanpasbaar (tabel + modal)
+- Projectnaam + versie + datum in header, bewerkbaar
+- Projectnaam uit eerste regel van MD bij laden
+- MD én CSV laden via 📂 knop
+- MD én CSV exporteren met bestandsnaam = projectnaam-versie
+- AI suggestie via Anthropic API (gebruiker voert eigen sleutel in)
+- Data wissen knop: verwijdert alle `bl_*` localStorage sleutels
+- Lege velden blijven leeg (geen X-vervanging in weergave/export)
+- Toegangsbeveiliging via AdminGuard.protect('admin')
+- Geen automatisch laden via fetch — gebruiker kiest bestand via 📂
+
+### admin/projectlog.html — v1.0.0 (nieuw)
+- Laadt PROJECT_LOG.md via 📂 knop
+- Sessies als uitklapbare kaarten met groene bovenlijn
+- Zoeken in titels én inhoud
+- Alles uitklappen / inklappen
+- Log bewaard in localStorage (bl_log)
+- Log wissen knop
+- Zelfde laadvolgorde en look & feel als backlog.html
+
+### admin/marketing.html — v3.0.0 (nieuw)
+- Standaard dataformaat: marketing.md met secties [TAKEN][KALENDER][KPI][KANALEN][TEMPLATES]
+- Taken: start/einddatum + gepubliceerd checkbox
+- Kalender: maand/week/dag weergave, taken + aparte kalender-events
+- KPI's: bewerkbaar via modal, werkelijke cijfers opslaan
+- Kanalen: bewerkbaar via modal
+- Templates: bewerkbaar via modal, markdown preview, kopieerknop
+- Markdown editor in alle forms: bold, cursief, lijst, tabel, code toolbar
+- Import/export als één marketing.md
+- localStorage prefix: mk_* (geen conflict met bl_*)
+- Zelfde board/lijst/filters structuur als backlog.html
+
+### Navbar.html — v1.4.0
+- Backlog, Project Log en Marketing links toegevoegd aan Administrator dropdown
+
+### BACKLOG.md — v1.0.0 (opgeschoond)
+- WINOTS en DP9ZZF rijen verwijderd
+- F8-57 t/m F8-62 hersteld als normale rij
+- Fase 10 beschrijving naar fase-header als tooltip
+- Bugfixes sectie hernoemd, type gecorrigeerd naar Bug
+
+### Standaard dataformaat vastgelegd
+- Alle admin toolpagina's gebruiken hetzelfde MD-formaat
+- Secties gemarkeerd met [SECTIENAAM]
+- Kolommen gestandaardiseerd: ID | Titel | Type | Startdatum | Einddatum | Gepubliceerd | Prioriteit | Status | Toegewezen | Tags | Omschrijving | Resultaat
+- localStorage prefixes: bl_* (backlog), mk_* (marketing), per nieuwe pagina eigen prefix
+
+### Versie-overzicht
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `admin/backlog.html` | v4.0.0 | v5.1.0 | Board scroll, sticky headers, MD/CSV laden zonder fetch |
+| `admin/projectlog.html` | — | v1.0.0 | Nieuw — project log viewer |
+| `admin/marketing.html` | — | v3.0.0 | Nieuw — marketing & communicatieplan |
+| `Layout/Navbar.html` | v1.3.0 | v1.4.0 | Backlog, Project Log, Marketing links |
+| `BACKLOG.md` | — | v1.0.0 | Opgeschoond |
+| `PROJECT_LOG.md` | v1.0.0 | v1.1.0 | Sessie 37 toegevoegd |
+
+---
+
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
 
