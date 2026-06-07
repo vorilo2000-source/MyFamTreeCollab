@@ -1,0 +1,952 @@
+<!-- ======================= admin/agenda.html v1.0.0 =======================
+    Centrale Agenda — admin only
+
+    Wijzigingen v1.0.0 (sessie 38):
+     - Maand/week/dag weergave
+     - Kleurcodering per bron (backlog/marketing/roadmap/releasenotes/standalone)
+     - Status volgt bronpagina's — agenda schrijft nooit terug
+     - Standalone events: titel, start/eind datum+tijd, locatie,
+       beschrijving, status, deelnemers, herhaling
+     - .ics export per item en bulk (maand)
+     - Filter op bron, status, zoekterm
+     - localStorage: ag_events (standalone), ag_cache (bron-items via agendaStore)
+
+    Afhankelijkheden:
+     - ../js/utils.js · ../js/auth.js
+     - /MyFamTreeCollab/js/adminGuard.js · /MyFamTreeCollab/js/siteAnalytics.js
+     - ../js/agendaStore.js
+     - ../js/topbar.js (via fetch)
+    ======================================================================= -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agenda — Admin</title>
+  <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Basis variabelen ── */
+    :root {
+      --bg-main:      #565656;
+      --bg-card:      #3a3a3a;
+      --bg-card-alt:  #444444;
+      --accent:       #00d4aa;
+      --accent-dim:   rgba(0,212,170,0.15);
+      --text-primary: #f0f0f0;
+      --text-muted:   #aaa;
+      --border:       rgba(255,255,255,0.08);
+      --font-mono:    'IBM Plex Mono', monospace;
+      --font-sans:    'IBM Plex Sans', sans-serif;
+      --radius:       8px;
+      --shadow:       0 4px 20px rgba(0,0,0,0.35);
+      --danger:       #f08080;
+    }
+    #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); }
+    #page-content { display:none; }
+    main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
+    .wrap { max-width:100%; margin:0; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Knoppen ── */
+    .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .15s; white-space:nowrap; }
+    .btn:hover { background:var(--bg-card-alt); }
+    .btn-accent { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+    .btn-accent:hover { background:rgba(0,212,170,0.28); }
+    .btn-ghost { border-color:transparent; background:transparent; color:var(--text-muted); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.06); }
+    .btn-danger { background:rgba(240,128,128,0.15); color:var(--danger); border-color:var(--danger); }
+    .btn-sm { padding:3px 10px; font-size:0.7rem; }
+
+    /* ── Form ── */
+    .form-label { font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:3px; }
+    .form-input { font-family:var(--font-mono); font-size:0.8rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
+    .form-input:focus { border-color:var(--accent); }
+    select.form-input { cursor:pointer; }
+    textarea.form-input { resize:vertical; min-height:70px; }
+    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    @media(max-width:540px){ .form-grid2,.form-grid3{ grid-template-columns:1fr; } }
+
+    /* ── Header ── */
+    .page-header { margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .page-title { font-family:var(--font-mono); font-size:1.4rem; font-weight:600; color:var(--accent); margin:0; }
+    .page-meta { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
+
+    /* ── Toolbar ── */
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.25rem; align-items:center; }
+    .view-toggle { display:flex; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); overflow:hidden; }
+    .view-toggle button { font-family:var(--font-mono); font-size:0.75rem; padding:6px 14px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; transition:background .15s; }
+    .view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
+
+    /* ── Legenda & filters ── */
+    .filters-bar { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:1.25rem; display:flex; flex-direction:column; gap:10px; }
+    .filter-row { display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; }
+    .filter-label { font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); min-width:70px; padding-top:4px; white-space:nowrap; }
+    .pills { display:flex; gap:5px; flex-wrap:wrap; }
+    .pill { font-family:var(--font-mono); font-size:0.68rem; padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+    .pill:hover { border-color:var(--accent); color:var(--accent); }
+    .pill.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+    .pill-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    /* Status pills kleuren */
+    .pill-open       { border-color:#60a5fa!important; color:#60a5fa!important; }
+    .pill-open.active{ background:rgba(96,165,250,0.15)!important; }
+    .pill-inprogress       { border-color:#a78bfa!important; color:#a78bfa!important; }
+    .pill-inprogress.active{ background:rgba(167,139,250,0.15)!important; }
+    .pill-review       { border-color:#fbbf24!important; color:#fbbf24!important; }
+    .pill-review.active{ background:rgba(251,191,36,0.15)!important; }
+    .pill-done       { border-color:#00d4aa!important; color:#00d4aa!important; }
+    .pill-done.active{ background:rgba(0,212,170,0.15)!important; }
+    .pill-cancelled       { border-color:#9ca3af!important; color:#9ca3af!important; }
+    .pill-cancelled.active{ background:rgba(156,163,175,0.1)!important; }
+    .pill-future       { border-color:#f472b6!important; color:#f472b6!important; }
+    .pill-future.active{ background:rgba(244,114,182,0.15)!important; }
+
+    /* ── Navigatie ── */
+    .cal-nav { display:flex; align-items:center; gap:10px; margin-bottom:1rem; flex-wrap:wrap; }
+    .cal-nav-title { font-family:var(--font-mono); font-size:1.1rem; font-weight:600; color:var(--accent); flex:1; }
+    .cal-today-btn { font-family:var(--font-mono); font-size:0.72rem; padding:4px 12px; }
+
+    /* ── Maandrooster ── */
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+    .cal-day-header { font-family:var(--font-mono); font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); text-align:center; padding:6px 0; letter-spacing:1px; }
+    .cal-cell { background:var(--bg-card); border:1px solid var(--border); border-radius:4px; min-height:90px; padding:5px; transition:background .15s; position:relative; }
+    .cal-cell:hover { background:var(--bg-card-alt); }
+    .cal-cell.today { border-color:var(--accent); }
+    .cal-cell.today .cal-cell-num { color:var(--accent); font-weight:600; }
+    .cal-cell.other-month { opacity:.3; }
+    .cal-cell-num { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; }
+    .cal-cell-add { font-size:14px; cursor:pointer; opacity:0; transition:opacity .15s; color:var(--accent); line-height:1; }
+    .cal-cell:hover .cal-cell-add { opacity:1; }
+    /* Event blokken in maandrooster */
+    .cal-ev { font-family:var(--font-sans); font-size:0.6rem; padding:2px 5px; border-radius:3px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; border-left:3px solid transparent; transition:opacity .15s; }
+    .cal-ev:hover { opacity:.85; }
+    .cal-ev.start { border-radius:3px 0 0 3px; }
+    .cal-ev.middle { border-radius:0; border-left-width:1px; opacity:.7; }
+    .cal-ev.end   { border-radius:0 3px 3px 0; border-left-width:1px; opacity:.7; }
+    .cal-ev.single { border-radius:3px; }
+    .cal-ev.done { text-decoration:line-through; opacity:.5; }
+    .cal-ev.cancelled { opacity:.35; text-decoration:line-through; }
+    .cal-ev-more { font-family:var(--font-mono); font-size:0.58rem; color:var(--text-muted); padding:1px 4px; cursor:pointer; }
+    .cal-ev-more:hover { color:var(--accent); }
+
+    /* ── Weekrooster ── */
+    .week-wrap { overflow-x:auto; }
+    .week-grid { display:grid; grid-template-columns:52px repeat(7,1fr); gap:1px; min-width:600px; }
+    .week-header-cell { font-family:var(--font-mono); font-size:0.68rem; text-align:center; padding:6px 2px; color:var(--text-muted); border-bottom:1px solid var(--border); }
+    .week-header-cell.today { color:var(--accent); font-weight:600; }
+    .week-time-label { font-family:var(--font-mono); font-size:0.6rem; color:var(--text-muted); text-align:right; padding:2px 6px 0 0; border-right:1px solid var(--border); }
+    .week-cell { background:var(--bg-card); border-bottom:1px solid rgba(255,255,255,0.04); min-height:36px; padding:2px 3px; position:relative; }
+    .week-cell:hover { background:var(--bg-card-alt); }
+    .week-cell.today-col { background:rgba(0,212,170,0.04); }
+    .week-all-day-row { display:contents; }
+
+    /* ── Dagweergave ── */
+    .day-list { display:flex; flex-direction:column; gap:8px; }
+    .day-ev-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; display:flex; gap:14px; align-items:flex-start; cursor:pointer; transition:background .15s; border-left:4px solid transparent; animation:fadeUp .2s ease; }
+    .day-ev-card:hover { background:var(--bg-card-alt); }
+    .day-ev-time { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); min-width:80px; flex-shrink:0; }
+    .day-ev-title { font-weight:600; font-size:0.88rem; margin-bottom:2px; }
+    .day-ev-meta { font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); display:flex; gap:10px; flex-wrap:wrap; }
+    .day-ev-empty { text-align:center; padding:3rem; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-muted); border:1px solid var(--border); border-radius:var(--radius); }
+
+    /* ── Status badges (klein, voor dagweergave) ── */
+    .s-badge { font-family:var(--font-mono); font-size:0.62rem; padding:1px 7px; border-radius:10px; font-weight:600; display:inline-block; }
+    .s-open       { background:rgba(96,165,250,0.2);  color:#60a5fa;  border:1px solid #60a5fa;  }
+    .s-inprogress { background:rgba(167,139,250,0.2); color:#a78bfa;  border:1px solid #a78bfa;  }
+    .s-review     { background:rgba(251,191,36,0.2);  color:#fbbf24;  border:1px solid #fbbf24;  }
+    .s-done       { background:rgba(0,212,170,0.2);   color:#00d4aa;  border:1px solid #00d4aa;  }
+    .s-cancelled  { background:rgba(255,255,255,0.06);color:#9ca3af;  border:1px solid #9ca3af;  }
+    .s-future     { background:rgba(244,114,182,0.2); color:#f472b6;  border:1px solid #f472b6;  }
+
+    /* ── Detail popup ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); align-items:center; justify-content:center; z-index:200; padding:16px; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .22s ease; }
+    .modal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:10px; gap:10px; }
+    .modal-header h2 { font-family:var(--font-mono); font-size:0.95rem; font-weight:600; color:var(--accent); margin:0; flex:1; }
+    .modal-body { display:flex; flex-direction:column; gap:10px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.25rem; border-top:1px solid var(--border); padding-top:10px; flex-wrap:wrap; }
+    /* Detail view (readonly voor bron-items) */
+    .detail-row { display:flex; gap:10px; align-items:flex-start; font-family:var(--font-mono); font-size:0.78rem; }
+    .detail-label { color:var(--text-muted); min-width:100px; flex-shrink:0; font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; padding-top:2px; }
+    .detail-val { color:var(--text-primary); flex:1; line-height:1.5; }
+    .bron-link { color:var(--accent); text-decoration:none; font-size:0.72rem; }
+    .bron-link:hover { text-decoration:underline; }
+    /* Bron-label chip */
+    .bron-chip { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:0.65rem; padding:2px 8px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); }
+
+    /* ── Herhaling beschrijving ── */
+    .herhaling-hint { font-family:var(--font-mono); font-size:0.68rem; color:var(--text-muted); margin-top:3px; }
+
+    /* ── Toegang geweigerd ── */
+    .access-denied { background:var(--bg-card); border:1px solid var(--danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
+    .access-denied h2 { font-size:1.1rem; color:var(--danger); margin-bottom:10px; font-family:var(--font-sans); }
+    .access-denied p { font-size:0.88rem; color:var(--text-muted); line-height:1.6; }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script>
+  <div id="topbar-placeholder"></div>
+  <div id="navbar-placeholder"></div>
+
+  <div id="accessDenied"><div class="access-denied"><h2>Geen toegang</h2><p>Alleen toegankelijk voor administrators.</p></div></div>
+
+  <div id="page-content">
+    <main><div class="wrap">
+
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">📅 Centrale Agenda</div>
+          <div class="page-meta" id="page-meta"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" id="btn-export-ics-maand">📥 Maand .ics</button>
+          <button class="btn btn-accent" id="btn-add-event">+ Event toevoegen</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <div class="filter-row">
+          <span class="filter-label">Zoeken</span>
+          <input type="search" class="form-input" id="input-search" placeholder="Titel, ID, locatie…" style="flex:1;min-width:160px"/>
+          <button class="btn btn-ghost btn-sm" id="btn-clear-filters">✕ Wissen</button>
+          <button class="btn btn-sm" id="btn-sync" title="Herlees alle bronnen">🔄 Sync</button>
+        </div>
+        <!-- Bron filter: pills met kleurstip per bron -->
+        <div class="filter-row">
+          <span class="filter-label">Bron</span>
+          <div class="pills" id="pills-bron"></div>
+        </div>
+        <!-- Status filter -->
+        <div class="filter-row">
+          <span class="filter-label">Status</span>
+          <div class="pills" id="pills-status"></div>
+        </div>
+      </div>
+
+      <!-- Navigatie + view toggle -->
+      <div class="toolbar">
+        <button class="btn" id="cal-prev">‹</button>
+        <button class="btn cal-today-btn" id="cal-today">Vandaag</button>
+        <button class="btn" id="cal-next">›</button>
+        <div class="cal-nav-title" id="cal-title"></div>
+        <span style="flex:1"></span>
+        <div class="view-toggle">
+          <button data-view="month" class="active">Maand</button>
+          <button data-view="week">Week</button>
+          <button data-view="day">Dag</button>
+        </div>
+      </div>
+
+      <!-- Kalenderinhoud -->
+      <div id="cal-content"></div>
+
+    </div></main>
+  </div>
+
+  <!-- ══ Modal: Event detail / bewerken (standalone) / bekijken (bron) ══ -->
+  <div class="modal-overlay" id="modal-detail">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="md-title">Event</h2>
+        <button class="btn btn-ghost" id="btn-md-close" style="font-size:18px;padding:2px 8px">✕</button>
+      </div>
+      <div class="modal-body" id="md-body"></div>
+      <div class="modal-footer" id="md-footer"></div>
+    </div>
+  </div>
+
+  <!-- ══ Modal: Nieuw / bewerk standalone event ══ -->
+  <div class="modal-overlay" id="modal-event">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header">
+        <h2 id="me-title">Event toevoegen</h2>
+        <button class="btn btn-ghost" id="btn-me-close" style="font-size:18px;padding:2px 8px">✕</button>
+      </div>
+      <div class="modal-body">
+        <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="fe-titel" placeholder="Event naam"/></div>
+        <div class="form-grid2">
+          <div><label class="form-label">Startdatum *</label><input class="form-input" type="date" id="fe-startdate"/></div>
+          <div><label class="form-label">Starttijd</label><input class="form-input" type="time" id="fe-starttime"/></div>
+          <div><label class="form-label">Einddatum</label><input class="form-input" type="date" id="fe-enddate"/></div>
+          <div><label class="form-label">Eindtijd</label><input class="form-input" type="time" id="fe-endtime"/></div>
+        </div>
+        <div><label class="form-label">Locatie</label><input class="form-input" type="text" id="fe-locatie" placeholder="Adres, stad of online link"/></div>
+        <div><label class="form-label">Deelnemers</label><input class="form-input" type="text" id="fe-deelnemers" placeholder="naam@email.com, naam2@email.com"/></div>
+        <div><label class="form-label">Status</label>
+          <select class="form-input" id="fe-status">
+            <option value="Open">📋 Open</option>
+            <option value="In Progress">🔄 In Progress</option>
+            <option value="Review">🔍 Review</option>
+            <option value="Done">✅ Done</option>
+            <option value="Cancelled">❌ Cancelled</option>
+            <option value="Future">🔮 Future</option>
+          </select>
+        </div>
+        <div><label class="form-label">Herhaling</label>
+          <select class="form-input" id="fe-herhaling">
+            <option value="geen">Geen herhaling</option>
+            <option value="dagelijks">Dagelijks</option>
+            <option value="wekelijks">Wekelijks</option>
+            <option value="tweewekelijks">Tweewekelijks</option>
+            <option value="maandelijks">Maandelijks</option>
+            <option value="jaarlijks">Jaarlijks</option>
+          </select>
+          <div class="herhaling-hint" id="herhaling-hint"></div>
+        </div>
+        <div><label class="form-label">Beschrijving</label><textarea class="form-input" id="fe-omschrijving" placeholder="Aanvullende informatie…"></textarea></div>
+        <div><label class="form-label">Tags</label><input class="form-input" type="text" id="fe-tags" placeholder="tag1, tag2"/></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-me-delete" style="display:none;color:var(--danger)">🗑 Verwijderen</button>
+        <span style="flex:1"></span>
+        <button class="btn" id="btn-me-cancel">Annuleren</button>
+        <button class="btn btn-accent" id="btn-me-save">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <!-- Laadvolgorde: identiek aan andere admin pagina's -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
+  <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+  <!-- agendaStore vóór topbar laden zodat het beschikbaar is bij init -->
+  <script src="../js/agendaStore.js"></script>
+
+  <script>
+  // Layout laden
+  fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
+    document.getElementById('topbar-placeholder').innerHTML=html;
+    const s=document.createElement('script'); s.src='../js/topbar.js';
+    s.onload=()=>AdminGuard.protect('admin').then(ok=>{if(ok)Agenda.init();});
+    document.body.appendChild(s);
+  });
+  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{document.getElementById('navbar-placeholder').innerHTML=html;});
+  fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{document.getElementById('footer-placeholder').innerHTML=html;});
+
+  // ════════════════════════════════════════════════════════════════
+  // AGENDA MODULE
+  // ════════════════════════════════════════════════════════════════
+  const Agenda = (() => {
+
+    // ── State ──
+    let calView='month', calDate=new Date();
+    let allItems=[];                          // gecombineerd: bron-items + standalone
+    let fBron=new Set(), fStatus=new Set();   // actieve filters (leeg = alles tonen)
+    let search='';
+    let editEventId=null;                     // null = nieuw, string = bewerken
+
+    // ── Constanten ──
+    const DAYS   = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+    const MONTHS = ['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+    const STATUSES = ['Open','In Progress','Review','Done','Cancelled','Future'];
+    const S_ICON  = {'Open':'📋','In Progress':'🔄','Review':'🔍','Done':'✅','Cancelled':'❌','Future':'🔮'};
+    const S_CSS   = {'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
+    const S_PILL  = {'Open':'pill-open','In Progress':'pill-inprogress','Review':'pill-review','Done':'pill-done','Cancelled':'pill-cancelled','Future':'pill-future'};
+    // iCal status mapping
+    const ICS_STATUS = {'Open':'NEEDS-ACTION','In Progress':'IN-PROCESS','Review':'IN-PROCESS','Done':'COMPLETED','Cancelled':'CANCELLED','Future':'TENTATIVE'};
+    // iCal herhaling mapping
+    const ICS_RRULE = {'dagelijks':'DAILY','wekelijks':'WEEKLY','tweewekelijks':'WEEKLY;INTERVAL=2','maandelijks':'MONTHLY','jaarlijks':'YEARLY'};
+
+    const $ = id => document.getElementById(id);
+
+    // ─────────────────────────────────────────────
+    // INITIALISATIE
+    // ─────────────────────────────────────────────
+    function init() {
+      _loadItems();
+      _bindEvents();
+      _renderFilters();
+      _renderCal();
+      _updateMeta();
+    }
+
+    // Items laden: AgendaStore.sync() + getAll()
+    function _loadItems() {
+      AgendaStore.sync();               // ag_cache herberekenen uit alle bronnen
+      allItems = AgendaStore.getAll();  // gecombineerd: bron-items + ag_events
+    }
+
+    // ─────────────────────────────────────────────
+    // EVENT BINDINGS
+    // ─────────────────────────────────────────────
+    function _bindEvents() {
+      // Navigatie
+      $('cal-prev').addEventListener('click', ()=>{ _navCal(-1); });
+      $('cal-next').addEventListener('click', ()=>{ _navCal(1);  });
+      $('cal-today').addEventListener('click', ()=>{ calDate=new Date(); _renderCal(); _updateMeta(); });
+
+      // View toggle (maand/week/dag)
+      document.querySelectorAll('.view-toggle button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          document.querySelectorAll('.view-toggle button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          calView=b.dataset.view;
+          _renderCal();
+        });
+      });
+
+      // Zoeken
+      $('input-search').addEventListener('input', e=>{ search=e.target.value.toLowerCase(); _renderCal(); });
+      $('btn-clear-filters').addEventListener('click', ()=>{ search=''; fBron.clear(); fStatus.clear(); $('input-search').value=''; _renderFilters(); _renderCal(); });
+
+      // Sync knop: herlees alle bronnen
+      $('btn-sync').addEventListener('click', ()=>{ _loadItems(); _renderFilters(); _renderCal(); _updateMeta(); });
+
+      // Event toevoegen
+      $('btn-add-event').addEventListener('click', ()=>_openEventModal());
+      $('btn-me-close').addEventListener('click', ()=>_closeEventModal());
+      $('btn-me-cancel').addEventListener('click', ()=>_closeEventModal());
+      $('btn-me-save').addEventListener('click', _saveEvent);
+      $('btn-me-delete').addEventListener('click', _deleteEvent);
+      $('modal-event').addEventListener('click', e=>{ if(e.target===$('modal-event'))_closeEventModal(); });
+
+      // Herhaling hint updaten bij wijziging
+      $('fe-herhaling').addEventListener('change', _updateHerhalingHint);
+
+      // Maand .ics export
+      $('btn-export-ics-maand').addEventListener('click', _exportMaandIcs);
+
+      // Detail modal sluiten
+      $('btn-md-close').addEventListener('click', ()=>$('modal-detail').classList.remove('open'));
+      $('modal-detail').addEventListener('click', e=>{ if(e.target===$('modal-detail'))$('modal-detail').classList.remove('open'); });
+    }
+
+    // ─────────────────────────────────────────────
+    // META
+    // ─────────────────────────────────────────────
+    function _updateMeta() {
+      const bronItems=allItems.filter(i=>i.bron!=='standalone').length;
+      const standalone=allItems.filter(i=>i.bron==='standalone').length;
+      $('page-meta').textContent=`${allItems.length} items totaal · ${bronItems} gekoppeld · ${standalone} eigen events`;
+    }
+
+    // ─────────────────────────────────────────────
+    // FILTERS
+    // ─────────────────────────────────────────────
+    function _renderFilters() {
+      // Bron pills: kleurstip + naam per beschikbare bron
+      const bronnen = AgendaStore.getSources();
+      const colors  = AgendaStore.getColors();
+      // Voeg standalone toe
+      const allBronnen = [...bronnen, {key:'standalone', label:'Eigen events', kleur:colors.standalone}];
+      // Filter op bronnen die ook daadwerkelijk items hebben
+      const activeBronnen = allBronnen.filter(b=>allItems.some(i=>i.bron===b.key));
+
+      $('pills-bron').innerHTML = activeBronnen.map(b=>`
+        <button class="pill ${fBron.has(b.key)?'active':''}" data-bron="${b.key}">
+          <span class="pill-dot" style="background:${b.kleur}"></span>${b.label}
+        </button>`).join('');
+      $('pills-bron').querySelectorAll('.pill').forEach(p=>{
+        p.addEventListener('click', ()=>{
+          const k=p.dataset.bron;
+          fBron.has(k) ? fBron.delete(k) : fBron.add(k);
+          _renderFilters(); _renderCal();
+        });
+      });
+
+      // Status pills
+      $('pills-status').innerHTML = STATUSES.map(s=>`
+        <button class="pill ${S_PILL[s]} ${fStatus.has(s)?'active':''}" data-status="${s}">
+          ${S_ICON[s]} ${s}
+        </button>`).join('');
+      $('pills-status').querySelectorAll('.pill').forEach(p=>{
+        p.addEventListener('click', ()=>{
+          const s=p.dataset.status;
+          fStatus.has(s) ? fStatus.delete(s) : fStatus.add(s);
+          _renderFilters(); _renderCal();
+        });
+      });
+    }
+
+    // Gefilterde items
+    function _filtered() {
+      return allItems.filter(i=>{
+        const mb = !fBron.size   || fBron.has(i.bron);
+        const ms = !fStatus.size || fStatus.has(i.status);
+        const mq = !search || i.titel.toLowerCase().includes(search) || (i.omschrijving||'').toLowerCase().includes(search) || (i.locatie||'').toLowerCase().includes(search) || i.id.toLowerCase().includes(search);
+        return mb && ms && mq;
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // KALENDER RENDEREN
+    // ─────────────────────────────────────────────
+    function _renderCal() {
+      const y=calDate.getFullYear(), m=calDate.getMonth();
+      if(calView==='month') {
+        $('cal-title').textContent=`${MONTHS[m]} ${y}`;
+        _renderMonth(y,m);
+      } else if(calView==='week') {
+        const mon=_getMonday(calDate);
+        $('cal-title').textContent=`Week van ${mon.toLocaleDateString('nl-BE')}`;
+        _renderWeek(mon);
+      } else {
+        $('cal-title').textContent=calDate.toLocaleDateString('nl-BE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+        _renderDay(calDate);
+      }
+    }
+
+    // ── Maandweergave ──
+    function _renderMonth(y,m) {
+      const filtered=_filtered();
+      const first=new Date(y,m,1), last=new Date(y,m+1,0);
+      const startDay=(first.getDay()+6)%7; // Maandag=0
+      let html=`<div class="cal-grid">`;
+
+      // Dag-koppen
+      DAYS.forEach(d=>{ html+=`<div class="cal-day-header">${d}</div>`; });
+
+      // Lege cellen voor de maand
+      for(let i=0;i<startDay;i++) {
+        const d=new Date(y,m,i-startDay+1);
+        html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${d.getDate()}</div></div>`;
+      }
+
+      // Dagen
+      for(let d=1;d<=last.getDate();d++) {
+        const ds=_ds(new Date(y,m,d));
+        const isToday=ds===_today();
+
+        // Items op deze dag: start ≤ dag ≤ eind (of startdate=dag als geen eind)
+        const dayItems=filtered.filter(i=>{
+          const eind=i.enddate||i.startdate;
+          return i.startdate<=ds && eind>=ds;
+        });
+
+        // Herhaling-expansie: voeg herhalende standalone events toe
+        const herhalingItems=_expandHerhaling(filtered.filter(i=>i.herhaling&&i.herhaling!=='geen'), ds);
+        const allDay=[...dayItems, ...herhalingItems.filter(i=>!dayItems.find(x=>x.id===i.id))];
+
+        html+=`<div class="cal-cell ${isToday?'today':''}" data-date="${ds}">
+          <div class="cal-cell-num">
+            <span>${d}</span>
+            <span class="cal-cell-add" data-date="${ds}" title="Event toevoegen op ${ds}">+</span>
+          </div>
+          ${allDay.slice(0,3).map(i=>_evBlock(i,ds)).join('')}
+          ${allDay.length>3?`<div class="cal-ev-more" data-date="${ds}">+${allDay.length-3} meer</div>`:''}
+        </div>`;
+      }
+
+      // Lege cellen na de maand
+      const lastDay=(last.getDay()+6)%7;
+      for(let i=1;i<7-lastDay;i++) html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${i}</div></div>`;
+      html+=`</div>`;
+
+      $('cal-content').innerHTML=html;
+
+      // Klik op event blok → detail modal
+      $('cal-content').querySelectorAll('[data-ev-id]').forEach(el=>{
+        el.addEventListener('click', e=>{ e.stopPropagation(); _openDetail(el.dataset.evId); });
+      });
+      // Klik op + knop → event toevoegen op die datum
+      $('cal-content').querySelectorAll('.cal-cell-add').forEach(el=>{
+        el.addEventListener('click', e=>{ e.stopPropagation(); _openEventModal(null, el.dataset.date); });
+      });
+      // Klik op "meer" → dag-view
+      $('cal-content').querySelectorAll('.cal-ev-more').forEach(el=>{
+        el.addEventListener('click', e=>{ e.stopPropagation(); calDate=new Date(el.dataset.date); calView='day'; document.querySelectorAll('.view-toggle button').forEach(b=>b.classList.toggle('active',b.dataset.view==='day')); _renderCal(); });
+      });
+    }
+
+    // Event blok HTML voor maandrooster
+    function _evBlock(item, ds) {
+      const eind=item.enddate||item.startdate;
+      const isStart=item.startdate===ds;
+      const isEnd=eind===ds;
+      const pos=isStart&&isEnd?'single':isStart?'start':isEnd?'end':'middle';
+      const isDone=item.status==='Done';
+      const isCancelled=item.status==='Cancelled';
+      const alpha=isDone||isCancelled?'0.5':'1';
+      const bg=item.kleur+'26'; // kleur met 15% opacity als achtergrond
+      const border=item.kleur;
+      return `<div class="cal-ev ${pos} ${isDone?'done':''} ${isCancelled?'cancelled':''}"
+        data-ev-id="${item.id}"
+        style="background:${bg};border-left-color:${border};color:${item.kleur};opacity:${alpha}"
+        title="${item.bron!=='standalone'?'['+item.bronLabel+'] ':''} ${item.titel}">
+        ${isStart?'▶ ':''}${item.titel.slice(0,22)}${item.titel.length>22?'…':''}
+      </div>`;
+    }
+
+    // ── Weekweergave ──
+    function _renderWeek(mon) {
+      const filtered=_filtered();
+      let html=`<div class="week-wrap"><div class="week-grid">`;
+      // Lege hoek
+      html+=`<div style="border-bottom:1px solid var(--border)"></div>`;
+      // Dag-koppen
+      for(let d=0;d<7;d++) {
+        const day=new Date(mon); day.setDate(mon.getDate()+d);
+        const isToday=_ds(day)===_today();
+        html+=`<div class="week-header-cell ${isToday?'today':''}">${DAYS[d]}<br>${day.getDate()}</div>`;
+      }
+      // Uurvakken 0–23
+      for(let h=0;h<24;h++) {
+        html+=`<div class="week-time-label">${String(h).padStart(2,'0')}:00</div>`;
+        for(let d=0;d<7;d++) {
+          const day=new Date(mon); day.setDate(mon.getDate()+d);
+          const ds=_ds(day);
+          const isToday=ds===_today();
+          // Items die op deze dag vallen en in dit uur starten
+          const slotItems=filtered.filter(i=>{
+            const eind=i.enddate||i.startdate;
+            if(!(i.startdate<=ds && eind>=ds)) return false;
+            if(!i.starttime) return h===8; // Geen tijd → toon in 08:00 vak
+            return parseInt(i.starttime.split(':')[0])===h;
+          });
+          html+=`<div class="week-cell ${isToday?'today-col':''}">
+            ${slotItems.map(i=>`<div class="cal-ev single" data-ev-id="${i.id}"
+              style="background:${i.kleur}26;border-left-color:${i.kleur};color:${i.kleur};margin-bottom:2px"
+              title="${i.titel}">${i.titel.slice(0,16)}</div>`).join('')}
+          </div>`;
+        }
+      }
+      html+=`</div></div>`;
+      $('cal-content').innerHTML=html;
+      $('cal-content').querySelectorAll('[data-ev-id]').forEach(el=>{
+        el.addEventListener('click', e=>{ e.stopPropagation(); _openDetail(el.dataset.evId); });
+      });
+      // Scroll naar 08:00 na render
+      requestAnimationFrame(()=>{ const wrap=$('cal-content').querySelector('.week-wrap'); if(wrap) wrap.scrollTop=8*37; });
+    }
+
+    // ── Dagweergave ──
+    function _renderDay(date) {
+      const filtered=_filtered();
+      const ds=_ds(date);
+      const dayItems=filtered.filter(i=>{
+        const eind=i.enddate||i.startdate;
+        return i.startdate<=ds && eind>=ds;
+      });
+      const herhalingItems=_expandHerhaling(filtered.filter(i=>i.herhaling&&i.herhaling!=='geen'), ds);
+      const allDay=[...dayItems,...herhalingItems.filter(i=>!dayItems.find(x=>x.id===i.id))];
+
+      if(!allDay.length) {
+        $('cal-content').innerHTML=`<div class="day-ev-empty">Geen items op deze dag.<br><br><button class="btn btn-accent" id="btn-add-day">+ Event toevoegen</button></div>`;
+        $('btn-add-day').addEventListener('click', ()=>_openEventModal(null, ds));
+        return;
+      }
+
+      // Sorteer op starttijd (items zonder tijd komen eerst)
+      allDay.sort((a,b)=>(a.starttime||'00:00').localeCompare(b.starttime||'00:00'));
+
+      $('cal-content').innerHTML=`<div class="day-list">${allDay.map(i=>`
+        <div class="day-ev-card" data-ev-id="${i.id}" style="border-left-color:${i.kleur}">
+          <div class="day-ev-time">
+            ${i.starttime||'—'}<br>
+            <span style="font-size:0.6rem;opacity:.6">${i.endtime||''}</span>
+          </div>
+          <div style="flex:1">
+            <div class="day-ev-title">${i.titel}</div>
+            <div class="day-ev-meta">
+              <span class="s-badge ${S_CSS[i.status]||'s-open'}">${S_ICON[i.status]||''} ${i.status}</span>
+              <span class="bron-chip" style="border-color:${i.kleur};color:${i.kleur}">
+                <span style="width:6px;height:6px;border-radius:50%;background:${i.kleur};display:inline-block"></span>
+                ${i.bronLabel}
+              </span>
+              ${i.locatie?`<span>📍 ${i.locatie}</span>`:''}
+              ${i.fase?`<span>🗂 ${i.fase}</span>`:''}
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" data-ev-id="${i.id}">›</button>
+        </div>`).join('')}</div>`;
+
+      $('cal-content').querySelectorAll('[data-ev-id]').forEach(el=>{
+        el.addEventListener('click', ()=>_openDetail(el.dataset.evId));
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // HERHALING EXPANSIE
+    // Controleert of een herhalend event ook op 'ds' valt
+    // ─────────────────────────────────────────────
+    function _expandHerhaling(herhalingItems, ds) {
+      const result=[];
+      for(const item of herhalingItems) {
+        if(!item.startdate || item.startdate===ds) continue; // Al in dayItems
+        const start=new Date(item.startdate);
+        const target=new Date(ds);
+        if(target<start) continue; // Vóór de startdatum
+        const diff=Math.round((target-start)/(864e5)); // Dagen verschil
+        let match=false;
+        if(item.herhaling==='dagelijks')       match=true;
+        if(item.herhaling==='wekelijks')       match=diff%7===0;
+        if(item.herhaling==='tweewekelijks')   match=diff%14===0;
+        if(item.herhaling==='maandelijks') {
+          match=start.getDate()===target.getDate();
+        }
+        if(item.herhaling==='jaarlijks') {
+          match=start.getDate()===target.getDate() && start.getMonth()===target.getMonth();
+        }
+        if(match) result.push({...item, startdate:ds, enddate:ds});
+      }
+      return result;
+    }
+
+    // ─────────────────────────────────────────────
+    // DETAIL MODAL — readonly voor bron-items, bewerkbaar voor standalone
+    // ─────────────────────────────────────────────
+    function _openDetail(id) {
+      // Zoek item in allItems (ook herhalingen hebben origineel id)
+      const item=allItems.find(i=>i.id===id);
+      if(!item) return;
+
+      $('md-title').textContent=item.titel;
+
+      // Bouw detail rijen
+      const rows=[
+        ['Status',      `<span class="s-badge ${S_CSS[item.status]||'s-open'}">${S_ICON[item.status]||''} ${item.status}</span>`],
+        ['Bron',        `<span class="bron-chip" style="border-color:${item.kleur};color:${item.kleur}"><span style="width:6px;height:6px;border-radius:50%;background:${item.kleur};display:inline-block"></span> ${item.bronLabel}</span>${item.bronUrl?` <a class="bron-link" href="${item.bronUrl}">→ Naar pagina</a>`:''}`],
+        ['Startdatum',  item.startdate+(item.starttime?' '+item.starttime:'')],
+        ['Einddatum',   (item.enddate||item.startdate)+(item.endtime?' '+item.endtime:'')],
+        item.locatie    ? ['Locatie',   item.locatie]    : null,
+        item.deelnemers ? ['Deelnemers',item.deelnemers] : null,
+        item.herhaling && item.herhaling!=='geen' ? ['Herhaling', item.herhaling] : null,
+        item.fase       ? ['Fase',      item.fase]       : null,
+        item.type       ? ['Type',      item.type]       : null,
+        item.prioriteit ? ['Prioriteit',item.prioriteit] : null,
+        item.assignee   ? ['Toegewezen',item.assignee]   : null,
+        item.tags       ? ['Tags',      item.tags]       : null,
+        item.omschrijving ? ['Beschrijving', `<span style="white-space:pre-wrap;font-family:var(--font-sans);font-size:0.82rem">${item.omschrijving}</span>`] : null,
+      ].filter(Boolean);
+
+      $('md-body').innerHTML=rows.map(([label,val])=>`
+        <div class="detail-row">
+          <div class="detail-label">${label}</div>
+          <div class="detail-val">${val}</div>
+        </div>`).join('');
+
+      // Footer knoppen
+      const isStandalone=item.bron==='standalone';
+      $('md-footer').innerHTML=`
+        <button class="btn btn-sm" id="btn-md-ics">📥 .ics download</button>
+        ${isStandalone?`<button class="btn btn-accent btn-sm" id="btn-md-edit">✏️ Bewerken</button>`:''}
+        <button class="btn btn-ghost btn-sm" id="btn-md-close2">Sluiten</button>`;
+
+      $('btn-md-ics').addEventListener('click', ()=>_downloadIcs([item]));
+      $('btn-md-close2').addEventListener('click', ()=>$('modal-detail').classList.remove('open'));
+      if(isStandalone) {
+        $('btn-md-edit').addEventListener('click', ()=>{ $('modal-detail').classList.remove('open'); _openEventModal(item.id); });
+      }
+
+      $('modal-detail').classList.add('open');
+    }
+
+    // ─────────────────────────────────────────────
+    // STANDALONE EVENT MODAL
+    // ─────────────────────────────────────────────
+    function _openEventModal(id=null, prefillDate=null) {
+      editEventId=id;
+      $('me-title').textContent    = id ? 'Event bewerken' : 'Event toevoegen';
+      $('btn-me-save').textContent = id ? 'Opslaan' : 'Toevoegen';
+      $('btn-me-delete').style.display = id ? 'inline-flex' : 'none';
+
+      if(id) {
+        // Bestaand event: velden vullen
+        const ev=_getStandaloneEvents().find(e=>e.id===id);
+        if(!ev) return;
+        $('fe-titel').value       = ev.titel||'';
+        $('fe-startdate').value   = ev.startdate||'';
+        $('fe-starttime').value   = ev.starttime||'';
+        $('fe-enddate').value     = ev.enddate||'';
+        $('fe-endtime').value     = ev.endtime||'';
+        $('fe-locatie').value     = ev.locatie||'';
+        $('fe-deelnemers').value  = ev.deelnemers||'';
+        $('fe-status').value      = ev.status||'Open';
+        $('fe-herhaling').value   = ev.herhaling||'geen';
+        $('fe-omschrijving').value= ev.omschrijving||'';
+        $('fe-tags').value        = ev.tags||'';
+      } else {
+        // Nieuw event: leegmaken, optioneel datum invullen
+        ['fe-titel','fe-starttime','fe-enddate','fe-endtime','fe-locatie','fe-deelnemers','fe-omschrijving','fe-tags'].forEach(fid=>$(fid).value='');
+        $('fe-startdate').value = prefillDate||'';
+        $('fe-status').value    = 'Open';
+        $('fe-herhaling').value = 'geen';
+      }
+      _updateHerhalingHint();
+      $('modal-event').classList.add('open');
+      $('fe-titel').focus();
+    }
+
+    function _closeEventModal() {
+      $('modal-event').classList.remove('open');
+      editEventId=null;
+    }
+
+    // Standalone events ophalen uit localStorage
+    function _getStandaloneEvents() {
+      try { return JSON.parse(localStorage.getItem('ag_events')||'[]'); } catch(e){ return []; }
+    }
+
+    // Standalone events opslaan + AgendaStore.sync() (voor ag_cache update)
+    function _saveStandaloneEvents(evts) {
+      localStorage.setItem('ag_events', JSON.stringify(evts));
+      AgendaStore.sync(); // ag_cache herberekenen
+    }
+
+    // Event opslaan (nieuw of bewerkt)
+    function _saveEvent() {
+      const titel=$('fe-titel').value.trim();
+      if(!titel){ $('fe-titel').focus(); return; }
+      const startdate=$('fe-startdate').value;
+      if(!startdate){ $('fe-startdate').focus(); return; }
+
+      const evts=_getStandaloneEvents();
+      const ev = {
+        id:          editEventId || 'AG-'+Date.now(),
+        titel,
+        startdate,
+        starttime:   $('fe-starttime').value,
+        enddate:     $('fe-enddate').value || startdate,
+        endtime:     $('fe-endtime').value,
+        locatie:     $('fe-locatie').value.trim(),
+        deelnemers:  $('fe-deelnemers').value.trim(),
+        status:      $('fe-status').value,
+        herhaling:   $('fe-herhaling').value,
+        omschrijving:$('fe-omschrijving').value.trim(),
+        tags:        $('fe-tags').value.trim(),
+      };
+
+      if(editEventId) {
+        const idx=evts.findIndex(e=>e.id===editEventId);
+        if(idx>-1) evts[idx]=ev; else evts.push(ev);
+      } else {
+        evts.push(ev);
+      }
+      _saveStandaloneEvents(evts);
+      _closeEventModal();
+      _loadItems();         // allItems herladen
+      _renderFilters();
+      _renderCal();
+      _updateMeta();
+    }
+
+    // Event verwijderen
+    function _deleteEvent() {
+      if(!editEventId || !confirm('Event verwijderen?')) return;
+      const evts=_getStandaloneEvents().filter(e=>e.id!==editEventId);
+      _saveStandaloneEvents(evts);
+      _closeEventModal();
+      _loadItems();
+      _renderFilters();
+      _renderCal();
+      _updateMeta();
+    }
+
+    // Herhaling beschrijving bijwerken in modal
+    function _updateHerhalingHint() {
+      const v=$('fe-herhaling').value;
+      const hints={'dagelijks':'Elke dag','wekelijks':'Elke week op dezelfde dag','tweewekelijks':'Elke twee weken','maandelijks':'Elke maand op dezelfde datum','jaarlijks':'Elk jaar op dezelfde datum','geen':''};
+      $('herhaling-hint').textContent=hints[v]||'';
+    }
+
+    // ─────────────────────────────────────────────
+    // .ICS EXPORT
+    // ─────────────────────────────────────────────
+
+    // Datum naar iCal formaat: YYYYMMDD
+    function _icsDate(d) { return d ? d.replace(/-/g,'') : ''; }
+
+    // Datum+tijd naar iCal formaat: YYYYMMDDTHHmmss
+    function _icsDateTime(d, t) {
+      if(!d) return '';
+      const base=d.replace(/-/g,'');
+      if(!t) return base;
+      return base+'T'+t.replace(':','')+'00';
+    }
+
+    // UID genereren per item
+    function _icsUid(item) { return `${item.id}-${item.startdate}@myfamtreecollab`; }
+
+    // iCal tekst voor één item
+    function _itemToVEvent(item) {
+      const now=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+      const isAllDay=!item.starttime;
+      const dtstart=isAllDay ? `DTSTART;VALUE=DATE:${_icsDate(item.startdate)}` : `DTSTART:${_icsDateTime(item.startdate,item.starttime)}`;
+      const eind=item.enddate||item.startdate;
+      const dtend  =isAllDay ? `DTEND;VALUE=DATE:${_icsDate(eind)}` : `DTEND:${_icsDateTime(eind,item.endtime||item.starttime)}`;
+      const rrule  =item.herhaling&&item.herhaling!=='geen' ? `RRULE:FREQ=${ICS_RRULE[item.herhaling]||'WEEKLY'}` : '';
+      const cats   =[item.bron, item.type, item.fase].filter(Boolean).join(',');
+
+      return [
+        'BEGIN:VEVENT',
+        `UID:${_icsUid(item)}`,
+        `DTSTAMP:${now}`,
+        dtstart,
+        dtend,
+        `SUMMARY:${item.titel}`,
+        item.omschrijving ? `DESCRIPTION:${item.omschrijving.replace(/\n/g,'\\n')}` : '',
+        item.locatie      ? `LOCATION:${item.locatie}` : '',
+        item.deelnemers   ? item.deelnemers.split(',').map(e=>`ATTENDEE;RSVP=FALSE:mailto:${e.trim()}`).join('\r\n') : '',
+        `STATUS:${ICS_STATUS[item.status]||'NEEDS-ACTION'}`,
+        cats ? `CATEGORIES:${cats}` : '',
+        rrule,
+        `X-BRON:${item.bronLabel}`,
+        'END:VEVENT',
+      ].filter(Boolean).join('\r\n');
+    }
+
+    // Download .ics bestand voor een lijst items
+    function _downloadIcs(items, filename='agenda') {
+      if(!items.length){ alert('Geen items om te exporteren.'); return; }
+      const cal=[
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//MyFamTreeCollab//Agenda//NL',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        `X-WR-CALNAME:MyFamTreeCollab Agenda`,
+        'X-WR-TIMEZONE:Europe/Brussels',
+        ...items.map(_itemToVEvent),
+        'END:VCALENDAR',
+      ].join('\r\n');
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([cal],{type:'text/calendar;charset=utf-8'}));
+      a.download=`${filename}.ics`;
+      a.click();
+    }
+
+    // Maand-export: alle gefilterde items in de huidige maand
+    function _exportMaandIcs() {
+      const y=calDate.getFullYear(), m=calDate.getMonth();
+      const maandStart=_ds(new Date(y,m,1));
+      const maandEnd  =_ds(new Date(y,m+1,0));
+      const maandItems=_filtered().filter(i=>{
+        const eind=i.enddate||i.startdate;
+        return i.startdate<=maandEnd && eind>=maandStart;
+      });
+      _downloadIcs(maandItems, `agenda-${MONTHS[m].toLowerCase()}-${y}`);
+    }
+
+    // ─────────────────────────────────────────────
+    // NAVIGATIE
+    // ─────────────────────────────────────────────
+    function _navCal(dir) {
+      if(calView==='month')     calDate=new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
+      else if(calView==='week') calDate=new Date(calDate.getTime()+dir*7*864e5);
+      else                      calDate=new Date(calDate.getTime()+dir*864e5);
+      _renderCal();
+      _updateMeta();
+    }
+
+    // ─────────────────────────────────────────────
+    // DATUM HULPFUNCTIES
+    // ─────────────────────────────────────────────
+    function _getMonday(d) { const day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1); return new Date(d.getFullYear(),d.getMonth(),diff); }
+    function _today()      { return _ds(new Date()); }
+    function _ds(d)        { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+    return { init };
+  })();
+  </script>
+</body>
+</html>
