@@ -205,6 +205,11 @@
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn" id="btn-export-ics-maand">📥 Maand .ics</button>
+          <!-- .ics import knop — opent bestandskiezer -->
+          <label class="btn" style="cursor:pointer" title="Importeer een .ics bestand van Google Calendar, Outlook of Apple Calendar">
+            📤 .ics importeren
+            <input type="file" id="input-ics" accept=".ics" style="display:none"/>
+          </label>
           <button class="btn btn-accent" id="btn-add-event">+ Event toevoegen</button>
         </div>
       </div>
