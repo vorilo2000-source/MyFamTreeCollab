@@ -9,7 +9,7 @@
 
 | ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
-| F0-001 |  | ZIP analyseren en alle bestanden inventariseren |  |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F0-001 |  | ZIP bestand | ZIP bestand analyseren en alle bestanden inventariseren |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
 | F0-002 |  | DeleteRow | js/DeleteRow.js` verwijderen (leeg bestand) |  | Bug |  |  |  | 🟡 Medium | ✅ Done |
 | F0-003 |  | schemaGlobal.js | js/schemaGlobal.js` verwijderen (verouderd) |  | Bug |  |  |  | 🟡 Medium | ✅ Done |
 | F0-004 |  | Dubbele functies | Alle dubbele functies in kaart brengen |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
@@ -110,16 +110,12 @@
 | F10-001 |  | accountbeheer.html | `admin/accountbeheer.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
 | F10-002 |  | analytics.html | `admin/analytics.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
 | F10-003 |  | analyse.html | `admin/analyse.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
-| F10-004 | sessie, 32, 33 | supabase-analyse.html | 1. `admin/supabase-analyse.html` — inline check vervangen door `adminGuard.js` `AdminGuard.protect()`, `#dashboard` → `#page-content`
-2. Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt |  | Bug | 2026-05-28 | 2026-05-28 |  | 🟡 Medium | ✅ Done |
+| F10-004 | sessie, 32, 33 | supabase-analyse.html | 1. `admin/supabase-analyse.html` — inline check vervangen door `adminGuard.js` `AdminGuard.protect()`, `#dashboard` → `#page-content`. 2. Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt. |  | Bug | 2026-05-28 | 2026-05-28 |  | 🟡 Medium | ✅ Done |
 | F10-005 |  | adminGuard.js | `js/adminGuard.js` — centrale herbruikbare guard module |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
 | F10-006 |  | blank.html | `develop/blank.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
 | F10-007 |  | sandbox.html | `develop/sandbox.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
 | F10-008 |  | standaardpagina.html | `develop/standaardpagina.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
-| F10-000 |  | Description | **Patroon:** `AdminGuard.protect(role)` via centrale `adminGuard.js` module.
-> - Tier !== 'admin' → `#accessDenied` zichtbaar, `#page-content` verborgen, uitvoering gestopt
-> - Tier === 'admin' → `#page-content` zichtbaar, `onAuthChange` listener actief
-> - Bij `SIGNED_OUT` → redirect naar `index.html` |  | Description |  |  |  | 🟡 Medium | 🔍 Review |
+| F10-000 |  | Description | **Patroon:** `AdminGuard.protect(role)` via centrale `adminGuard.js` module. - Tier !== 'admin' → `#accessDenied` zichtbaar, `#page-content` verborgen, uitvoering gestopt.  - Tier === 'admin' → `#page-content` zichtbaar, `onAuthChange` listener actief.  - Bij `SIGNED_OUT` → redirect naar `index.html` |  | Description |  |  |  | 🟡 Medium | 🔍 Review |
 | F10-009 | sessie, 31 | developer menu | Admin/developer menu verborgen na security-fix — recursieve RLS op `profiles` |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
 | F10-010 | sessie, 31 | accountbeheer.html | admin_users` view ontbrak na security-fix |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
 | F10-011 | sessie, 31 | admin_users | view — `permission denied for table users |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
