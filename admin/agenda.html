@@ -1152,12 +1152,14 @@
     function _parseIcs(text) {
       const events=[];
       // Unfold: iCal staat regels te vouwen met spatie/tab als vervolg
-      const unfolded=text.replace(/
-[ 	]/g,'').replace(/
-[ 	]/g,'');
-      const lines=unfolded.split(/
-?
-/);
+      const unfolded=text
+        .split('\r\n ').join('')
+        .split('\r\n\t').join('')
+        .split('\n ').join('')
+        .split('\n\t').join('');
+      const lines=unfolded.split('\r\n').length > 1
+        ? unfolded.split('\r\n')
+        : unfolded.split('\n');
 
       let inEvent=false, cur={};
       for(const raw of lines){
@@ -1233,7 +1235,8 @@
       };
 
       // Tekst unescapen: \n → newline, \, → komma
-      const unescape=(s)=>(s||'').replace(/\n/g,'\n').replace(/\,/g,',').replace(/\;/g,';').replace(/\\/g,'\');
+      // Tekst unescapen: \\n literal naar newline, escaped komma/puntkomma/backslash
+      const unescape=(s)=>{ if(!s)return''; return s.split('\\n').join('\n').split('\\,').join(',').split('\\;').join(';').split('\\\\').join('\\'); };
 
       return {
         id:          'ICS-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
