@@ -1,20 +1,21 @@
-<!-- ======================= admin/backlog.html v5.2.0 =======================
+<!-- ======================= admin/backlog.html v5.3.0 =======================
     Backlog Manager — admin only
 
-    Wijzigingen v5.2.0 (sessie 38):
-     - Tabs toegevoegd: Backlog · Kalender · KPI's
-     - Kalender: maand/week/dag weergave (identiek aan marketing.html)
-     - Backlog-items in kalender als blok van startdatum t/m einddatum
-     - KPI's: naam + beschrijving (tooltip), metriek-type (aantal/%/€/ms/MB)
-       kolommen: maand / kwartaal / jaar — elk invulbaar
-     - Item modal: startdatum + einddatum velden toegevoegd
-     - MD export: [KALENDER] en [KPI] secties toegevoegd
-     - localStorage: bl_events, bl_kpis toegevoegd
+    Wijzigingen v5.3.0 (sessie 38):
+     - Kalender tab verwijderd — agenda items via agenda.html (centrale agenda)
+     - KPI tab verwijderd — KPI's komen in apart kpi.html (toekomstige sessie)
+     - Tabs volledig verwijderd — directe backlog weergave zonder tab-overhead
+     - agendaStore.js geladen voor AgendaStore.sync() koppeling
+     - AgendaStore.sync() aangeroepen na elke _save() zodat agenda.html
+       altijd de actuele status van backlog items kent
+     - Alle kalender/KPI CSS, HTML en JS verwijderd
+     - Stat-card "KPI's" vervangen door "Agenda-items" (items met startdatum)
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
      - /MyFamTreeCollab/js/adminGuard.js
      - /MyFamTreeCollab/js/siteAnalytics.js
+     - ../js/agendaStore.js  ← nieuw v5.3.0
      - ../js/topbar.js (via fetch)
     ======================================================================= -->
 <!DOCTYPE html>
@@ -31,7 +32,6 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* ── Basis variabelen — identiek aan marketing.html ── */
     :root {
       --bg-main:      #565656;
       --bg-card:      #3a3a3a;
@@ -48,7 +48,6 @@
       --color-danger: #f08080;
     }
 
-    /* ── Toegang / page wrapper ── */
     #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
     #page-content  { display:none; }
     main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
@@ -66,7 +65,7 @@
     .projinfo-dd.open { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
     @media(max-width:600px){ .projinfo-dd.open{ grid-template-columns:1fr; } }
 
-    /* ── Acties toolbar ── */
+    /* ── Acties ── */
     .bl-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
 
     /* ── Knoppen ── */
@@ -88,15 +87,14 @@
     .apikey-dd.open { display:block; animation:fadeUp .2s ease; }
     .apikey-dd p { font-size:11px; color:var(--text-muted); line-height:1.5; margin-top:6px; }
 
-    /* ── Form elementen ── */
+    /* ── Form ── */
     .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
     .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
     .form-input:focus { border-color:var(--accent); }
     select.form-input { cursor:pointer; }
     textarea.form-input { resize:vertical; }
     .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .form-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
-    @media(max-width:500px){ .form-grid2,.form-grid3{ grid-template-columns:1fr; } }
+    @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
 
     /* ── Statistieken ── */
     .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:1.75rem; }
@@ -115,7 +113,6 @@
     .phase-pill { font-family:var(--font-mono); font-size:0.75rem; padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; position:relative; white-space:nowrap; }
     .phase-pill:hover { border-color:var(--accent); color:var(--accent); }
     .phase-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
-    /* Tooltip via CSS data-tip attribuut */
     .phase-pill[data-tip]:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:0; background:#1a1a18; color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; border:1px solid var(--border); max-width:260px; overflow:hidden; text-overflow:ellipsis; }
     .phase-pill[data-tip]:hover::before { content:''; position:absolute; bottom:calc(100% + 3px); left:16px; border:4px solid transparent; border-top-color:#1a1a18; pointer-events:none; z-index:99; }
     .phase-input-wrap { display:none; flex-wrap:wrap; gap:6px; align-items:center; padding-top:8px; border-top:1px solid var(--border); }
@@ -134,28 +131,18 @@
     .view-toggle button { font-family:var(--font-mono); font-size:0.75rem; padding:5px 14px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; transition:background .15s; }
     .view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
 
-    /* ── Tabs ── */
-    .tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; flex-wrap:wrap; }
-    .tab-btn { font-family:var(--font-mono); font-size:0.82rem; padding:10px 24px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; white-space:nowrap; }
-    .tab-btn:hover { color:var(--text-primary); }
-    .tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
-    .tab-panel { display:none; }
-    .tab-panel.active { display:block; }
-
     /* ── Lege staat ── */
     .empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); }
     .empty .empty-icon { font-size:32px; margin-bottom:12px; }
     .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
 
-    /* ── Board scroll container ── */
+    /* ── Board ── */
     .board-scroll { overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 320px); border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-main); scrollbar-width:thin; scrollbar-color:rgba(0,212,170,0.4) rgba(255,255,255,0.05); }
     .board-scroll::-webkit-scrollbar { width:8px; height:8px; }
     .board-scroll::-webkit-scrollbar-track { background:rgba(255,255,255,0.04); border-radius:4px; }
     .board-scroll::-webkit-scrollbar-thumb { background:rgba(0,212,170,0.4); border-radius:4px; }
     .board-scroll::-webkit-scrollbar-thumb:hover { background:rgba(0,212,170,0.7); }
     .board-scroll::-webkit-scrollbar-corner { background:rgba(255,255,255,0.04); }
-
-    /* ── Board kolommen ── */
     .board { display:flex; gap:0; min-width:max-content; align-items:flex-start; }
     .board-col { width:260px; flex-shrink:0; padding:0 12px; border-right:1px solid var(--border); }
     .board-col:last-child { border-right:none; }
@@ -193,7 +180,7 @@
     .tbl-id:hover { color:#0d3d5e; }
     .tbl-id-input { font-family:var(--font-mono); font-size:0.72rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:2px 6px; width:90px; outline:none; }
 
-    /* ── Prioriteit badges ── */
+    /* ── Prioriteit ── */
     .p-critical{background:rgba(240,128,128,0.2);color:#f08080;border:1px solid #f08080;}
     .p-high    {background:rgba(249,115,22,0.2); color:#fb923c;border:1px solid #fb923c;}
     .p-medium  {background:rgba(234,179,8,0.2);  color:#fbbf24;border:1px solid #fbbf24;}
@@ -205,7 +192,7 @@
     .dot-critical{background:#f08080} .dot-high{background:#fb923c}
     .dot-medium  {background:#fbbf24} .dot-low {background:#4ade80}
 
-    /* ── Status badges ── */
+    /* ── Status ── */
     .s-open      {background:rgba(96,165,250,0.2); color:#60a5fa;border:1px solid #60a5fa;}
     .s-inprogress{background:rgba(167,139,250,0.2);color:#a78bfa;border:1px solid #a78bfa;}
     .s-review    {background:rgba(251,191,36,0.2); color:#fbbf24;border:1px solid #fbbf24;}
@@ -217,63 +204,9 @@
     .s-review-tbl    {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-done-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
     .s-cancelled-tbl {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
-    .s-future-tbl    {background:#fdf4ff;color:#7e22ce; border:1px solid #e9d5ff;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
+    .s-future-tbl    {background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;display:inline-block;}
 
-    /* ── Kalender ── */
-    .cal-nav { display:flex; align-items:center; gap:10px; margin-bottom:1rem; flex-wrap:wrap; }
-    .cal-nav-title { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); flex:1; }
-    .cal-view-toggle { display:flex; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); overflow:hidden; }
-    .cal-view-toggle button { font-family:var(--font-mono); font-size:0.72rem; padding:5px 12px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; }
-    .cal-view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
-    /* Maandrooster */
-    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:1rem; }
-    .cal-day-header { font-family:var(--font-mono); font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); text-align:center; padding:6px 0; letter-spacing:1px; }
-    .cal-cell { background:var(--bg-card); border:1px solid var(--border); border-radius:4px; min-height:80px; padding:4px; cursor:pointer; transition:background .15s; }
-    .cal-cell:hover { background:var(--bg-card-alt); }
-    .cal-cell.today { border-color:var(--accent); }
-    .cal-cell.other-month { opacity:.35; }
-    .cal-cell-num { font-family:var(--font-mono); font-size:0.68rem; color:var(--text-muted); margin-bottom:3px; }
-    /* Kalender event blokken */
-    .cal-event { font-family:var(--font-sans); font-size:0.62rem; padding:2px 5px; border-radius:3px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
-    .cal-event.bl-item { background:rgba(96,165,250,0.25); color:#93c5fd; }
-    .cal-event.bl-item.done { background:rgba(0,212,170,0.2); color:var(--accent); }
-    .cal-event.bl-item.start { border-left:3px solid #60a5fa; }
-    .cal-event.bl-item.end { border-right:3px solid #60a5fa; opacity:.7; }
-    .cal-event.bl-item.middle { border-radius:0; opacity:.5; }
-    .cal-event.cal-extra { background:rgba(167,139,250,0.25); color:#c4b5fd; }
-    /* Weekrooster */
-    .week-grid { display:grid; grid-template-columns:60px repeat(7,1fr); gap:2px; }
-    .week-time { font-family:var(--font-mono); font-size:0.62rem; color:var(--text-muted); text-align:right; padding:3px 6px 0 0; }
-    .week-cell { background:var(--bg-card); border:1px solid var(--border); min-height:40px; padding:2px 4px; }
-    /* Dagweergave */
-    .day-list { display:flex; flex-direction:column; gap:6px; }
-    .day-event-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; display:flex; gap:12px; align-items:flex-start; }
-    .day-event-time { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); min-width:60px; }
-    .day-event-title { font-weight:600; font-size:0.82rem; }
-    .day-event-type { font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); }
-
-    /* ── KPI tabel ── */
-    .kpi-table-wrap { border:1px solid var(--border); border-radius:var(--radius); overflow:auto; margin-bottom:1.25rem; box-shadow:var(--shadow); }
-    .kpi-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.75rem; }
-    .kpi-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; color:#fff; padding:9px 12px; text-align:left; font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #0f5c35; white-space:nowrap; }
-    .kpi-table tbody td { padding:8px 12px; background:#c8c8c8; color:#1a1a1a; border-bottom:1px solid #aaa; vertical-align:middle; }
-    .kpi-table tbody tr:last-child td { border-bottom:none; }
-    .kpi-table tbody tr:hover td { background:#d8d8d8; }
-    /* KPI naam cel met tooltip-knop */
-    .kpi-naam-cel { display:flex; align-items:center; gap:6px; }
-    .kpi-desc-btn { font-size:0.65rem; width:18px; height:18px; border-radius:50%; border:1px solid #555; background:rgba(0,0,0,0.1); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:#555; position:relative; flex-shrink:0; }
-    .kpi-desc-btn:hover { background:rgba(0,0,0,0.2); }
-    /* Tooltip popup via :hover */
-    .kpi-desc-btn[data-desc]:hover::after { content:attr(data-desc); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1a1a18; color:#fff; font-size:11px; padding:6px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:99; border:1px solid var(--border); max-width:240px; white-space:normal; min-width:140px; }
-    /* KPI invoerveld inline in tabel */
-    .kpi-input { font-family:var(--font-mono); font-size:0.72rem; background:#fff; border:1px solid #1a7a4a; border-radius:4px; padding:3px 7px; width:80px; outline:none; color:#1a1a1a; }
-    /* Metriek-type badge */
-    .kpi-type { font-family:var(--font-mono); font-size:0.62rem; padding:1px 6px; border-radius:4px; background:rgba(0,212,170,0.1); color:#1a7a4a; border:1px solid #1a7a4a; }
-
-    /* ── KPI modal ── */
-    .id-preview { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); opacity:.7; margin-top:4px; }
-
-    /* ── Modal overlay ── */
+    /* ── Modal ── */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
     .modal-overlay.open { display:flex; }
     .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
@@ -281,6 +214,7 @@
     .modal-header h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:0; }
     .modal-body { display:flex; flex-direction:column; gap:12px; }
     .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
+    .id-preview { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); opacity:.7; margin-top:4px; }
     .ai-section { border-top:1px solid var(--border); padding-top:12px; }
     .ai-warning { font-family:var(--font-mono); font-size:0.72rem; color:#fb923c; margin-left:8px; }
     .ai-box { margin-top:10px; font-family:var(--font-mono); font-size:0.75rem; background:#2a2a2a; border-radius:var(--radius); padding:10px 14px; white-space:pre-wrap; line-height:1.6; color:var(--text-muted); border:1px solid var(--border); }
@@ -292,15 +226,12 @@
   </style>
 </head>
 <body>
-
-  <!-- Debug console (zelfde als andere admin pagina's) -->
   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script>eruda.init();</script>
 
   <div id="topbar-placeholder"></div>
   <div id="navbar-placeholder"></div>
 
-  <!-- Toegang geweigerd — verborgen tot AdminGuard beslist -->
   <div id="accessDenied">
     <div class="access-denied">
       <h2>Geen toegang</h2>
@@ -308,152 +239,89 @@
     </div>
   </div>
 
-  <!-- Hoofdinhoud — verborgen tot AdminGuard.protect() slaagt -->
   <div id="page-content">
-    <main>
-      <div class="dash-wrap">
+    <main><div class="dash-wrap">
 
-        <!-- Project header: naam + versie + datum, inline bewerkbaar -->
-        <div class="proj-header">
-          <div class="proj-name">
-            <span id="proj-name-txt">Project</span>
-            <button class="proj-edit-btn" id="btn-edit-proj">✏️ bewerken</button>
-          </div>
-          <!-- Uitklapbaar paneel voor naam/versie/datum -->
-          <div class="projinfo-dd" id="projinfo-dd">
-            <div><label class="form-label">Projectnaam</label><input class="form-input" type="text" id="pi-name" placeholder="MyFamTreeCollab"/></div>
-            <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0.0"/></div>
-            <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
-            <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
-              <button class="btn" id="btn-proj-cancel">Annuleren</button>
-              <button class="btn btn-accent" id="btn-proj-save">Opslaan</button>
-            </div>
-          </div>
-          <div class="proj-meta" id="proj-meta"></div>
+      <!-- Project header -->
+      <div class="proj-header">
+        <div class="proj-name">
+          <span id="proj-name-txt">Project</span>
+          <button class="proj-edit-btn" id="btn-edit-proj">✏️ bewerken</button>
         </div>
-
-        <!-- Acties: export, import, toevoegen, wissen -->
-        <div class="bl-actions">
-          <div class="apikey-wrap">
-            <button class="btn" id="btn-apikey">🔑 <span id="apikey-label">API key instellen</span></button>
-            <div class="apikey-dd" id="apikey-dd">
-              <label class="form-label">Anthropic API key</label>
-              <input class="form-input" type="password" id="input-apikey" placeholder="sk-ant-…"/>
-              <p>Sleutel wordt opgeslagen in localStorage en alleen naar de Anthropic API gestuurd.</p>
-            </div>
-          </div>
-          <button class="btn" id="btn-export-csv">💾 CSV opslaan</button>
-          <button class="btn" id="btn-export-md">📝 MD exporteren</button>
-          <label class="btn" style="cursor:pointer">📂 Laden (CSV/MD)<input type="file" id="input-file" accept=".csv,.md" style="display:none"/></label>
-          <button class="btn btn-accent" id="btn-add">+ Toevoegen</button>
-          <span style="flex:1"></span>
-          <button class="btn btn-danger" id="btn-clear-db" title="Wist alle bl_* data uit localStorage">🗑 Data wissen</button>
-        </div>
-
-        <!-- Statistieken kaarten -->
-        <div class="stat-grid" id="stat-grid"></div>
-
-        <!-- Fases — klikbare pills met tooltip-beschrijving -->
-        <div class="phases-bar">
-          <div class="phases-bar-top">
-            <span class="phases-label">Fases</span>
-            <button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button>
-          </div>
-          <div class="phase-pills-wrap" id="phase-pills"></div>
-          <!-- Inline fase-invoer -->
-          <div class="phase-input-wrap" id="phase-input-wrap">
-            <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="padding:3px 8px;font-size:12px"/>
-            <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving (tooltip)" style="padding:3px 8px;font-size:12px"/>
-            <button class="btn btn-accent" id="btn-add-phase" style="padding:4px 10px">+</button>
-            <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">✕</button>
+        <div class="projinfo-dd" id="projinfo-dd">
+          <div><label class="form-label">Projectnaam</label><input class="form-input" type="text" id="pi-name" placeholder="MyFamTreeCollab"/></div>
+          <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0.0"/></div>
+          <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
+          <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn" id="btn-proj-cancel">Annuleren</button>
+            <button class="btn btn-accent" id="btn-proj-save">Opslaan</button>
           </div>
         </div>
-
-        <!-- Hoofd tabs: Backlog | Kalender | KPI's -->
-        <div class="tab-bar">
-          <button class="tab-btn active" data-tab="backlog">📋 Backlog</button>
-          <button class="tab-btn" data-tab="kalender">📅 Kalender</button>
-          <button class="tab-btn" data-tab="kpis">📊 KPI's</button>
-        </div>
-
-        <!-- ══ TAB: Backlog ══ -->
-        <div class="tab-panel active" id="tab-backlog">
-          <!-- Filters: zoekbalk, view toggle, status/prio/type/tags pills -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <span class="filter-row-label">Zoeken</span>
-              <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID, toegewezen…" style="flex:1;min-width:200px"/>
-              <div class="view-toggle">
-                <button id="btn-view-board" class="active">Board</button>
-                <button id="btn-view-list">Lijst</button>
-              </div>
-              <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.72rem;padding:4px 12px">✕ Wissen</button>
-            </div>
-            <div class="filter-row"><span class="filter-row-label">Status</span><div class="pills-wrap" id="filter-status-pills"></div></div>
-            <div class="filter-row"><span class="filter-row-label">Prioriteit</span><div class="pills-wrap" id="filter-priority-pills"></div></div>
-            <div class="filter-row"><span class="filter-row-label">Type</span><div class="pills-wrap" id="filter-type-pills"></div></div>
-            <div class="filter-row"><span class="filter-row-label">Tags</span><div class="pills-wrap" id="filter-tag-pills"></div></div>
-          </div>
-          <!-- Board of lijstinhoud wordt hier gerenderd -->
-          <div id="bl-content"></div>
-        </div>
-
-        <!-- ══ TAB: Kalender ══ -->
-        <div class="tab-panel" id="tab-kalender">
-          <!-- Navigatie: pijlen, titel, view toggle -->
-          <div class="cal-nav">
-            <button class="btn" id="cal-prev">‹</button>
-            <div class="cal-nav-title" id="cal-title"></div>
-            <button class="btn" id="cal-next">›</button>
-            <div class="cal-view-toggle">
-              <button data-calview="month" class="active">Maand</button>
-              <button data-calview="week">Week</button>
-              <button data-calview="day">Dag</button>
-            </div>
-          </div>
-          <!-- Kalenderinhoud wordt dynamisch gevuld -->
-          <div id="cal-content"></div>
-          <!-- Legenda -->
-          <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
-            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);">Legenda:</span>
-            <span class="cal-event bl-item start" style="white-space:nowrap">● Item (start)</span>
-            <span class="cal-event bl-item middle" style="white-space:nowrap">● Item (midden)</span>
-            <span class="cal-event bl-item end" style="white-space:nowrap">● Item (eind)</span>
-            <span class="cal-event bl-item done" style="white-space:nowrap">✅ Gedaan</span>
-          </div>
-        </div>
-
-        <!-- ══ TAB: KPI's ══ -->
-        <div class="tab-panel" id="tab-kpis">
-          <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;">
-            <button class="btn btn-accent" id="btn-add-kpi">+ KPI toevoegen</button>
-          </div>
-          <!-- KPI tabel: naam (ℹ tooltip) | type | maand doel/actueel | kwartaal | jaar | acties -->
-          <div class="kpi-table-wrap">
-            <table class="kpi-table">
-              <thead>
-                <tr>
-                  <th>Metric</th>
-                  <th>Type</th>
-                  <th>Maand doel</th>
-                  <th>Maand actueel</th>
-                  <th>Kwartaal doel</th>
-                  <th>Kwartaal actueel</th>
-                  <th>Jaar doel</th>
-                  <th>Jaar actueel</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="kpi-body"></tbody>
-            </table>
-          </div>
-        </div>
-
+        <div class="proj-meta" id="proj-meta"></div>
       </div>
-    </main>
+
+      <!-- Acties -->
+      <div class="bl-actions">
+        <div class="apikey-wrap">
+          <button class="btn" id="btn-apikey">🔑 <span id="apikey-label">API key instellen</span></button>
+          <div class="apikey-dd" id="apikey-dd">
+            <label class="form-label">Anthropic API key</label>
+            <input class="form-input" type="password" id="input-apikey" placeholder="sk-ant-…"/>
+            <p>Sleutel wordt opgeslagen in localStorage en alleen naar de Anthropic API gestuurd.</p>
+          </div>
+        </div>
+        <button class="btn" id="btn-export-csv">💾 CSV opslaan</button>
+        <button class="btn" id="btn-export-md">📝 MD exporteren</button>
+        <label class="btn" style="cursor:pointer">📂 Laden (CSV/MD)<input type="file" id="input-file" accept=".csv,.md" style="display:none"/></label>
+        <button class="btn btn-accent" id="btn-add">+ Toevoegen</button>
+        <!-- Link naar centrale agenda — opent in zelfde tab -->
+        <a class="btn" href="/MyFamTreeCollab/admin/agenda.html" style="text-decoration:none">📅 Naar agenda</a>
+        <span style="flex:1"></span>
+        <button class="btn btn-danger" id="btn-clear-db">🗑 Data wissen</button>
+      </div>
+
+      <!-- Statistieken -->
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <!-- Fases -->
+      <div class="phases-bar">
+        <div class="phases-bar-top">
+          <span class="phases-label">Fases</span>
+          <button class="phase-pill" id="btn-new-phase">+ Nieuwe fase</button>
+        </div>
+        <div class="phase-pills-wrap" id="phase-pills"></div>
+        <div class="phase-input-wrap" id="phase-input-wrap">
+          <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="padding:3px 8px;font-size:12px"/>
+          <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving (tooltip)" style="padding:3px 8px;font-size:12px"/>
+          <button class="btn btn-accent" id="btn-add-phase" style="padding:4px 10px">+</button>
+          <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">✕</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-section">
+        <div class="filter-row">
+          <span class="filter-row-label">Zoeken</span>
+          <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID, toegewezen…" style="flex:1;min-width:200px"/>
+          <div class="view-toggle">
+            <button id="btn-view-board" class="active">Board</button>
+            <button id="btn-view-list">Lijst</button>
+          </div>
+          <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.72rem;padding:4px 12px">✕ Wissen</button>
+        </div>
+        <div class="filter-row"><span class="filter-row-label">Status</span><div class="pills-wrap" id="filter-status-pills"></div></div>
+        <div class="filter-row"><span class="filter-row-label">Prioriteit</span><div class="pills-wrap" id="filter-priority-pills"></div></div>
+        <div class="filter-row"><span class="filter-row-label">Type</span><div class="pills-wrap" id="filter-type-pills"></div></div>
+        <div class="filter-row"><span class="filter-row-label">Tags</span><div class="pills-wrap" id="filter-tag-pills"></div></div>
+      </div>
+
+      <!-- Backlog inhoud (board of lijst) -->
+      <div id="bl-content"></div>
+
+    </div></main>
   </div>
 
-  <!-- ══ Modal: Backlog item ══ -->
+  <!-- Modal: item toevoegen / bewerken -->
   <div class="modal-overlay" id="modal">
     <div class="modal">
       <div class="modal-header">
@@ -461,7 +329,6 @@
         <button class="btn btn-ghost" id="btn-modal-close" style="font-size:18px;padding:4px 8px">✕</button>
       </div>
       <div class="modal-body">
-        <!-- ID: automatisch gegenereerd, handmatig aanpasbaar -->
         <div>
           <label class="form-label">ID <span style="opacity:.5;font-size:0.68rem">(automatisch · aanpasbaar)</span></label>
           <input class="form-input" type="text" id="f-id" placeholder="Wordt automatisch gegenereerd"/>
@@ -488,7 +355,7 @@
               <option>Done</option><option>Cancelled</option><option>Future</option>
             </select>
           </div>
-          <!-- Datumvelden: nieuw in v5.2.0 -->
+          <!-- Datumvelden: zichtbaar in agenda.html als item een startdatum heeft -->
           <div><label class="form-label">Startdatum</label><input class="form-input" type="date" id="f-startdate"/></div>
           <div><label class="form-label">Einddatum</label><input class="form-input" type="date" id="f-enddate"/></div>
         </div>
@@ -496,7 +363,6 @@
         <div><label class="form-label">Tags</label><input class="form-input" type="text" id="f-tags" placeholder="tag1, tag2, tag3"/></div>
         <div><label class="form-label">Omschrijving</label><textarea class="form-input" id="f-description" rows="3" placeholder="Wat moet er gedaan worden? Waarom?"></textarea></div>
         <div><label class="form-label">AI suggestie</label><textarea class="form-input" id="f-ai" rows="2" placeholder="Via ✦ AI suggestie of handmatig…"></textarea></div>
-        <!-- AI sectie -->
         <div class="ai-section">
           <button class="btn" id="btn-ai">✦ AI suggestie ophalen</button>
           <span class="ai-warning" id="ai-warning" style="display:none">Stel eerst je API key in</span>
@@ -510,59 +376,21 @@
     </div>
   </div>
 
-  <!-- ══ Modal: KPI toevoegen/bewerken ══ -->
-  <div class="modal-overlay" id="modal-kpi">
-    <div class="modal" style="max-width:520px">
-      <div class="modal-header">
-        <h2 id="kpi-modal-title">KPI toevoegen</h2>
-        <button class="btn btn-ghost" id="btn-kpi-close" style="font-size:18px;padding:4px 8px">✕</button>
-      </div>
-      <div class="modal-body">
-        <!-- Naam van de metric -->
-        <div><label class="form-label">Naam metric *</label><input class="form-input" type="text" id="fk-naam" placeholder="bv. Aantal actieve gebruikers"/></div>
-        <!-- Beschrijving als popup in tabel -->
-        <div><label class="form-label">Beschrijving <span style="opacity:.5;font-size:0.68rem">(verschijnt als ℹ tooltip)</span></label><textarea class="form-input" id="fk-desc" rows="2" placeholder="Wat meet deze metric, waarom is het relevant?"></textarea></div>
-        <!-- Metriek-type: bepaalt welk eenheid getoond wordt -->
-        <div><label class="form-label">Metriek-type</label>
-          <select class="form-input" id="fk-type">
-            <option value="aantal">Aantal (0, 1, 2…)</option>
-            <option value="%">Percentage (%)</option>
-            <option value="€">Bedrag (€)</option>
-            <option value="ms">Milliseconden (ms)</option>
-            <option value="MB">Megabytes (MB)</option>
-            <option value="vrij">Vrij tekst</option>
-          </select>
-        </div>
-        <!-- Doelstellingen: maand / kwartaal / jaar -->
-        <div class="form-grid3">
-          <div><label class="form-label">Maand doel</label><input class="form-input" type="text" id="fk-maand-doel" placeholder="100"/></div>
-          <div><label class="form-label">Kwartaal doel</label><input class="form-input" type="text" id="fk-kwartaal-doel" placeholder="300"/></div>
-          <div><label class="form-label">Jaar doel</label><input class="form-input" type="text" id="fk-jaar-doel" placeholder="1200"/></div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="btn-kpi-cancel">Annuleren</button>
-        <button class="btn btn-accent" id="btn-kpi-save">Toevoegen</button>
-      </div>
-    </div>
-  </div>
-
   <div id="footer-placeholder"></div>
 
-  <!-- ── Laadvolgorde: identiek aan analytics.html en marketing.html ── -->
+  <!-- Laadvolgorde: supabase → utils → auth → adminGuard → siteAnalytics → agendaStore → topbar -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/auth.js"></script>
   <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
   <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+  <!-- agendaStore vóór de module laden zodat AgendaStore.sync() beschikbaar is -->
+  <script src="../js/agendaStore.js"></script>
 
   <script>
-  // ── Layout laden (TopBar, Navbar, Footer) ──
   fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
     document.getElementById('topbar-placeholder').innerHTML=html;
-    const s=document.createElement('script');
-    s.src='../js/topbar.js';
-    // Na topbar.js geladen: AdminGuard beschermt de pagina, dan Backlog initialiseren
+    const s=document.createElement('script'); s.src='../js/topbar.js';
     s.onload=()=>AdminGuard.protect('admin').then(ok=>{if(ok)Backlog.init();});
     document.body.appendChild(s);
   });
@@ -570,25 +398,20 @@
   fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{document.getElementById('footer-placeholder').innerHTML=html;});
 
   // ════════════════════════════════════════════════════════════════
-  // BACKLOG MODULE — beheer van backlog items, kalender en KPI's
+  // BACKLOG MODULE v5.3.0
   // ════════════════════════════════════════════════════════════════
   const Backlog = (() => {
     // ── State ──
-    let items=[], phases=[], phaseDescs={};     // backlog data
-    let kpis=[];                                  // KPI data (nieuw v5.2.0)
-    let view='board', search='', fPhase='All';   // filter state backlog tab
+    let items=[], phases=[], phaseDescs={};
+    let view='board', search='', fPhase='All';
     let fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
-    let editId=null, editKpiIdx=null, apiKey=''; // welk item/kpi wordt bewerkt
-    let projName='', projVersion='', projDate='';// project meta
-    let calView='month', calDate=new Date();     // kalender state (nieuw v5.2.0)
+    let editId=null, apiKey='';
+    let projName='', projVersion='', projDate='';
 
     // ── Constanten ──
     const STATUSES   = ['Open','In Progress','Review','Done','Cancelled','Future'];
     const PRIORITIES = ['Critical','High','Medium','Low'];
     const TYPES      = ['Feature','Bug','Improvement','Security','Tech Debt','Decision','Description','Other'];
-    const DAYS       = ['Ma','Di','Wo','Do','Vr','Za','Zo'];  // week begint op maandag
-    const MONTHS     = ['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
-    // Status iconen en CSS klassen
     const S_ICON = {'Open':'📋','In Progress':'🔄','Review':'🔍','Done':'✅','Cancelled':'❌','Future':'🔮'};
     const S_CSS  = {'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
     const S_TBL  = {'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
@@ -596,50 +419,43 @@
     const P_TBL  = {'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
     const D_CSS  = {'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
 
-    // ── Hulpfuncties ──
-    const $  = id => document.getElementById(id);
-    const V  = v  => v&&v.trim() ? v.trim() : '';  // lege waarde = lege string (nooit 'X')
+    const $ = id => document.getElementById(id);
+    const V = v  => v&&v.trim() ? v.trim() : '';
 
     // ─────────────────────────────────────────────
     // INITIALISATIE
     // ─────────────────────────────────────────────
     function init() {
-      // API key ophalen uit localStorage
       apiKey = localStorage.getItem('bl_apikey') || '';
       _updateApiKeyUI();
 
-      // Backlog data laden uit localStorage als aanwezig
       const savedItems = localStorage.getItem('bl_items');
       if(savedItems) {
         items      = JSON.parse(savedItems);
         phases     = JSON.parse(localStorage.getItem('bl_phases')     || '[]');
         phaseDescs = JSON.parse(localStorage.getItem('bl_phasedescs') || '{}');
-        kpis       = JSON.parse(localStorage.getItem('bl_kpis')       || '[]');  // nieuw v5.2.0
         _loadProjInfo();
       }
-
       _bindEvents();
       _renderAll();
+      // Initiële sync: ag_cache bijwerken zodat agenda.html direct actuele data heeft
+      _agSync();
+    }
+
+    // ─────────────────────────────────────────────
+    // AGENDA SYNC — roept AgendaStore.sync() aan als beschikbaar
+    // ─────────────────────────────────────────────
+    function _agSync() {
+      if(typeof AgendaStore !== 'undefined') {
+        AgendaStore.sync(); // ag_cache herberekenen met actuele bl_items status
+      }
     }
 
     // ─────────────────────────────────────────────
     // EVENT BINDINGS
     // ─────────────────────────────────────────────
     function _bindEvents() {
-      // Tabs: Backlog / Kalender / KPI's
-      document.querySelectorAll('.tab-btn').forEach(b=>{
-        b.addEventListener('click', ()=>{
-          document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-          document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
-          b.classList.add('active');
-          // Tab paneel id = 'tab-' + data-tab waarde
-          $('tab-'+b.dataset.tab).classList.add('active');
-          // Kalender direct renderen bij tabwissel
-          if(b.dataset.tab==='kalender') _renderCal();
-        });
-      });
-
-      // Project info bewerkpaneel
+      // Project info
       $('btn-edit-proj').addEventListener('click', ()=>{
         $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate;
         $('projinfo-dd').classList.toggle('open');
@@ -650,7 +466,7 @@
       });
       $('btn-proj-cancel').addEventListener('click', ()=>$('projinfo-dd').classList.remove('open'));
 
-      // API key dropdown
+      // API key
       $('btn-apikey').addEventListener('click', ()=>$('apikey-dd').classList.toggle('open'));
       $('input-apikey').value = apiKey;
       $('input-apikey').addEventListener('change', e=>{
@@ -663,15 +479,15 @@
           $('apikey-dd').classList.remove('open');
       });
 
-      // Acties toolbar
+      // Acties
       $('btn-export-csv').addEventListener('click', exportCSV);
       $('btn-export-md').addEventListener('click', exportMD);
       $('input-file').addEventListener('change', importFile);
-
-      // Data wissen: verwijdert alle bl_* keys uit localStorage
       $('btn-clear-db').addEventListener('click', ()=>{
-        if(!confirm('Alle backlog data wissen uit localStorage?\nDit kan niet ongedaan worden gemaakt.')) return;
+        if(!confirm('Alle backlog data wissen?\nDit kan niet ongedaan worden gemaakt.')) return;
         Object.keys(localStorage).filter(k=>k.startsWith('bl_')).forEach(k=>localStorage.removeItem(k));
+        // ag_cache ook wissen zodat agenda.html geen stale backlog items toont
+        localStorage.removeItem('ag_cache');
         location.reload();
       });
 
@@ -685,100 +501,69 @@
       $('btn-add-phase').addEventListener('click', _addPhase);
       $('input-new-phase').addEventListener('keydown', e=>{if(e.key==='Enter')_addPhase();if(e.key==='Escape')_cancelPhaseInput();});
 
-      // Backlog item modal
+      // Item modal
       $('btn-add').addEventListener('click', ()=>openModal());
       $('btn-modal-close').addEventListener('click', closeModal);
       $('btn-modal-cancel').addEventListener('click', closeModal);
       $('btn-modal-save').addEventListener('click', saveItem);
       $('modal').addEventListener('click', e=>{if(e.target===$('modal'))closeModal();});
-
-      // Auto ID updaten als fase of type wijzigt
       $('f-phase').addEventListener('change', _updateAutoId);
       $('f-type').addEventListener('change',  _updateAutoId);
 
-      // Zoeken en view toggle
+      // Filters
       $('input-search').addEventListener('input', e=>{search=e.target.value;_renderContent();});
       $('btn-view-board').addEventListener('click', ()=>{view='board';_updateViewToggle();_renderContent();});
       $('btn-view-list').addEventListener('click',  ()=>{view='list'; _updateViewToggle();_renderContent();});
       $('btn-clear-filters').addEventListener('click', clearFilters);
 
-      // AI suggestie
+      // AI
       $('btn-ai').addEventListener('click', _getAiSuggestion);
-
-      // Kalender navigatie
-      $('cal-prev').addEventListener('click', ()=>_calNav(-1));
-      $('cal-next').addEventListener('click', ()=>_calNav(1));
-      document.querySelectorAll('.cal-view-toggle button').forEach(b=>{
-        b.addEventListener('click', ()=>{
-          document.querySelectorAll('.cal-view-toggle button').forEach(x=>x.classList.remove('active'));
-          b.classList.add('active');
-          calView=b.dataset.calview;
-          _renderCal();
-        });
-      });
-
-      // KPI modal
-      $('btn-add-kpi').addEventListener('click', ()=>_openKpiModal());
-      $('btn-kpi-close').addEventListener('click', ()=>_closeKpiModal());
-      $('btn-kpi-cancel').addEventListener('click', ()=>_closeKpiModal());
-      $('btn-kpi-save').addEventListener('click', _saveKpi);
-      $('modal-kpi').addEventListener('click', e=>{if(e.target===$('modal-kpi'))_closeKpiModal();});
     }
 
     // ─────────────────────────────────────────────
-    // RENDER ALL
+    // RENDER
     // ─────────────────────────────────────────────
     function _renderAll() {
-      _renderMeta();
-      _renderStats();
-      _renderPhasePills();
-      _renderFilterPills();
-      _renderContent();
-      _updatePhasesInModal();
-      _renderKpi();
+      _renderMeta(); _renderStats(); _renderPhasePills(); _renderFilterPills(); _renderContent(); _updatePhasesInModal();
     }
 
-    // ── Meta in header ──
     function _renderMeta() {
       const t=items.length, done=items.filter(i=>i.status==='Done').length, pct=t?Math.round(done/t*100):0;
       $('proj-name-txt').textContent = projName || 'Project';
       $('proj-meta').innerHTML =
-        `${projVersion ? `<span>📦 <b>${projVersion}</b></span>` : ''}` +
-        `${projDate    ? `<span>📅 <b>${_fmtDate(projDate)}</b></span>` : ''}` +
+        `${projVersion?`<span>📦 <b>${projVersion}</b></span>`:''}` +
+        `${projDate   ?`<span>📅 <b>${_fmtDate(projDate)}</b></span>`:''}` +
         `<span>📋 <b>${t}</b> items</span><span>✅ <b>${pct}%</b> afgerond</span>`;
     }
 
-    // Datum van YYYY-MM-DD naar DD-MM-YYYY weergave
     function _fmtDate(d) { if(!d)return''; const p=d.split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; }
 
-    // ── Statistieken ──
     function _renderStats() {
       const t=items.length, done=items.filter(i=>i.status==='Done').length, pct=t?Math.round(done/t*100):0;
+      // Agenda-items: items met een startdatum (zichtbaar in agenda.html)
+      const metDatum=items.filter(i=>i.startdate&&i.startdate.trim()).length;
       $('stat-grid').innerHTML=`
         <div class="stat-card"><div class="stat-label">Totaal</div><div class="stat-value">${t}</div></div>
         <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${items.filter(i=>i.status==='Open').length}</div></div>
         <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${items.filter(i=>i.status==='In Progress').length}</div></div>
         <div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">${done}</div></div>
         <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
-        <div class="stat-card"><div class="stat-label">KPI's</div><div class="stat-value">${kpis.length}</div></div>`;
+        <div class="stat-card" title="Items met startdatum — zichtbaar in agenda.html"><div class="stat-label">In agenda</div><div class="stat-value">${metDatum}</div></div>`;
     }
 
-    // ── Fase pills ──
     function _renderPhasePills() {
       $('phase-pills').innerHTML = phases.map(ph=>{
-        const desc = phaseDescs[ph]||'';
+        const desc=phaseDescs[ph]||'';
         return `<span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}" ${desc?`data-tip="${desc}"`:''}>${ph} <span data-remove="${ph}" style="margin-left:5px;opacity:.4;cursor:pointer">×</span></span>`;
       }).join('');
       $('phase-pills').querySelectorAll('.phase-pill').forEach(el=>{
         el.addEventListener('click', e=>{
           if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;}
-          fPhase = fPhase===el.dataset.phase ? 'All' : el.dataset.phase;
-          _renderContent();
+          fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; _renderContent();
         });
       });
     }
 
-    // ── Filter pills ──
     function _renderFilterPills() {
       const allTags=[...new Set(items.flatMap(i=>(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort();
       _buildPills('filter-status-pills',   STATUSES,   fStatus,   S_ICON);
@@ -789,105 +574,94 @@
 
     function _buildPills(cid, opts, activeSet, icons) {
       const el=$(cid);
-      el.innerHTML = opts.map(o=>`<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`).join('');
+      el.innerHTML=opts.map(o=>`<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`).join('');
       el.querySelectorAll('.filter-pill').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          const v=btn.dataset.val;
-          activeSet.has(v) ? activeSet.delete(v) : activeSet.add(v);
-          _renderFilterPills();
-          _renderContent();
+          const v=btn.dataset.val; activeSet.has(v)?activeSet.delete(v):activeSet.add(v);
+          _renderFilterPills(); _renderContent();
         });
       });
     }
 
     function clearFilters() {
       search=''; fPhase='All'; fStatus.clear(); fPriority.clear(); fType.clear(); fTags.clear();
-      $('input-search').value='';
-      _renderAll();
+      $('input-search').value=''; _renderAll();
     }
 
-    // ── Gefilterde items ──
     function _filtered() {
       const q=search.toLowerCase();
       return items.filter(i=>{
-        const mq  = !q || i.title.toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || i.id.toLowerCase().includes(q) || (i.assignee||'').toLowerCase().includes(q);
-        const ms  = !fStatus.size   || fStatus.has(i.status);
-        const mp  = !fPriority.size || fPriority.has(i.priority);
-        const mt  = !fType.size     || fType.has(i.type);
-        const mph = fPhase==='All'  || i.phase===fPhase;
+        const mq  = !q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q)||(i.assignee||'').toLowerCase().includes(q);
+        const ms  = !fStatus.size   ||fStatus.has(i.status);
+        const mp  = !fPriority.size ||fPriority.has(i.priority);
+        const mt  = !fType.size     ||fType.has(i.type);
+        const mph = fPhase==='All'  ||i.phase===fPhase;
         const it  = (i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-        const mta = !fTags.size     || [...fTags].some(t=>it.includes(t));
+        const mta = !fTags.size     ||[...fTags].some(t=>it.includes(t));
         return mq&&ms&&mp&&mt&&mph&&mta;
       });
     }
 
-    // ── Backlog inhoud renderen (board of lijst) ──
     function _renderContent() {
       const filtered=_filtered();
-      // Lege staat: geen items geladen
       if(!items.length) {
         $('bl-content').innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Nog geen items. Laad een CSV/MD bestand of voeg je eerste item toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste item toevoegen</button></div>`;
-        $('btn-add-empty').addEventListener('click', ()=>openModal());
-        return;
+        $('btn-add-empty').addEventListener('click', ()=>openModal()); return;
       }
-      $('bl-content').innerHTML = view==='board' ? _boardHTML(filtered) : _listHTML(filtered);
-      // Klik handlers voor bewerken en verwijderen
-      $('bl-content').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>openModal(b.dataset.edit)));
-      $('bl-content').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click', ()=>_deleteItem(b.dataset.delete)));
-      // Inline ID bewerken via klik op het ID element
-      $('bl-content').querySelectorAll('.tbl-id,.card-id').forEach(el=>el.addEventListener('click', ()=>_inlineEditId(el)));
+      $('bl-content').innerHTML=view==='board'?_boardHTML(filtered):_listHTML(filtered);
+      $('bl-content').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.edit)));
+      $('bl-content').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>_deleteItem(b.dataset.delete)));
+      $('bl-content').querySelectorAll('.tbl-id,.card-id').forEach(el=>el.addEventListener('click',()=>_inlineEditId(el)));
     }
 
-    // Board weergave: kolommen per status
     function _boardHTML(filtered) {
-      // Toon alleen gefilterde statussen als filter actief is
-      const visibleStatuses = fStatus.size>0 ? STATUSES.filter(s=>fStatus.has(s)) : STATUSES;
-      return `<div class="board-scroll"><div class="board">${visibleStatuses.map(s=>{
+      const vis=fStatus.size>0?STATUSES.filter(s=>fStatus.has(s)):STATUSES;
+      return `<div class="board-scroll"><div class="board">${vis.map(s=>{
         const col=filtered.filter(i=>i.status===s);
         return `<div class="board-col">
           <div class="board-col-title">${S_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
-          <div class="board-col-items">${col.length ? col.map(_cardHTML).join('') : '<div class="board-empty">—</div>'}</div>
+          <div class="board-col-items">${col.length?col.map(_cardHTML).join(''):'<div class="board-empty">—</div>'}</div>
         </div>`;
       }).join('')}</div></div>`;
     }
 
-    // Kaart HTML voor board weergave
     function _cardHTML(i) {
       const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+      // Kleine agenda-indicator als het item een startdatum heeft
+      const agIndicator=i.startdate?`<span title="Zichtbaar in agenda" style="font-size:10px;opacity:.5">📅</span>`:'';
       return `<div class="card">
         <div class="card-header">
-          <span class="card-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span>
+          <span class="card-id" data-id="${i.id}">${i.id} ${agIndicator}</span>
           <div class="card-actions">
             <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px;font-size:11px">✏️</button>
             <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px;font-size:11px">🗑</button>
           </div>
         </div>
         <div class="card-title">${i.title}</div>
-        ${i.description ? `<div class="card-desc">${i.description}</div>` : ''}
-        ${(i.startdate||i.enddate) ? `<div class="card-dates">📅 ${i.startdate||''}${i.enddate&&i.enddate!==i.startdate?' → '+i.enddate:''}</div>` : ''}
+        ${i.description?`<div class="card-desc">${i.description}</div>`:''}
+        ${(i.startdate||i.enddate)?`<div class="card-dates">📅 ${i.startdate||''}${i.enddate&&i.enddate!==i.startdate?' → '+i.enddate:''}</div>`:''}
         <div class="card-footer">
           <span class="badge ${P_CSS[i.priority]||'p-medium'}"><span class="dot ${D_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span>
           <span class="badge ${S_CSS[i.status]||'s-open'}">${S_ICON[i.status]||''} ${i.status}</span>
-          ${i.phase ? `<span class="badge s-cancelled" style="font-size:0.65rem">${i.phase}</span>` : ''}
-          ${i.assignee ? `<span class="assignee-txt">👤 ${i.assignee}</span>` : ''}
+          ${i.phase?`<span class="badge s-cancelled" style="font-size:0.65rem">${i.phase}</span>`:''}
+          ${i.assignee?`<span class="assignee-txt">👤 ${i.assignee}</span>`:''}
         </div>
-        ${tags.length ? `<div class="card-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}
+        ${tags.length?`<div class="card-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
       </div>`;
     }
 
-    // Lijst weergave (tabel)
     function _listHTML(filtered) {
       if(!filtered.length) return `<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem 0;text-align:center">Geen items gevonden.</p>`;
       return `<div class="list-wrap"><table class="list-table">
-        <thead><tr><th>ID</th><th>Tags</th><th>Taak</th><th>Omschrijving</th><th>AI suggestie</th><th>Type</th><th>Start</th><th>Eind</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Tags</th><th>Taak</th><th>Omschrijving</th><th>AI</th><th>Type</th><th>Start</th><th>Eind</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
         <tbody>${filtered.map(i=>{
           const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
           return `<tr>
-            <td><span class="tbl-id" data-id="${i.id}" title="Klik om ID te bewerken">${i.id}</span></td>
+            <td><span class="tbl-id" data-id="${i.id}">${i.id}${i.startdate?' 📅':''}</span></td>
             <td>${tags.map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')||''}</td>
             <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title||''}</td>
             <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.description||''}</td>
-            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;font-size:0.72rem">${i.ai||''}</td>
+            <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;font-size:0.72rem">${i.ai||''}</td>
             <td>${i.type||''}</td>
             <td style="white-space:nowrap">${i.startdate||''}</td>
             <td style="white-space:nowrap">${i.enddate||''}</td>
@@ -901,339 +675,72 @@
         }).join('')}</tbody></table></div>`;
     }
 
-    // ── Inline ID bewerking ──
     function _inlineEditId(el) {
       const oldId=el.dataset.id;
       const input=document.createElement('input');
-      input.className='tbl-id-input id-edit-input';
-      input.value=oldId;
+      input.className='tbl-id-input id-edit-input'; input.value=oldId;
       el.replaceWith(input); input.focus(); input.select();
       const commit=()=>{
         const newId=input.value.trim();
-        if(newId && newId!==oldId) {
-          if(items.find(i=>i.id===newId)){ alert('ID "'+newId+'" bestaat al.'); input.focus(); return; }
-          items=items.map(i=>i.id===oldId ? {...i,id:newId} : i); _save();
+        if(newId&&newId!==oldId){
+          if(items.find(i=>i.id===newId)){alert('ID "'+newId+'" bestaat al.');input.focus();return;}
+          items=items.map(i=>i.id===oldId?{...i,id:newId}:i); _save();
         }
         _renderContent();
       };
       input.addEventListener('blur', commit);
-      input.addEventListener('keydown', e=>{ if(e.key==='Enter')commit(); if(e.key==='Escape')_renderContent(); });
+      input.addEventListener('keydown', e=>{if(e.key==='Enter')commit();if(e.key==='Escape')_renderContent();});
     }
 
     // ─────────────────────────────────────────────
-    // KALENDER (identiek aan marketing.html, items op start t/m eindatum)
-    // ─────────────────────────────────────────────
-
-    // Renderen op basis van calView (month/week/day)
-    function _renderCal() {
-      const y=calDate.getFullYear(), m=calDate.getMonth();
-      if(calView==='month') {
-        $('cal-title').textContent=`${MONTHS[m]} ${y}`;
-        _renderCalMonth(y,m);
-      } else if(calView==='week') {
-        const mon=_getMonday(calDate);
-        $('cal-title').textContent=`Week van ${mon.toLocaleDateString('nl-BE')}`;
-        _renderCalWeek(mon);
-      } else {
-        $('cal-title').textContent=calDate.toLocaleDateString('nl-BE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-        _renderCalDay(calDate);
-      }
-    }
-
-    // Maandweergave: 7-koloms grid, items als blokken over start-eind range
-    function _renderCalMonth(y,m) {
-      const first=new Date(y,m,1), last=new Date(y,m+1,0);
-      let startDay=(first.getDay()+6)%7; // Maandag = index 0
-      let html=`<div class="cal-grid">${DAYS.map(d=>`<div class="cal-day-header">${d}</div>`).join('')}`;
-
-      // Lege cellen voor de eerste dag van de maand
-      for(let i=0;i<startDay;i++) {
-        const d=new Date(y,m,i-startDay+1);
-        html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${d.getDate()}</div></div>`;
-      }
-
-      // Dagen van de maand
-      for(let d=1;d<=last.getDate();d++) {
-        const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const isToday=dateStr===_today();
-
-        // Items die dit dag overlappen (start ≤ dag ≤ eind)
-        const dayItems=items.filter(i=>{
-          if(!i.startdate) return false; // Geen startdatum: niet in kalender
-          const eind=i.enddate||i.startdate; // Geen eindatum: eendagsevent
-          return i.startdate<=dateStr && eind>=dateStr;
-        });
-
-        html+=`<div class="cal-cell ${isToday?'today':''}" data-date="${dateStr}">
-          <div class="cal-cell-num">${d}</div>
-          ${dayItems.slice(0,3).map(i=>{
-            // Bepaal of dit de start, eind, of een middendag is voor visuele stijl
-            const eind=i.enddate||i.startdate;
-            const isStart=i.startdate===dateStr;
-            const isEnd=eind===dateStr;
-            const pos=isStart&&isEnd?'start':isStart?'start':isEnd?'end':'middle';
-            const isDone=i.status==='Done';
-            return `<div class="cal-event bl-item ${pos} ${isDone?'done':''}" data-edit="${i.id}" title="${i.id}: ${i.title}">
-              ${isStart?'▶ ':''}${i.title.slice(0,20)}${i.title.length>20?'…':''}
-            </div>`;
-          }).join('')}
-          ${dayItems.length>3?`<div class="cal-event cal-extra">+${dayItems.length-3} meer</div>`:''}
-        </div>`;
-      }
-
-      // Lege cellen na de laatste dag
-      const lastDay=(last.getDay()+6)%7;
-      for(let i=1;i<7-lastDay;i++) html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${i}</div></div>`;
-      html+='</div>';
-
-      $('cal-content').innerHTML=html;
-
-      // Klikhandlers: item openen via data-edit, dag klik doet niets speciaals
-      $('cal-content').querySelectorAll('[data-edit]').forEach(el=>{
-        el.addEventListener('click', e=>{e.stopPropagation(); openModal(el.dataset.edit);});
-      });
-    }
-
-    // Weekweergave: 7 dagen x uren rooster
-    function _renderCalWeek(mon) {
-      let html=`<div class="week-grid">`;
-      // Kolomkoppen: dag + datum
-      html+=`<div></div>`;
-      for(let d=0;d<7;d++) {
-        const day=new Date(mon); day.setDate(mon.getDate()+d);
-        const isToday=_dateStr(day)===_today();
-        html+=`<div style="font-family:var(--font-mono);font-size:0.68rem;text-align:center;padding:4px;color:${isToday?'var(--accent)':'var(--text-muted)'}">${DAYS[d]} ${day.getDate()}</div>`;
-      }
-      // Uurvakken: 8u tot 20u
-      for(let h=8;h<20;h++) {
-        html+=`<div class="week-time">${h}:00</div>`;
-        for(let d=0;d<7;d++) {
-          const day=new Date(mon); day.setDate(mon.getDate()+d);
-          const ds=_dateStr(day);
-          // Items die dit dag overlappen
-          const dayItems=items.filter(i=>{
-            if(!i.startdate) return false;
-            const eind=i.enddate||i.startdate;
-            return i.startdate<=ds && eind>=ds;
-          });
-          // Toon items alleen in het 8u vak (eerste uur van de dag) om overlapping te vermijden
-          html+=`<div class="week-cell">${h===8 ? dayItems.map(i=>`<div class="cal-event bl-item ${i.status==='Done'?'done':''}" data-edit="${i.id}" style="margin-bottom:2px" title="${i.id}">${i.title.slice(0,18)}</div>`).join('') : ''}</div>`;
-        }
-      }
-      html+='</div>';
-      $('cal-content').innerHTML=html;
-      $('cal-content').querySelectorAll('[data-edit]').forEach(el=>{
-        el.addEventListener('click', e=>{e.stopPropagation(); openModal(el.dataset.edit);});
-      });
-    }
-
-    // Dagweergave: lijst van items op die dag
-    function _renderCalDay(date) {
-      const ds=_dateStr(date);
-      const dayItems=items.filter(i=>{
-        if(!i.startdate) return false;
-        const eind=i.enddate||i.startdate;
-        return i.startdate<=ds && eind>=ds;
-      });
-      if(!dayItems.length) {
-        $('cal-content').innerHTML=`<div class="empty"><p>Geen items op deze dag.</p></div>`;
-        return;
-      }
-      $('cal-content').innerHTML=`<div class="day-list">${dayItems.map(i=>`
-        <div class="day-event-card">
-          <div class="day-event-time">${S_ICON[i.status]||'📋'}</div>
-          <div style="flex:1">
-            <div class="day-event-title">${i.title}</div>
-            <div class="day-event-type">${i.type||''} · ${i.phase||''} · ${i.startdate||''}${i.enddate&&i.enddate!==i.startdate?' → '+i.enddate:''}</div>
-          </div>
-          <div style="margin-left:auto">
-            <button class="btn btn-sm" data-edit="${i.id}">✏️</button>
-          </div>
-        </div>`).join('')}</div>`;
-      $('cal-content').querySelectorAll('[data-edit]').forEach(btn=>{
-        btn.addEventListener('click', ()=>openModal(btn.dataset.edit));
-      });
-    }
-
-    // Kalender navigatie: pijl-klik verschuift maand/week/dag
-    function _calNav(dir) {
-      if(calView==='month')     calDate=new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
-      else if(calView==='week') calDate=new Date(calDate.getTime()+dir*7*864e5);
-      else                      calDate=new Date(calDate.getTime()+dir*864e5);
-      _renderCal();
-    }
-
-    // Hulpfuncties voor datumberekeningen
-    function _getMonday(d) { const day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1); return new Date(d.getFullYear(),d.getMonth(),diff); }
-    function _today()       { return _dateStr(new Date()); }
-    function _dateStr(d)    { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-
-    // ─────────────────────────────────────────────
-    // KPI's
-    // ─────────────────────────────────────────────
-
-    // KPI tabel renderen
-    function _renderKpi() {
-      if(!kpis.length) {
-        $('kpi-body').innerHTML=`<tr><td colspan="9" style="text-align:center;color:#555;font-family:var(--font-mono);font-size:0.78rem;padding:2rem">Nog geen KPI's. Klik op + KPI toevoegen.</td></tr>`;
-        return;
-      }
-      $('kpi-body').innerHTML = kpis.map((k,i)=>`<tr>
-        <!-- Naam met ℹ tooltip-knop als er een beschrijving is -->
-        <td>
-          <div class="kpi-naam-cel">
-            <strong>${k.naam}</strong>
-            ${k.desc ? `<span class="kpi-desc-btn" data-desc="${k.desc.replace(/"/g,'&quot;')}" title="${k.desc}">ℹ</span>` : ''}
-          </div>
-        </td>
-        <!-- Metriek-type badge -->
-        <td><span class="kpi-type">${k.type||'aantal'}</span></td>
-        <!-- Maand: doel (vast) + actueel (invulbaar) -->
-        <td>${k.maandDoel||'—'}</td>
-        <td><input class="kpi-input" data-ki="${i}" data-kf="maandActueel" value="${k.maandActueel||''}" placeholder="—"/> <span style="font-size:0.65rem;color:#555">${k.type||''}</span></td>
-        <!-- Kwartaal: doel + actueel -->
-        <td>${k.kwartaalDoel||'—'}</td>
-        <td><input class="kpi-input" data-ki="${i}" data-kf="kwartaalActueel" value="${k.kwartaalActueel||''}" placeholder="—"/> <span style="font-size:0.65rem;color:#555">${k.type||''}</span></td>
-        <!-- Jaar: doel + actueel -->
-        <td>${k.jaarDoel||'—'}</td>
-        <td><input class="kpi-input" data-ki="${i}" data-kf="jaarActueel" value="${k.jaarActueel||''}" placeholder="—"/> <span style="font-size:0.65rem;color:#555">${k.type||''}</span></td>
-        <!-- Acties: bewerken en verwijderen -->
-        <td style="white-space:nowrap">
-          <button class="btn btn-ghost btn-sm" data-edit-kpi="${i}">✏️</button>
-          <button class="btn btn-ghost btn-sm" data-delete-kpi="${i}">🗑</button>
-        </td>
-      </tr>`).join('');
-
-      // Actuele waarden worden bij wijziging direct opgeslagen
-      $('kpi-body').querySelectorAll('.kpi-input').forEach(inp=>{
-        inp.addEventListener('change', e=>{
-          kpis[parseInt(e.target.dataset.ki)][e.target.dataset.kf] = e.target.value;
-          _save();
-        });
-      });
-      // Bewerken en verwijderen handlers
-      $('kpi-body').querySelectorAll('[data-edit-kpi]').forEach(b=>b.addEventListener('click', ()=>_openKpiModal(parseInt(b.dataset.editKpi))));
-      $('kpi-body').querySelectorAll('[data-delete-kpi]').forEach(b=>b.addEventListener('click', ()=>{
-        if(!confirm('KPI verwijderen?')) return;
-        kpis.splice(parseInt(b.dataset.deleteKpi),1);
-        _save(); _renderKpi(); _renderStats();
-      }));
-    }
-
-    // KPI modal openen: toevoegen (geen idx) of bewerken (met idx)
-    function _openKpiModal(idx) {
-      editKpiIdx = idx!=null ? idx : null;
-      $('kpi-modal-title').textContent = idx!=null ? 'KPI bewerken' : 'KPI toevoegen';
-      $('btn-kpi-save').textContent    = idx!=null ? 'Opslaan' : 'Toevoegen';
-      if(idx!=null) {
-        // Bestaande waarden invullen
-        const k=kpis[idx];
-        $('fk-naam').value          = k.naam||'';
-        $('fk-desc').value          = k.desc||'';
-        $('fk-type').value          = k.type||'aantal';
-        $('fk-maand-doel').value    = k.maandDoel||'';
-        $('fk-kwartaal-doel').value = k.kwartaalDoel||'';
-        $('fk-jaar-doel').value     = k.jaarDoel||'';
-      } else {
-        // Velden leegmaken
-        ['fk-naam','fk-desc','fk-maand-doel','fk-kwartaal-doel','fk-jaar-doel'].forEach(id=>$(id).value='');
-        $('fk-type').value='aantal';
-      }
-      $('modal-kpi').classList.add('open');
-      $('fk-naam').focus();
-    }
-
-    // KPI modal sluiten
-    function _closeKpiModal() {
-      $('modal-kpi').classList.remove('open');
-      editKpiIdx=null;
-    }
-
-    // KPI opslaan (nieuw of bewerkt)
-    function _saveKpi() {
-      const naam=$('fk-naam').value.trim();
-      if(!naam) { $('fk-naam').focus(); return; }
-      const k = {
-        naam,
-        desc:          $('fk-desc').value.trim(),
-        type:          $('fk-type').value,
-        maandDoel:     $('fk-maand-doel').value.trim(),
-        kwartaalDoel:  $('fk-kwartaal-doel').value.trim(),
-        jaarDoel:      $('fk-jaar-doel').value.trim(),
-        // Actuele waarden behouden bij bewerken
-        maandActueel:    editKpiIdx!=null ? kpis[editKpiIdx].maandActueel    : '',
-        kwartaalActueel: editKpiIdx!=null ? kpis[editKpiIdx].kwartaalActueel : '',
-        jaarActueel:     editKpiIdx!=null ? kpis[editKpiIdx].jaarActueel     : '',
-      };
-      if(editKpiIdx!=null) kpis[editKpiIdx]=k; else kpis.push(k);
-      _save(); _closeKpiModal(); _renderKpi(); _renderStats();
-    }
-
-    // ─────────────────────────────────────────────
-    // ITEM MODAL (backlog item toevoegen/bewerken)
+    // MODAL
     // ─────────────────────────────────────────────
     function openModal(id) {
       editId=id||null;
-      $('modal-title').textContent    = id ? 'Item bewerken' : 'Item toevoegen';
-      $('btn-modal-save').textContent = id ? 'Opslaan' : 'Toevoegen';
+      $('modal-title').textContent    = id?'Item bewerken':'Item toevoegen';
+      $('btn-modal-save').textContent = id?'Opslaan':'Toevoegen';
       $('ai-box').style.display='none'; $('ai-box').textContent='';
-      $('ai-warning').style.display = apiKey ? 'none' : 'inline';
+      $('ai-warning').style.display=apiKey?'none':'inline';
       $('f-id').dataset.manual='';
       _updatePhasesInModal();
       if(id) {
-        // Bestaand item: velden vullen
-        const item=items.find(i=>i.id===id); if(!item) return;
+        const item=items.find(i=>i.id===id); if(!item)return;
         $('f-id').value=item.id; $('f-id').dataset.manual='1';
         $('id-preview').textContent='';
-        $('f-title').value=item.title||'';
-        $('f-phase').value=item.phase||'';
-        $('f-type').value=item.type||'Feature';
-        $('f-priority').value=item.priority||'Medium';
+        $('f-title').value=item.title||''; $('f-phase').value=item.phase||'';
+        $('f-type').value=item.type||'Feature'; $('f-priority').value=item.priority||'Medium';
         $('f-status').value=item.status||'Open';
-        $('f-startdate').value=item.startdate||''; // nieuw v5.2.0
-        $('f-enddate').value=item.enddate||'';     // nieuw v5.2.0
-        $('f-assignee').value=item.assignee||'';
-        $('f-tags').value=item.tags||'';
-        $('f-description').value=item.description||'';
-        $('f-ai').value=item.ai||'';
+        $('f-startdate').value=item.startdate||''; $('f-enddate').value=item.enddate||'';
+        $('f-assignee').value=item.assignee||''; $('f-tags').value=item.tags||'';
+        $('f-description').value=item.description||''; $('f-ai').value=item.ai||'';
       } else {
-        // Nieuw item: velden leegmaken
         ['f-title','f-assignee','f-tags','f-description','f-ai','f-startdate','f-enddate'].forEach(fid=>$(fid).value='');
         $('f-type').value='Feature'; $('f-priority').value='Medium'; $('f-status').value='Open'; $('f-phase').value='';
         _updateAutoId();
       }
-      // ID handmatig aanpassen: auto-generatie stoppen
-      $('f-id').addEventListener('input', ()=>{ $('f-id').dataset.manual='1'; });
-      $('modal').classList.add('open');
-      $('f-title').focus();
+      $('f-id').addEventListener('input', ()=>{$('f-id').dataset.manual='1';});
+      $('modal').classList.add('open'); $('f-title').focus();
     }
 
     function closeModal() { $('modal').classList.remove('open'); editId=null; }
 
-    // Item opslaan (nieuw of bewerkt)
     function saveItem() {
-      const title=$('f-title').value.trim(); if(!title){ $('f-title').focus(); return; }
-      const id=$('f-id').value.trim() || _genId($('f-phase').value, $('f-type').value);
-      if(!editId && items.find(i=>i.id===id)){ alert('ID "'+id+'" bestaat al. Pas het aan.'); $('f-id').focus(); return; }
-      const item = {
-        id, title,
-        phase:       $('f-phase').value,
-        type:        $('f-type').value,
-        priority:    $('f-priority').value,
-        status:      $('f-status').value,
-        startdate:   $('f-startdate').value,  // nieuw v5.2.0
-        enddate:     $('f-enddate').value,     // nieuw v5.2.0
-        assignee:    $('f-assignee').value.trim(),
-        tags:        $('f-tags').value.trim(),
-        description: $('f-description').value.trim(),
-        ai:          $('f-ai').value.trim(),
+      const title=$('f-title').value.trim(); if(!title){$('f-title').focus();return;}
+      const id=$('f-id').value.trim()||_genId($('f-phase').value,$('f-type').value);
+      if(!editId&&items.find(i=>i.id===id)){alert('ID "'+id+'" bestaat al.');$('f-id').focus();return;}
+      const item={
+        id, title, phase:$('f-phase').value, type:$('f-type').value,
+        priority:$('f-priority').value, status:$('f-status').value,
+        startdate:$('f-startdate').value, enddate:$('f-enddate').value,
+        assignee:$('f-assignee').value.trim(), tags:$('f-tags').value.trim(),
+        description:$('f-description').value.trim(), ai:$('f-ai').value.trim(),
       };
-      if(editId) items=items.map(i=>i.id===editId ? item : i); else items.push(item);
+      if(editId) items=items.map(i=>i.id===editId?item:i); else items.push(item);
       _save(); closeModal(); _renderAll();
     }
 
     function _deleteItem(id) {
-      if(!confirm('Dit item verwijderen?')) return;
+      if(!confirm('Dit item verwijderen?'))return;
       items=items.filter(i=>i.id!==id); _save(); _renderAll();
     }
 
@@ -1242,60 +749,59 @@
     // ─────────────────────────────────────────────
     function _addPhase() {
       const v=$('input-new-phase').value.trim(), d=$('input-new-phase-desc').value.trim();
-      if(v && !phases.includes(v)) { phases.push(v); if(d) phaseDescs[v]=d; _save(); }
+      if(v&&!phases.includes(v)){phases.push(v);if(d)phaseDescs[v]=d;_save();}
       _cancelPhaseInput(); _renderPhasePills(); _updatePhasesInModal();
     }
-    function _removePhase(ph)    { phases=phases.filter(p=>p!==ph); if(fPhase===ph)fPhase='All'; _save(); _renderPhasePills(); }
-    function _cancelPhaseInput() { $('input-new-phase').value=''; $('input-new-phase-desc').value=''; $('phase-input-wrap').classList.remove('open'); $('btn-new-phase').style.display=''; }
+    function _removePhase(ph)    { phases=phases.filter(p=>p!==ph);if(fPhase===ph)fPhase='All';_save();_renderPhasePills(); }
+    function _cancelPhaseInput() { $('input-new-phase').value='';$('input-new-phase-desc').value='';$('phase-input-wrap').classList.remove('open');$('btn-new-phase').style.display=''; }
     function _updatePhasesInModal() { $('f-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join(''); }
 
     // ─────────────────────────────────────────────
     // ID GENERATIE
     // ─────────────────────────────────────────────
     function _genId(phase, type) {
-      const fl=(phase||'X')[0].toUpperCase();
-      const tl=(type||'X')[0].toUpperCase();
+      const fl=(phase||'X')[0].toUpperCase(), tl=(type||'X')[0].toUpperCase();
       const prefix=fl+tl+'-';
-      // Zoek eerstvolgende vrije nummer
       const used=new Set(items.filter(i=>i.id&&i.id.startsWith(prefix)).map(i=>parseInt(i.id.slice(prefix.length))||0));
-      let n=1; while(used.has(n)) n++;
+      let n=1; while(used.has(n))n++;
       return prefix+String(n).padStart(3,'0');
     }
 
     function _updateAutoId() {
-      if(editId) return; // Niet overschrijven bij bewerken
-      const id=_genId($('f-phase').value, $('f-type').value);
-      if(!$('f-id').dataset.manual) $('f-id').value=id;
+      if(editId)return;
+      const id=_genId($('f-phase').value,$('f-type').value);
+      if(!$('f-id').dataset.manual)$('f-id').value=id;
       $('id-preview').textContent=`→ ${id}`;
     }
 
     // ─────────────────────────────────────────────
     // UI HULPFUNCTIES
     // ─────────────────────────────────────────────
-    function _updateViewToggle() { $('btn-view-board').classList.toggle('active',view==='board'); $('btn-view-list').classList.toggle('active',view==='list'); }
-    function _updateApiKeyUI()   { $('apikey-label').textContent=apiKey?'AI gereed':'API key instellen'; $('btn-apikey').classList.toggle('btn-ai-ready',!!apiKey); }
+    function _updateViewToggle() { $('btn-view-board').classList.toggle('active',view==='board');$('btn-view-list').classList.toggle('active',view==='list'); }
+    function _updateApiKeyUI()   { $('apikey-label').textContent=apiKey?'AI gereed':'API key instellen';$('btn-apikey').classList.toggle('btn-ai-ready',!!apiKey); }
 
     // ─────────────────────────────────────────────
-    // PERSISTENTIE (localStorage)
+    // PERSISTENTIE — AgendaStore.sync() NA ELKE SAVE
     // ─────────────────────────────────────────────
     function _save() {
       localStorage.setItem('bl_items',      JSON.stringify(items));
       localStorage.setItem('bl_phases',     JSON.stringify(phases));
       localStorage.setItem('bl_phasedescs', JSON.stringify(phaseDescs));
-      localStorage.setItem('bl_kpis',       JSON.stringify(kpis));   // nieuw v5.2.0
+      // Agenda cache bijwerken: status wijzigingen zijn direct zichtbaar in agenda.html
+      _agSync();
     }
-    function _saveProjInfo() { localStorage.setItem('bl_proj', JSON.stringify({projName,projVersion,projDate})); }
-    function _loadProjInfo() { const p=JSON.parse(localStorage.getItem('bl_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; }
+    function _saveProjInfo() { localStorage.setItem('bl_proj',JSON.stringify({projName,projVersion,projDate})); }
+    function _loadProjInfo() { const p=JSON.parse(localStorage.getItem('bl_proj')||'{}');projName=p.projName||'';projVersion=p.projVersion||'';projDate=p.projDate||''; }
 
     // ─────────────────────────────────────────────
     // IMPORT
     // ─────────────────────────────────────────────
     function importFile(e) {
-      const file=e.target.files[0]; if(!file) return;
-      if(!confirm('Huidige data vervangen door '+file.name+'?')){ e.target.value=''; return; }
+      const file=e.target.files[0]; if(!file)return;
+      if(!confirm('Huidige data vervangen door '+file.name+'?')){e.target.value='';return;}
       const reader=new FileReader();
       reader.onload=ev=>{
-        if(file.name.endsWith('.md')) _parseMD(ev.target.result);
+        if(file.name.endsWith('.md'))_parseMD(ev.target.result);
         else _parseCSV(ev.target.result);
         e.target.value='';
         alert(items.length+' items geladen uit '+file.name);
@@ -1304,116 +810,72 @@
       reader.readAsText(file);
     }
 
-    // CSV import
     function _parseCSV(text) {
       const rows=text.trim().split('\n'), headers=rows[0].split(',').map(h=>h.trim());
       items=rows.slice(1).map(row=>{
-        const vals=[]; let cur='', inQ=false;
-        for(const ch of row){ if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;} }
+        const vals=[]; let cur='',inQ=false;
+        for(const ch of row){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;}}
         vals.push(cur.trim());
         const obj={}; headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj;
       }).filter(i=>i.id);
-      // Fases afleiden uit items
       const seen=new Set(); phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
       _save();
     }
 
-    // MD import: parst [KPI] sectie naast backlog items
     function _parseMD(text) {
-      items=[]; phases=[]; phaseDescs={}; kpis=[];
+      items=[]; phases=[]; phaseDescs={};
       let parsedName='', parsedVersion='';
-      const lines=text.split('\n');
-      let curPhase='', curDesc='', section='backlog';
-
+      const lines=text.split('\n'); let curPhase='', curDesc='', section='backlog';
       for(const line of lines) {
-        // Projectnaam uit H1
-        if(line.startsWith('# ')) {
-          const raw=line.replace(/^#\s*/,'').trim();
-          const dash=raw.indexOf('—');
-          parsedName=dash>-1 ? raw.slice(dash+1).trim() : raw.replace(/^BACKLOG\.md/i,'').trim();
-          continue;
-        }
-        // Versie uit > Versie: regel
-        if(line.startsWith('> Versie:')) {
-          const m=line.match(/Versie:\s*([^\s·]+)/);
-          if(m&&m[1]&&m[1]!=='—') parsedVersion=m[1];
-          continue;
-        }
-        // Sectie wisselen
-        if(line.match(/^\[KPI\]$/))     { section='kpi'; continue; }
-        if(line.match(/^\[BACKLOG\]$/)) { section='backlog'; continue; }
-
-        // Fase kopteksten (## of ###)
-        if(section==='backlog' && (line.startsWith('##'))) {
+        if(line.startsWith('# ')){const raw=line.replace(/^#\s*/,'').trim();const dash=raw.indexOf('—');parsedName=dash>-1?raw.slice(dash+1).trim():raw.replace(/^BACKLOG\.md/i,'').trim();continue;}
+        if(line.startsWith('> Versie:')){const m=line.match(/Versie:\s*([^\s·]+)/);if(m&&m[1]&&m[1]!=='—')parsedVersion=m[1];continue;}
+        if(line.match(/^\[BACKLOG\]$/)){section='backlog';continue;}
+        if(line.match(/^\[KPI\]$/)   ){section='kpi';continue;}    // KPI sectie overslaan (niet verwijderen uit MD)
+        if(section==='backlog'&&line.startsWith('##')){
           const raw=line.replace(/^#+\s*/,'').trim().replace(/[✅🔄📋🔮].*/,'').trim();
-          const d=raw.indexOf('—');
-          curPhase=d>-1 ? raw.slice(0,d).trim() : raw;
-          curDesc =d>-1 ? raw.slice(d+1).trim() : '';
-          if(curPhase&&!phases.includes(curPhase)) phases.push(curPhase);
-          if(curDesc) phaseDescs[curPhase]=curDesc;
-          continue;
+          const d=raw.indexOf('—'); curPhase=d>-1?raw.slice(0,d).trim():raw; curDesc=d>-1?raw.slice(d+1).trim():'';
+          if(curPhase&&!phases.includes(curPhase))phases.push(curPhase);
+          if(curDesc)phaseDescs[curPhase]=curDesc; continue;
         }
-
-        // Tabelrijen
-        if(line.startsWith('|') && !line.includes('---')) {
+        if(line.startsWith('|')&&!line.includes('---')&&section==='backlog'){
           const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
-          if(!cells.length) continue;
-
-          if(section==='backlog') {
-            // Kolommen: ID | Tags | Taak | Omschrijving | AI | Type | Start | Eind | Toegewezen | Prioriteit | Status
-            if(cells[0]==='ID'||cells[0]==='Taak') continue; // Sla header over
-            if(cells.length>=9) {
-              const [id,tags,title,desc,ai,type,startdate,enddate,assignee,prio,status]=cells;
-              if(id&&title) items.push({id, phase:curPhase, tags, title, description:desc, ai, type:type||'Feature', startdate:startdate||'', enddate:enddate||'', assignee, priority:_mapPrio(prio), status:_mapStatus(status)});
-            } else if(cells.length>=4) {
-              // Legacy formaat (v5.1.0 zonder datum kolommen)
-              const [id,tags,title,desc,ai,type,assignee,prio,status]=cells;
-              if(id&&title) items.push({id, phase:curPhase, tags:tags||'', title, description:desc||'', ai:ai||'', type:type||'Feature', startdate:'', enddate:'', assignee:assignee||'', priority:_mapPrio(prio), status:_mapStatus(status)});
-            }
-          }
-
-          if(section==='kpi') {
-            // Kolommen: Naam | Type | Maand doel | Maand actueel | Kwartaal doel | Kwartaal actueel | Jaar doel | Jaar actueel | Beschrijving
-            if(cells[0]==='Metric'||cells[0]==='Naam') continue;
-            if(cells.length>=7) {
-              const [naam,type,maandDoel,maandActueel,kwartaalDoel,kwartaalActueel,jaarDoel,jaarActueel,desc]=cells;
-              if(naam) kpis.push({naam, desc:desc||'', type:type||'aantal', maandDoel, maandActueel:maandActueel||'', kwartaalDoel, kwartaalActueel:kwartaalActueel||'', jaarDoel, jaarActueel:jaarActueel||''});
-            }
+          if(!cells.length||cells[0]==='ID'||cells[0]==='Taak')continue;
+          if(cells.length>=9){
+            const [id,tags,title,desc,ai,type,startdate,enddate,assignee,prio,status]=cells;
+            if(id&&title)items.push({id,phase:curPhase,tags,title,description:desc,ai,type:type||'Feature',startdate:startdate||'',enddate:enddate||'',assignee,priority:_mapPrio(prio),status:_mapStatus(status)});
+          } else if(cells.length>=4){
+            const [id,tags,title,desc,ai,type,assignee,prio,status]=cells;
+            if(id&&title)items.push({id,phase:curPhase,tags:tags||'',title,description:desc||'',ai:ai||'',type:type||'Feature',startdate:'',enddate:'',assignee:assignee||'',priority:_mapPrio(prio),status:_mapStatus(status)});
           }
         }
       }
-      if(parsedName)    projName    = parsedName;
-      if(parsedVersion) projVersion = parsedVersion;
-      _saveProjInfo();
-      _save();
+      if(parsedName)   projName   =parsedName;
+      if(parsedVersion)projVersion=parsedVersion;
+      _saveProjInfo(); _save();
     }
 
-    // Status en prioriteit mapping vanuit MD emoji's of tekst
-    function _mapStatus(s){ if(!s)return'Open'; if(s.includes('✅')||s.toLowerCase().includes('gedaan'))return'Done'; if(s.includes('🔄')||s.toLowerCase().includes('uitvoering'))return'In Progress'; if(s.toLowerCase().includes('review'))return'Review'; if(s.includes('❌')||s.toLowerCase().includes('geannuleerd'))return'Cancelled'; if(s.includes('🔮')||s.toLowerCase().includes('toekomst'))return'Future'; return'Open'; }
-    function _mapPrio(s){ if(!s)return'Medium'; if(s.includes('🔴'))return'High'; if(s.includes('🟡'))return'Medium'; if(s.includes('🟢'))return'Low'; if(s.toLowerCase().includes('critical'))return'Critical'; return'Medium'; }
+    function _mapStatus(s){if(!s)return'Open';if(s.includes('✅')||s.toLowerCase().includes('gedaan'))return'Done';if(s.includes('🔄')||s.toLowerCase().includes('uitvoering'))return'In Progress';if(s.toLowerCase().includes('review'))return'Review';if(s.includes('❌')||s.toLowerCase().includes('geannuleerd'))return'Cancelled';if(s.includes('🔮')||s.toLowerCase().includes('toekomst'))return'Future';return'Open';}
+    function _mapPrio(s){if(!s)return'Medium';if(s.includes('🔴'))return'High';if(s.includes('🟡'))return'Medium';if(s.includes('🟢'))return'Low';if(s.toLowerCase().includes('critical'))return'Critical';return'Medium';}
 
     // ─────────────────────────────────────────────
     // EXPORT
     // ─────────────────────────────────────────────
     function exportCSV() {
-      // Kolommen inclusief startdate en enddate (nieuw v5.2.0)
       const cols=['id','phase','tags','title','description','ai','type','startdate','enddate','assignee','priority','status'];
-      const rows=[cols.join(','), ...items.map(i=>cols.map(c=>'"'+V(i[c]).replace(/"/g,'""')+'"').join(','))];
+      const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+V(i[c]).replace(/"/g,'""')+'"').join(','))];
       const name=(V(projName)||'backlog').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.csv';
-      _download(name, rows.join('\n'), 'text/csv');
+      _download(name,rows.join('\n'),'text/csv');
     }
 
     function exportMD() {
       let md=`# BACKLOG.md — ${V(projName)||'Project'}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
       md+=`> Versie: ${V(projVersion)||'—'} · ${items.length} items\n\n`;
-
-      // [BACKLOG] sectie — items gegroepeerd per fase
       md+=`## [BACKLOG]\n\n`;
       const byPhase={};
-      items.forEach(i=>{ const ph=i.phase||'Overig'; (byPhase[ph]=byPhase[ph]||[]).push(i); });
-      for(const ph of [...phases, ...Object.keys(byPhase).filter(p=>!phases.includes(p))]) {
-        if(!byPhase[ph]) continue;
-        const desc=phaseDescs[ph] ? ` — ${phaseDescs[ph]}` : '';
+      items.forEach(i=>{const ph=i.phase||'Overig';(byPhase[ph]=byPhase[ph]||[]).push(i);});
+      for(const ph of [...phases,...Object.keys(byPhase).filter(p=>!phases.includes(p))]) {
+        if(!byPhase[ph])continue;
+        const desc=phaseDescs[ph]?` — ${phaseDescs[ph]}`:'';
         md+=`## ${ph}${desc}\n\n`;
         md+=`| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |\n`;
         md+=`|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|\n`;
@@ -1423,48 +885,28 @@
         });
         md+='\n';
       }
-
-      // [KPI] sectie (nieuw v5.2.0)
-      md+=`## [KPI]\n\n`;
-      md+=`| Naam | Type | Maand doel | Maand actueel | Kwartaal doel | Kwartaal actueel | Jaar doel | Jaar actueel | Beschrijving |\n`;
-      md+=`|------|------|-----------|-------------|-------------|----------------|---------|------------|-------------|\n`;
-      kpis.forEach(k=>{
-        md+=`| ${k.naam} | ${k.type} | ${k.maandDoel||''} | ${k.maandActueel||''} | ${k.kwartaalDoel||''} | ${k.kwartaalActueel||''} | ${k.jaarDoel||''} | ${k.jaarActueel||''} | ${k.desc||''} |\n`;
-      });
-      md+='\n';
-
       const name=(V(projName)||'BACKLOG').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
-      _download(name, md, 'text/markdown');
+      _download(name,md,'text/markdown');
     }
 
-    function _download(filename, content, type) {
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([content],{type}));
-      a.download=filename; a.click();
-    }
+    function _download(filename,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=filename;a.click();}
 
     // ─────────────────────────────────────────────
     // AI SUGGESTIE
     // ─────────────────────────────────────────────
     async function _getAiSuggestion() {
-      const title=$('f-title').value.trim();
-      if(!title||!apiKey) return;
+      const title=$('f-title').value.trim(); if(!title||!apiKey)return;
       $('btn-ai').textContent='…bezig'; $('btn-ai').disabled=true; $('ai-box').style.display='none';
       try {
         const res=await fetch('https://api.anthropic.com/v1/messages',{
           method:'POST',
           headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({
-            model:'claude-sonnet-4-20250514', max_tokens:800,
-            messages:[{role:'user',content:`Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`}]
-          })
+          body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:`Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`}]})
         });
         const data=await res.json();
         const s=data.content?.[0]?.text||'Geen suggestie ontvangen.';
         $('ai-box').textContent=s; $('ai-box').style.display='block'; $('f-ai').value=s;
-      } catch(e) {
-        $('ai-box').textContent='Fout: '+e.message; $('ai-box').style.display='block';
-      }
+      } catch(e){$('ai-box').textContent='Fout: '+e.message;$('ai-box').style.display='block';}
       $('btn-ai').textContent='✦ AI suggestie ophalen'; $('btn-ai').disabled=false;
     }
 
