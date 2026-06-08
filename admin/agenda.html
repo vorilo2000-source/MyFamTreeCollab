@@ -316,6 +316,42 @@
     </div>
   </div>
 
+
+  <!-- ══ Modal: .ics import conflict ══ -->
+  <div class="modal-overlay" id="modal-conflict">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h2>⚠️ Conflict gevonden</h2>
+        <button class="btn btn-ghost" id="btn-conflict-close" style="font-size:18px;padding:2px 8px">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="conflict-info" style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-muted);line-height:1.7"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px">Bestaand</div>
+            <div id="conflict-existing" style="background:#2a2a2a;border:1px solid var(--border);border-radius:var(--radius);padding:10px;font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);line-height:1.6"></div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px">Geïmporteerd</div>
+            <div id="conflict-new" style="background:#2a2a2a;border:1px solid var(--accent);border-radius:var(--radius);padding:10px;font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);line-height:1.6"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)" id="conflict-progress"></div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm" id="btn-conflict-skip">Overslaan</button>
+          <button class="btn btn-accent btn-sm" id="btn-conflict-overwrite">Overschrijven</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" id="btn-conflict-skip-all">Alle overslaan</button>
+          <button class="btn btn-ghost btn-sm" id="btn-conflict-overwrite-all">Alle overschrijven</button>
+          <button class="btn btn-danger btn-sm" id="btn-conflict-abort">Annuleren</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="footer-placeholder"></div>
 
   <!-- Laadvolgorde: identiek aan andere admin pagina's -->
@@ -420,6 +456,9 @@
 
       // Maand .ics export
       $('btn-export-ics-maand').addEventListener('click', _exportMaandIcs);
+
+      // .ics import — bestandskiezer trigger
+      $('input-ics').addEventListener('change', _handleIcsImport);
 
       // Detail modal sluiten
       $('btn-md-close').addEventListener('click', ()=>$('modal-detail').classList.remove('open'));
@@ -949,6 +988,269 @@
     function _getMonday(d) { const day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1); return new Date(d.getFullYear(),d.getMonth(),diff); }
     function _today()      { return _ds(new Date()); }
     function _ds(d)        { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+
+    // ─────────────────────────────────────────────
+    // .ICS IMPORT
+    // Parser voor iCal bestanden van Google Calendar, Outlook, Apple Calendar
+    // Conflicten (zelfde UID) worden afgehandeld via modal met 5 keuzes
+    // ─────────────────────────────────────────────
+
+    // Import state: wachtrij van conflicten die afgehandeld moeten worden
+    let _importQueue=[], _importResolved=[], _importBulkAction=null;
+
+    // Bestand gelezen → parsen → conflicten afhandelen
+    function _handleIcsImport(e) {
+      const file=e.target.files[0]; if(!file)return;
+      e.target.value=''; // reset zodat hetzelfde bestand opnieuw geïmporteerd kan worden
+      const reader=new FileReader();
+      reader.onload=ev=>{ _importIcs(ev.target.result, file.name); };
+      reader.readAsText(file,'UTF-8');
+    }
+
+    // Hoofdparser: .ics tekst → array van genormaliseerde standalone events
+    function _importIcs(text, filename) {
+      const parsed=_parseIcs(text);
+      if(!parsed.length){ alert('Geen events gevonden in '+filename); return; }
+
+      const existing=_getStandaloneEvents();
+      const existingUids=new Map(existing.map(e=>[e.icsUid||e.id, e]));
+
+      // Splits in conflicten (bestaande UID) en nieuwe events
+      const nieuweEvents=[];
+      const conflicten=[];
+      for(const ev of parsed){
+        const uid=ev.icsUid||ev.id;
+        if(existingUids.has(uid)){
+          conflicten.push({bestaand:existingUids.get(uid), nieuw:ev});
+        } else {
+          nieuweEvents.push(ev);
+        }
+      }
+
+      // Alle nieuwe events direct toevoegen
+      if(nieuweEvents.length){
+        const updated=[...existing, ...nieuweEvents];
+        _saveStandaloneEvents(updated);
+        _loadItems(); _renderFilters(); _renderCal(); _updateMeta();
+      }
+
+      if(!conflicten.length){
+        alert(`✅ Import klaar: ${nieuweEvents.length} nieuw, 0 conflicten — ${filename}`);
+        return;
+      }
+
+      // Conflicten afhandelen via modal wachtrij
+      _importQueue=[...conflicten];
+      _importResolved=[...nieuweEvents]; // al verwerkte nieuwe events
+      _importBulkAction=null;
+      _showNextConflict(filename, parsed.length);
+    }
+
+    // Toon volgende conflict in de modal
+    function _showNextConflict(filename, totaal) {
+      // Als bulk actie ingesteld: alle resterende conflicten in één keer verwerken
+      if(_importBulkAction && _importQueue.length){
+        while(_importQueue.length){
+          const c=_importQueue.shift();
+          if(_importBulkAction==='skip'){
+            _importResolved.push(c.bestaand); // bestaande behouden
+          } else {
+            _importResolved.push(c.nieuw);    // geïmporteerde wint
+          }
+        }
+        _applyImportResult(filename, totaal);
+        return;
+      }
+
+      if(!_importQueue.length){
+        _applyImportResult(filename, totaal);
+        return;
+      }
+
+      const c=_importQueue[0];
+      const gedaan=totaal-_importQueue.length;
+
+      // Conflictinfo tekst
+      $('conflict-info').innerHTML=`
+        <b style="color:var(--text-primary)">${c.nieuw.titel}</b><br>
+        UID: <code style="color:var(--accent);font-size:0.68rem">${c.nieuw.icsUid||c.nieuw.id}</code><br>
+        Dit event bestaat al. Wat wil je doen?`;
+
+      // Vergelijkingstekst: bestaand vs nieuw
+      $('conflict-existing').innerHTML=_conflictSummary(c.bestaand);
+      $('conflict-new').innerHTML=_conflictSummary(c.nieuw);
+      $('conflict-progress').textContent=`Conflict ${gedaan+1} van ${totaal-_importQueue.length+1}`;
+
+      // Knop handlers — eenmalig binden via onclick (voorkomt stapeling)
+      $('btn-conflict-skip').onclick=()=>{
+        _importResolved.push(c.bestaand); // bestaande behouden
+        _importQueue.shift();
+        _showNextConflict(filename, totaal);
+      };
+      $('btn-conflict-overwrite').onclick=()=>{
+        _importResolved.push(c.nieuw);    // geïmporteerde wint
+        _importQueue.shift();
+        _showNextConflict(filename, totaal);
+      };
+      $('btn-conflict-skip-all').onclick=()=>{
+        _importBulkAction='skip';
+        _importResolved.push(c.bestaand);
+        _importQueue.shift();
+        _showNextConflict(filename, totaal);
+      };
+      $('btn-conflict-overwrite-all').onclick=()=>{
+        _importBulkAction='overwrite';
+        _importResolved.push(c.nieuw);
+        _importQueue.shift();
+        _showNextConflict(filename, totaal);
+      };
+      $('btn-conflict-abort').onclick=()=>{
+        $('modal-conflict').classList.remove('open');
+        _importQueue=[]; _importResolved=[]; _importBulkAction=null;
+        alert('Import geannuleerd.');
+      };
+      $('btn-conflict-close').onclick=()=>$('btn-conflict-abort').onclick();
+
+      $('modal-conflict').classList.add('open');
+    }
+
+    // Pas het eindresultaat toe: vervang ag_events met de opgeloste lijst
+    function _applyImportResult(filename, totaal) {
+      $('modal-conflict').classList.remove('open');
+
+      // Bestaande standalone events die NIET in conflicten zaten blijven behouden
+      const existing=_getStandaloneEvents();
+      const conflictUids=new Set([..._importResolved.map(e=>e.icsUid||e.id)]);
+      const ongewijzigd=existing.filter(e=>!conflictUids.has(e.icsUid||e.id));
+
+      const final=[...ongewijzigd, ..._importResolved];
+      _saveStandaloneEvents(final);
+      _loadItems(); _renderFilters(); _renderCal(); _updateMeta();
+
+      const nieuweCount=_importResolved.filter(e=>!existing.find(x=>(x.icsUid||x.id)===(e.icsUid||e.id))).length;
+      alert(`✅ Import klaar uit ${filename}\n${nieuweCount} nieuw toegevoegd · ${totaal-nieuweCount} conflicten opgelost`);
+
+      _importQueue=[]; _importResolved=[]; _importBulkAction=null;
+    }
+
+    // Samenvatting van één event voor de conflictmodal
+    function _conflictSummary(ev) {
+      return [
+        ev.titel     ? `<b>${ev.titel}</b>` : '',
+        ev.startdate ? `📅 ${ev.startdate}${ev.starttime?' '+ev.starttime:''}` : '',
+        ev.enddate && ev.enddate!==ev.startdate ? `→ ${ev.enddate}${ev.endtime?' '+ev.endtime:''}` : '',
+        ev.locatie   ? `📍 ${ev.locatie}` : '',
+        ev.status    ? `${S_ICON[ev.status]||''} ${ev.status}` : '',
+        ev.herhaling && ev.herhaling!=='geen' ? `🔁 ${ev.herhaling}` : '',
+      ].filter(Boolean).join('<br>');
+    }
+
+    // ── iCal parser ──
+    // Ondersteunt: DTSTART/DTEND (datum en datetime), SUMMARY, DESCRIPTION,
+    // LOCATION, ATTENDEE, RRULE, STATUS, UID, tijdzones (TZID — converteert naar lokaal)
+    function _parseIcs(text) {
+      const events=[];
+      // Unfold: iCal staat regels te vouwen met spatie/tab als vervolg
+      const unfolded=text.replace(/
+[ 	]/g,'').replace(/
+[ 	]/g,'');
+      const lines=unfolded.split(/
+?
+/);
+
+      let inEvent=false, cur={};
+      for(const raw of lines){
+        const line=raw.trim();
+        if(line==='BEGIN:VEVENT'){ inEvent=true; cur={}; continue; }
+        if(line==='END:VEVENT')  { inEvent=false; const ev=_icsEventToLocal(cur); if(ev)events.push(ev); continue; }
+        if(!inEvent) continue;
+
+        // iCal property: KEY;PARAMS:VALUE
+        const colon=line.indexOf(':');
+        if(colon<0) continue;
+        const keypart=line.slice(0,colon).toUpperCase();
+        const val    =line.slice(colon+1).trim();
+
+        // Meerdere ATTENDEE regels samenvoegen
+        if(keypart==='ATTENDEE'){
+          const email=val.replace(/^.*mailto:/i,'').trim();
+          cur.attendees=(cur.attendees?cur.attendees+', ':'')+email;
+          continue;
+        }
+        // Sla de eerste waarde op (duplicaten negeren, behalve ATTENDEE)
+        const key=keypart.split(';')[0];
+        if(!cur[key]) cur[key]=val;
+        // TZID bewaren voor datetime parsing
+        if(keypart.startsWith('DTSTART;TZID=')||keypart.startsWith('DTEND;TZID=')) cur[keypart]=val;
+      }
+      return events;
+    }
+
+    // Converteer één parsed VEVENT naar genormaliseerd standalone event formaat
+    function _icsEventToLocal(raw) {
+      if(!raw.SUMMARY) return null; // Geen titel → overslaan
+
+      // Datum + tijd parsen: ondersteunt YYYYMMDD en YYYYMMDDTHHmmss (met/zonder Z)
+      const parseDateTime=(val)=>{
+        if(!val) return {date:'',time:''};
+        // Verwijder timezone prefix als aanwezig (bv TZID=...:20260615T100000)
+        const clean=val.includes(':')?val.split(':').pop():val;
+        const isAllDay=clean.length===8; // YYYYMMDD zonder tijd
+        const y=clean.slice(0,4), mo=clean.slice(4,6), d=clean.slice(6,8);
+        const date=`${y}-${mo}-${d}`;
+        if(isAllDay) return {date,time:''};
+        const h=clean.slice(9,11), mi=clean.slice(11,13);
+        return {date, time:`${h}:${mi}`};
+      };
+
+      const start=parseDateTime(raw.DTSTART||raw['DTSTART;VALUE=DATE']||'');
+      const end  =parseDateTime(raw.DTEND  ||raw['DTEND;VALUE=DATE']  ||'');
+
+      // RRULE parsen naar ons herhalings-formaat
+      const parseRrule=(rrule)=>{
+        if(!rrule) return 'geen';
+        const freq=(rrule.match(/FREQ=([^;]+)/)||[])[1]||'';
+        const interval=parseInt((rrule.match(/INTERVAL=(\d+)/)||[])[1]||'1');
+        if(freq==='DAILY')   return 'dagelijks';
+        if(freq==='WEEKLY')  return interval>=2?'tweewekelijks':'wekelijks';
+        if(freq==='MONTHLY') return 'maandelijks';
+        if(freq==='YEARLY')  return 'jaarlijks';
+        return 'geen';
+      };
+
+      // STATUS mappen naar ons formaat
+      const parseStatus=(s)=>{
+        if(!s) return 'Open';
+        const u=s.toUpperCase();
+        if(u==='COMPLETED')    return 'Done';
+        if(u==='CANCELLED')    return 'Cancelled';
+        if(u==='IN-PROCESS')   return 'In Progress';
+        if(u==='TENTATIVE')    return 'Future';
+        if(u==='NEEDS-ACTION') return 'Open';
+        if(u==='CONFIRMED')    return 'Open';
+        return 'Open';
+      };
+
+      // Tekst unescapen: \n → newline, \, → komma
+      const unescape=(s)=>(s||'').replace(/\n/g,'\n').replace(/\,/g,',').replace(/\;/g,';').replace(/\\/g,'\');
+
+      return {
+        id:          'ICS-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
+        icsUid:      raw.UID||'',           // originele UID bewaren voor conflict detectie
+        titel:       unescape(raw.SUMMARY),
+        startdate:   start.date,
+        starttime:   start.time,
+        enddate:     end.date||start.date,
+        endtime:     end.time,
+        locatie:     unescape(raw.LOCATION||''),
+        deelnemers:  unescape(raw.attendees||''),
+        status:      parseStatus(raw.STATUS),
+        herhaling:   parseRrule(raw.RRULE||''),
+        omschrijving:unescape(raw.DESCRIPTION||''),
+        tags:        '',
+      };
+    }
 
     return { init };
   })();
