@@ -1,7 +1,54 @@
 # MyFamTreeCollab — Project Log
-## Bijgewerkt: 2026-06-07
+## Bijgewerkt: 2026-06-08
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
+
+---
+
+## Sessie 38 — Centrale Agenda + Backlog cleanup
+
+**Datum:** 2026-06-08
+
+### Doel
+Centrale agenda als single source of truth voor alle admin modules.
+Backlog ontdoen van kalender/KPI tabs. .ics import/export.
+
+### js/agendaStore.js — v1.0.0 (nieuw)
+- register() — module registreert zichzelf met mapping config
+- sync() — herberekent ag_cache uit bl_items, mk_items, rm_items, rn_items
+- getAll() — combineert ag_cache + ag_events (standalone)
+- Schrijft nooit terug naar bronpagina's
+- Kleurcodering per bron: backlog blauw, marketing paars, roadmap oranje, releasenotes groen
+
+### admin/agenda.html — v1.1.0 (nieuw)
+- Maand/week/dag weergave
+- Kleurcodering per bron, filter op bron + status + zoekterm
+- Status volgt bronpagina's — 🔄 Sync knop
+- Standalone events: titel, start/eind datum+tijd, locatie, deelnemers, status, herhaling, tags
+- Herhaling: dagelijks/wekelijks/tweewekelijks/maandelijks/jaarlijks
+- .ics export per item en bulk (maand)
+- .ics import: parser voor Google Calendar/Outlook/Apple Calendar
+  DTSTART/DTEND, TZID, RRULE, ATTENDEE, STATUS, UID
+- Conflict modal bij zelfde UID: Overslaan / Overschrijven /
+  Alle overslaan / Alle overschrijven / Annuleren
+
+### admin/backlog.html — v5.2.0 → v5.3.0
+- Kalender tab verwijderd
+- KPI tab verwijderd
+- Tabs volledig verwijderd — directe backlog weergave
+- agendaStore.js geladen in laadvolgorde
+- AgendaStore.sync() na elke _save() en bij init()
+- Stat-card "In agenda" toont items met startdatum
+- 📅 indicator op kaarten/tabel voor items met startdatum
+- "📅 Naar agenda" knop in toolbar
+
+### Versie-overzicht
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `js/agendaStore.js` | — | v1.0.0 | Nieuw |
+| `admin/agenda.html` | — | v1.1.0 | Nieuw |
+| `admin/backlog.html` | v5.2.0 | v5.3.0 | Tabs verwijderd, AgendaStore sync |
 
 ---
 
