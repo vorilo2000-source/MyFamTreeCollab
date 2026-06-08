@@ -1,189 +1,186 @@
 # BACKLOG.md — Backlog_MyFamTreeCollab
-## Bijgewerkt: 29-05-2026
+## Bijgewerkt: 08-06-2026
 
-> Versie: V1.0.0 · 106 items
+> Versie: v1.1.0 · 105 items
+
+## [BACKLOG]
 
 ## Fase 0 — Audit & opschoning
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F0-01 |  | ZIP analyseren en alle bestanden inventariseren |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F0-02 |  | `js/DeleteRow.js` verwijderen (leeg bestand) |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F0-03 |  | `js/schemaGlobal.js` verwijderen (verouderd) |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F0-04 |  | Alle dubbele functies in kaart brengen |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F0-05 |  | Kapotte bestanden identificeren |  |  | Feature |  | 🟡 Medium | ✅ Done |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F0-001 |  | ZIP analyseren en alle bestanden inventariseren |  |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F0-002 |  | DeleteRow | js/DeleteRow.js` verwijderen (leeg bestand) |  | Bug |  |  |  | 🟡 Medium | ✅ Done |
+| F0-003 |  | schemaGlobal.js | js/schemaGlobal.js` verwijderen (verouderd) |  | Bug |  |  |  | 🟡 Medium | ✅ Done |
+| F0-004 |  | Dubbele functies | Alle dubbele functies in kaart brengen |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F0-005 |  | Kapotte bestanden identificeren |  |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| FO-006 |  | Analytics (AN-01 t/m AN-40) | trackPage() alle pagina's + dashboard |  | Other |  |  |  | 🟡 Medium | ✅ Done |
+| FF-007 |  | account.html (AN-21) | tracking toevoegen |  | Other |  |  |  | 🟡 Medium | ❌ Cancelled |
 
 ## Fase 1 — Structuur & centrale modules
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F1-01 |  | `idGenerator.js` herbouwen als centrale module (v2.0.0) |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F1-02 |  | `utils.js` aanmaken met `safe()`, `formatDate()`, `parseBirthday()` |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F1-03 |  | Lokale `safe()` verwijderen uit alle bestanden |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F1-04 |  | `computeRelaties()` uit `manage.js` → centrale `relatieEngine.js` |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F1-05 |  | `LiveSearch.js` volledig in IIFE wikkelen (bugfix safe already declared) |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F1-06 |  | `utils.js` als eerste script toevoegen aan alle pagina's |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F1-07 |  | `relatieEngine.js` toevoegen aan `manage.html` (ontbrak) |  |  | Feature |  | 🟡 Medium | ✅ Done |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F1-001 |  | idGenerator.js | `idGenerator.js` herbouwen als centrale module (v2.0.0) |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F1-002 |  | utils.js | `utils.js` aanmaken met `safe()`, `formatDate()`, `parseBirthday()` |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F1-003 |  | Lokale | Lokale `safe()` verwijderen uit alle bestanden |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F1-004 |  | manage.js | `computeRelaties()` uit `manage.js` → centrale `relatieEngine.js` |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F1-005 |  | LiveSearch.js | volledig in IIFE wikkelen (bugfix safe already declared) |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F1-006 |  | utils.js | als eerste script toevoegen aan alle pagina's |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F1-007 |  | relatieEngine.js | toevoegen aan `manage.html` (ontbrak) |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
 
 ## Fase 2 — Kapotte bestanden repareren
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F2-01 |  | `export.js` herschrijven als centrale module met CSV + JSON |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-02 |  | `export.html` repareren: `storage.js` + `schema.js` laden |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-03 |  | `export.html` uitbreiden met JSON-knop |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-04 |  | `storage.html` exportcode vervangen door centrale `export.js` |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-05 |  | Export JSON/CSV knoppen verwijderen uit `storage.html` |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-06 |  | `storage.js`: `migrate()` niet meer bij elke `get()` |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-07 |  | `storage.js`: `migrate()` geeft `null` bij ongeldig record |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-08 |  | `storage.js`: `console.log` bij laden verwijderd |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F2-09 |  | `js/LSD.js` dubbele `DOMContentLoaded` |  |  | Feature |  | 🟡 Medium | ❌ Cancelled |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F2-001 |  | export.js | herschrijven als centrale module met CSV + JSON |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F2-002 |  | export.html | repareren: `storage.js` + `schema.js` laden |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F2-003 |  | export.html | uitbreiden met JSON-knop |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F2-004 |  | storage.html | exportcode vervangen door centrale `export.js` |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F2-005 |  | storage.html | Export JSON/CSV knoppen verwijderen uit `storage.html` |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F2-006 |  | storage.js | `migrate()` niet meer bij elke `get()` |  | Improvement |  |  |  | 🟡 Medium | ✅ Done |
+| F2-007 |  | storage.js | `migrate()` geeft `null` bij ongeldig record |  | Bug |  |  |  | 🟡 Medium | ✅ Done |
+| F2-008 |  | storage.js | `console.log` bij laden verwijderd |  | Bug |  |  |  | 🟡 Medium | ✅ Done |
+| F2-009 |  | LSD.js | dubbele `DOMContentLoaded` |  | Other |  |  |  | 🟡 Medium | ❌ Cancelled |
 
 ## Fase 3 — Kernfeatures verbeteren
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F3-43 | 3B | Zoekresultaten highlighten |  |  | Feature |  | 🔴 High | ❌ Cancelled |
-| F3-44 | 3B | Zoeken op meerdere velden tegelijk |  |  | Feature |  | 🔴 High | ✅ Done |
-| F3-45 | 3B | Popup-stijlen verplaatsen naar `style.css` |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-46 | 3B | Keyboard navigatie in zoekpopup |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-47 | 3B | Zoekgeschiedenis |  |  | Feature |  | 🟢 Low | 📋 Open |
-| F3-48 | 3C | Meerdere partners ondersteunen |  |  | Feature |  | 🔴 High | ✅ Done |
-| F3-49 | 3C | Relatie toevoegen vanuit `manage.html` |  |  | Feature |  | 🔴 High | 📋 Open |
-| F3-50 | 3C | Grootouders en kleinkinderen tonen in view.html |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-51 | 3C | Halfbroers/halfzussen correct onderscheiden |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-52 | 3C | Relatie-labels vertalen |  |  | Feature |  | 🟢 Low | 📋 Open |
-| F3-53 | 3D | Verbindingslijnen tekenen (SVG of CSS) |  |  | Feature |  | 🔴 High | 🔮 Future |
-| F3-54 | 3D | Foto/avatar toevoegen aan persoon-node |  |  | Feature |  | 🔴 High | 🔮 Future |
-| F3-55 | 3D | Zoom en pan op de stamboomweergave |  |  | Feature |  | 🟡 Medium | 🔮 Future |
-| F3-56 | 3D | Uitklappen/inklappen van takken |  |  | Feature |  | 🟢 Low | 🔮 Future |
-| F3-57 | 3E | Overlijdensdatum tonen op tijdlijn |  |  | Feature |  | 🔴 High | ✅ Done |
-| F3-58 | 3E | Levensspanne als balk weergeven |  |  | Feature |  | 🟡 Medium | 🔮 Future |
-| F3-59 | 3E | Schaalbare tijdas |  |  | Feature |  | 🟡 Medium | 🔮 Future |
-| F3-60 | 3E | Historische gebeurtenissen toevoegen |  |  | Feature |  | 🟢 Low | 🔮 Future |
-| F3-61 | 3F | `import.js` herschrijven met inline commentaar |  |  | Feature |  | 🔴 High | ✅ Done |
-| F3-62 | 3F | Import validatie: dubbele ID's detecteren |  |  | Feature |  | 🔴 High | ✅ Done |
-| F3-63 | 3F | Import preview tonen vóór opslaan |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-64 | 3F | GEDCOM-formaat importeren |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-68 | 3H | `stamboom/stats.html` JS verplaatsen naar apart `stats.js` |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-69 | 3H | `home/print.html` implementeren |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F3-70 | 3H | `schema.js` herschrijven met inline commentaar |  |  | Feature |  | 🟢 Low | 📋 Open |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F3-043 | 3b | Zoekfunctie | Zoekresultaten highlighten |  | Feature |  |  |  | 🔴 High | ❌ Cancelled |
+| F3-044 | 3b | Zoekfunctie | Zoeken op meerdere velden tegelijk |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| F3-045 | 3b | Zoekfunctie | Popup-stijlen verplaatsen naar `style.css` |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F3-046 | 3b | Zoekfunctie | Keyboard navigatie in zoek-popup |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F3-047 | 3b | Zoekfunctie | Zoekgeschiedenis |  | Feature |  |  |  | 🟢 Low | 📋 Open |
+| F3-048 | 3c | Relaties | Meerdere partners ondersteunen |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| F3-049 | 3c | Relaties | toevoegen vanuit `manage.html` |  | Feature |  |  |  | 🔴 High | 📋 Open |
+| F3-050 | 3c | Relaties | Grootouders en kleinkinderen tonen in view.html |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F3-051 | 3c | Relaties | Halfbroers/halfzussen correct onderscheiden |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F3-052 | 3c | Relaties | Relatie-labels vertalen |  | Feature |  |  |  | 🟢 Low | 📋 Open |
+| F3-053 | 3d | Stamboomvisualisatie | Verbindingslijnen tekenen (SVG of CSS) |  | Feature |  |  |  | 🔴 High | 🔮 Future |
+| F3-054 | 3d | Stamboomvisualisatie | Foto/avatar toevoegen aan persoon-node |  | Feature |  |  |  | 🔴 High | 🔮 Future |
+| F3-055 | 3d | Stamboomvisualisatie | Zoom en pan op de stamboomweergave |  | Feature |  |  |  | 🟡 Medium | 🔮 Future |
+| F3-056 | 3d | Stamboomvisualisatie | Uitklappen/inklappen van takken |  | Feature |  |  |  | 🟢 Low | 🔮 Future |
+| F3-057 | 3e | Tijdlijn | Overlijdensdatum tonen op tijdlijn |  | Feature |  |  |  | 🟢 Low | ✅ Done |
+| F3-058 | 3e | Tijdlijn | Levensspanne als balk weergeven |  | Feature |  |  |  | 🟡 Medium | 🔮 Future |
+| F3-59 | 3E | Tijdlijn | Schaalbare tijdas |  | Feature |  |  |  | 🟡 Medium | 🔮 Future |
+| F3-060 | 3e | Tijdlijn | Historische gebeurtenissen toevoegen |  | Feature |  |  |  | 🟡 Medium | 🔮 Future |
+| F3-061 | 3f | Import / export | `import.js` herschrijven met inline commentaar |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| F3-062 | 3f | Import / export | Import validatie: dubbele ID's detecteren |  | Feature |  |  |  | 🔴 High | 📋 Open |
+| F3-063 | 3f | Import / export | Import preview tonen vóór opslaan |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F3-064 | 3f | Import / export | GEDCOM-formaat importeren |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F3-068 | 3h | Kernfeatures verbeteren | `stamboom/stats.html` JS verplaatsen naar apart `stats.js` |  | Feature |  |  |  | 🔴 High | 📋 Open |
+| F3-069 | 3h | Kernfeatures verbeteren | `home/print.html` implementeren |  | Feature |  |  |  | 🔴 High | 📋 Open |
+| F3-070 | 3h | Kernfeatures verbeteren | `schema.js` herschrijven met inline commentaar |  | Feature |  |  |  | 🟢 Low | 📋 Open |
+| F3-065 | 3f, sessie, 34 | import.js | `import.js` v2.2.0 — legacy CSV (19 kolommen) werd niet herkend, parser gebruikte eigen object-bouw i.p.v. schema.normalizeHeader() + schema.fromCSV() |  | Bug | 2026-05-29 | 2026-05-29 |  | 🟡 Medium | ✅ Done |
 
 ## Fase 8 — Internationalisatie (i18n)
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F8-01 t/m F8-16 |  | Core i18n module, common/home/create/manage/auth locales |  |  | Feature |  | 🟢 Low | ✅ Done |
-| F8-17 |  | Automatische namespace detectie op basis van URL |  |  | Feature |  | 🟢 Low | 🔮 Future |
-| F8-18 |  | Missing key logging activeren in development |  |  | Feature |  | 🟢 Low | 🔮 Future |
-| F8-19 |  | `handleiding-nl.html` bijwerken met i18n uitleg |  |  | Feature |  | 🟢 Low | ❌ Cancelled |
-| F8-20 t/m F8-55 |  | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n |  |  | Feature |  | 🟢 Low | ✅ Done |
-| F8-56 |  | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) |  |  | Feature |  | 🔴 High | ✅ Done |
-| F8-57 t/m F8-62 |  | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F8-15 |  | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) |  |  | Feature |  | 🟢 Low | ✅ Done |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F8-001/-016 |  | i18n | Core i18n module, common/home/create/manage/auth locales |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F8-017 |  | Namespace detectie | Automatische namespace detectie op basis van URL |  | Feature |  |  |  | 🟢 Low | 🔮 Future |
+| F8-018 |  | Key logging activeren | Missing key logging activeren in development |  | Feature |  |  |  | 🟢 Low | 🔮 Future |
+| F8-019 |  | handleiding html | `handleiding-nl.html` bijwerken met i18n uitleg |  | Feature |  |  |  | 🟡 Medium | ❌ Cancelled |
+| F8-020/-055 |  | i18n | Start/Stamboom/Bronnen/Gemeenschap/Develop/Abonnementen i18n |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F8-056 |  | Schema | Import-parser aanpassen: rij 2 lezen als technische header (schema.js) |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| F8-057/-062 |  | template.html | template.html taalwissel + abonnementen namespaces + supabaseAnalyse key |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F8-015 |  | topbar.js | `lang-link` handlers verwijderen uit `topbar.js` (TD-09) — handlers waren al verwijderd in eerdere sessie |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F8-0063 | sessie, 30 | i18n | Race condition — i18n keys toonden als key-naam op abonnementen-pagina's |  | Bug | 2026-05-25 | 2026-05-25 |  | 🟡 Medium | ✅ Done |
+| FB-001 | sessie, 28 | template.html | tabelheaders bleven NL na taalwissel naar EN/ES |  | Bug | 2026-05-20 | 2026-02-20 |  | 🟡 Medium | ✅ Done |
 
 ## Fase 9 — Bronnen (genealogisch onderzoek)
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F9-01 |  | Ontwerp bronnen-datamodel (Supabase tabel `bronnen`) |  |  | Feature |  | 🔴 High | 📋 Open |
-| F9-02 |  | `stamboom/bronnen.html` aanmaken — overzicht en beheer |  |  | Feature |  | 🔴 High | 📋 Open |
-| F9-03 |  | `js/bronnen.js` aanmaken — CRUD voor bronnen |  |  | Feature |  | 🔴 High | 📋 Open |
-| F9-04 |  | Bron koppelen aan persoon in `manage.html` |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F9-05 |  | Bronnen tonen in `view.html` per persoon |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F9-06 |  | Brontypen: boek, archief, website, mondelinge overlevering |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F9-07 |  | `locales/{nl,en,es}/bronnen.json` aanmaken |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F9-08 |  | Extern archieflink valideren (URL check) |  |  | Feature |  | 🟢 Low | 📋 Open |
-| F9-09 |  | Bron exporteren als onderdeel van GEDCOM |  |  | Feature |  | 🟢 Low | 📋 Open |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F9-001 |  | Bronnen-datamodel | Ontwerp bronnen-datamodel (Supabase tabel `bronnen`) |  | Feature |  |  |  | 🔴 High | 📋 Open |
+| F9-002 |  | Beheer | `stamboom/bronnen.html` aanmaken — overzicht en beheer |  | Feature |  |  |  | 🔴 High | 📋 Open |
+| F9-003 |  | bronnen.js | `js/bronnen.js` aanmaken — CRUD voor bronnen |  | Feature |  |  |  | 🔴 High | 📋 Open |
+| F9-004 |  | manage.html | Bron koppelen aan persoon in `manage.html` |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F9-005 |  | view.html | Bronnen tonen in `view.html` per persoon |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F9-006 |  | Brontypen | Brontypen: boek, archief, website, mondelinge overlevering |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F9-007 |  | locales | `locales/{nl,en,es}/bronnen.json` aanmaken |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F9-008 |  | archieflink | Extern archieflink valideren (URL check) |  | Feature |  |  |  | 🟢 Low | 📋 Open |
+| F9-009 |  | GEDCOM | Bron exporteren als onderdeel van GEDCOM |  | Feature |  |  |  | 🟢 Low | 📋 Open |
 
-## Fase 10 — Admin toegangsbeveiliging — AdminGuard.protect(role) via centrale adminGuard.js
+## Fase 10 — Admin toegangsbeveiliging
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F10-01 |  | `admin/accountbeheer.html` — admin-check + uitlog-redirect |  |  | Feature |  | 🔴 High | ✅ Done |
-| F10-02 |  | `admin/analytics.html` — admin-check + uitlog-redirect |  |  | Feature |  | 🔴 High | ✅ Done |
-| F10-03 |  | `admin/analyse.html` — admin-check + uitlog-redirect |  |  | Feature |  | 🔴 High | ✅ Done |
-| F10-04 |  | `admin/supabase-analyse.html` — inline check vervangen door `adminGuard.js` |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F10-05 |  | `js/adminGuard.js` — centrale herbruikbare guard module |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F10-06 |  | `develop/blank.html` — developer-only toegang via `adminGuard.js` |  |  | Feature |  | 🟢 Low | ✅ Done |
-| F10-07 |  | `develop/sandbox.html` — developer-only toegang via `adminGuard.js` |  |  | Feature |  | 🟢 Low | ✅ Done |
-| F10-08 |  | `develop/standaardpagina.html` — developer-only toegang via `adminGuard.js` |  |  | Feature |  | 🟢 Low | ✅ Done |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F10-001 |  | accountbeheer.html | `admin/accountbeheer.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| F10-002 |  | analytics.html | `admin/analytics.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| F10-003 |  | analyse.html | `admin/analyse.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| F10-004 | sessie, 32, 33 | supabase-analyse.html | 1. `admin/supabase-analyse.html` — inline check vervangen door `adminGuard.js` `AdminGuard.protect()`, `#dashboard` → `#page-content`
+2. Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt |  | Bug | 2026-05-28 | 2026-05-28 |  | 🟡 Medium | ✅ Done |
+| F10-005 |  | adminGuard.js | `js/adminGuard.js` — centrale herbruikbare guard module |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F10-006 |  | blank.html | `develop/blank.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
+| F10-007 |  | sandbox.html | `develop/sandbox.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
+| F10-008 |  | standaardpagina.html | `develop/standaardpagina.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
+| F10-000 |  | Description | **Patroon:** `AdminGuard.protect(role)` via centrale `adminGuard.js` module.
+> - Tier !== 'admin' → `#accessDenied` zichtbaar, `#page-content` verborgen, uitvoering gestopt
+> - Tier === 'admin' → `#page-content` zichtbaar, `onAuthChange` listener actief
+> - Bij `SIGNED_OUT` → redirect naar `index.html` |  | Description |  |  |  | 🟡 Medium | 🔍 Review |
+| F10-009 | sessie, 31 | developer menu | Admin/developer menu verborgen na security-fix — recursieve RLS op `profiles` |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
+| F10-010 | sessie, 31 | accountbeheer.html | admin_users` view ontbrak na security-fix |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
+| F10-011 | sessie, 31 | admin_users | view — `permission denied for table users |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
+| F10-012 | sessie, 29 | Supabase | auth_users_exposed` — `admin_users` view gedropt |  | Bug | 2026-05-22 | 2026-05-22 |  | 🟡 Medium | 🔍 Review |
+| F10-013 | sessie, 29 | Supabase | rls_disabled_in_public` — RLS op 6 tabellen ingeschakeld |  | Bug | 2026-05-22 | 2026-05-22 |  | 🟡 Medium | ✅ Done |
+| F10-014 | sessie, 29 | Supabase | `sensitive_columns_exposed` — anon REVOKED, grants minimaal |  | Bug | 2026-05-22 | 2026-05-22 |  | 🟡 Medium | ✅ Done |
+| F10-015 | sessie, 33 | supabase-analyse.html | `supabase-analyse.html` — inline `AuthModule.getTier()` check vervangen door `AdminGuard.protect()`, `#dashboard` → `#page-content` |  | Bug | 2026-05-29 | 2026-05-29 |  | 🟡 Medium | ✅ Done |
 
 ## Fase A — Account & donaties
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| FA-01 t/m FA-22 |  | Account, auth, Ko-fi, admin, bevestigingsmail |  |  | Feature |  | 🟡 Medium | ✅ Done |
-
-## Fase A+ — Cloud backup
-
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| FA+-01 t/m FA+-10 |  | Cloud sync, tiers, rollen, beveiliging |  |  | Feature |  | 🟡 Medium | ✅ Done |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| FA-001/022 |  | Account & donaties | Account, auth, Ko-fi, admin, bevestigingsmail |  | Other |  |  |  | 🟡 Medium | ✅ Done |
+| FA-022/-032 |  | Cloud backup | Cloud sync, tiers, rollen |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
 
 ## Fase 5 — Cloud & accounts
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F5-01 t/m F5-08 |  | Supabase, accounts, sync, delen, versiegeschiedenis |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| F5-09 |  | Promotiecodes voor cloud toegang |  |  | Feature |  | 🟡 Medium | 🔮 Future |
-| F5-10 |  | Abonnementen en betaaltiers verder uitwerken |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| F5-11 |  | Ko-fi webhook integratie voor donateur-badge |  |  | Feature |  | 🟡 Medium | 📋 Open |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F5-001/-008 |  | Cloud & accounts | Supabase, accounts, sync, delen, versiegeschiedenis |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F5-009 |  | Cloud & accounts | Promotiecodes voor cloud toegang |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F5-010 |  | Cloud & accounts | Abonnementen en betaaltiers verder uitwerken → Fase 7 |  | Feature |  |  |  | 🟡 Medium | 🔍 Review |
+| F5-011 |  | Cloud & accounts | Ko-fi webhook integratie voor donateur-badge  → Fase 7 |  | Improvement |  |  |  | 🟡 Medium | 🔍 Review |
 
 ## Fase 6 — Rolmodel implementatie
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F6-01 t/m F6-20 |  | Rolmodel, demo database, upgrade flow, versiebeheer, handleiding |  |  | Feature |  | 🟡 Medium | ✅ Done |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F6-001/-020 |  | Rolmodel | Rolmodel, demo database, upgrade flow, versiebeheer, handleiding |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
 
 ## Fase 7 — Businessmodel & betaling
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| F7-01 t/m F7-06 |  | Stripe, Ko-fi, prijsstelling |  |  | Feature |  | 🟡 Medium | 🔮 Future |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F7-001/-006 |  | Donatie | Stripe, Ko-fi, prijsstelling |  | Feature |  |  |  | 🟡 Medium | 🔮 Future |
 
 ## Beveiliging
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| SEC-01 |  | `admin_users` view droppen — lekte auth.users via publieke API |  |  | Feature |  | 🔴 High | ✅ Done |
-| SEC-02 |  | RLS inschakelen op alle publieke tabellen (6 tabellen) |  |  | Feature |  | 🔴 High | ✅ Done |
-| SEC-03 |  | Anon-rechten intrekken + authenticated grants minimaliseren |  |  | Feature |  | 🔴 High | ✅ Done |
-| SEC-04 |  | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` |  |  | Feature |  | 🟡 Medium | ✅ Done |
-
-## Analytics
-
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| AN-01 t/m AN-40 |  | trackPage() alle pagina's + dashboard |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| AN-21 |  | `stamboom/account.html` — tracking toevoegen |  |  | Feature |  | 🟡 Medium | ❌ Cancelled |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| SEC-001 |  | admin_users | `admin_users` view droppen — lekte auth.users via publieke API |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| SEC-002 |  | RLS inschakelen | RLS inschakelen op alle publieke tabellen (6 tabellen) |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| SEC-003 |  | Anon-rechten / authenticated | Anon-rechten intrekken + authenticated grants minimaliseren |  | Feature |  |  |  | 🔴 High | ✅ Done |
+| SEC-004 |  | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` (RLS was al correct, dubbele policies opgeruimd) |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
 
 ## Technische schuld
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| TD-01 |  | `js/Sandbox.js` — testbestand in repo |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| TD-02 |  | `js/script.js` — doet alleen console.log |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| TD-03 |  | `js/LSD.js` — dubbele DOMContentLoaded |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| TD-04 |  | `Layout/*.html` via fetch() — werkt niet op file:// |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| TD-05 |  | Popup-stijlen in LiveSearch.js hardcoded inline |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| TD-07 |  | Resend zonder eigen domein — mail alleen naar Resend-account |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| TD-08 |  | async/await mismatch — call-sites van storage.add() controleren |  |  | Feature |  | 🟡 Medium | 📋 Open |
-| TD-09 |  | `lang-link` handlers in `topbar.js` vervangen door i18n.js |  |  | Feature |  | 🟡 Medium | ✅ Done |
-| TD-11 |  | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html meertalig |  |  | Feature |  | 🟡 Medium | ✅ Done |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| TD-001 |  | Sandbox.js | testbestand in repo |  | Tech Debt |  |  |  | 🟢 Low | 📋 Open |
+| TD-002 |  | script.js | doet alleen console.log |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
+| TD-003 |  | LSD.js | dubbele DOMContentLoaded | |  | Tech Debt |  |  |  | 🟢 Low | 📋 Open |
+| TD-004 |  | Layout/*.html | via fetch() — werkt niet op file:// |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
+| TD-005 |  | LiveSearch.js | Popup-stijlen in LiveSearch.js hardcoded inline |  | Tech Debt |  |  |  | 🟢 Low | 📋 Open |
+| Td-007 |  | Resend | Resend zonder eigen domein — mail alleen naar Resend-account |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
+| TD-008 |  | async/await mismatch | async/await mismatch — call-sites van storage.add() controleren |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
+| TD-009 |  | topbar.j | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen |  | Tech Debt |  |  |  | 🟡 Medium | ✅ Done |
+| TD-011 |  | template.html | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html me |  | Tech Debt |  |  |  | 🔴 High | ✅ Done |
 
-## Bugfixes — Uitgevoerde sessies
+## [KPI]
 
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|------------|-----------|--------|
-| BF-62 | 34 | `import.js` v2.2.0 — legacy CSV (19 kolommen) werd niet herkend | Sessie 34 - 2026-05-29 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-61 | 33 | `supabase-analyse.html` — inline check vervangen door AdminGuard.protect() | Sessie 33 - 2026-05-29 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-60 | 32 | `supabase-analyse.html` — Storage-secties toonden geen data | Sessie 32 - 2026-05-28 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-57 | 31 | Admin/developer menu verborgen na security-fix — recursieve RLS op profiles | Sessie 31 - 2026-05-26 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-58 | 31 | `accountbeheer.html` — admin_users view ontbrak na security-fix | Sessie 31 - 2026-05-26 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-59 | 31 | `admin_users` view — permission denied for table users | Sessie 31 - 2026-05-26 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-56 | 30 | Race condition — i18n keys toonden als key-naam op abonnementen-pagina's | Sessie 30 - 2026-05-25 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-53 | 29 | Supabase: auth_users_exposed — admin_users view gedropt | Sessie 29 - 2026-05-22 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-54 | 29 | Supabase: rls_disabled_in_public — RLS op 6 tabellen ingeschakeld | Sessie 29 - 2026-05-22 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-55 | 29 | Supabase: sensitive_columns_exposed — anon REVOKED, grants minimaal | Sessie 29 - 2026-05-22 |  | Bug |  | 🟡 Medium | ✅ Done |
-| BF-52 | 28 | `bronnen/template.html` — tabelheaders bleven NL na taalwissel naar EN/ES | Sessie 28 - 2026-05-20 |  | Bug |  | 🟡 Medium | ✅ Done |
+| Naam | Type | Maand doel | Maand actueel | Kwartaal doel | Kwartaal actueel | Jaar doel | Jaar actueel | Beschrijving |
+|------|------|-----------|-------------|-------------|----------------|---------|------------|-------------|
+
