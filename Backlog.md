@@ -157,7 +157,7 @@
 | FA-001/022 |  | Account & donaties | Account, auth, Ko-fi, admin, bevestigingsmail |  | Other |  |  |  | 🟡 Medium | ✅ Done |
 | FA-022/-032 |  | Cloud backup | Cloud sync, tiers, rollen |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
 
-## Beveiliging
+## Beveiliging — 
 
 | ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
@@ -166,7 +166,7 @@
 | SEC-003 |  | Anon-rechten / authenticated | Anon-rechten intrekken + authenticated grants minimaliseren |  | Feature |  |  |  | 🔴 High | ✅ Done |
 | SEC-004 |  | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` | Editor-rol schrijfrecht op `stambomen` via `stamboom_gedeeld.rol` (RLS was al correct, dubbele policies opgeruimd) |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
 
-## Technische schuld
+## Technische schuld  — 
 
 | ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
@@ -180,10 +180,10 @@
 | TD-009 |  | topbar.j | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen |  | Tech Debt |  |  |  | 🟡 Medium | ✅ Done |
 | TD-011 |  | template.html | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html me |  | Tech Debt |  |  |  | 🔴 High | ✅ Done |
 
-## SB - Supabase, Action, task & backlog
+## SB — Supabase, Action, task & backlog
 
-| ID     | Tags | Taak              | Omschrijving                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | AI suggestie | Type        | Startdatum | Einddatum | Toegewezen | Prioriteit | Status    |
-| ------ | ---- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ----------- | ---------- | --------- | ---------- | ---------- | --------- |
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
 | SD-001 |      | Projectoverzicht  | ## 🎯 **Doel**<br>Het ontwikkelen van een dynamische, realtime Gantt chart applicatie gebaseerd op Supabase als backend en een JavaScript frontend (Mermaid of alternatieve Gantt library).<br><hr> ## 🧱 **Scope** <br> - Takenbeheer (CRUD) <br>  - Visualisatie via Gantt chart <br> - Realtime updates via Supabase <br> - Integratie met MyFamTreeCollab<br> <hr> ## 🚫 **Out of scope** (fase 1) <br> - Drag & drop planning <br> - Complex  resource management <br> - Multi-tenant enterprise features |              | Description |            |           |            | 🔴 High    | 🔍 Review |
 | SD-002 |      | Architectuur      | ## **Backend**<br>- Supabase (PostgreSQL)<br>- Realtime subscriptions<br>- Row Level Security (RLS)<br><hr>## **Frontend**<br>- HTML + JavaScript<br> - Mermaid (fase 1)<br> - Eventueel upgrade naar inte**ractieve** Gantt lib<br><hr>## Datastroom<br>- User action → Supabase DB → Realtime → Frontend → Render Gantt<br>                                                                                                                                                                                  |              | Description |            |           |            | 🔴 High    | 🔍 Review |
 | SD-004 |      | Security (RLS)    | ## **Basis policies**<br> - Users kunnen enkel eigen taken zien<br> - Admin kan alles beheren<br> Voorbeeld: <br> [sql]<br> CREATE POLICY "Users can view own tasks"<br> ON tasks<br> FOR SELECT<br> USING (auth.uid() = user_id);<br>                                                                                                                                                                                                                                                                         |              | Description |            |           |            | 🟡 Medium  | 🔍 Review |
@@ -192,7 +192,7 @@
 | SD-009 |      | Deployment        | ## Omgevingen<br>- dev<br>- staging<br>- prod<br><hr>## Hosting<br>- Frontend: GitHub Pages / Vercel<br>- Backend: Supabase<br>                                                                                                                                                                                                                                                                                                                                                                                |              | Description |            |           |            | 🔴 High    | 🔍 Review |
 | SD-010 |      | Volgende stappen  | 1. Supabase project aanmaken<br>2. Database schema implementeren<br>3. Basis frontend bouwen<br>4. Eerste Gantt render testen<br>                                                                                                                                                                                                                                                                                                                                                                              |              | Description |            |           |            | 🟡 Medium  | 🔍 Review |
 
-## IS - Instructies, Beschrijving van instructies voor uitvoering van taken 
+## IS — Instructies, Beschrijving van instructies voor uitvoering van taken 
 
 | ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
