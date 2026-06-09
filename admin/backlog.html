@@ -1,4 +1,4 @@
-<!-- ======================= admin/backlog.html v5.3.0 =======================
+<!-- ======================= admin/backlog.html v5.3.1 =======================
     Backlog Manager — admin only
 
     Wijzigingen v5.3.0 (sessie 38):
@@ -15,7 +15,7 @@
      - ../js/utils.js · ../js/auth.js
      - /MyFamTreeCollab/js/adminGuard.js
      - /MyFamTreeCollab/js/siteAnalytics.js
-     - ../js/agendaStore.js  ← nieuw v5.3.0
+     - ../js/agendaStore.js  ← nieuw v5.3.1
      - ../js/topbar.js (via fetch)
     ======================================================================= -->
 <!DOCTYPE html>
@@ -832,6 +832,8 @@
         if(line.match(/^\[BACKLOG\]$/)){section='backlog';continue;}
         if(line.match(/^\[KPI\]$/)   ){section='kpi';continue;}    // KPI sectie overslaan (niet verwijderen uit MD)
         if(section==='backlog'&&line.startsWith('##')){
+          if(line.match(/^##\s*Bijgewerkt:/i))continue;
+          if(line.match(/^##\s*\[/))continue;
           const raw=line.replace(/^#+\s*/,'').trim().replace(/[✅🔄📋🔮].*/,'').trim();
           const d=raw.indexOf('—'); curPhase=d>-1?raw.slice(0,d).trim():raw; curDesc=d>-1?raw.slice(d+1).trim():'';
           if(curPhase&&!phases.includes(curPhase))phases.push(curPhase);
