@@ -1,7 +1,7 @@
 # BACKLOG.md — Backlog_MyFamTreeCollab
-## Bijgewerkt: 08-06-2026
+## Bijgewerkt: 9/6/2026
 
-> Versie: v1.1.0 · 105 items
+> Versie: v1.1.3 · 113 items
 
 ## [BACKLOG]
 
@@ -43,7 +43,7 @@
 | F2-008 |  | storage.js | `console.log` bij laden verwijderd |  | Bug |  |  |  | 🟡 Medium | ✅ Done |
 | F2-009 |  | LSD.js | dubbele `DOMContentLoaded` |  | Other |  |  |  | 🟡 Medium | ❌ Cancelled |
 
-## Fase 3 — Kernfeatures verbeteren
+## Fase 3 — UX<br>- Form voor task beheer<br> - Filtering & sorting<br><hr>## Fase 4 — Integratie<br>- Koppeling met MyFamTreeCollab<br><hr>## Fase 5 — Advanced<br>- Interactieve Gantt library<br>- Drag & drop<br> |  | Description |  |  |  |
 
 | ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
@@ -73,6 +73,27 @@
 | F3-069 | 3h | Kernfeatures verbeteren | `home/print.html` implementeren |  | Feature |  |  |  | 🔴 High | 📋 Open |
 | F3-070 | 3h | Kernfeatures verbeteren | `schema.js` herschrijven met inline commentaar |  | Feature |  |  |  | 🟢 Low | 📋 Open |
 | F3-065 | 3f, sessie, 34 | import.js | `import.js` v2.2.0 — legacy CSV (19 kolommen) werd niet herkend, parser gebruikte eigen object-bouw i.p.v. schema.normalizeHeader() + schema.fromCSV() |  | Bug | 2026-05-29 | 2026-05-29 |  | 🟡 Medium | ✅ Done |
+
+## Fase 5 — Cloud & accounts
+
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F5-001/-008 |  | Cloud & accounts | Supabase, accounts, sync, delen, versiegeschiedenis |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+| F5-009 |  | Cloud & accounts | Promotiecodes voor cloud toegang |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
+| F5-010 |  | Cloud & accounts | Abonnementen en betaaltiers verder uitwerken → Fase 7 |  | Feature |  |  |  | 🟡 Medium | 🔍 Review |
+| F5-011 |  | Cloud & accounts | Ko-fi webhook integratie voor donateur-badge  → Fase 7 |  | Improvement |  |  |  | 🟡 Medium | 🔍 Review |
+
+## Fase 6 — Rolmodel implementatie
+
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F6-001/-020 |  | Rolmodel | Rolmodel, demo database, upgrade flow, versiebeheer, handleiding |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
+
+## Fase 7 — Businessmodel & betaling
+
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| F7-001/-006 |  | Donatie | Stripe, Ko-fi, prijsstelling |  | Feature |  |  |  | 🟡 Medium | 🔮 Future |
 
 ## Fase 8 — Internationalisatie (i18n)
 
@@ -110,12 +131,12 @@
 | F10-001 |  | accountbeheer.html | `admin/accountbeheer.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
 | F10-002 |  | analytics.html | `admin/analytics.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
 | F10-003 |  | analyse.html | `admin/analyse.html` — admin-check + uitlog-redirect |  | Feature |  |  |  | 🔴 High | ✅ Done |
-| F10-004 | sessie, 32, 33 | supabase-analyse.html | 1. `admin/supabase-analyse.html` — inline check vervangen door `adminGuard.js` `AdminGuard.protect()`, `#dashboard` → `#page-content`. 2. Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt. |  | Bug | 2026-05-28 | 2026-05-28 |  | 🟡 Medium | ✅ Done |
+| F10-004 | sessie, 32, 33 | supabase-analyse.html | 1. `admin/supabase-analyse.html`<br>— inline check vervangen door `adminGuard.js` `AdminGuard.protect()`, `#dashboard` → `#page-content`.<br><hr>2. Storage-secties toonden "geen data" omdat app geen Supabase Storage gebruikt. |  | Bug | 2026-05-28 | 2026-05-28 |  | 🟡 Medium | ✅ Done |
 | F10-005 |  | adminGuard.js | `js/adminGuard.js` — centrale herbruikbare guard module |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
 | F10-006 |  | blank.html | `develop/blank.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
 | F10-007 |  | sandbox.html | `develop/sandbox.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
 | F10-008 |  | standaardpagina.html | `develop/standaardpagina.html` — developer-only toegang via `adminGuard.js` |  | Feature |  |  |  | 🟢 Low | ✅ Done |
-| F10-000 |  | Description | **Patroon:** `AdminGuard.protect(role)` via centrale `adminGuard.js` module. - Tier !== 'admin' → `#accessDenied` zichtbaar, `#page-content` verborgen, uitvoering gestopt.  - Tier === 'admin' → `#page-content` zichtbaar, `onAuthChange` listener actief.  - Bij `SIGNED_OUT` → redirect naar `index.html` |  | Description |  |  |  | 🟡 Medium | 🔍 Review |
+| F10-000 |  | Description | **Patroon:** `AdminGuard.protect(role)` via centrale `adminGuard.js` module.<br> - Tier !== 'admin' → `#accessDenied` zichtbaar, `#page-content` verborgen, uitvoering gestopt.<br>- Tier === 'admin' → `#page-content` zichtbaar, `onAuthChange` listener actief.  - Bij `SIGNED_OUT` → redirect naar `index.html` |  | Description |  |  |  | 🟡 Medium | 🔍 Review |
 | F10-009 | sessie, 31 | developer menu | Admin/developer menu verborgen na security-fix — recursieve RLS op `profiles` |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
 | F10-010 | sessie, 31 | accountbeheer.html | admin_users` view ontbrak na security-fix |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
 | F10-011 | sessie, 31 | admin_users | view — `permission denied for table users |  | Bug | 2026-05-26 | 2026-05-26 |  | 🟡 Medium | ✅ Done |
@@ -123,6 +144,11 @@
 | F10-013 | sessie, 29 | Supabase | rls_disabled_in_public` — RLS op 6 tabellen ingeschakeld |  | Bug | 2026-05-22 | 2026-05-22 |  | 🟡 Medium | ✅ Done |
 | F10-014 | sessie, 29 | Supabase | `sensitive_columns_exposed` — anon REVOKED, grants minimaal |  | Bug | 2026-05-22 | 2026-05-22 |  | 🟡 Medium | ✅ Done |
 | F10-015 | sessie, 33 | supabase-analyse.html | `supabase-analyse.html` — inline `AuthModule.getTier()` check vervangen door `AdminGuard.protect()`, `#dashboard` → `#page-content` |  | Bug | 2026-05-29 | 2026-05-29 |  | 🟡 Medium | ✅ Done |
+| F10-015 | sessie, 33 | supabase-analyse.html | `supabase-analyse.html` — inline `AuthModule.getTier()` check vervangen door `AdminGuard.protect()`, `#dashboard` → `#page-content` |  | Bug | 2026-05-29 | 2026-05-29 |  | 🟡 Medium | ✅ Done |
+| F10-016 | sessie, 38 | agendaStore.js | Centrale agenda store — brug tussen alle admin modules en agenda.html. register(), sync(), getAll() | | Feature | 2026-06-08 | 2026-06-08 | | 🔴 High | ✅ Done |
+| F10-017 | sessie, 38 | agenda.html | Centrale agenda v1.1.0 — maand/week/dag, kleurcodering per bron, filter op bron+status+zoek, standalone events met herhaling, .ics export + import, conflict modal | | Feature | 2026-06-08 | 2026-06-08 | | 🔴 High | ✅ Done |
+| F10-018 | sessie, 38 | backlog.html | v5.2.0 → v5.3.0 — kalender en KPI tabs verwijderd, agendaStore.js geladen, AgendaStore.sync() na elke _save(), "In agenda" stat-card, 📅 indicator | | Improvement | 2026-06-08 | 2026-06-08 | | 🔴 High | ✅ Done |
+| F10-019 | sessie, 38 | backlog.html | v5.1.0 → v5.2.0 — tabs Backlog/Kalender/KPI's, kalender maand/week/dag, items als blok start-eind, KPI modal met naam+beschrijving tooltip+metriek-type+maand/kwartaal/jaar | | Feature | 2026-06-08 | 2026-06-08 | | 🟡 Medium | ✅ Done |
 
 ## Fase A — Account & donaties
 
@@ -130,27 +156,6 @@
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
 | FA-001/022 |  | Account & donaties | Account, auth, Ko-fi, admin, bevestigingsmail |  | Other |  |  |  | 🟡 Medium | ✅ Done |
 | FA-022/-032 |  | Cloud backup | Cloud sync, tiers, rollen |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
-
-## Fase 5 — Cloud & accounts
-
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
-| F5-001/-008 |  | Cloud & accounts | Supabase, accounts, sync, delen, versiegeschiedenis |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
-| F5-009 |  | Cloud & accounts | Promotiecodes voor cloud toegang |  | Feature |  |  |  | 🟡 Medium | 📋 Open |
-| F5-010 |  | Cloud & accounts | Abonnementen en betaaltiers verder uitwerken → Fase 7 |  | Feature |  |  |  | 🟡 Medium | 🔍 Review |
-| F5-011 |  | Cloud & accounts | Ko-fi webhook integratie voor donateur-badge  → Fase 7 |  | Improvement |  |  |  | 🟡 Medium | 🔍 Review |
-
-## Fase 6 — Rolmodel implementatie
-
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
-| F6-001/-020 |  | Rolmodel | Rolmodel, demo database, upgrade flow, versiebeheer, handleiding |  | Feature |  |  |  | 🟡 Medium | ✅ Done |
-
-## Fase 7 — Businessmodel & betaling
-
-| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
-|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
-| F7-001/-006 |  | Donatie | Stripe, Ko-fi, prijsstelling |  | Feature |  |  |  | 🟡 Medium | 🔮 Future |
 
 ## Beveiliging
 
@@ -167,16 +172,29 @@
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
 | TD-001 |  | Sandbox.js | testbestand in repo |  | Tech Debt |  |  |  | 🟢 Low | 📋 Open |
 | TD-002 |  | script.js | doet alleen console.log |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
-| TD-003 |  | LSD.js | dubbele DOMContentLoaded | |  | Tech Debt |  |  |  | 🟢 Low | 📋 Open |
+| TD-003 |  | LSD.js | dubbele DOMContentLoaded |  | Feature | Tech Debt |  |  | 🟡 Medium | 📋 Open |
 | TD-004 |  | Layout/*.html | via fetch() — werkt niet op file:// |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
 | TD-005 |  | LiveSearch.js | Popup-stijlen in LiveSearch.js hardcoded inline |  | Tech Debt |  |  |  | 🟢 Low | 📋 Open |
-| Td-007 |  | Resend | Resend zonder eigen domein — mail alleen naar Resend-account |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
+| TD-007 |  | Resend | Resend zonder eigen domein — mail alleen naar Resend-account |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
 | TD-008 |  | async/await mismatch | async/await mismatch — call-sites van storage.add() controleren |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
 | TD-009 |  | topbar.j | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen |  | Tech Debt |  |  |  | 🟡 Medium | ✅ Done |
 | TD-011 |  | template.html | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html me |  | Tech Debt |  |  |  | 🔴 High | ✅ Done |
 
-## [KPI]
+## SB - Supabase, Action, task & backlog
 
-| Naam | Type | Maand doel | Maand actueel | Kwartaal doel | Kwartaal actueel | Jaar doel | Jaar actueel | Beschrijving |
-|------|------|-----------|-------------|-------------|----------------|---------|------------|-------------|
+| ID     | Tags | Taak              | Omschrijving                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | AI suggestie | Type        | Startdatum | Einddatum | Toegewezen | Prioriteit | Status    |
+| ------ | ---- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ----------- | ---------- | --------- | ---------- | ---------- | --------- |
+| SD-001 |      | Projectoverzicht  | ## 🎯 **Doel**<br>Het ontwikkelen van een dynamische, realtime Gantt chart applicatie gebaseerd op Supabase als backend en een JavaScript frontend (Mermaid of alternatieve Gantt library).<br><hr> ## 🧱 **Scope** <br> - Takenbeheer (CRUD) <br>  - Visualisatie via Gantt chart <br> - Realtime updates via Supabase <br> - Integratie met MyFamTreeCollab<br> <hr> ## 🚫 **Out of scope** (fase 1) <br> - Drag & drop planning <br> - Complex  resource management <br> - Multi-tenant enterprise features |              | Description |            |           |            | 🔴 High    | 🔍 Review |
+| SD-002 |      | Architectuur      | ## **Backend**<br>- Supabase (PostgreSQL)<br>- Realtime subscriptions<br>- Row Level Security (RLS)<br><hr>## **Frontend**<br>- HTML + JavaScript<br> - Mermaid (fase 1)<br> - Eventueel upgrade naar inte**ractieve** Gantt lib<br><hr>## Datastroom<br>- User action → Supabase DB → Realtime → Frontend → Render Gantt<br>                                                                                                                                                                                  |              | Description |            |           |            | 🔴 High    | 🔍 Review |
+| SD-004 |      | Security (RLS)    | ## **Basis policies**<br> - Users kunnen enkel eigen taken zien<br> - Admin kan alles beheren<br> Voorbeeld: <br> [sql]<br> CREATE POLICY "Users can view own tasks"<br> ON tasks<br> FOR SELECT<br> USING (auth.uid() = user_id);<br>                                                                                                                                                                                                                                                                         |              | Description |            |           |            | 🟡 Medium  | 🔍 Review |
+| SD-005 |      | Functionaliteiten | ## Core features<br> - Taken aanmaken<br> - Taken wijzigen<br>- Taken verwijderen<br> - Gantt visualisatie<br> - Realtime updates<br> <hr> ## UI features<br>- Section grouping<br>- Status indicators<br>- Timeline view<br>                                                                                                                                                                                                                                                                                  |              | Description |            |           |            | 🟡 Medium  | 🔍 Review |
+| SD-008 |      | KPI’s             | - Laadtijd < 2s<br>- Realtime latency < 500ms<br>- 99% uptime<br>                                                                                                                                                                                                                                                                                                                                                                                                                                              |              | Description |            |           |            | 🟡 Medium  | 🔍 Review |
+| SD-009 |      | Deployment        | ## Omgevingen<br>- dev<br>- staging<br>- prod<br><hr>## Hosting<br>- Frontend: GitHub Pages / Vercel<br>- Backend: Supabase<br>                                                                                                                                                                                                                                                                                                                                                                                |              | Description |            |           |            | 🔴 High    | 🔍 Review |
+| SD-010 |      | Volgende stappen  | 1. Supabase project aanmaken<br>2. Database schema implementeren<br>3. Basis frontend bouwen<br>4. Eerste Gantt render testen<br>                                                                                                                                                                                                                                                                                                                                                                              |              | Description |            |           |            | 🟡 Medium  | 🔍 Review |
 
+## IS - Instructies, Beschrijving van instructies voor uitvoering van taken 
+
+| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
+|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
+| ID-001 |  | Taak is klaar als: | Een taak is **klaar** als:<br>- [ ] De code werkt zoals bedoeld<br>- [ ] Inline commentaar aanwezig op elke coderegel<br>- [ ] Bestandsheader bijgewerkt met versienummer (v2.0.0+)<br>- [ ] `PROJECT_LOG.md` bijgewerkt<br>- [ ] `BACKLOG.md` bijgewerkt: taak op ✅ Gedaan<br>- [ ] Getest in de browser (geen console-errors)<br> |  | Description |  |  |  | 🔴 High | 🔍 Review |
+| ID-002 | | Werkwijze Claude Code | Alle code-wijzigingen via Claude Code for VS Code.<br>**Process:**<br>1. Open project in VS Code<br>2. Geef opdracht in Claude Code chat<br>3. Claude Code leest/schrijft bestanden direct<br>4. Test in browser<br>5. `git add` + `git commit -m "beschrijving"` + `git push` | | Description | | | | 🔴 High | 🔍 Review |
