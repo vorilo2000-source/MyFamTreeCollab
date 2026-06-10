@@ -1,4 +1,4 @@
-<!-- ======================= admin/backlog.html v5.3.1 =======================
+<!-- ======================= admin/backlog.html v5.3.2 =======================
     Backlog Manager — admin only
 
     Wijzigingen v5.3.1 (sessie 39):
@@ -824,14 +824,17 @@
       const seen=new Set(); phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
       _save();
     }
-
+    
+    // ─────────────────────────────────────────────
+    // Markdown import parser
+    // ─────────────────────────────────────────────
     function _parseMD(text) {
       items=[]; phases=[]; phaseDescs={};
       let parsedName='', parsedVersion='';
       const lines=text.split('\n'); let curPhase='', curDesc='', section='backlog';
       for(const line of lines) {
         if(line.startsWith('# ')){const raw=line.replace(/^#\s*/,'').trim();const dash=raw.indexOf('—');parsedName=dash>-1?raw.slice(dash+1).trim():raw.replace(/^BACKLOG\.md/i,'').trim();continue;}
-        if(line.startsWith('> Versie:')){const m=line.match(/Versie:\s*([^\s·]+)/);if(m&&m[1]&&m[1]!=='—')parsedVersion=m[1];continue;}
+        if(line.startsWith('> Versie:')){const m=line.match(/Versie:\s*([^\s·\u00b7·]+)/);if(m&&m[1]&&m[1]!=='—')parsedVersion=m[1];continue;}
         if(line.match(/^\[BACKLOG\]$/)){section='backlog';continue;}
         if(line.match(/^\[KPI\]$/)   ){section='kpi';continue;}    // KPI sectie overslaan (niet verwijderen uit MD)
         if(section==='backlog'&&line.startsWith('##')){
