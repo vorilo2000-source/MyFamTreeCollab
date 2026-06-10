@@ -1,25 +1,69 @@
 # MyFamTreeCollab — Claude instructies
 
-## Project
-Commerciële heritage & genealogie webapplicatie.
+## Projectvisie
+MyFamTreeCollab is een **commerciële heritage & genealogie webapplicatie** waarbij
+de gebruiker altijd volledige controle houdt over zijn eigen data.
+
+### Kernprincipes
+- **Privacy first** — data blijft standaard lokaal in de browser
+- **Geen betaalde account vereist** voor basisfunctionaliteit
+- **Open standaarden** — export naar CSV, JSON én GEDCOM
+
+### Uitbreidingen
+- 👥 Samenwerken met anderen aan dezelfde stamboom
+- 🔗 Delen van stambomen (met leesrechten)
+- 📜 Versiebeheer per persoon
+
+### Toekomstige uitbreidingen
+- 🔍 Genealogisch onderzoek (bronnen, archieven, verwijzingen)
+
+---
+
+## Technische informatie
 **Live:** https://vorilo2000-source.github.io/MyFamTreeCollab/index.html
 **Broncode:** https://github.com/vorilo2000-source/MyFamTreeCollab
 **Stack:** Vanilla HTML + CSS + JavaScript — geen frameworks
-**Cloud:** Supabase
+**Cloud:** Supabase — https://supabase.com/dashboard/org/kvaizqetplltywdpwefz
 
-### Kernprincipes
-- Privacy first — data blijft standaard lokaal in de browser
-- Geen betaalde account vereist voor basisfunctionaliteit
-- Open standaarden — export naar CSV, JSON én GEDCOM
+---
+
+## Marketing & Communicatie
+**Kernboodschap:** "Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat."
+**Actieve kanalen:** Facebook · Reddit (r/genealogy, r/belgium) · Product Hunt
+**Huidig plan:** zie `MARKETING.md` — fasering, contentkalender, KPI's en lanceringstemplates
+
+Bij een sessie met marketing-impact checkt Claude ook de actieve fase in `MARKETING.md` en levert een bijgewerkte statuskolom.
 
 ---
 
 ## Werkwijze per sessie
-1. Gebruiker geeft aan wat er gedaan moet worden
-2. Claude checkt backlog en huidige bestandsstatus **voor** hij bouwt
+1. Gebruiker geeft aan wat er gedaan moet worden (of vraagt wat de volgende prioriteit is)
+2. Claude checkt backlog, huidige bestandsstatus én actieve marketingfase (indien relevant)
 3. Claude vraagt toestemming **voor** hij begint
-4. Claude vraagt bij twijfel — doet nooit meer dan gevraagd
-5. Einde sessie: Claude levert gewijzigde bestanden + PROJECT_LOG.md entry + BACKLOG.md update
+4. Claude doet **nooit meer dan gevraagd** — stop en vraag bij twijfel
+5. Einde van sessie: Claude levert
+   - Gewijzigde bestanden
+   - Sessie-entry voor `PROJECT_LOG.md`
+   - Bijgewerkte: `BACKLOG.md`, `handleiding-nl.html` en `PROJECT.md`
+   - *(indien marketing-impact)* Bijgewerkte statuskolom in `MARKETING.md`
+
+---
+
+## Werkwijze Claude Code
+Alle code-wijzigingen via Claude Code for VS Code.
+
+**Op computer:**
+1. Open project in VS Code
+2. Geef opdracht in Claude Code chat
+3. Claude Code leest/schrijft bestanden direct
+4. Test in browser
+5. `git add .` + `git commit -m "beschrijving"` + `git push`
+
+**Op iPad:**
+1. Bestand aanpassen via claude.ai
+2. Bestand downloaden
+3. Bestand vervangen in clone map op computer
+4. `git add .` + `git commit -m "beschrijving"` + `git push`
 
 ---
 
@@ -28,7 +72,7 @@ Commerciële heritage & genealogie webapplicatie.
 - Code & commentaar: **Engels**
 - Stijl: direct en technisch, geen overbodige uitleg tenzij gevraagd
 - Inline commentaar op **elke** coderegel
-- Versienummering: verhoog bij elke wijziging (v1.0.0 voor nieuwe bestanden)
+- Versienummering: verhoog bij elke wijziging (`v1.0.0` voor nieuwe bestanden)
 
 ---
 
@@ -37,9 +81,11 @@ Een taak is klaar als:
 - [ ] Code werkt zoals bedoeld (getest in browser, geen console-errors)
 - [ ] Inline commentaar op elke coderegel
 - [ ] Bestandsheader bijgewerkt met nieuw versienummer
-- [ ] PROJECT_LOG.md bijgewerkt met sessie-entry
-- [ ] BACKLOG.md bijgewerkt: taak op ✅ Gedaan
-- [ ] Handleiding.html bijgewerkt indien van toepassing
+- [ ] `PROJECT.md` bijgewerkt
+- [ ] `PROJECT_LOG.md` bijgewerkt met sessie-entry
+- [ ] `BACKLOG.md` bijgewerkt: taak op ✅ Gedaan
+- [ ] `handleiding-nl.html` bijgewerkt indien van toepassing
+- [ ] *(indien marketing-impact)* Statuskolom bijgewerkt in `MARKETING.md`
 
 ---
 
@@ -85,19 +131,11 @@ AgendaStore.sync();
 ## Admin toolset (huidige versies)
 | Bestand | Versie | Omschrijving |
 |---------|--------|--------------|
-| `admin/backlog.html` | v5.3.0 | Backlog manager |
+| `admin/backlog.html` | v5.3.1 | Backlog manager |
 | `admin/marketing.html` | v3.0.0 | Marketing & communicatieplan |
 | `admin/agenda.html` | v1.1.0 | Centrale agenda |
 | `admin/projectlog.html` | v1.0.0 | Project log viewer |
 | `js/agendaStore.js` | v1.0.0 | Centrale agenda brug |
-
----
-
-## Backlog & logging
-- **BACKLOG.md** — alle openstaande en afgeronde taken per fase
-- **PROJECT_LOG.md** — chronologisch overzicht van alle sessies
-- Nieuwe backlog items krijgen ID volgens patroon: `[fase][type]-[volgnummer]`
-- Auto ID format: `[1e letter fase][1e letter type]-[3-cijferig volgnummer]`
 
 ---
 
@@ -113,9 +151,8 @@ AgendaStore.sync();
 | F7 | Businessmodel & betaling |
 | F8 | Internationalisatie (i18n) |
 | F9 | Bronnen (genealogisch onderzoek) |
-| F10 | Admin toegangsbeveiliging & tools  |
+| F10 | Admin toegangsbeveiliging |
 | FA | Account & donaties |
 | SEC | Beveiliging |
 | TD | Technische schuld |
-| SB | Supabase, action, task & backlog |
-| IS | Instructies, beschrijving van instructies voor uitvoering van taken |
+| IS | Instructies & beschrijvingen |
