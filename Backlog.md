@@ -180,7 +180,7 @@
 | TD-009 |  | topbar.j | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen |  | Tech Debt |  |  |  | 🟡 Medium | ✅ Done |
 | TD-011 |  | template.html | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html me |  | Tech Debt |  |  |  | 🔴 High | ✅ Done |
 
-## SB — Supabase, Action, task & backlog
+## Supabase — Action, task & backlog
 
 | ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
@@ -192,7 +192,7 @@
 | SD-009 |      | Deployment        | ## Omgevingen<br>- dev<br>- staging<br>- prod<br><hr>## Hosting<br>- Frontend: GitHub Pages / Vercel<br>- Backend: Supabase |              | Description |            |           |            | 🔴 High    | 🔍 Review |
 | SD-010 |      | Volgende stappen  | 1. Supabase project aanmaken<br>2. Database schema implementeren<br>3. Basis frontend bouwen<br>4. Eerste Gantt render testen    |  | Description | |  | 🟡 Medium  | 🔍 Review |
 
-## IS — Instructies, Beschrijving van instructies voor uitvoering van taken 
+## Instructie — Beschrijving van instructies voor uitvoering van taken 
 
 | ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |
 |----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|
