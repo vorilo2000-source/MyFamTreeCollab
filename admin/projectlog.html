@@ -11,7 +11,7 @@
      - Toegangsbeveiliging via AdminGuard.protect('admin')
 
     Wijzigingen v1.1.0 (sessie 40):
-     - Fix: localStorage key bl_log → pl_log (pl_ prefix)
+    - Fix: localStorage key bl_log → pl_log (pl_ prefix)
      - Fix: agendaStore.js toegevoegd aan script-laadvolgorde
      - Fix: tabel flush bij einde sessie-body
      - Fix: ## Bijgewerkt / blockquote / --- overgeslagen in rawLines
@@ -157,6 +157,8 @@
           </label>
           <button class="btn btn-accent" id="btn-expand-all">▼ Alles uitklappen</button>
           <button class="btn btn-ghost" id="btn-collapse-all">▲ Alles inklappen</button>
+          <!-- Link naar centrale agenda — opent in zelfde tab -->
+          <a class="btn" href="/MyFamTreeCollab/admin/agenda.html" style="text-decoration:none">📅 Naar agenda</a>
           <span style="flex:1"></span>
           <button class="btn btn-danger" id="btn-clear-log" title="Wist de opgeslagen log uit localStorage">🗑 Log wissen</button>
         </div>
