@@ -477,8 +477,8 @@
         });
         html+='</ul>';
       }
-      if(s.notes&&s.notes.trim()) { // notities via MD parser
-        html+=_mdToHtml(s.notes);
+      if(s.notes&&s.notes.trim()) { // notities direct als HTML/tekst plaatsen, backlog-achtige gedrag
+        html+=s.notes.trim();
       }
       return html||'<p style="color:var(--text-muted);font-size:0.8rem">Geen inhoud.</p>'; // lege staat
     }
@@ -599,13 +599,15 @@
     }
 
     // Inline markdown: **bold** en `code` naar HTML
+    // Laat HTML-tags zoals <br> of <hr> door voor dezelfde behavior als backlog.html
     function _inline(t) {
-      return _esc(t)
+      return String(t)
+        .replace(/&/g,'&amp;')
         .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') // **bold** naar <strong>
         .replace(/`([^`]+)`/g,'<code>$1</code>');         // `code` naar <code>
     }
 
-    // HTML escapen: voorkomt XSS via gebruikersinvoer
+    // HTML escapen: voorkomt XSS voor velden die direct als tekst worden geplaatst
     function _esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     return { init:init }; // publieke interface: alleen init() blootstellen
