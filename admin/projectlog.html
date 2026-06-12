@@ -2,28 +2,27 @@
     Project Log Editor — admin only
 
     Wijzigingen v1.0.0 (sessie 37):
-     - Initiële versie
-     - Laadt PROJECT_LOG.md via 📂 knop
-     - Sessies als uitklapbare kaarten
-     - Zoeken op sessietitel of inhoud
+     - Initiële versie: viewer met uitklapbare sessiekaarten
      - Log bewaard in localStorage (pl_log)
-     - Zelfde look & feel als backlog.html en analytics.html
-     - Toegangsbeveiliging via AdminGuard.protect('admin')
 
     Wijzigingen v1.1.0 (sessie 40):
-     - Fix: localStorage key bl_log → pl_log (pl_ prefix)
+     - Fix: localStorage key bl_log -> pl_log (pl_ prefix)
      - Fix: agendaStore.js toegevoegd aan script-laadvolgorde
      - Fix: tabel flush bij einde sessie-body
      - Fix: ## Bijgewerkt / blockquote / --- overgeslagen in rawLines
 
     Wijzigingen v2.0.0 (sessie 40):
-     - Viewer uitgebreid naar volwaardige editor (zelfde patroon als backlog.html)
-     - + Toevoegen knop: nieuwe sessie via modal
+     - Volledige herschrijving: viewer -> editor (zelfde architectuur als backlog.html v5.3.2)
+     - Board/lijst weergave met sticky headers en scrollbare container
+     - Zoeken op alle velden (nummer, titel, datum, versie, inhoud)
+     - Modal editor: nummer, titel, datum, versie, uitgevoerd, niet uitgevoerd, notities
      - Sessies bewerken en verwijderen
      - 💾 Opslaan in localStorage (pl_items)
-     - 📝 MD exporteren als PROJECT_LOG.md
-     - AgendaStore.sync() na elke _save() zodat sessiedatums in agenda.html zichtbaar zijn
-     - Sessievelden: nummer, titel, datum, versie, uitgevoerd, niet uitgevoerd, notities
+     - 📝 MD exporteren als PROJECT_LOG.md (zelfde formaat als bestaande log)
+     - 📂 Laden van bestaande PROJECT_LOG.md
+     - AgendaStore.sync() na elke _save() zodat sessiedatums in agenda.html verschijnen
+     - Markdown toolbar in notities-veld (bold, code, lijst, tabel)
+     - Tags per sessie (zelfde structuur als backlog items)
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -44,66 +43,113 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    /* ── CSS variabelen: zelfde palet als backlog.html ── */
+    /* ── CSS variabelen: identiek aan backlog.html ── */
     :root {
-      --bg-main:     #565656;
-      --bg-card:     #3a3a3a;
-      --bg-card-alt: #444444;
-      --accent:      #00d4aa;
-      --accent-dim:  rgba(0,212,170,0.15);
-      --text-primary:#f0f0f0;
-      --text-muted:  #aaa;
-      --border:      rgba(255,255,255,0.08);
-      --font-mono:   'IBM Plex Mono', monospace;
-      --font-sans:   'IBM Plex Sans', sans-serif;
-      --radius:      8px;
-      --shadow:      0 4px 20px rgba(0,0,0,0.35);
-      --color-danger:#f08080;
+      --bg-main:      #565656;
+      --bg-card:      #3a3a3a;
+      --bg-card-alt:  #444444;
+      --accent:       #00d4aa;
+      --accent-dim:   rgba(0,212,170,0.15);
+      --text-primary: #f0f0f0;
+      --text-muted:   #aaa;
+      --border:       rgba(255,255,255,0.08);
+      --font-mono:    'IBM Plex Mono', monospace;
+      --font-sans:    'IBM Plex Sans', sans-serif;
+      --radius:       8px;
+      --shadow:       0 4px 20px rgba(0,0,0,0.35);
+      --color-danger: #f08080;
     }
+
     /* ── Toegangsblokken ── */
     #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
     #page-content  { display:none; }
+
     /* ── Main layout ── */
     main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
-    .dash-wrap { max-width:900px; margin:0 auto; }
+    .dash-wrap { max-width:960px; margin:0 auto; }
+
     /* ── Animatie ── */
     @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-    /* ── Header ── */
-    .log-header { margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
-    .log-title { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 6px; }
-    .log-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
-    .log-meta b { color:var(--accent); }
+
+    /* ── Project header ── */
+    .proj-header { margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
+    .proj-name { font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--accent); margin:0 0 6px; }
+    .proj-meta { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
+    .proj-meta b { color:var(--accent); }
+
     /* ── Acties ── */
-    .log-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
-    /* ── Knoppen ── */
+    .bl-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
+
+    /* ── Knoppen: identiek aan backlog.html ── */
     .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; text-decoration:none; }
     .btn:hover { background:var(--bg-card-alt); }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
     .btn-accent { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
     .btn-accent:hover { background:rgba(0,212,170,0.28); }
     .btn-ghost { border-color:transparent; background:transparent; color:var(--text-muted); }
     .btn-ghost:hover { background:rgba(255,255,255,0.06); }
     .btn-danger { background:rgba(240,128,128,0.15); color:var(--color-danger); border-color:var(--color-danger); }
     .btn-danger:hover { background:rgba(240,128,128,0.28); }
-    /* ── Zoekbalk ── */
-    .search-bar { width:100%; font-family:var(--font-mono); font-size:0.82rem; padding:8px 14px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; margin-bottom:1.25rem; box-sizing:border-box; }
-    .search-bar:focus { border-color:var(--accent); }
+    .btn-sm { padding:3px 10px; font-size:0.7rem; }
+
+    /* ── Formulierelementen: identiek aan backlog.html ── */
+    .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
+    .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
+    .form-input:focus { border-color:var(--accent); }
+    select.form-input { cursor:pointer; }
+    textarea.form-input { resize:vertical; font-family:var(--font-sans); font-size:0.82rem; line-height:1.6; }
+    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
+
+    /* ── Statistieken: identiek aan backlog.html ── */
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:1.75rem; }
+    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 20px 16px; box-shadow:var(--shadow); position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); }
+    .stat-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); margin-bottom:8px; }
+    .stat-value { font-family:var(--font-mono); font-size:2rem; font-weight:600; color:var(--text-primary); line-height:1; }
+
+    /* ── Filters: identiek aan backlog.html ── */
+    .filter-section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:1.5rem; display:flex; flex-direction:column; gap:12px; }
+    .filter-row { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+    .filter-row-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); min-width:80px; padding-top:5px; white-space:nowrap; }
+    .pills-wrap { display:flex; gap:6px; flex-wrap:wrap; }
+    .filter-pill { font-family:var(--font-mono); font-size:0.72rem; padding:3px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .filter-pill:hover { border-color:var(--accent); color:var(--accent); }
+    .filter-pill.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+    .view-toggle { display:flex; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); overflow:hidden; }
+    .view-toggle button { font-family:var(--font-mono); font-size:0.75rem; padding:5px 14px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; transition:background .15s; }
+    .view-toggle button.active { background:var(--accent-dim); color:var(--accent); }
+
     /* ── Lege staat ── */
-    .log-empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); font-family:var(--font-mono); font-size:0.85rem; color:var(--text-muted); animation:fadeUp .3s ease; }
-    /* ── Sessiekaart ── */
-    .log-session { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; animation:fadeUp .3s ease; box-shadow:var(--shadow); position:relative; }
-    .log-session-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; cursor:pointer; user-select:none; transition:background .15s; gap:12px; }
-    .log-session-header:hover { background:var(--bg-card-alt); }
-    .log-session-header::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); border-radius:var(--radius) 0 0 var(--radius); }
-    .log-session-left { display:flex; flex-direction:column; gap:3px; flex:1; }
-    .log-session-title { font-family:var(--font-mono); font-size:0.88rem; font-weight:600; color:var(--accent); }
-    .log-session-date { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
-    .log-session-actions { display:flex; gap:4px; flex-shrink:0; }
-    .log-session-toggle { font-size:0.75rem; color:var(--text-muted); transition:transform .2s; flex-shrink:0; }
-    .log-session.open .log-session-toggle { transform:rotate(180deg); }
-    .log-session-body { display:none; padding:0 18px 18px; border-top:1px solid var(--border); }
-    .log-session.open .log-session-body { display:block; }
-    /* ── Markdown content ── */
+    .empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); }
+    .empty p { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; font-family:var(--font-mono); }
+
+    /* ── Lijst tabel: identiek aan backlog.html ── */
+    .list-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; max-height:680px; box-shadow:var(--shadow); }
+    .list-table { width:100%; border-collapse:separate; border-spacing:0; font-family:var(--font-mono); font-size:0.78rem; }
+    .list-table thead th { position:sticky; top:0; z-index:1; background:#1a7a4a; text-align:left; color:#fff; padding:10px 12px; border-bottom:2px solid #0f5c35; font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:0.68rem; white-space:nowrap; }
+    .list-table tbody td { padding:8px 12px; color:#1a1a1a; background:#c8c8c8; border-bottom:1px solid #aaa; vertical-align:middle; }
+    .list-table tbody tr:last-child td { border-bottom:none; }
+    .list-table tbody tr:hover td { background:#d8d8d8; }
+
+    /* ── Sessiekaart (board weergave) ── */
+    .board-scroll { overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 380px); border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-main); scrollbar-width:thin; scrollbar-color:rgba(0,212,170,0.4) rgba(255,255,255,0.05); }
+    .sessions-list { display:flex; flex-direction:column; gap:10px; padding:12px; }
+    .session-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; animation:fadeUp .3s ease; box-shadow:var(--shadow); position:relative; }
+    .session-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); border-radius:var(--radius) 0 0 var(--radius); } /* groene lijnmarkering links */
+    .session-card-header { display:flex; align-items:center; padding:14px 18px; cursor:pointer; user-select:none; transition:background .15s; gap:12px; }
+    .session-card-header:hover { background:var(--bg-card-alt); }
+    .session-card-left { display:flex; flex-direction:column; gap:3px; flex:1; }
+    .session-card-title { font-family:var(--font-mono); font-size:0.88rem; font-weight:600; color:var(--accent); }
+    .session-card-meta { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
+    .session-card-toggle { font-size:0.75rem; color:var(--text-muted); transition:transform .2s; flex-shrink:0; }
+    .session-card.open .session-card-toggle { transform:rotate(180deg); } /* toggle pijl draaien bij open */
+    .session-card-body { display:none; padding:0 18px 18px; border-top:1px solid var(--border); }
+    .session-card.open .session-card-body { display:block; } /* body tonen als open */
+
+    /* ── Markdown content in sessiekaart ── */
     .log-md { padding-top:12px; }
     .log-md h3 { font-family:var(--font-mono); font-size:0.82rem; color:var(--accent); margin:16px 0 6px; text-transform:uppercase; letter-spacing:0.5px; }
     .log-md p { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.7; margin:4px 0 8px; }
@@ -116,21 +162,25 @@
     .log-md tbody td { padding:7px 12px; background:#c8c8c8; color:#1a1a1a; border-bottom:1px solid #aaa; }
     .log-md tbody tr:last-child td { border-bottom:none; }
     .log-md tbody tr:hover td { background:#d8d8d8; }
-    /* ── Modal ── */
+
+    /* ── Badges en tags: identiek aan backlog.html ── */
+    .badge { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
+    .tag { font-family:var(--font-mono); font-size:0.65rem; padding:1px 7px; border-radius:4px; background:rgba(255,255,255,0.08); color:var(--text-muted); }
+
+    /* ── Markdown toolbar in modal ── */
+    .md-toolbar { display:flex; gap:4px; margin-bottom:4px; flex-wrap:wrap; }
+    .md-toolbar button { font-family:var(--font-mono); font-size:0.72rem; padding:2px 8px; border:1px solid rgba(255,255,255,0.15); border-radius:4px; background:var(--bg-card-alt); color:var(--text-muted); cursor:pointer; transition:background .15s; }
+    .md-toolbar button:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+
+    /* ── Modal: identiek aan backlog.html ── */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
     .modal-overlay.open { display:flex; }
-    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:620px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:640px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
     .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:12px; }
     .modal-header h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:0; }
     .modal-body { display:flex; flex-direction:column; gap:12px; }
     .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
-    /* ── Formulierelementen ── */
-    .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
-    .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
-    .form-input:focus { border-color:var(--accent); }
-    textarea.form-input { resize:vertical; font-family:var(--font-sans); font-size:0.82rem; line-height:1.6; }
-    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
+
     /* ── Toegang geweigerd ── */
     .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
     .access-denied h2 { font-size:1.2rem; color:var(--color-danger); margin-bottom:10px; font-family:var(--font-sans); }
@@ -152,46 +202,46 @@
   </div>
 
   <div id="page-content">
-    <main>
-      <div class="dash-wrap">
+    <main><div class="dash-wrap">
 
-        <!-- Header -->
-        <div class="log-header">
-          <div class="log-title">&#x1F4D6; Project Log</div>
-          <div class="log-meta" id="log-meta"></div>
-        </div>
-
-        <!-- Acties: zelfde patroon als backlog.html -->
-        <div class="log-actions">
-          <label class="btn" style="cursor:pointer">
-            &#x1F4C2; Laden
-            <input type="file" id="input-log-file" accept=".md" style="display:none"/>
-          </label>
-          <button class="btn" id="btn-save">&#x1F4BE; Opslaan</button>
-          <button class="btn" id="btn-export-md">&#x1F4DD; MD exporteren</button>
-          <button class="btn btn-accent" id="btn-add">+ Toevoegen</button>
-          <!-- Link naar centrale agenda: sessiedatums zichtbaar via AgendaStore.sync() -->
-          <a class="btn" href="/MyFamTreeCollab/admin/agenda.html" style="text-decoration:none">&#x1F4C5; Naar agenda</a>
-          <span style="flex:1"></span>
-          <button class="btn btn-danger" id="btn-clear-log" title="Wist de opgeslagen log uit localStorage">&#x1F5D1; Log wissen</button>
-        </div>
-
-        <!-- Uitklap/inklap knoppen -->
-        <div style="display:flex;gap:8px;margin-bottom:1rem;">
-          <button class="btn btn-ghost" id="btn-expand-all">&#x25BC; Alles uitklappen</button>
-          <button class="btn btn-ghost" id="btn-collapse-all">&#x25B2; Alles inklappen</button>
-        </div>
-
-        <!-- Zoeken -->
-        <input type="search" class="search-bar" id="input-search" placeholder="Zoeken in sessietitels en inhoud&hellip;"/>
-
-        <!-- Sessiekaarten -->
-        <div id="log-content">
-          <div class="log-empty">Laad een PROJECT_LOG.md bestand of voeg een sessie toe.</div>
-        </div>
-
+      <!-- Project header -->
+      <div class="proj-header">
+        <div class="proj-name">&#x1F4D6; Project Log</div>
+        <div class="proj-meta" id="proj-meta"></div>
       </div>
-    </main>
+
+      <!-- Acties: zelfde patroon als backlog.html -->
+      <div class="bl-actions">
+        <button class="btn" id="btn-export-md">&#x1F4DD; MD exporteren</button>
+        <label class="btn" style="cursor:pointer">&#x1F4C2; Laden (MD)<input type="file" id="input-file" accept=".md" style="display:none"/></label>
+        <button class="btn btn-accent" id="btn-add">+ Toevoegen</button>
+        <!-- Link naar centrale agenda: sessiedatums via AgendaStore.sync() -->
+        <a class="btn" href="/MyFamTreeCollab/admin/agenda.html" style="text-decoration:none">&#x1F4C5; Naar agenda</a>
+        <span style="flex:1"></span>
+        <button class="btn btn-danger" id="btn-clear-db">&#x1F5D1; Data wissen</button>
+      </div>
+
+      <!-- Statistieken -->
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <!-- Filters -->
+      <div class="filter-section">
+        <div class="filter-row">
+          <span class="filter-row-label">Zoeken</span>
+          <input type="search" class="form-input" id="input-search" placeholder="Sessienr, titel, versie, tags, inhoud&#x2026;" style="flex:1;min-width:200px"/>
+          <div class="view-toggle">
+            <button id="btn-view-cards" class="active">Kaarten</button>
+            <button id="btn-view-list">Lijst</button>
+          </div>
+          <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.72rem;padding:4px 12px">&#x2715; Wissen</button>
+        </div>
+        <div class="filter-row"><span class="filter-row-label">Tags</span><div class="pills-wrap" id="filter-tag-pills"></div></div>
+      </div>
+
+      <!-- Sessie-inhoud (kaarten of lijst) -->
+      <div id="pl-content"></div>
+
+    </div></main>
   </div>
 
   <!-- Modal: sessie toevoegen / bewerken -->
@@ -202,6 +252,7 @@
         <button class="btn btn-ghost" id="btn-modal-close" style="font-size:18px;padding:4px 8px">&#x2715;</button>
       </div>
       <div class="modal-body">
+        <!-- Sessienummer en datum -->
         <div class="form-grid2">
           <div>
             <label class="form-label">Sessienummer</label>
@@ -212,25 +263,54 @@
             <input class="form-input" type="date" id="f-date"/>
           </div>
         </div>
+        <!-- Titel -->
         <div>
           <label class="form-label">Titel *</label>
           <input class="form-input" type="text" id="f-title" placeholder="Korte beschrijving van de sessie"/>
         </div>
-        <div>
-          <label class="form-label">Versie(s)</label>
-          <input class="form-input" type="text" id="f-version" placeholder="backlog.html v5.3.2, CLAUDE.md v1.0.0"/>
+        <!-- Versie en tags op één rij -->
+        <div class="form-grid2">
+          <div>
+            <label class="form-label">Versie(s)</label>
+            <input class="form-input" type="text" id="f-version" placeholder="backlog.html v5.3.2"/>
+          </div>
+          <div>
+            <label class="form-label">Tags</label>
+            <input class="form-input" type="text" id="f-tags" placeholder="bugfix, feature, admin"/>
+          </div>
         </div>
+        <!-- Uitgevoerd: markdown-ondersteund textarea -->
         <div>
-          <label class="form-label">Uitgevoerd <span style="opacity:.5;font-size:0.68rem">(één item per regel)</span></label>
+          <label class="form-label">Uitgevoerd <span style="opacity:.5;font-size:0.68rem">(markdown ondersteund)</span></label>
+          <div class="md-toolbar" id="toolbar-done">
+            <button type="button" data-target="f-done" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-done" data-wrap="`|`" title="Code">&#x60;</button>
+            <button type="button" data-target="f-done" data-prefix="- " title="Lijst">&#x2022; Lijst</button>
+          </div>
           <textarea class="form-input" id="f-done" rows="5" placeholder="- Item 1&#10;- Item 2"></textarea>
         </div>
+        <!-- Niet uitgevoerd: markdown-ondersteund textarea -->
         <div>
-          <label class="form-label">Niet uitgevoerd <span style="opacity:.5;font-size:0.68rem">(één item per regel)</span></label>
+          <label class="form-label">Niet uitgevoerd <span style="opacity:.5;font-size:0.68rem">(markdown ondersteund)</span></label>
+          <div class="md-toolbar" id="toolbar-notdone">
+            <button type="button" data-target="f-notdone" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-notdone" data-wrap="`|`" title="Code">&#x60;</button>
+            <button type="button" data-target="f-notdone" data-prefix="- " title="Lijst">&#x2022; Lijst</button>
+          </div>
           <textarea class="form-input" id="f-notdone" rows="3" placeholder="- Item 1&#10;- Item 2"></textarea>
         </div>
+        <!-- Notities: volledige markdown toolbar -->
         <div>
-          <label class="form-label">Notities / extra secties</label>
-          <textarea class="form-input" id="f-notes" rows="4" placeholder="Vrije markdown inhoud&hellip;"></textarea>
+          <label class="form-label">Notities / versie-overzicht <span style="opacity:.5;font-size:0.68rem">(markdown ondersteund)</span></label>
+          <div class="md-toolbar" id="toolbar-notes">
+            <button type="button" data-target="f-notes" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-notes" data-wrap="*|*" title="Cursief">I</button>
+            <button type="button" data-target="f-notes" data-wrap="`|`" title="Code">&#x60;</button>
+            <button type="button" data-target="f-notes" data-prefix="- " title="Lijst">&#x2022;</button>
+            <button type="button" data-target="f-notes" data-prefix="### " title="Koptekst">H3</button>
+            <button type="button" data-target="f-notes" data-table="1" title="Tabel invoegen">&#x22EE; Tabel</button>
+          </div>
+          <textarea class="form-input" id="f-notes" rows="6" placeholder="### Versie-overzicht&#10;&#10;| Bestand | Van | Naar | Wijziging |&#10;|---------|-----|------|-----------|&#10;| `admin/projectlog.html` | v1.1.0 | v2.0.0 | Herschrijving |"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -242,7 +322,7 @@
 
   <div id="footer-placeholder"></div>
 
-  <!-- Scripts: verplichte volgorde -->
+  <!-- Scripts: verplichte volgorde identiek aan backlog.html -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/auth.js"></script>
@@ -253,362 +333,488 @@
 
   <script>
   // Layout laden: topbar -> admin-check -> Log.init()
-  fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
-    document.getElementById('topbar-placeholder').innerHTML=html; // topbar injecteren
-    const s=document.createElement('script'); s.src='../js/topbar.js'; // topbar.js dynamisch laden
-    s.onload=()=>AdminGuard.protect('admin').then(ok=>{ if(ok) Log.init(); }); // alleen admins
-    document.body.appendChild(s);
+  fetch('/MyFamTreeCollab/Layout/TopBar.html').then(function(r){return r.text();}).then(function(html){
+    document.getElementById('topbar-placeholder').innerHTML=html; // topbar HTML injecteren
+    var s=document.createElement('script'); // topbar.js dynamisch aanmaken
+    s.src='../js/topbar.js'; // script pad instellen
+    s.onload=function(){ AdminGuard.protect('admin').then(function(ok){ if(ok) Log.init(); }); }; // alleen admins
+    document.body.appendChild(s); // script toevoegen aan DOM
   });
-  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; }); // navbar injecteren
-  fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{ document.getElementById('footer-placeholder').innerHTML=html; }); // footer injecteren
+  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(function(r){return r.text();}).then(function(html){ document.getElementById('navbar-placeholder').innerHTML=html; }); // navbar injecteren
+  fetch('/MyFamTreeCollab/Layout/Footer.html').then(function(r){return r.text();}).then(function(html){ document.getElementById('footer-placeholder').innerHTML=html; }); // footer injecteren
 
   // ================================================================
   // PROJECT LOG MODULE v2.0.0 - vanilla JS
-  // Patroon: zelfde structuur als backlog.html (Backlog module)
+  // Architectuur: identiek aan backlog.html (Backlog module v5.3.2)
+  // localStorage prefix: pl_* (geen conflict met bl_*, mk_*, ag_*)
   // ================================================================
-  const Log = (() => {
-    const $=id=>document.getElementById(id); // DOM helper: element ophalen op ID
-    let sessions=[]; // array van alle sessie-objecten
-    let search='';   // actieve zoekterm
-    let editIdx=null; // index van sessie in bewerking (null = nieuwe sessie)
+  var Log = (function() {
+    var items=[]; // array van alle sessie-objecten
+    var view='cards'; // actieve weergave: 'cards' of 'list'
+    var search=''; // actieve zoekterm
+    var fTags=new Set(); // actieve tag-filters
+    var editId=null; // ID van sessie in bewerking (null = nieuw)
+    var $ = function(id){ return document.getElementById(id); }; // DOM helper
 
-    // Initialisatie: event listeners koppelen en opgeslagen data laden
+    // ── Initialisatie ──
     function init() {
-      _bindEvents(); // alle event listeners registreren
-      const saved=localStorage.getItem('pl_items'); // probeer opgeslagen sessies te laden
-      if(saved) { sessions=JSON.parse(saved); _renderAll(); } // parse JSON en render
+      var saved=localStorage.getItem('pl_items'); // opgeslagen sessies laden
+      if(saved) items=JSON.parse(saved); // JSON parsen naar array
       else {
-        const legacy=localStorage.getItem('pl_log'); // fallback: oude viewer-cache
-        if(legacy) _parseMD(legacy); // converteer oude MD-tekst naar sessie-objecten
+        var legacy=localStorage.getItem('pl_log'); // fallback: oude viewer-cache (plain MD tekst)
+        if(legacy) _parseMD(legacy); // oude MD converteren naar sessie-objecten
       }
+      _bindEvents(); // alle event listeners registreren
+      _renderAll(); // initieel renderen
+      _agSync(); // initiële agenda sync
     }
 
-    // Event bindings: koppel alle knoppen en inputs aan handlers
+    // ── Agenda sync: roept AgendaStore.sync() aan na elke _save() ──
+    function _agSync() {
+      if(typeof AgendaStore !== 'undefined') AgendaStore.sync(); // ag_cache herberekenen
+    }
+
+    // ── Persistentie: sla items op en sync agenda ──
+    function _save() {
+      localStorage.setItem('pl_items', JSON.stringify(items)); // sessies als JSON opslaan
+      _agSync(); // agenda bijwerken zodat sessiedatums zichtbaar zijn in agenda.html
+    }
+
+    // ── Event bindings ──
     function _bindEvents() {
-      $('input-log-file').addEventListener('change', _loadFile); // MD bestand laden via file picker
-      $('input-search').addEventListener('input', e=>{ search=e.target.value; _renderSessions(); }); // live zoeken bij typen
-      $('btn-expand-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.add('open')); }); // alle kaarten uitklappen
-      $('btn-collapse-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.remove('open')); }); // alle kaarten inklappen
-      $('btn-save').addEventListener('click', _save); // handmatig opslaan in localStorage
-      $('btn-export-md').addEventListener('click', _exportMD); // download als PROJECT_LOG.md
-      $('btn-add').addEventListener('click', ()=>_openModal()); // open lege modal voor nieuwe sessie
-      $('btn-modal-close').addEventListener('click', _closeModal); // sluit modal via X knop
-      $('btn-modal-cancel').addEventListener('click', _closeModal); // sluit modal via Annuleren
-      $('btn-modal-save').addEventListener('click', _saveSession); // sla sessie op vanuit modal
-      $('modal').addEventListener('click', e=>{ if(e.target===$('modal'))_closeModal(); }); // klik buiten modal sluit hem
-      $('btn-clear-log').addEventListener('click', ()=>{ // wis alle sessies na bevestiging
+      $('input-file').addEventListener('change', _importFile); // MD bestand laden
+      $('btn-export-md').addEventListener('click', _exportMD); // exporteer als PROJECT_LOG.md
+      $('btn-add').addEventListener('click', function(){ _openModal(); }); // nieuwe sessie
+      $('btn-modal-close').addEventListener('click', _closeModal); // modal sluiten via X
+      $('btn-modal-cancel').addEventListener('click', _closeModal); // modal sluiten via Annuleren
+      $('btn-modal-save').addEventListener('click', _saveItem); // sessie opslaan
+      $('modal').addEventListener('click', function(e){ if(e.target===$('modal')) _closeModal(); }); // klik buiten modal
+      $('btn-clear-db').addEventListener('click', function(){ // alle data wissen
         if(!confirm('Alle sessies wissen?\nDit kan niet ongedaan worden gemaakt.')) return;
-        localStorage.removeItem('pl_items'); // verwijder sessie-data uit localStorage
-        localStorage.removeItem('pl_log');   // verwijder ook oude viewer-cache
-        sessions=[]; search=''; $('input-search').value=''; // reset state
-        _renderAll(); // render lege staat
-        _agSync();    // ag_cache leegmaken via AgendaStore
+        Object.keys(localStorage).filter(function(k){ return k.startsWith('pl_'); }).forEach(function(k){ localStorage.removeItem(k); }); // alle pl_* keys wissen
+        localStorage.removeItem('ag_cache'); // agenda cache ook wissen
+        location.reload(); // pagina herladen voor schone staat
+      });
+      $('input-search').addEventListener('input', function(e){ search=e.target.value; _renderContent(); }); // live zoeken
+      $('btn-view-cards').addEventListener('click', function(){ view='cards'; _updateViewToggle(); _renderContent(); }); // kaarten weergave
+      $('btn-view-list').addEventListener('click', function(){ view='list'; _updateViewToggle(); _renderContent(); }); // lijst weergave
+      $('btn-clear-filters').addEventListener('click', _clearFilters); // filters wissen
+
+      // Markdown toolbar knoppen: wrap of prefix toepassen op textarea
+      document.querySelectorAll('.md-toolbar button').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var ta=$(btn.dataset.target); // target textarea ophalen
+          if(!ta) return; // textarea niet gevonden
+          var start=ta.selectionStart, end=ta.selectionEnd; // cursor positie
+          var val=ta.value; // huidige waarde
+          if(btn.dataset.wrap) { // wrap-modus: tekst omhullen
+            var parts=btn.dataset.wrap.split('|'); // split op | voor voor/na
+            var before=parts[0], after=parts[1]; // voor en na de selectie
+            ta.value=val.slice(0,start)+before+val.slice(start,end)+after+val.slice(end); // tekst injecteren
+            ta.selectionStart=start+before.length; // cursor na begin-wrap
+            ta.selectionEnd=end+before.length; // selectie behouden
+          } else if(btn.dataset.prefix) { // prefix-modus: voor elke geselecteerde regel
+            var lines=val.slice(start,end).split('\n'); // geselecteerde regels
+            var prefixed=lines.map(function(l){ return btn.dataset.prefix+l; }).join('\n'); // prefix toevoegen
+            ta.value=val.slice(0,start)+prefixed+val.slice(end); // tekst vervangen
+          } else if(btn.dataset.table) { // tabel-modus: standaard tabel invoegen
+            var tbl='\n| Bestand | Van | Naar | Wijziging |\n|---------|-----|------|----------|\n| `` | v1.0.0 | v2.0.0 | Omschrijving |\n';
+            ta.value=val.slice(0,start)+tbl+val.slice(end); // tabel invoegen
+          }
+          ta.focus(); // focus terug op textarea
+        });
       });
     }
 
-    // Bestand laden: leest gekozen MD bestand en vervangt huidige sessies
-    function _loadFile(e) {
-      const file=e.target.files[0]; if(!file) return; // geen bestand geselecteerd
-      if(!confirm('Huidige sessies vervangen door '+file.name+'?')) { e.target.value=''; return; } // bevestiging vragen
-      const reader=new FileReader(); // FileReader voor tekst-inhoud
-      reader.onload=ev=>{ _parseMD(ev.target.result); e.target.value=''; }; // parse geladen MD tekst
-      reader.readAsText(file); // start lezen als tekst
+    // ── Import: laad PROJECT_LOG.md bestand ──
+    function _importFile(e) {
+      var file=e.target.files[0]; if(!file) return; // geen bestand gekozen
+      if(!confirm('Huidige sessies vervangen door '+file.name+'?')) { e.target.value=''; return; } // bevestiging
+      var reader=new FileReader(); // bestand lezen als tekst
+      reader.onload=function(ev){ _parseMD(ev.target.result); e.target.value=''; alert(items.length+' sessies geladen.'); }; // parse en meld
+      reader.readAsText(file); // start lezen
     }
 
-    // MD parser: converteert PROJECT_LOG.md tekst naar sessie-objecten array
+    // ── MD parser: converteert PROJECT_LOG.md tekst naar sessie-objecten ──
     function _parseMD(text) {
-      const lines=text.split('\n'); // splits volledige tekst in regels
-      sessions=[]; // reset bestaande sessies
-      let cur=null; // huidige sessie in opbouw
+      var lines=text.split('\n'); // splits op regels
+      items=[]; // reset bestaande sessies
+      var cur=null; // huidige sessie in opbouw
+      var nextId=1; // auto-increment ID voor import
 
-      for(const line of lines) {
-        if(line.startsWith('## ')&&line.toLowerCase().includes('sessie')) { // sessie-header detecteren
-          if(cur) sessions.push(cur); // vorige sessie opslaan voor we nieuwe starten
-          const raw=line.replace(/^##\s*/,'').trim(); // verwijder ## prefix en witruimte
-          const dash=raw.indexOf('\u2014'); // zoek em-dash scheidingsteken
-          const nr=raw.match(/\d+/)?.[0]||''; // extraheer sessienummer via regex
-          const title=dash>-1?raw.slice(dash+1).trim():raw; // titel na dash, of volledige tekst
-          cur={ nr, title, date:'', version:'', done:'', notdone:'', notes:'', _section:'' }; // nieuw sessie-object
+      for(var i=0;i<lines.length;i++) {
+        var line=lines[i]; // huidige regel
+        if(line.startsWith('## ') && line.toLowerCase().includes('sessie')) { // sessie-header
+          if(cur) items.push(cur); // vorige sessie opslaan
+          var raw=line.replace(/^##\s*/,'').trim(); // ## prefix verwijderen
+          var dash=raw.indexOf('\u2014'); // em-dash zoeken als scheiding
+          var nr=raw.match(/\d+/); // sessienummer extraheren
+          var title=dash>-1 ? raw.slice(dash+1).trim() : raw; // titel na dash
+          cur={ id:'PL-'+String(nextId++).padStart(3,'0'), nr:nr?nr[0]:'', title:title, date:'', version:'', tags:'', done:'', notdone:'', notes:'', _section:'' };
           continue;
         }
-        if(!cur) continue; // geen actieve sessie, sla regel over
-        if(line.startsWith('**Datum:**')) { cur.date=line.replace('**Datum:**','').trim(); continue; } // datum extraheren
-        if(line.startsWith('**Versie:**')) { cur.version=line.replace('**Versie:**','').trim(); continue; } // versie extraheren
+        if(!cur) continue; // nog geen sessie actief
+        if(line.startsWith('**Datum:**'))   { cur.date=line.replace('**Datum:**','').trim(); continue; } // datum
+        if(line.startsWith('**Versie:**'))  { cur.version=line.replace('**Versie:**','').trim(); continue; } // versie
         if(line.startsWith('## Bijgewerkt:')) continue; // log-metadata overslaan
         if(line.startsWith('> '))             continue; // blockquote overslaan
         if(line.startsWith('---'))            continue; // horizontale lijn overslaan
-        if(line.startsWith('### Uitgevoerd'))      { cur._section='done';    continue; } // sectie wisselen naar uitgevoerd
-        if(line.startsWith('### Niet uitgevoerd')) { cur._section='notdone'; continue; } // sectie wisselen naar niet uitgevoerd
-        if(line.startsWith('### '))                { cur._section='notes';   continue; } // overige ### naar notities
-        if(cur._section==='done')    cur.done    +=(cur.done   ?'\n':'')+line; // regel toevoegen aan uitgevoerd
-        else if(cur._section==='notdone') cur.notdone+=(cur.notdone?'\n':'')+line; // regel toevoegen aan niet uitgevoerd
-        else if(cur._section==='notes')   cur.notes  +=(cur.notes  ?'\n':'')+line; // regel toevoegen aan notities
+        if(line.startsWith('### Uitgevoerd'))      { cur._section='done';    continue; } // sectie wisselen
+        if(line.startsWith('### Niet uitgevoerd')) { cur._section='notdone'; continue; } // sectie wisselen
+        if(line.startsWith('### '))                { cur._section='notes';   cur.notes+=(cur.notes?'\n':'')+line; continue; } // h3 in notities bewaren
+        if(cur._section==='done')    cur.done    +=(cur.done   ?'\n':'')+line; // regel in uitgevoerd
+        else if(cur._section==='notdone') cur.notdone+=(cur.notdone?'\n':'')+line; // regel in niet-uitgevoerd
+        else if(cur._section==='notes')   cur.notes  +=(cur.notes  ?'\n':'')+line; // regel in notities
       }
-      if(cur) sessions.push(cur); // laatste sessie toevoegen na einde loop
-      _save(); // opslaan in localStorage
-      _renderAll(); // renderen na laden
+      if(cur) items.push(cur); // laatste sessie toevoegen
+      _save(); // opslaan
+      _renderAll(); // renderen
     }
 
-    // AgendaStore sync: roept AgendaStore.sync() aan als de module beschikbaar is
-    function _agSync() {
-      if(typeof AgendaStore !== 'undefined') {
-        localStorage.setItem('pl_items', JSON.stringify(sessions)); // zorg dat ag_cache actuele pl_items leest
-        AgendaStore.sync(); // herberekent ag_cache zodat sessiedatums in agenda.html zichtbaar zijn
-      }
-    }
-
-    // Opslaan: persist sessies in localStorage en sync agenda
-    function _save() {
-      localStorage.setItem('pl_items', JSON.stringify(sessions)); // sessies als JSON opslaan
-      _agSync(); // agenda bijwerken na elke save
-      _renderMeta(); // meta-balk bijwerken met actuele tellingen
-    }
-
-    // MD export: genereert PROJECT_LOG.md en triggert download
+    // ── Export: genereer en download PROJECT_LOG.md ──
     function _exportMD() {
-      let md='# MyFamTreeCollab \u2014 Project Log\n'; // document-header met projectnaam
-      md+='## Bijgewerkt: '+new Date().toLocaleDateString('nl-BE')+'\n\n'; // huidige datum als bijgewerkt-datum
-      md+='> Chronologisch overzicht van alle sessies en wijzigingen.\n\n---\n\n'; // intro blockquote
+      var md='# MyFamTreeCollab \u2014 Project Log\n'; // document-header
+      md+='## Bijgewerkt: '+new Date().toLocaleDateString('nl-BE')+'\n\n'; // bijgewerkt-datum
+      md+='> Chronologisch overzicht van alle sessies en wijzigingen.\n\n---\n\n'; // intro
 
-      for(const s of sessions) { // itereer over alle sessies
-        md+='## Sessie '+s.nr+' \u2014 '+s.title+'\n\n'; // sessie-header met nummer en titel
-        if(s.date)    md+='**Datum:** '+s.date+'\n'; // datum indien aanwezig
-        if(s.version) md+='**Versie:** '+s.version+'\n'; // versie indien aanwezig
+      for(var i=0;i<items.length;i++) { // itereer over alle sessies
+        var s=items[i]; // huidige sessie
+        md+='## Sessie '+s.nr+' \u2014 '+s.title+'\n\n'; // sessie-header
+        if(s.date)    md+='**Datum:** '+s.date+'\n'; // datum
+        if(s.version) md+='**Versie:** '+s.version+'\n'; // versie
         md+='\n'; // lege regel na metadata
-        if(s.done&&s.done.trim()) { // uitgevoerd sectie alleen als er inhoud is
-          md+='### Uitgevoerd\n'; // sectie-header
-          md+=s.done.trim().split('\n').map(l=>l.startsWith('-')?l:'- '+l).join('\n')+'\n\n'; // zorg voor - prefix op elke regel
+        if(s.done && s.done.trim()) { // uitgevoerd sectie
+          md+='### Uitgevoerd\n';
+          md+=s.done.trim().split('\n').map(function(l){ return l.startsWith('-')?l:'- '+l; }).join('\n')+'\n\n'; // - prefix
         }
-        if(s.notdone&&s.notdone.trim()) { // niet uitgevoerd sectie alleen als er inhoud is
-          md+='### Niet uitgevoerd\n'; // sectie-header
-          md+=s.notdone.trim().split('\n').map(l=>l.startsWith('-')?l:'- '+l).join('\n')+'\n\n'; // zorg voor - prefix
+        if(s.notdone && s.notdone.trim()) { // niet uitgevoerd sectie
+          md+='### Niet uitgevoerd\n';
+          md+=s.notdone.trim().split('\n').map(function(l){ return l.startsWith('-')?l:'- '+l; }).join('\n')+'\n\n'; // - prefix
         }
-        if(s.notes&&s.notes.trim()) { // notities alleen als er inhoud is
-          md+=s.notes.trim()+'\n\n'; // vrije markdown inhoud ongewijzigd
-        }
+        if(s.notes && s.notes.trim()) md+=s.notes.trim()+'\n\n'; // notities ongewijzigd
         md+='---\n\n'; // sessie-scheiding
       }
 
-      const blob=new Blob([md],{type:'text/markdown'}); // blob aanmaken voor download
-      const a=document.createElement('a'); // tijdelijke anchor element
-      a.href=URL.createObjectURL(blob); // object URL toewijzen
-      a.download='PROJECT_LOG.md'; // bestandsnaam voor download
-      a.click(); // download triggeren
+      var blob=new Blob([md],{type:'text/markdown'}); // blob aanmaken
+      var a=document.createElement('a'); // tijdelijke link
+      a.href=URL.createObjectURL(blob); // object URL
+      a.download='PROJECT_LOG.md'; // bestandsnaam
+      a.click(); // download starten
     }
 
-    // Render alles: meta-balk en sessiekaarten
-    function _renderAll() { _renderMeta(); _renderSessions(); }
+    // ── Render alles ──
+    function _renderAll() { _renderMeta(); _renderStats(); _renderFilterPills(); _renderContent(); }
 
-    // Meta-balk: toont aantal sessies en datum van meest recente sessie
+    // ── Meta-balk: sessie-aantallen ──
     function _renderMeta() {
-      $('log-meta').innerHTML=
-        '<span>\u{1F4CB} <b>'+sessions.length+'</b> sessies</span>'+ // totaal aantal sessies
-        (sessions.length?'<span>\u{1F4C5} Laatste: <b>'+(sessions[0].date||'\u2014')+'</b></span>':''); // datum eerste (nieuwste) sessie
+      var total=items.length; // totaal aantal sessies
+      var metDatum=items.filter(function(s){ return s.date&&s.date.trim(); }).length; // sessies met datum
+      $('proj-meta').innerHTML=
+        '<span>&#x1F4CB; <b>'+total+'</b> sessies</span>'+
+        '<span>&#x1F4C5; <b>'+metDatum+'</b> met datum</span>'+
+        (items.length?'<span>Laatste: <b>'+(items[0].date||'\u2014')+'</b></span>':''); // datum meest recente sessie
     }
 
-    // Sessies renderen met zoekfilter
-    function _renderSessions() {
-      const q=search.toLowerCase().trim(); // zoekterm in lowercase voor case-insensitive vergelijking
-      const filtered=sessions.map((s,i)=>({s,i})).filter(({s})=>{ // filter met originele index behouden
-        if(!q) return true; // geen zoekterm: alles tonen
-        return (s.nr+s.title+s.done+s.notdone+s.notes).toLowerCase().includes(q); // zoek in alle tekstvelden
+    // ── Statistieken ──
+    function _renderStats() {
+      var total=items.length; // totaal
+      var metDatum=items.filter(function(s){ return s.date&&s.date.trim(); }).length; // met datum
+      var metTags=items.filter(function(s){ return s.tags&&s.tags.trim(); }).length; // met tags
+      $('stat-grid').innerHTML=
+        '<div class="stat-card"><div class="stat-label">Sessies</div><div class="stat-value">'+total+'</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Met datum</div><div class="stat-value">'+metDatum+'</div></div>'+
+        '<div class="stat-card" title="Sessies met startdatum zichtbaar in agenda.html"><div class="stat-label">In agenda</div><div class="stat-value">'+metDatum+'</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Met tags</div><div class="stat-value">'+metTags+'</div></div>';
+    }
+
+    // ── Filter pills: tags ──
+    function _renderFilterPills() {
+      var allTags=[]; // verzamel alle unieke tags
+      var seen={}; // bijhouden welke tags al gezien zijn
+      items.forEach(function(s){
+        (s.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean).forEach(function(t){
+          if(!seen[t]){ seen[t]=true; allTags.push(t); } // alleen unieke tags
+        });
       });
+      allTags.sort(); // alfabetisch sorteren
 
-      if(!sessions.length) { // geen sessies aanwezig
-        $('log-content').innerHTML='<div class="log-empty">Laad een PROJECT_LOG.md bestand of voeg een sessie toe.</div>';
+      var el=$('filter-tag-pills'); // tags container
+      el.innerHTML=allTags.map(function(t){
+        return '<button class="filter-pill'+(fTags.has(t)?' active':'')+'" data-val="'+_escAttr(t)+'">'+_esc(t)+'</button>';
+      }).join(''); // pills renderen
+
+      el.querySelectorAll('.filter-pill').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var v=btn.dataset.val; // tag waarde
+          if(fTags.has(v)) fTags.delete(v); else fTags.add(v); // toggle tag filter
+          _renderFilterPills(); // pills herrenderen
+          _renderContent(); // inhoud herrenderen
+        });
+      });
+    }
+
+    // ── Gefilterde items ──
+    function _filtered() {
+      var q=search.toLowerCase(); // zoekterm
+      return items.filter(function(s){
+        var mq=!q || (s.nr+s.title+s.version+s.tags+s.done+s.notdone+s.notes).toLowerCase().includes(q); // zoek in alle velden
+        var mt=!fTags.size || (s.tags||'').split(',').map(function(t){return t.trim();}).some(function(t){ return fTags.has(t); }); // tag filter
+        return mq && mt; // beide filters moeten matchen
+      });
+    }
+
+    // ── Inhoud renderen: kaarten of lijst ──
+    function _renderContent() {
+      var filtered=_filtered(); // gefilterde sessies
+      if(!items.length) { // geen sessies aanwezig
+        $('pl-content').innerHTML='<div class="empty"><p>Nog geen sessies. Laad een PROJECT_LOG.md of voeg je eerste sessie toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste sessie toevoegen</button></div>';
+        $('btn-add-empty').addEventListener('click', function(){ _openModal(); }); // empty state knop
         return;
       }
-      if(!filtered.length) { // zoekterm levert geen resultaten
-        $('log-content').innerHTML='<div class="log-empty">Geen sessies gevonden voor &ldquo;'+_esc(q)+'&rdquo;</div>';
-        return;
-      }
+      if(view==='cards') $('pl-content').innerHTML=_cardsHTML(filtered); // kaarten weergave
+      else               $('pl-content').innerHTML=_listHTML(filtered);  // lijst weergave
 
-      $('log-content').innerHTML=filtered.map(function(item){ // map over gefilterde sessies
-        var s=item.s, i=item.i; // destructureer sessie en index
-        return '<div class="log-session" id="log-s-'+i+'">'
-          +'<div class="log-session-header" data-idx="'+i+'">'
-          +'<div class="log-session-left">'
-          +'<div class="log-session-title">Sessie '+_esc(s.nr)+' \u2014 '+_esc(s.title)+'</div>'
-          +(s.date?'<div class="log-session-date">\u{1F4C5} '+_esc(s.date)+(s.version?' \u00B7 '+_esc(s.version):'')+' </div>':'')
-          +'</div>'
-          +'<div class="log-session-actions">'
-          +'<button class="btn btn-ghost" data-edit="'+i+'" style="padding:2px 6px;font-size:11px" title="Bewerken">\u270F\uFE0F</button>'
-          +'<button class="btn btn-ghost" data-delete="'+i+'" style="padding:2px 6px;font-size:11px" title="Verwijderen">\u{1F5D1}</button>'
-          +'</div>'
-          +'<span class="log-session-toggle">\u25BC</span>'
-          +'</div>'
-          +'<div class="log-session-body"><div class="log-md">'+_renderBody(s)+'</div></div>'
-          +'</div>';
-      }).join(''); // alle kaarten samenvoegen
-
-      $('log-content').querySelectorAll('.log-session-header').forEach(function(el){ // toggle handlers
+      // Bewerken knoppen
+      $('pl-content').querySelectorAll('[data-edit]').forEach(function(b){
+        b.addEventListener('click', function(){ _openModal(b.dataset.edit); }); // open modal
+      });
+      // Verwijderen knoppen
+      $('pl-content').querySelectorAll('[data-delete]').forEach(function(b){
+        b.addEventListener('click', function(){ _deleteItem(b.dataset.delete); }); // verwijder sessie
+      });
+      // Toggle kaart open/dicht
+      $('pl-content').querySelectorAll('.session-card-header').forEach(function(el){
         el.addEventListener('click', function(e){
-          if(e.target.dataset.edit||e.target.dataset.delete) return; // edit/delete knoppen niet togglen
-          document.getElementById('log-s-'+el.dataset.idx).classList.toggle('open'); // uit/inklappen
+          if(e.target.dataset.edit || e.target.dataset.delete) return; // knoppen niet togglen
+          el.parentElement.classList.toggle('open'); // kaart uit/inklappen
         });
       });
 
-      $('log-content').querySelectorAll('[data-edit]').forEach(function(btn){ // bewerken handlers
-        btn.addEventListener('click', function(){ _openModal(parseInt(btn.dataset.edit)); }); // open modal met sessie data
-      });
-
-      $('log-content').querySelectorAll('[data-delete]').forEach(function(btn){ // verwijderen handlers
-        btn.addEventListener('click', function(){ _deleteSession(parseInt(btn.dataset.delete)); }); // verwijder sessie
-      });
-
-      var first=$('log-content').querySelector('.log-session'); // eerste kaart selecteren
-      if(first) first.classList.add('open'); // eerste sessie standaard uitklappen
+      // Eerste kaart standaard uitklappen
+      var first=$('pl-content').querySelector('.session-card');
+      if(first) first.classList.add('open');
     }
 
-    // Sessie-body: genereert HTML voor inhoud van een sessiekaart
+    // ── Kaarten HTML ──
+    function _cardsHTML(filtered) {
+      if(!filtered.length) return '<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem;text-align:center">Geen sessies gevonden.</p>';
+      var html='<div class="board-scroll"><div class="sessions-list">'; // scrollbare container
+      filtered.forEach(function(s){
+        var tags=(s.tags||'').split(',').map(function(t){return t.trim();}).filter(Boolean); // tags splitsen
+        html+='<div class="session-card">'; // sessiekaart
+        html+='<div class="session-card-header">'; // klikbare header
+        html+='<div class="session-card-left">'; // linker blok met titel en meta
+        html+='<div class="session-card-title">Sessie '+_esc(s.nr)+' \u2014 '+_esc(s.title)+'</div>'; // titel
+        html+='<div class="session-card-meta">'; // meta-informatie
+        if(s.date) html+='&#x1F4C5; '+_esc(s.date); // datum
+        if(s.version) html+=(s.date?' &middot; ':'')+_esc(s.version); // versie
+        if(tags.length) html+=' '+tags.map(function(t){ return '<span class="tag">'+_esc(t)+'</span>'; }).join(' '); // tags
+        html+='</div></div>'; // einde meta en linker blok
+        html+='<div style="display:flex;gap:4px;flex-shrink:0">'; // actie knoppen
+        html+='<button class="btn btn-ghost" data-edit="'+_escAttr(s.id)+'" style="padding:2px 6px;font-size:11px">&#x270F;&#xFE0F;</button>'; // bewerken
+        html+='<button class="btn btn-ghost" data-delete="'+_escAttr(s.id)+'" style="padding:2px 6px;font-size:11px">&#x1F5D1;</button>'; // verwijderen
+        html+='</div>'; // einde actie knoppen
+        html+='<span class="session-card-toggle">&#x25BC;</span>'; // toggle pijl
+        html+='</div>'; // einde header
+        html+='<div class="session-card-body"><div class="log-md">'+_renderBody(s)+'</div></div>'; // uitklapbare body
+        html+='</div>'; // einde sessiekaart
+      });
+      html+='</div></div>'; // einde container
+      return html;
+    }
+
+    // ── Lijst HTML ──
+    function _listHTML(filtered) {
+      if(!filtered.length) return '<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem;text-align:center">Geen sessies gevonden.</p>';
+      var html='<div class="list-wrap"><table class="list-table">'; // tabel container
+      html+='<thead><tr><th>Nr</th><th>Datum</th><th>Titel</th><th>Versie</th><th>Tags</th><th></th></tr></thead><tbody>'; // kolom headers
+      filtered.forEach(function(s){
+        var tags=(s.tags||'').split(',').map(function(t){return t.trim();}).filter(Boolean); // tags
+        html+='<tr>'; // tabelrij
+        html+='<td style="font-family:var(--font-mono);color:#1a5c8a;font-weight:600">'+_esc(s.nr)+'</td>'; // sessienummer
+        html+='<td style="white-space:nowrap">'+_esc(s.date||'')+'</td>'; // datum
+        html+='<td style="font-weight:600;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_esc(s.title)+'</td>'; // titel
+        html+='<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_esc(s.version||'')+'</td>'; // versie
+        html+='<td>'+tags.map(function(t){ return '<span class="tag" style="background:#e5e7eb;color:#374151">'+_esc(t)+'</span>'; }).join(' ')+'</td>'; // tags
+        html+='<td style="white-space:nowrap">'; // actie knoppen
+        html+='<button class="btn btn-ghost" data-edit="'+_escAttr(s.id)+'" style="padding:2px 6px">&#x270F;&#xFE0F;</button>'; // bewerken
+        html+='<button class="btn btn-ghost" data-delete="'+_escAttr(s.id)+'" style="padding:2px 6px">&#x1F5D1;</button>'; // verwijderen
+        html+='</td></tr>'; // einde rij
+      });
+      html+='</tbody></table></div>'; // einde tabel
+      return html;
+    }
+
+    // ── Sessie-body: markdown naar HTML ──
     function _renderBody(s) {
-      var html='';
-      if(s.done&&s.done.trim()) { // uitgevoerd sectie
+      var html=''; // HTML output
+      if(s.done && s.done.trim()) { // uitgevoerd sectie
         html+='<h3>Uitgevoerd</h3><ul>';
-        s.done.trim().split('\n').filter(function(l){ return l.trim(); }).forEach(function(l){ // lege regels overslaan
+        s.done.trim().split('\n').filter(function(l){ return l.trim(); }).forEach(function(l){
           html+='<li>'+_inline(l.replace(/^[-*]\s*/,''))+'</li>'; // list-prefix strippen
         });
         html+='</ul>';
       }
-      if(s.notdone&&s.notdone.trim()) { // niet uitgevoerd sectie
+      if(s.notdone && s.notdone.trim()) { // niet uitgevoerd sectie
         html+='<h3>Niet uitgevoerd</h3><ul>';
         s.notdone.trim().split('\n').filter(function(l){ return l.trim(); }).forEach(function(l){
           html+='<li>'+_inline(l.replace(/^[-*]\s*/,''))+'</li>';
         });
         html+='</ul>';
       }
-      if(s.notes&&s.notes.trim()) { // notities via MD parser
-        html+=_mdToHtml(s.notes);
-      }
-      return html||'<p style="color:var(--text-muted);font-size:0.8rem">Geen inhoud.</p>'; // lege staat
+      if(s.notes && s.notes.trim()) html+=_mdToHtml(s.notes); // notities via volledige MD parser
+      return html || '<p style="color:var(--text-muted);font-size:0.8rem">Geen inhoud.</p>'; // lege staat
     }
 
-    // Modal openen: vult velden in voor bewerken, of lege velden voor nieuw
-    function _openModal(idx) {
-      editIdx=(idx!==undefined)?idx:null; // bewerkings-index opslaan
-      $('modal-title').textContent    = editIdx!==null?'Sessie bewerken':'Sessie toevoegen'; // modal-titel aanpassen
-      $('btn-modal-save').textContent = editIdx!==null?'Opslaan':'Toevoegen'; // knop-label aanpassen
+    // ── Modal openen ──
+    function _openModal(id) {
+      editId=id||null; // bewerkings-ID opslaan
+      $('modal-title').textContent    = editId ? 'Sessie bewerken' : 'Sessie toevoegen'; // modal-titel
+      $('btn-modal-save').textContent = editId ? 'Opslaan'         : 'Toevoegen'; // knop-label
 
-      if(editIdx!==null) { // bestaande sessie bewerken: velden invullen
-        var s=sessions[editIdx]; // sessie-data ophalen
-        $('f-nr').value      = s.nr      ||''; // sessienummer invullen
-        $('f-title').value   = s.title   ||''; // titel invullen
-        $('f-date').value    = _toInputDate(s.date); // datum converteren naar input formaat
-        $('f-version').value = s.version ||''; // versie invullen
-        $('f-done').value    = s.done    ||''; // uitgevoerd invullen
-        $('f-notdone').value = s.notdone ||''; // niet uitgevoerd invullen
-        $('f-notes').value   = s.notes   ||''; // notities invullen
-      } else { // nieuwe sessie: automatisch volgend nummer berekenen
-        var maxNr=sessions.reduce(function(m,s){ return Math.max(m,parseInt(s.nr)||0); },0); // hoogste bestaande nummer
-        $('f-nr').value      = maxNr+1; // automatisch volgend sessienummer
+      if(editId) { // bestaande sessie: velden invullen
+        var s=items.find(function(x){ return x.id===editId; }); // sessie opzoeken
+        if(!s) return; // sessie niet gevonden
+        $('f-nr').value      = s.nr      || ''; // sessienummer
+        $('f-title').value   = s.title   || ''; // titel
+        $('f-date').value    = _toInputDate(s.date); // datum naar input formaat
+        $('f-version').value = s.version || ''; // versie
+        $('f-tags').value    = s.tags    || ''; // tags
+        $('f-done').value    = s.done    || ''; // uitgevoerd
+        $('f-notdone').value = s.notdone || ''; // niet uitgevoerd
+        $('f-notes').value   = s.notes   || ''; // notities
+      } else { // nieuwe sessie: automatisch volgend nummer
+        var maxNr=items.reduce(function(m,s){ return Math.max(m,parseInt(s.nr)||0); },0); // hoogste nummer
+        $('f-nr').value      = maxNr+1; // volgend sessienummer
         $('f-title').value   = ''; // lege titel
-        $('f-date').value    = new Date().toISOString().slice(0,10); // vandaag als standaard datum
+        $('f-date').value    = new Date().toISOString().slice(0,10); // vandaag
         $('f-version').value = ''; // lege versie
-        $('f-done').value    = ''; // leeg uitgevoerd
-        $('f-notdone').value = ''; // leeg niet uitgevoerd
-        $('f-notes').value   = ''; // lege notities
+        $('f-tags').value    = ''; // lege tags
+        $('f-done').value    = ''; // leeg
+        $('f-notdone').value = ''; // leeg
+        $('f-notes').value   = ''; // leeg
       }
-      $('modal').classList.add('open'); // modal zichtbaar maken
-      $('f-title').focus(); // focus op titelveld voor directe invoer
+      $('modal').classList.add('open'); // modal tonen
+      $('f-title').focus(); // focus op titelveld
     }
 
-    // Modal sluiten: verberg modal en reset bewerkings-index
-    function _closeModal() { $('modal').classList.remove('open'); editIdx=null; }
+    // ── Modal sluiten ──
+    function _closeModal() { $('modal').classList.remove('open'); editId=null; }
 
-    // Sessie opslaan vanuit modal: valideer en sla op
-    function _saveSession() {
-      var title=$('f-title').value.trim(); if(!title){ $('f-title').focus(); return; } // titel is verplicht
-      var session={ // sessie-object samenstellen uit formuliervelden
+    // ── Sessie opslaan vanuit modal ──
+    function _saveItem() {
+      var title=$('f-title').value.trim(); if(!title){ $('f-title').focus(); return; } // titel verplicht
+      var item={ // sessie-object samenstellen
+        id:      editId || 'PL-'+Date.now(), // bestaand ID of nieuw timestamp-ID
         nr:      $('f-nr').value.trim(), // sessienummer
-        title:   title, // titel (al getrimd)
-        date:    _fromInputDate($('f-date').value), // datum converteren naar weergave-formaat
-        version: $('f-version').value.trim(), // versie(s)
-        done:    $('f-done').value.trim(), // uitgevoerd items
-        notdone: $('f-notdone').value.trim(), // niet uitgevoerd items
+        title:   title, // titel
+        date:    _fromInputDate($('f-date').value), // datum naar weergave-formaat
+        version: $('f-version').value.trim(), // versie
+        tags:    $('f-tags').value.trim(), // tags
+        done:    $('f-done').value.trim(), // uitgevoerd
+        notdone: $('f-notdone').value.trim(), // niet uitgevoerd
         notes:   $('f-notes').value.trim() // notities
       };
-      if(editIdx!==null) sessions[editIdx]=session; // bestaande sessie overschrijven
-      else sessions.unshift(session); // nieuwe sessie bovenaan toevoegen (nieuwste eerst)
-      _save();       // persisteren in localStorage
+      if(editId) { // bestaande sessie overschrijven
+        items=items.map(function(x){ return x.id===editId?item:x; });
+      } else { // nieuwe sessie bovenaan toevoegen (nieuwste eerst)
+        items.unshift(item);
+      }
+      _save();       // persisteren
       _closeModal(); // modal sluiten
-      _renderAll();  // herrenderen met nieuwe data
+      _renderAll();  // herrenderen
     }
 
-    // Sessie verwijderen na bevestiging
-    function _deleteSession(idx) {
-      if(!confirm('Sessie "'+sessions[idx].title+'" verwijderen?')) return; // bevestiging vragen
-      sessions.splice(idx,1); // sessie uit array verwijderen
+    // ── Sessie verwijderen ──
+    function _deleteItem(id) {
+      var s=items.find(function(x){ return x.id===id; }); // sessie opzoeken voor bevestiging
+      if(!s||!confirm('Sessie "'+s.title+'" verwijderen?')) return; // bevestiging
+      items=items.filter(function(x){ return x.id!==id; }); // verwijder uit array
       _save();      // persisteren
       _renderAll(); // herrenderen
     }
 
-    // Datum naar input formaat: DD-MM-YYYY of YYYY-MM-DD -> YYYY-MM-DD
-    function _toInputDate(d) {
-      if(!d) return ''; // lege string teruggeven als geen datum
-      if(d.includes('-')&&d.length===10) { // controleer op datum-formaat
-        var p=d.split('-'); // splits op koppelteken
-        if(p[0].length===4) return d; // al YYYY-MM-DD formaat
-        return p[2]+'-'+p[1]+'-'+p[0]; // DD-MM-YYYY omdraaien naar YYYY-MM-DD
+    // ── Filters wissen ──
+    function _clearFilters() {
+      search=''; fTags.clear(); // reset state
+      $('input-search').value=''; // zoekveld leegmaken
+      _renderAll(); // herrenderen
+    }
+
+    // ── View toggle ──
+    function _updateViewToggle() {
+      $('btn-view-cards').classList.toggle('active', view==='cards'); // kaarten knop
+      $('btn-view-list').classList.toggle('active',  view==='list');  // lijst knop
+    }
+
+    // ── Datum helpers ──
+    function _toInputDate(d) { // DD-MM-YYYY of YYYY-MM-DD -> YYYY-MM-DD voor input[type=date]
+      if(!d) return '';
+      if(d.includes('-') && d.length===10) {
+        var p=d.split('-');
+        if(p[0].length===4) return d; // al YYYY-MM-DD
+        return p[2]+'-'+p[1]+'-'+p[0]; // omdraaien
       }
-      return d; // ongewijzigd teruggeven als formaat onbekend
+      return d;
+    }
+    function _fromInputDate(d) { // YYYY-MM-DD -> DD-MM-YYYY voor weergave en export
+      if(!d) return '';
+      var p=d.split('-');
+      return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : d; // omdraaien
     }
 
-    // Datum van input formaat: YYYY-MM-DD -> DD-MM-YYYY voor weergave
-    function _fromInputDate(d) {
-      if(!d) return ''; // lege string teruggeven als geen datum
-      var p=d.split('-'); // splits op koppelteken
-      return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:d; // omdraaien naar DD-MM-YYYY of ongewijzigd
-    }
-
-    // MD naar HTML converter: voor notities-veld met tabellen, lijsten, koppen
+    // ── MD naar HTML converter (voor notities-veld) ──
     function _mdToHtml(text) {
-      var lines=text.split('\n'); // splits op regels
+      var lines=text.split('\n'); // regels splitsen
       var html='', inList=false, inTable=false, tableRows=[]; // staat-variabelen
 
-      function flushTable(){ // tabel naar HTML omzetten en resetten
+      function flushTable(){ // tabel naar HTML
         if(!tableRows.length){inTable=false;return;} // niets te flushen
-        html+='<table><thead><tr>'+tableRows[0].map(function(c){return '<th>'+_inline(c)+'</th>';}).join('')+'</tr></thead><tbody>'; // header rij
-        tableRows.slice(2).forEach(function(row){ html+='<tr>'+row.map(function(c){return '<td>'+_inline(c)+'</td>';}).join('')+'</tr>'; }); // data rijen, sla scheidingslijn over
+        html+='<table><thead><tr>'+tableRows[0].map(function(c){return '<th>'+_inline(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+        tableRows.slice(2).forEach(function(row){ html+='<tr>'+row.map(function(c){return '<td>'+_inline(c)+'</td>';}).join('')+'</tr>'; }); // scheidingslijn overslaan
         html+='</tbody></table>';
-        tableRows=[]; inTable=false; // tabel-staat resetten
+        tableRows=[]; inTable=false; // reset
       }
 
-      for(var i=0;i<lines.length;i++){ // itereer over alle regels
+      for(var i=0;i<lines.length;i++){
         var line=lines[i]; // huidige regel
-        if(line.startsWith('|')){ // tabelrij detecteren
-          if(inList){html+='</ul>';inList=false;} // open lijst sluiten
-          inTable=true; // tabel-modus activeren
-          tableRows.push(line.split('|').map(function(c){return c.trim();}).filter(function(_,j,a){return j>0&&j<a.length-1;})); // cells extraheren
+        if(line.startsWith('|')){ // tabelrij
+          if(inList){html+='</ul>';inList=false;}
+          inTable=true;
+          tableRows.push(line.split('|').map(function(c){return c.trim();}).filter(function(_,j,a){return j>0&&j<a.length-1;}));
           continue;
         }
-        if(inTable) flushTable(); // tabel sluiten als niet-tabelrij volgt
-        if(!line.trim()){ if(inList){html+='</ul>';inList=false;} continue; } // lege regel: lijst sluiten
-        if(line.startsWith('### ')){ if(inList){html+='</ul>';inList=false;} html+='<h3>'+_inline(line.slice(4))+'</h3>'; continue; } // h3 koptekst
-        if(line.match(/^[-*]\s/)){ // lijstitem detecteren
-          if(!inList){html+='<ul>';inList=true;} // lijst openen als nog niet open
-          html+='<li>'+_inline(line.replace(/^[-*]\s/,''))+'</li>'; // list-prefix strippen
+        if(inTable) flushTable(); // tabel sluiten
+        if(!line.trim()){ if(inList){html+='</ul>';inList=false;} continue; } // lege regel
+        if(line.startsWith('### ')){ if(inList){html+='</ul>';inList=false;} html+='<h3>'+_inline(line.slice(4))+'</h3>'; continue; } // h3
+        if(line.match(/^[-*]\s/)){ // lijstitem
+          if(!inList){html+='<ul>';inList=true;}
+          html+='<li>'+_inline(line.replace(/^[-*]\s/,''))+'</li>';
           continue;
         }
-        if(inList){html+='</ul>';inList=false;} // lijst sluiten voor niet-lijstregel
-        if(line.startsWith('## ')||line.startsWith('---')||line.startsWith('> ')) continue; // meta-regels overslaan
+        if(inList){html+='</ul>';inList=false;}
+        if(line.startsWith('## ')||line.startsWith('---')||line.startsWith('> ')) continue; // meta overslaan
         if(line.trim()) html+='<p>'+_inline(line)+'</p>'; // paragraaf
       }
-      if(inList) html+='</ul>';  // open lijst sluiten na einde tekst
-      if(inTable) flushTable();  // open tabel sluiten na einde tekst
+      if(inList) html+='</ul>';   // open lijst sluiten
+      if(inTable) flushTable();   // open tabel sluiten
       return html;
     }
 
-    // Inline markdown: **bold** en `code` naar HTML
+    // ── Inline markdown: **bold**, *cursief*, `code` ──
     function _inline(t) {
       return _esc(t)
-        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') // **bold** naar <strong>
-        .replace(/`([^`]+)`/g,'<code>$1</code>');         // `code` naar <code>
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') // **bold**
+        .replace(/\*([^*]+)\*/g,'<em>$1</em>')           // *cursief*
+        .replace(/`([^`]+)`/g,'<code>$1</code>');         // `code`
     }
 
-    // HTML escapen: voorkomt XSS via gebruikersinvoer
+    // ── HTML escapen voor weergave ──
     function _esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    // ── HTML escapen voor attributen ──
+    function _escAttr(t){ return String(t).replace(/"/g,'&quot;'); }
 
-    return { init:init }; // publieke interface: alleen init() blootstellen
+    return { init:init }; // publieke interface
   })();
   </script>
 </body>
