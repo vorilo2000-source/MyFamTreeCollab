@@ -1,42 +1,7 @@
-<!-- ======================= admin/projectlog.html v1.1.0 =======================
-    Project Log Viewer — admin only
-
-    Wijzigingen v1.0.0 (sessie 37):
-     - Initiële versie
-     - Laadt PROJECT_LOG.md via 📂 knop
-     - Sessies als uitklapbare kaarten
-     - Zoeken op sessietitel of inhoud
-     - Log bewaard in localStorage (pl_log)
-     - Zelfde look & feel als backlog.html en analytics.html
-     - Toegangsbeveiliging via AdminGuard.protect('admin')
-
-    Wijzigingen v1.1.0 (sessie 40):
-    - Fix: localStorage key bl_log → pl_log (pl_ prefix)
-     - Fix: agendaStore.js toegevoegd aan script-laadvolgorde
-     - Fix: tabel flush bij einde sessie-body
-     - Fix: ## Bijgewerkt / blockquote / --- overgeslagen in rawLines
-
-    Afhankelijkheden:
-     - ../js/utils.js · ../js/auth.js
-     - /MyFamTreeCollab/js/adminGuard.js
-     - /MyFamTreeCollab/js/siteAnalytics.js
-     - ../js/topbar.js (via fetch)
-    ======================================================================= -->
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Project Log — Admin</title>
-  <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    /* ── CSS variabelen: zelfde palet als analytics.html ── */
+﻿  
+  
+  Project Log — Admin
+  - /* ── CSS variabelen: zelfde palet als backlog.html ── */
     :root {
       --bg-main:     #565656;
       --bg-card:     #3a3a3a;
@@ -57,7 +22,7 @@
     #accessDenied { display:none; text-align:center; padding:4rem 2rem; color:var(--text-primary); font-family:var(--font-sans); }
     #page-content  { display:none; }
 
-    /* ── Main ── */
+    /* ── Main layout ── */
     main { background:var(--bg-main); min-height:100vh; padding:150px 20px 64px; font-family:var(--font-sans); color:var(--text-primary); }
     .dash-wrap { max-width:900px; margin:0 auto; }
 
@@ -74,7 +39,7 @@
     .log-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
 
     /* ── Knoppen ── */
-    .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; }
+    .btn { font-family:var(--font-mono); font-size:0.8rem; display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:background .2s; text-decoration:none; }
     .btn:hover { background:var(--bg-card-alt); }
     .btn-accent { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
     .btn-accent:hover { background:rgba(0,212,170,0.28); }
@@ -91,14 +56,14 @@
     .log-empty { text-align:center; padding:4rem 2rem; border:1px solid var(--border); border-radius:var(--radius); font-family:var(--font-mono); font-size:0.85rem; color:var(--text-muted); animation:fadeUp .3s ease; }
 
     /* ── Sessiekaart ── */
-    .log-session { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; animation:fadeUp .3s ease; box-shadow:var(--shadow); }
+    .log-session { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; animation:fadeUp .3s ease; box-shadow:var(--shadow); position:relative; }
     .log-session-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; cursor:pointer; user-select:none; transition:background .15s; gap:12px; }
     .log-session-header:hover { background:var(--bg-card-alt); }
     .log-session-header::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); border-radius:var(--radius) 0 0 var(--radius); }
-    .log-session { position:relative; }
     .log-session-left { display:flex; flex-direction:column; gap:3px; flex:1; }
     .log-session-title { font-family:var(--font-mono); font-size:0.88rem; font-weight:600; color:var(--accent); }
     .log-session-date { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
+    .log-session-actions { display:flex; gap:4px; flex-shrink:0; }
     .log-session-toggle { font-size:0.75rem; color:var(--text-muted); transition:transform .2s; flex-shrink:0; }
     .log-session.open .log-session-toggle { transform:rotate(180deg); }
     .log-session-body { display:none; padding:0 18px 18px; border-top:1px solid var(--border); }
@@ -118,184 +83,354 @@
     .log-md tbody tr:last-child td { border-bottom:none; }
     .log-md tbody tr:hover td { background:#d8d8d8; }
 
+    /* ── Modal ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:620px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:12px; }
+    .modal-header h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:0; }
+    .modal-body { display:flex; flex-direction:column; gap:12px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
+
+    /* ── Formulierelementen ── */
+    .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
+    .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
+    .form-input:focus { border-color:var(--accent); }
+    textarea.form-input { resize:vertical; font-family:var(--font-sans); font-size:0.82rem; line-height:1.6; }
+    .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
+
     /* ── Toegang geweigerd ── */
     .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
     .access-denied h2 { font-size:1.2rem; color:var(--color-danger); margin-bottom:10px; font-family:var(--font-sans); }
     .access-denied p { font-size:0.9rem; color:var(--text-muted); line-height:1.6; }
-  </style>
-</head>
-<body>
+  
 
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init();</script>
+  
+  
+  eruda.init();
 
-  <div id="topbar-placeholder"></div>
-  <div id="navbar-placeholder"></div>
+  
+  
 
-  <div id="accessDenied">
-    <div class="access-denied">
-      <h2>Geen toegang</h2>
-      <p>Deze pagina is alleen toegankelijk voor administrators.<br>Log in met een admin-account om verder te gaan.</p>
-    </div>
-  </div>
+  
+    
+      Geen toegang
+      Deze pagina is alleen toegankelijk voor administrators.
+Log in met een admin-account om verder te gaan.
+    
 
-  <div id="page-content">
-    <main>
-      <div class="dash-wrap">
+  
+    
 
-        <!-- Header -->
-        <div class="log-header">
-          <div class="log-title">📖 Project Log</div>
-          <div class="log-meta" id="log-meta"></div>
-        </div>
+        
 
-        <!-- Acties -->
-        <div class="log-actions">
-          <label class="btn" style="cursor:pointer">
-            📂 PROJECT_LOG.md laden
-            <input type="file" id="input-log-file" accept=".md" style="display:none"/>
-          </label>
-          <button class="btn btn-accent" id="btn-expand-all">▼ Alles uitklappen</button>
-          <button class="btn btn-ghost" id="btn-collapse-all">▲ Alles inklappen</button>
-          <!-- Link naar centrale agenda — opent in zelfde tab -->
-          <a class="btn" href="/MyFamTreeCollab/admin/agenda.html" style="text-decoration:none">📅 Naar agenda</a>
-          <span style="flex:1"></span>
-          <button class="btn btn-danger" id="btn-clear-log" title="Wist de opgeslagen log uit localStorage">🗑 Log wissen</button>
-        </div>
+          📖 Project Log
+          
+          
+        
 
-        <!-- Zoeken -->
-        <input type="search" class="search-bar" id="input-search" placeholder="Zoeken in sessietitels en inhoud…"/>
+        
 
-        <!-- Sessiekaarten -->
-        <div id="log-content">
-          <div class="log-empty">Laad een PROJECT_LOG.md bestand via de knop hierboven.</div>
-        </div>
+          📂 Laden
+          
+          
+        💾 Opslaan
+        📝 MD exporteren
+        + Toevoegen
+          
+          [📅 Naar agenda](/MyFamTreeCollab/admin/agenda.html)
+          
+        🗑 Log wissen
+       
 
-      </div>
-    </main>
-  </div>
+        
+          ▼ Alles uitklappen
+          ▲ Alles inklappen
+        
 
-  <div id="footer-placeholder"></div>
+      
 
-  <!-- Scripts: verplichte volgorde -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/utils.js"></script>
-  <script src="../js/auth.js"></script>
-  <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
-  <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
-  <script src="../js/agendaStore.js"></script>
+      
 
-  <script>
+        Laad een PROJECT_LOG.md bestand of voeg een sessie toe.
+      
+
+    
+
+  
+
+  
+
+    
+
+      Sessie toevoegen
+      ✕
+    
+    
+      
+        
+          Sessienummer
+          
+          
+        
+        
+          Datum
+          
+         
+      
+      
+        Titel *
+        
+      
+      
+        Versie(s)
+        
+      
+      
+        Uitgevoerd (één item per regel)
+        
+      
+      
+        Niet uitgevoerd (één item per regel)
+        
+      
+      
+        Notities / extra secties
+        
+      
+    
+
+      Annuleren
+      Toevoegen
+    
+
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+
   // ── Layout laden → topbar → admin-check → Log.init() ──
   fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
     document.getElementById('topbar-placeholder').innerHTML=html;
     const s=document.createElement('script'); s.src='../js/topbar.js';
-    s.onload=()=>AdminGuard.protect('admin').then(ok=>{ if(ok) Log.init(); });
+    s.onload=()=>AdminGuard.protect('admin').then(ok=>{ if(ok) Log.init(); }); // alleen toegang voor admins
     document.body.appendChild(s);
   });
   fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{ document.getElementById('navbar-placeholder').innerHTML=html; });
   fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{ document.getElementById('footer-placeholder').innerHTML=html; });
 
   // ================================================================
-  // PROJECT LOG MODULE — vanilla JS
+  // PROJECT LOG MODULE v2.0.0 — vanilla JS
+  // Patroon: zelfde structuur als backlog.html (Backlog module)
   // ================================================================
   const Log = (() => {
-    const $=id=>document.getElementById(id);
-    let sessions=[];   // geparsede sessies
-    let search='';     // actieve zoekterm
+    const $=id=>document.getElementById(id); // DOM helper
+    let sessions=[]; // array van sessie-objecten
+    let search='';   // actieve zoekterm
+    let editIdx=null; // index van sessie in bewerking (null = nieuw)
 
     // ── Initialisatie ──
     function init() {
-      $('input-log-file').addEventListener('change', _loadFile);
-      $('input-search').addEventListener('input', e=>{ search=e.target.value; _renderSessions(); });
-      $('btn-expand-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.add('open')); });
-      $('btn-collapse-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.remove('open')); });
-      $('btn-clear-log').addEventListener('click', ()=>{
-        if(!confirm('Opgeslagen log wissen?')) return;
-        localStorage.removeItem('pl_log'); // pl_ prefix: projectlog module
+      _bindEvents(); // koppel alle event listeners
+      const saved=localStorage.getItem('pl_items'); // herstel opgeslagen sessies
+      if(saved) { sessions=JSON.parse(saved); _renderAll(); } // parse en render
+      else {
+        const legacy=localStorage.getItem('pl_log'); // herstel uit oude viewer-cache
+        if(legacy) _parseMD(legacy); // converteer oude MD naar sessie-objecten
+      }
+    }
+
+    // ── Event bindings ──
+    function _bindEvents() {
+      $('input-log-file').addEventListener('change', _loadFile); // MD bestand laden
+      $('input-search').addEventListener('input', e=>{ search=e.target.value; _renderSessions(); }); // live zoeken
+      $('btn-expand-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.add('open')); }); // alles uitklappen
+      $('btn-collapse-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.remove('open')); }); // alles inklappen
+      $('btn-save').addEventListener('click', _save); // opslaan in localStorage
+      $('btn-export-md').addEventListener('click', _exportMD); // exporteer als PROJECT_LOG.md
+      $('btn-add').addEventListener('click', ()=>_openModal()); // nieuwe sessie toevoegen
+      $('btn-modal-close').addEventListener('click', _closeModal); // modal sluiten
+      $('btn-modal-cancel').addEventListener('click', _closeModal); // modal annuleren
+      $('btn-modal-save').addEventListener('click', _saveSession); // sessie opslaan vanuit modal
+      $('modal').addEventListener('click', e=>{ if(e.target===$('modal'))_closeModal(); }); // klik buiten modal sluit
+      $('btn-clear-log').addEventListener('click', ()=>{ // log wissen
+        if(!confirm('Alle sessies wissen?\nDit kan niet ongedaan worden gemaakt.')) return;
+        localStorage.removeItem('pl_items'); // verwijder sessie-data
+        localStorage.removeItem('pl_log');   // verwijder oude viewer-cache
         sessions=[]; search=''; $('input-search').value='';
-        $('log-meta').innerHTML='';
-        $('log-content').innerHTML='<div class="log-empty">Laad een PROJECT_LOG.md bestand via de knop hierboven.</div>';
+        _renderAll(); // herrender lege staat
+        _agSync();    // ag_cache bijwerken
       });
-      // Herstel uit localStorage
-      const saved=localStorage.getItem('pl_log'); // herstel gecachede log bij laden
-      if(saved) _parse(saved);
     }
 
     // ── Bestand laden ──
     function _loadFile(e) {
-      const file=e.target.files[0]; if(!file)return;
+      const file=e.target.files[0]; if(!file) return; // geen bestand gekozen
+      if(!confirm('Huidige sessies vervangen door '+file.name+'?')) { e.target.value=''; return; }
       const reader=new FileReader();
-      reader.onload=ev=>{ localStorage.setItem('pl_log',ev.target.result); _parse(ev.target.result); e.target.value=''; }; // cache geladen MD in localStorage
+      reader.onload=ev=>{ _parseMD(ev.target.result); e.target.value=''; }; // parse geladen MD
       reader.readAsText(file);
     }
 
     // ── MD parsen naar sessie-objecten ──
-    function _parse(text) {
-      const lines=text.split('\n');
-      sessions=[];
-      let cur=null;
-
-      // Meta uit koptekst
-      const titleLine  = lines.find(l=>l.startsWith('# '));
-      const updatedLine= lines.find(l=>l.startsWith('## Bijgewerkt:'));
-      const parts=[];
-      if(titleLine)   parts.push(titleLine.replace(/^#\s*/,'').trim());
-      if(updatedLine) parts.push(updatedLine.replace(/^##\s*/,'').trim());
-      $('log-meta').innerHTML=parts.map(p=>`<span><b>${_esc(p)}</b></span>`).join('');
+    function _parseMD(text) {
+      const lines=text.split('\n'); // splits op regels
+      sessions=[]; // reset sessies
+      let cur=null; // huidige sessie in opbouw
 
       for(const line of lines) {
-        // Sessie-koptekst: ## Sessie X ...
+        // Sessie-header: ## Sessie X — Titel
         if(line.startsWith('## ')&&line.toLowerCase().includes('sessie')) {
-          if(cur) sessions.push(cur);
-          cur={ title:line.replace(/^##\s*/,'').trim(), date:'', rawLines:[] };
+          if(cur) sessions.push(cur); // sla vorige sessie op
+          const raw=line.replace(/^##\s*/,'').trim(); // verwijder ## prefix
+          const dash=raw.indexOf('—'); // zoek scheidingsteken
+          const nr  =raw.match(/\d+/)?.[0]||''; // extraheer sessienummer
+          const title=dash>-1?raw.slice(dash+1).trim():raw; // extraheer titel
+          cur={ nr, title, date:'', version:'', done:'', notdone:'', notes:'' }; // nieuw sessie-object
           continue;
         }
-        if(!cur) continue;
-        // Datum
-        if(line.startsWith('**Datum:**')){ cur.date=line.replace('**Datum:**','').trim(); continue; }
-        // skip meta-regels die niet tot de sessie-inhoud behoren
+        if(!cur) continue; // nog geen sessie actief, sla over
+
+        // Datum regel
+        if(line.startsWith('**Datum:**')) { cur.date=line.replace('**Datum:**','').trim(); continue; }
+        // Versie regel
+        if(line.startsWith('**Versie:**')) { cur.version=line.replace('**Versie:**','').trim(); continue; }
+        // Meta-regels overslaan
         if(line.startsWith('## Bijgewerkt:')) continue; // log-header, niet sessie-content
-        if(line.startsWith('> '))             continue; // blockquote intro-tekst, overslaan
+        if(line.startsWith('> '))             continue; // blockquote, overslaan
         if(line.startsWith('---'))            continue; // horizontale lijn, overslaan
-        cur.rawLines.push(line); // voeg regel toe aan sessie-body
+
+        // Secties detecteren en toewijzen
+        if(line.startsWith('### Uitgevoerd'))     { cur._section='done';    continue; }
+        if(line.startsWith('### Niet uitgevoerd')) { cur._section='notdone'; continue; }
+        if(line.startsWith('### '))               { cur._section='notes';   continue; }
+
+        // Regel toevoegen aan actieve sectie
+        if(cur._section==='done')    cur.done   +=(cur.done?'
+':'')+line;
+        else if(cur._section==='notdone') cur.notdone+=(cur.notdone?'
+':'')+line;
+        else if(cur._section==='notes')   cur.notes  +=(cur.notes?'
+':'')+line;
       }
-      if(cur) sessions.push(cur);
-      _renderSessions();
+      if(cur) sessions.push(cur); // laatste sessie toevoegen
+      _save(); // opslaan in localStorage
+      _renderAll(); // renderen
+    }
+
+    // ── Agenda sync — roept AgendaStore.sync() aan als beschikbaar ──
+    function _agSync() {
+      if(typeof AgendaStore !== 'undefined') {
+        localStorage.setItem('pl_items', JSON.stringify(sessions)); // zorg dat ag_cache actuele data leest
+        AgendaStore.sync(); // herberekent ag_cache met sessiedatums
+      }
+    }
+
+    // ── Opslaan in localStorage ──
+    function _save() {
+      localStorage.setItem('pl_items', JSON.stringify(sessions)); // persist sessies
+      _agSync(); // agenda bijwerken na elke save
+      _renderMeta(); // meta-balk bijwerken
+    }
+
+    // ── MD exporteren als PROJECT_LOG.md ──
+    function _exportMD() {
+      let md=`# MyFamTreeCollab — Project Log\n`; // document-header
+      md+=`## Bijgewerkt: ${new Date().toLocaleDateString('nl-BE')}\n\n`; // bijgewerkt-datum
+      md+=`> Chronologisch overzicht van alle sessies en wijzigingen.\n\n---\n\n`; // intro
+
+      for(const s of sessions) { // itereer over sessies (nieuwste eerste)
+        md+=`## Sessie ${s.nr} — ${s.title}\n\n`; // sessie-header
+        if(s.date)    md+=`**Datum:** ${s.date}\n`; // datum
+        if(s.version) md+=`**Versie:** ${s.version}\n`; // versie
+        md+='\n';
+        if(s.done&&s.done.trim()) { // uitgevoerd sectie
+          md+=`### Uitgevoerd\n`;
+          md+=s.done.trim().split('\n').map(l=>l.startsWith('-')?l:'- '+l).join('\n')+'\n\n'; // zorg voor - prefix
+        }
+        if(s.notdone&&s.notdone.trim()) { // niet uitgevoerd sectie
+          md+=`### Niet uitgevoerd\n`;
+          md+=s.notdone.trim().split('\n').map(l=>l.startsWith('-')?l:'- '+l).join('\n')+'\n\n';
+        }
+        if(s.notes&&s.notes.trim()) { // notities sectie
+          md+=s.notes.trim()+'\n\n'; // vrije markdown inhoud
+        }
+        md+=`---\n\n`; // sessie-scheiding
+      }
+
+      const blob=new Blob([md],{type:'text/markdown'}); // maak downloadbaar bestand
+      const a=document.createElement('a'); // tijdelijke link
+      a.href=URL.createObjectURL(blob); // object URL
+      a.download='PROJECT_LOG.md'; // bestandsnaam
+      a.click(); // trigger download
+    }
+
+    // ── Render alles ──
+    function _renderAll() { _renderMeta(); _renderSessions(); }
+
+    // ── Meta-balk renderen ──
+    function _renderMeta() {
+      $('log-meta').innerHTML=
+        `📋 **${sessions.length}** sessies`+ // totaal aantal sessies
+        (sessions.length?`📅 Laatste: **${sessions[0].date||'—'}**`:''); // meest recente datum
     }
 
     // ── Sessies renderen (met zoekfilter) ──
     function _renderSessions() {
-      const q=search.toLowerCase().trim();
-      const filtered=sessions.filter(s=>{
+      const q=search.toLowerCase().trim(); // zoekterm
+      const filtered=sessions.map((s,i)=>({s,i})).filter(({s})=>{ // filter met originele index
         if(!q) return true;
-        return s.title.toLowerCase().includes(q) || s.rawLines.join('\n').toLowerCase().includes(q);
+        return (s.nr+s.title+s.done+s.notdone+s.notes).toLowerCase().includes(q); // zoek in alle velden
       });
 
-      if(!filtered.length) {
-        $('log-content').innerHTML=`<div class="log-empty">${q?'Geen sessies gevonden voor "'+_esc(q)+'"':'Geen sessies gevonden.'}</div>`;
+      if(!sessions.length) { // geen sessies aanwezig
+        $('log-content').innerHTML='Laad een PROJECT_LOG.md bestand of voeg een sessie toe.';
+        return;
+      }
+      if(!filtered.length) { // geen resultaten voor zoekterm
+        $('log-content').innerHTML=`Geen sessies gevonden voor "${_esc(q)}"`;
         return;
       }
 
-      $('log-content').innerHTML=filtered.map((s,i)=>`
-        <div class="log-session" id="log-s-${i}">
-          <div class="log-session-header" data-idx="${i}">
-            <div class="log-session-left">
-              <div class="log-session-title">${_esc(s.title)}</div>
-              ${s.date?`<div class="log-session-date">📅 ${_esc(s.date)}</div>`:''}
-            </div>
-            <span class="log-session-toggle">▼</span>
-          </div>
-          <div class="log-session-body">
-            <div class="log-md">${_mdToHtml(s.rawLines.join('\n'))}</div>
-          </div>
-        </div>`).join('');
+      $('log-content').innerHTML=filtered.map(({s,i})=>`
+        
+          
+            Sessie ${_esc(s.nr)} — ${_esc(s.title)}
+            ${s.date?`📅 ${_esc(s.date)}${s.version?' · '+_esc(s.version):''}`:''}
+          
+          
+            ✏️
+            🗑
+          
+        ▼
+          
+            ${_renderBody(s)}
+          
+        `).join('');
 
-      // Toggle handlers
+      // Toggle: klik op header klapt uit/in
       $('log-content').querySelectorAll('.log-session-header').forEach(el=>{
-        el.addEventListener('click', ()=>{
+        el.addEventListener('click', e=>{
+          if(e.target.dataset.edit||e.target.dataset.delete) return; // knoppen niet togglen
           document.getElementById('log-s-'+el.dataset.idx).classList.toggle('open');
         });
+      });
+
+      // Bewerken knoppen
+      $('log-content').querySelectorAll('[data-edit]').forEach(btn=>{
+        btn.addEventListener('click', ()=>_openModal(parseInt(btn.dataset.edit))); // open modal met sessie-data
+      });
+
+      // Verwijderen knoppen
+      $('log-content').querySelectorAll('[data-delete]').forEach(btn=>{
+        btn.addEventListener('click', ()=>_deleteSession(parseInt(btn.dataset.delete))); // verwijder sessie
       });
 
       // Eerste sessie standaard uitklappen
@@ -303,66 +438,153 @@
       if(first) first.classList.add('open');
     }
 
-    // ── Eenvoudige MD → HTML converter ──
+    // ── Sessie-body renderen als HTML ──
+    function _renderBody(s) {
+      let html='';
+      if(s.done&&s.done.trim()) { // uitgevoerd sectie
+        html+=`Uitgevoerd`;
+        s.done.trim().split('\n').filter(l=>l.trim()).forEach(l=>{ // elke niet-lege regel
+          html+=`${_inline(l.replace(/^[-*]\s*/,''))}
+`; // strip list-prefix
+        });
+        html+=`
+`;
+      }
+      if(s.notdone&&s.notdone.trim()) { // niet uitgevoerd sectie
+        html+=`Niet uitgevoerd
+`;
+        s.notdone.trim().split('\n').filter(l=>l.trim()).forEach(l=>{
+          html+=`- ${_inline(l.replace(/^[-*]\s*/,''))}
+`;
+        });
+        html+=`
+`;
+      }
+      if(s.notes&&s.notes.trim()) { // notities: gebruik MD parser
+        html+=_mdToHtml(s.notes);
+      }
+      return html||`Geen inhoud.
+
+`; // lege staat
+    }
+
+    // ── Modal openen ──
+    function _openModal(idx) {
+      editIdx = (idx !== undefined) ? idx : null; // sla bewerkings-index op
+      $('modal-title').textContent    = editIdx!==null ? 'Sessie bewerken' : 'Sessie toevoegen';
+      $('btn-modal-save').textContent = editIdx!==null ? 'Opslaan' : 'Toevoegen';
+
+      if(editIdx!==null) { // bestaande sessie: vul velden in
+        const s=sessions[editIdx];
+        $('f-nr').value      = s.nr      || '';
+        $('f-title').value   = s.title   || '';
+        $('f-date').value    = _toInputDate(s.date); // converteer datum naar YYYY-MM-DD
+        $('f-version').value = s.version || '';
+        $('f-done').value    = s.done    || '';
+        $('f-notdone').value = s.notdone || '';
+        $('f-notes').value   = s.notes   || '';
+      } else { // nieuwe sessie: lege velden + volgende sessienummer
+        const maxNr=sessions.reduce((m,s)=>Math.max(m,parseInt(s.nr)||0),0); // hoogste sessienummer
+        $('f-nr').value      = maxNr+1; // automatisch volgend nummer
+        $('f-title').value   = '';
+        $('f-date').value    = new Date().toISOString().slice(0,10); // vandaag als standaard
+        $('f-version').value = '';
+        $('f-done').value    = '';
+        $('f-notdone').value = '';
+        $('f-notes').value   = '';
+      }
+      $('modal').classList.add('open'); // modal zichtbaar maken
+      $('f-title').focus(); // focus op titelveld
+    }
+
+    // ── Modal sluiten ──
+    function _closeModal() { $('modal').classList.remove('open'); editIdx=null; }
+
+    // ── Sessie opslaan vanuit modal ──
+    function _saveSession() {
+      const title=$('f-title').value.trim(); if(!title){ $('f-title').focus(); return; } // titel verplicht
+      const session={ // sessie-object samenstellen
+        nr:      $('f-nr').value.trim(),
+        title,
+        date:    _fromInputDate($('f-date').value), // converteer YYYY-MM-DD naar weergave-formaat
+        version: $('f-version').value.trim(),
+        done:    $('f-done').value.trim(),
+        notdone: $('f-notdone').value.trim(),
+        notes:   $('f-notes').value.trim(),
+      };
+      if(editIdx!==null) sessions[editIdx]=session; // bestaande sessie overschrijven
+      else sessions.unshift(session);               // nieuwe sessie bovenaan toevoegen
+      _save();       // persisteren
+      _closeModal(); // modal sluiten
+      _renderAll();  // herrenderen
+    }
+
+    // ── Sessie verwijderen ──
+    function _deleteSession(idx) {
+      if(!confirm('Sessie "'+sessions[idx].title+'" verwijderen?')) return; // bevestiging
+      sessions.splice(idx,1); // verwijder uit array
+      _save();      // persisteren
+      _renderAll(); // herrenderen
+    }
+
+    // ── Datum helpers ──
+    function _toInputDate(d) { // nl-datum (DD-MM-YYYY of YYYY-MM-DD) → input[type=date] formaat
+      if(!d) return '';
+      if(d.includes('-')&&d.length===10) {
+        const p=d.split('-');
+        if(p[0].length===4) return d; // al YYYY-MM-DD
+        return `${p[2]}-${p[1]}-${p[0]}`; // DD-MM-YYYY → YYYY-MM-DD
+      }
+      return d;
+    }
+    function _fromInputDate(d) { // input[type=date] (YYYY-MM-DD) → weergave-formaat (DD-MM-YYYY)
+      if(!d) return '';
+      const p=d.split('-');
+      return p.length===3 ? `${p[2]}-${p[1]}-${p[0]}` : d; // DD-MM-YYYY
+    }
+
+    // ── Eenvoudige MD → HTML converter (voor notities-veld) ──
     function _mdToHtml(text) {
-      const lines=text.split('\n');
+      const lines=text.split('\n'); // splits op regels
       let html='', inList=false, inTable=false, tableRows=[];
 
-      const flushTable=()=>{
+      const flushTable=()=>{ // tabel naar HTML omzetten
         if(!tableRows.length){inTable=false;return;}
-        html+=`<table><thead><tr>${tableRows[0].map(c=>`<th>${_inline(c)}</th>`).join('')}</tr></thead><tbody>`;
-        // Rij 1 is headers, rij 2 is scheidingslijn (---)
-        tableRows.slice(2).forEach(row=>{ html+=`<tr>${row.map(c=>`<td>${_inline(c)}</td>`).join('')}</tr>`; });
-        html+=`</tbody></table>`;
-        tableRows=[]; inTable=false;
+        html+=`${tableRows[0].map(c=>`${_inline(c)}`).join('')}`;
+        tableRows.slice(2).forEach(row=>{ html+=`${row.map(c=>`${_inline(c)}`).join('')}`; }); // sla scheidingslijn over
+        html+=``;
+        tableRows=[]; inTable=false; // reset tabelstatus
       };
 
       for(const line of lines) {
-        // Tabelrij
-        if(line.startsWith('|')) {
-          if(inList){html+='</ul>';inList=false;}
+        if(line.startsWith('|')) { // tabelrij
+          if(inList){html+='\n';inList=false;}
           inTable=true;
-          tableRows.push(line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1));
+          tableRows.push(line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i${_inline(line.slice(4))}`; continue; } // h3
+        if(line.match(/^[-*]\s/)){ // lijstitem
+          if(!inList){html+='\n';inList=true;}
+          html+=`- ${_inline(line.replace(/^[-*]\s/,''))}\n`;
           continue;
         }
-        if(inTable) flushTable();
-
-        // Lege regel
-        if(!line.trim()){
-          if(inList){html+='</ul>';inList=false;}
-          continue;
-        }
-        // ### koptekst
-        if(line.startsWith('### ')){ if(inList){html+='</ul>';inList=false;} html+=`<h3>${_inline(line.slice(4))}</h3>`; continue; }
-        // Lijstitem
-        if(line.match(/^[-*]\s/)){
-          if(!inList){html+='<ul>';inList=true;}
-          html+=`<li>${_inline(line.replace(/^[-*]\s/,''))}</li>`;
-          continue;
-        }
-        if(inList){html+='</ul>';inList=false;}
-        // Sla ## en --- regels over
-        if(line.startsWith('## ')||line.startsWith('---')||line.startsWith('> ')) continue;
-        // Paragraaf
-        if(line.trim()) html+=`<p>${_inline(line)}</p>`;
+        if(inList){html+='\n';inList=false;}
+        if(line.startsWith('## ')||line.startsWith('---')||line.startsWith('> ')) continue; // meta-regels overslaan
+        if(line.trim()) html+=`${_inline(line)}\n\n`; // paragraaf
       }
-      if(inList) html+='</ul>'; // sluit open lijst af als tekst eindigt zonder lege regel
-      if(inTable) flushTable(); // sluit open tabel af als sessie eindigt zonder lege regel
+      if(inList) html+='\n';   // sluit open lijst af als tekst eindigt zonder lege regel
+      if(inTable) flushTable();   // sluit open tabel af als sessie eindigt zonder lege regel
       return html;
     }
 
-    // Inline markdown: **bold**, `code`
+    // ── Inline markdown: **bold**, `code` ──
     function _inline(t) {
       return _esc(t)
-        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-        .replace(/`([^`]+)`/g,'<code>$1</code>');
+        .replace(/\*\*(.+?)\*\*/g,'**$1**') // **bold**
+        .replace(/`([^`]+)`/g,'`$1`');         // `code`
     }
 
-    function _esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    // ── HTML escapen ──
+    function _esc(t){ return String(t).replace(/&/g,'&').replace(//g,'>'); }
 
-    return { init };
+    return { init }; // publieke interface
   })();
-  </script>
-
-</body>
-</html>
+  
