@@ -1,6 +1,34 @@
-﻿  
+﻿<!-- ======================= admin/projectlog.html v2.0.0 =======================
+    Project Log Viewer — admin only
+
+    Wijzigingen v1.0.0 (sessie 37):
+     - Initiële versie
+     - Laadt PROJECT_LOG.md via 📂 knop
+     - Sessies als uitklapbare kaarten
+     - Zoeken op sessietitel of inhoud
+     - Log bewaard in localStorage (pl_log)
+     - Zelfde look & feel als backlog.html en analytics.html
+     - Toegangsbeveiliging via AdminGuard.protect('admin')
+
+    Wijzigingen v1.1.0 (sessie 40):
+     - Fix: localStorage key bl_log → pl_log (pl_ prefix)
+     - Fix: agendaStore.js toegevoegd aan script-laadvolgorde
+     - Fix: tabel flush bij einde sessie-body
+     - Fix: ## Bijgewerkt / blockquote / --- overgeslagen in rawLines
+
+    Wijzigingen v2.0.0:
+     - Volledige rewrite van admin/projectlog.html naar v2.0.0
+     - Nieuwe interface voor projectlog, search, modal editor en sessiekaart-rendering
+     - Agenda-knop toegevoegd en AdminGuard-laadvolgorde gecontroleerd
+     - LocalStorage- en rawLines-verwerking geüpdatet voor consistentie
+
+    Afhankelijkheden:
+     - ../js/utils.js · ../js/auth.js
+     - /MyFamTreeCollab/js/adminGuard.js
+     - /MyFamTreeCollab/js/siteAnalytics.js
+     - ../js/topbar.js (via fetch)
+    ======================================================================= -->
   
-  Project Log — Admin
   - /* ── CSS variabelen: zelfde palet als backlog.html ── */
     :root {
       --bg-main:     #565656;
