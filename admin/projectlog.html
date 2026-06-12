@@ -1,4 +1,4 @@
-<!-- ======================= admin/projectlog.html v1.0.0 =======================
+<!-- ======================= admin/projectlog.html v1.1.0 =======================
     Project Log Viewer — admin only
 
     Wijzigingen v1.0.0 (sessie 37):
@@ -9,6 +9,12 @@
      - Log bewaard in localStorage (bl_log)
      - Zelfde look & feel als backlog.html en analytics.html
      - Toegangsbeveiliging via AdminGuard.protect('admin')
+
+    Wijzigingen v1.1.0 (sessie 40):
+     - Fix: localStorage key bl_log → pl_log (pl_ prefix)
+     - Fix: agendaStore.js toegevoegd aan script-laadvolgorde
+     - Fix: tabel flush bij einde sessie-body
+     - Fix: ## Bijgewerkt / blockquote / --- overgeslagen in rawLines
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -175,6 +181,7 @@
   <script src="../js/auth.js"></script>
   <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
   <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+  <script src="../js/agendaStore.js"></script>
 
   <script>
   // ── Layout laden → topbar → admin-check → Log.init() ──
@@ -203,13 +210,13 @@
       $('btn-collapse-all').addEventListener('click', ()=>{ document.querySelectorAll('.log-session').forEach(s=>s.classList.remove('open')); });
       $('btn-clear-log').addEventListener('click', ()=>{
         if(!confirm('Opgeslagen log wissen?')) return;
-        localStorage.removeItem('bl_log');
+        localStorage.removeItem('pl_log'); // pl_ prefix: projectlog module
         sessions=[]; search=''; $('input-search').value='';
         $('log-meta').innerHTML='';
         $('log-content').innerHTML='<div class="log-empty">Laad een PROJECT_LOG.md bestand via de knop hierboven.</div>';
       });
       // Herstel uit localStorage
-      const saved=localStorage.getItem('bl_log');
+      const saved=localStorage.getItem('pl_log'); // herstel gecachede log bij laden
       if(saved) _parse(saved);
     }
 
@@ -217,7 +224,7 @@
     function _loadFile(e) {
       const file=e.target.files[0]; if(!file)return;
       const reader=new FileReader();
-      reader.onload=ev=>{ localStorage.setItem('bl_log',ev.target.result); _parse(ev.target.result); e.target.value=''; };
+      reader.onload=ev=>{ localStorage.setItem('pl_log',ev.target.result); _parse(ev.target.result); e.target.value=''; }; // cache geladen MD in localStorage
       reader.readAsText(file);
     }
 
@@ -245,7 +252,11 @@
         if(!cur) continue;
         // Datum
         if(line.startsWith('**Datum:**')){ cur.date=line.replace('**Datum:**','').trim(); continue; }
-        cur.rawLines.push(line);
+        // skip meta-regels die niet tot de sessie-inhoud behoren
+        if(line.startsWith('## Bijgewerkt:')) continue; // log-header, niet sessie-content
+        if(line.startsWith('> '))             continue; // blockquote intro-tekst, overslaan
+        if(line.startsWith('---'))            continue; // horizontale lijn, overslaan
+        cur.rawLines.push(line); // voeg regel toe aan sessie-body
       }
       if(cur) sessions.push(cur);
       _renderSessions();
@@ -333,8 +344,8 @@
         // Paragraaf
         if(line.trim()) html+=`<p>${_inline(line)}</p>`;
       }
-      if(inList) html+='</ul>';
-      if(inTable) flushTable();
+      if(inList) html+='</ul>'; // sluit open lijst af als tekst eindigt zonder lege regel
+      if(inTable) flushTable(); // sluit open tabel af als sessie eindigt zonder lege regel
       return html;
     }
 

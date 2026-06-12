@@ -1,6 +1,9 @@
 <!-- ======================= admin/backlog.html v5.3.2 =======================
     Backlog Manager — admin only
 
+    Wijzigingen v5.3.2 (sessie 39):
+     - _parseMD: versie-parser uitgebreid met unicode middelpunt (·) ondersteuning
+
     Wijzigingen v5.3.1 (sessie 39):
      - _parseMD: metadata-regels "## Bijgewerkt" en "## [SECTIE]" overgeslagen als fase
 
@@ -401,7 +404,7 @@
   fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{document.getElementById('footer-placeholder').innerHTML=html;});
 
   // ════════════════════════════════════════════════════════════════
-  // BACKLOG MODULE v5.3.0
+  // BACKLOG MODULE v5.3.2
   // ════════════════════════════════════════════════════════════════
   const Backlog = (() => {
     // ── State ──
