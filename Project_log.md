@@ -1,4 +1,28 @@
 # MyFamTreeCollab — Project Log
+
+## Sessie 39 — Setup Claude Code & backlog.html fixes
+
+**Datum:** 09-06-2026
+**Versie:** backlog.html v5.3.2, CLAUDE.md v1.0.0
+
+### Uitgevoerd
+- CLAUDE.md aangemaakt: samenvoeging van ProjectInstructieAI.md en nieuwe Claude Code instructies
+- ProjectInstructieAI.md kan verwijderd worden
+- GitHub Codespaces getest op iPad — beperkt bruikbaar
+- GitHub Copilot in VS Code getest als Claude Code alternatief — werkt goed
+- Werkwijze iPad/computer gedocumenteerd: BACKLOG.md ID-002 en ID-003 toegevoegd
+- backlog.html v5.3.1: _parseMD fase-parser fix (## Bijgewerkt en ## [SECTIE] overgeslagen)
+- backlog.html v5.3.2: _parseMD versie-parser uitgebreid met unicode middelpunt (·)
+
+### Niet uitgevoerd (verschoven naar sessie 40)
+- admin/projectlog.html bugfix (Prioriteit 1)
+- admin/release-notes.html nieuw (Prioriteit 2)
+- admin/roadmap.html nieuw (Prioriteit 3)
+
+### Tools & werkwijze
+- Nieuwe werkwijze vastgelegd: Copilot in VS Code op computer, claude.ai op iPad
+- git push via VS Code terminal
+
 ## Bijgewerkt: 2026-06-08
 
 > Chronologisch overzicht van alle sessies en wijzigingen.
