@@ -67,6 +67,37 @@ Alle code-wijzigingen via Claude Code for VS Code.
 
 ---
 
+## Werkwijze HTML bestanden via Copilot
+
+### Probleem
+Copilot verwijdert HTML-tags uit JavaScript template strings en inline HTML.
+Voorbeeld: `html += '<div class="card">'` wordt `html += ''` na Copilot bewerking.
+
+### Regel: grote HTML bestanden nooit via Copilot instructie
+- Kleine fixes (< 10 regels): Copilot instructie is OK
+- Volledige bestanden of JS met inline HTML: altijd als download via claude.ai, dan handmatig vervangen
+
+### Werkwijze voor volledige bestandsvervanging
+1. Claude levert het bestand als download via claude.ai
+2. Bestand downloaden
+3. Bestaand bestand in repo vervangen (niet kopiëren/plakken — altijd bestand vervangen)
+4. `git add .` + `git commit -m "beschrijving"` + `git push`
+
+### Copilot instructies: do's en don'ts
+**Wel via Copilot:**
+- Versienummer in header aanpassen
+- Eén regel zoeken en vervangen (tekst zonder HTML-tags)
+- CSS variabelen toevoegen
+- Script-tags toevoegen aan laadvolgorde
+
+**Nooit via Copilot:**
+- JavaScript met innerHTML of template strings die HTML bevatten
+- Volledige bestandsvervanging
+- Functies die HTML genereren (_cardHTML, _listHTML, _renderBody, etc.)
+- Emoji's in code (gebruik HTML entities: &#x1F4C2; i.p.v. 📂)
+
+---
+
 ## Taal & stijl
 - Communicatie: **Nederlands**
 - Code & commentaar: **Engels**
