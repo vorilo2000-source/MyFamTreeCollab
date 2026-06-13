@@ -1,21 +1,29 @@
-<!-- ======================= admin/marketing.html v3.0.0 =======================
+<!-- ======================= admin/marketing.html v4.0.0 =======================
     Marketing & Communicatieplan — admin only
 
     Wijzigingen v3.0.0 (sessie 37):
-     - Volledig herschreven — geen hardcoded data meer
-     - Standaard dataformaat: marketing.md met secties [TAKEN][KALENDER][KPI][KANALEN][TEMPLATES]
-     - Taken: start/einddatum + gepubliceerd checkbox
-     - Kalender: maand/week/dag weergave, taken + kalender-events
-     - KPI's: bewerkbaar, opgeslagen in localStorage
-     - Kanalen: bewerkbaar via modal
-     - Templates: bewerkbaar via modal, markdown preview, kopieerknop
-     - Markdown editor in alle forms: bold, lijst, tabel toolbar
-     - Import/export als één marketing.md bestand
-     - localStorage prefix: mk_*
+     - Volledig herschreven: standaard dataformaat marketing.md
+     - Tabs: Taken / Kalender / KPI's / Kanalen / Templates
+     - Kalender: maand/week/dag weergave
+     - KPI's: bewerkbaar via modal
+     - Markdown toolbar in alle forms
+
+    Wijzigingen v4.0.0 (sessie 40):
+     - Kalender tab verwijderd (centrale agenda via agenda.html)
+     - KPI tab verwijderd (toekomstig kpi.html)
+     - agendaStore.js toegevoegd aan laadvolgorde
+     - AgendaStore.sync() na elke _saveAll()
+     - Modal taak: omschrijving ondersteunt HTML-tags in textarea
+     - Modal taak: gepubliceerd checkbox = "Publiceren in agenda" (alleen agenda-koppeling)
+     - Status badge in kaart/lijst: kleur op basis van status (identiek aan backlog.html)
+     - Tabs: Taken / Kanalen / Templates
+     - "Naar agenda" knop toegevoegd in actiebalk
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
-     - /MyFamTreeCollab/js/adminGuard.js · /MyFamTreeCollab/js/siteAnalytics.js
+     - /MyFamTreeCollab/js/adminGuard.js
+     - /MyFamTreeCollab/js/siteAnalytics.js
+     - ../js/agendaStore.js
      - ../js/topbar.js (via fetch)
     ======================================================================= -->
 <!DOCTYPE html>
@@ -23,20 +31,25 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Marketing & Communicatie — Admin</title>
+  <title>Marketing &amp; Communicatie &#x2014; Admin</title>
   <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ── CSS variabelen: identiek aan backlog.html ── */
     :root{--bg-main:#565656;--bg-card:#3a3a3a;--bg-card-alt:#444;--accent:#00d4aa;--accent-dim:rgba(0,212,170,0.15);--text-primary:#f0f0f0;--text-muted:#aaa;--border:rgba(255,255,255,0.08);--font-mono:'IBM Plex Mono',monospace;--font-sans:'IBM Plex Sans',sans-serif;--radius:8px;--shadow:0 4px 20px rgba(0,0,0,0.35);--danger:#f08080;}
+
+    /* ── Toegangsblokken ── */
     #accessDenied{display:none;text-align:center;padding:4rem 2rem;color:var(--text-primary);}
     #page-content{display:none;}
+
+    /* ── Main layout ── */
     main{background:var(--bg-main);min-height:100vh;padding:150px 20px 64px;font-family:var(--font-sans);color:var(--text-primary);}
     .wrap{max-width:100%;margin:0;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-    /* Header */
+    /* ── Project header ── */
     .proj-header{margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:1rem;}
     .proj-name{font-family:var(--font-mono);font-size:1.4rem;font-weight:600;color:var(--accent);margin:0 0 4px;display:flex;align-items:center;gap:10px;}
     .proj-edit-btn{font-family:var(--font-mono);font-size:0.72rem;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:var(--radius);padding:3px 10px;cursor:pointer;}
@@ -45,8 +58,8 @@
     .projinfo-dd{display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:1rem;}
     .projinfo-dd.open{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 
-    /* Buttons */
-    .btn{font-family:var(--font-mono);font-size:0.78rem;display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1px solid rgba(255,255,255,0.2);border-radius:var(--radius);background:var(--bg-card);color:var(--text-primary);cursor:pointer;transition:background .15s;}
+    /* ── Knoppen: identiek aan backlog.html ── */
+    .btn{font-family:var(--font-mono);font-size:0.78rem;display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1px solid rgba(255,255,255,0.2);border-radius:var(--radius);background:var(--bg-card);color:var(--text-primary);cursor:pointer;transition:background .15s;text-decoration:none;}
     .btn:hover{background:var(--bg-card-alt);}
     .btn:disabled{opacity:.4;cursor:not-allowed;}
     .btn-accent{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
@@ -56,14 +69,17 @@
     .btn-danger{background:rgba(240,128,128,0.15);color:var(--danger);border-color:var(--danger);}
     .btn-sm{padding:3px 10px;font-size:0.7rem;}
 
-    /* Form */
+    /* ── Formulierelementen ── */
     .form-label{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:3px;}
     .form-input{font-family:var(--font-mono);font-size:0.8rem;width:100%;padding:6px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);background:#2a2a2a;color:var(--text-primary);outline:none;box-sizing:border-box;}
     .form-input:focus{border-color:var(--accent);}
     select.form-input{cursor:pointer;}
-    textarea.form-input{resize:vertical;min-height:80px;}
+    textarea.form-input{resize:vertical;min-height:80px;font-family:var(--font-sans);font-size:0.82rem;line-height:1.6;}
+    .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    @media(max-width:520px){.form-grid2,.form-grid3{grid-template-columns:1fr;}}
 
-    /* Markdown editor */
+    /* ── Markdown editor toolbar ── */
     .md-editor-wrap{border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);overflow:hidden;}
     .md-toolbar{display:flex;gap:4px;padding:6px 8px;background:#222;border-bottom:1px solid rgba(255,255,255,0.1);flex-wrap:wrap;}
     .md-btn{font-family:var(--font-mono);font-size:0.72rem;padding:2px 8px;border:1px solid rgba(255,255,255,0.15);border-radius:4px;background:transparent;color:var(--text-muted);cursor:pointer;}
@@ -77,7 +93,7 @@
     .md-preview th{background:#1a7a4a;color:#fff;padding:5px 8px;text-align:left;}
     .md-preview td{padding:5px 8px;background:#c8c8c8;color:#1a1a1a;border-bottom:1px solid #aaa;}
 
-    /* Stats */
+    /* ── Statistieken ── */
     .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.5rem;}
     .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden;animation:fadeUp .4s ease both;}
     .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
@@ -86,10 +102,10 @@
     .progress-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;margin-top:6px;}
     .progress-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .4s;}
 
-    /* Acties */
+    /* ── Acties ── */
     .bl-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;}
 
-    /* Fase pills */
+    /* ── Fase pills ── */
     .phases-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:1.25rem;display:flex;flex-direction:column;gap:8px;}
     .phases-bar-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
     .phases-label{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);}
@@ -99,9 +115,8 @@
     .phase-pill.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
     .phase-input-wrap{display:none;flex-wrap:wrap;gap:6px;align-items:center;padding-top:8px;border-top:1px solid var(--border);}
     .phase-input-wrap.open{display:flex;}
-    .phase-input-wrap input{flex:1;min-width:120px;max-width:180px;}
 
-    /* Filters */
+    /* ── Filters ── */
     .filter-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:1.25rem;display:flex;flex-direction:column;gap:10px;}
     .filter-row{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;}
     .filter-row-label{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);min-width:80px;padding-top:4px;white-space:nowrap;}
@@ -113,7 +128,7 @@
     .view-toggle button{font-family:var(--font-mono);font-size:0.72rem;padding:5px 12px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;}
     .view-toggle button.active{background:var(--accent-dim);color:var(--accent);}
 
-    /* Tabs */
+    /* ── Tabs: Taken / Kanalen / Templates ── */
     .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap;}
     .tab-btn{font-family:var(--font-mono);font-size:0.75rem;padding:8px 16px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
     .tab-btn:hover{color:var(--text-primary);}
@@ -121,11 +136,11 @@
     .tab-panel{display:none;}
     .tab-panel.active{display:block;}
 
-    /* Lege staat */
+    /* ── Lege staat ── */
     .empty{text-align:center;padding:3rem 2rem;border:1px solid var(--border);border-radius:var(--radius);}
     .empty p{font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);margin:8px 0 16px;}
 
-    /* Board */
+    /* ── Board: identiek aan backlog.html ── */
     .board-scroll{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 300px);border:1px solid var(--border);border-radius:var(--radius);scrollbar-width:thin;scrollbar-color:rgba(0,212,170,0.4) rgba(255,255,255,0.05);}
     .board-scroll::-webkit-scrollbar{width:8px;height:8px;}
     .board-scroll::-webkit-scrollbar-thumb{background:rgba(0,212,170,0.4);border-radius:4px;}
@@ -136,25 +151,26 @@
     .board-col-items{display:flex;flex-direction:column;gap:6px;padding-bottom:14px;}
     .board-empty{font-family:var(--font-mono);font-size:0.72rem;color:rgba(255,255,255,0.15);padding:4px 0;}
 
-    /* Taakkaart */
+    /* ── Taakkaart ── */
     .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow);animation:fadeUp .3s ease;}
     .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
     .card-id{font-family:var(--font-mono);font-size:10px;color:var(--accent);opacity:.7;cursor:pointer;border-bottom:1px dashed rgba(0,212,170,0.3);}
     .card-title{font-weight:600;font-size:0.82rem;margin-bottom:3px;line-height:1.4;color:var(--text-primary);}
-    .card-dates{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);margin-bottom:4px;display:flex;gap:8px;align-items:center;}
-    .card-pub{font-size:0.65rem;padding:1px 6px;border-radius:99px;border:1px solid;}
-    .card-pub.yes{background:rgba(0,212,170,0.15);color:var(--accent);border-color:var(--accent);}
-    .card-pub.no{background:rgba(255,255,255,0.05);color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
+    .card-dates{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);margin-bottom:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    /* Agenda-indicator: toont of item gepubliceerd is in agenda */
+    .card-agenda{font-size:0.65rem;padding:1px 6px;border-radius:99px;border:1px solid;}
+    .card-agenda.yes{background:rgba(0,212,170,0.15);color:var(--accent);border-color:var(--accent);}
+    .card-agenda.no{background:rgba(255,255,255,0.05);color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
     .card-footer{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:4px;}
     .card-tags{margin-top:4px;display:flex;gap:3px;flex-wrap:wrap;}
     .id-edit-input{font-family:var(--font-mono);font-size:10px;background:#2a2a2a;border:1px solid var(--accent);border-radius:4px;color:var(--accent);padding:1px 5px;width:90px;outline:none;}
 
-    /* Badges */
+    /* ── Badges ── */
     .badge{display:inline-flex;align-items:center;gap:3px;font-family:var(--font-mono);font-size:0.65rem;font-weight:600;padding:2px 7px;border-radius:10px;}
     .dot{width:5px;height:5px;border-radius:50%;display:inline-block;}
     .tag{font-family:var(--font-mono);font-size:0.62rem;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:var(--text-muted);}
 
-    /* Prioriteit */
+    /* ── Prioriteit badges: identiek aan backlog.html ── */
     .p-critical{background:rgba(240,128,128,0.2);color:#f08080;border:1px solid #f08080;}
     .p-high    {background:rgba(249,115,22,0.2); color:#fb923c;border:1px solid #fb923c;}
     .p-medium  {background:rgba(234,179,8,0.2);  color:#fbbf24;border:1px solid #fbbf24;}
@@ -165,7 +181,7 @@
     .p-low-tbl     {background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
     .dot-critical{background:#f08080}.dot-high{background:#fb923c}.dot-medium{background:#fbbf24}.dot-low{background:#4ade80}
 
-    /* Status */
+    /* ── Status badges: identiek aan backlog.html, kleur op basis van status-waarde ── */
     .s-open      {background:rgba(96,165,250,0.2); color:#60a5fa;border:1px solid #60a5fa;}
     .s-inprogress{background:rgba(167,139,250,0.2);color:#a78bfa;border:1px solid #a78bfa;}
     .s-review    {background:rgba(251,191,36,0.2); color:#fbbf24;border:1px solid #fbbf24;}
@@ -177,9 +193,9 @@
     .s-review-tbl    {background:#fefce8;color:#854d0e;border:1px solid #fde047;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
     .s-done-tbl      {background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
     .s-cancelled-tbl {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
-    .s-future-tbl    {background:#fdf4ff;color:#7e22ce; border:1px solid #e9d5ff;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
+    .s-future-tbl    {background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff;border-radius:10px;padding:2px 7px;font-size:0.65rem;font-weight:600;display:inline-block;}
 
-    /* Lijst tabel */
+    /* ── Lijst tabel: identiek aan backlog.html ── */
     .list-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:680px;box-shadow:var(--shadow);}
     .list-table{width:100%;border-collapse:separate;border-spacing:0;font-family:var(--font-mono);font-size:0.75rem;}
     .list-table thead th{position:sticky;top:0;z-index:1;background:#1a7a4a;color:#fff;padding:9px 11px;text-align:left;border-bottom:2px solid #0f5c35;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:0.65rem;white-space:nowrap;}
@@ -189,45 +205,7 @@
     .tbl-id{font-family:var(--font-mono);font-size:0.68rem;color:#1a5c8a;cursor:pointer;border-bottom:1px dashed #1a5c8a;white-space:nowrap;}
     .tbl-id-input{font-family:var(--font-mono);font-size:0.68rem;background:#fff;border:1px solid #1a7a4a;border-radius:4px;padding:2px 5px;width:90px;outline:none;}
 
-    /* Kalender */
-    .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;}
-    .cal-nav-title{font-family:var(--font-mono);font-size:1rem;font-weight:600;color:var(--accent);flex:1;}
-    .cal-view-toggle{display:flex;border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);overflow:hidden;}
-    .cal-view-toggle button{font-family:var(--font-mono);font-size:0.72rem;padding:5px 12px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;}
-    .cal-view-toggle button.active{background:var(--accent-dim);color:var(--accent);}
-    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:1rem;}
-    .cal-day-header{font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;color:var(--text-muted);text-align:center;padding:6px 0;letter-spacing:1px;}
-    .cal-cell{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;min-height:80px;padding:4px;cursor:pointer;transition:background .15s;}
-    .cal-cell:hover{background:var(--bg-card-alt);}
-    .cal-cell.today{border-color:var(--accent);}
-    .cal-cell.other-month{opacity:.35;}
-    .cal-cell-num{font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);margin-bottom:3px;}
-    .cal-event{font-family:var(--font-sans);font-size:0.62rem;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
-    .cal-event.taak{background:rgba(96,165,250,0.25);color:#93c5fd;}
-    .cal-event.taak.done{background:rgba(0,212,170,0.2);color:var(--accent);}
-    .cal-event.kalender-event{background:rgba(167,139,250,0.25);color:#c4b5fd;}
-    .cal-event.gepubliceerd{background:rgba(0,212,170,0.3);color:var(--accent);font-weight:600;}
-    /* Week view */
-    .week-grid{display:grid;grid-template-columns:60px repeat(7,1fr);gap:2px;}
-    .week-time{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);text-align:right;padding:3px 6px 0 0;}
-    .week-cell{background:var(--bg-card);border:1px solid var(--border);min-height:40px;padding:2px 4px;}
-    /* Dag view */
-    .day-list{display:flex;flex-direction:column;gap:6px;}
-    .day-event-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;display:flex;gap:12px;align-items:flex-start;}
-    .day-event-time{font-family:var(--font-mono);font-size:0.72rem;color:var(--accent);min-width:60px;}
-    .day-event-title{font-weight:600;font-size:0.82rem;}
-    .day-event-type{font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);}
-
-    /* KPI tabel */
-    .mk-table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;margin-bottom:1.25rem;box-shadow:var(--shadow);}
-    .mk-table{width:100%;border-collapse:separate;border-spacing:0;font-family:var(--font-mono);font-size:0.75rem;}
-    .mk-table thead th{position:sticky;top:0;z-index:1;background:#1a7a4a;color:#fff;padding:9px 12px;text-align:left;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #0f5c35;white-space:nowrap;}
-    .mk-table tbody td{padding:8px 12px;background:#c8c8c8;color:#1a1a1a;border-bottom:1px solid #aaa;vertical-align:middle;}
-    .mk-table tbody tr:last-child td{border-bottom:none;}
-    .mk-table tbody tr:hover td{background:#d8d8d8;}
-    .kpi-input{font-family:var(--font-mono);font-size:0.72rem;background:#fff;border:1px solid #1a7a4a;border-radius:4px;padding:3px 7px;width:80px;outline:none;color:#1a1a1a;}
-
-    /* Kanalen & Templates kaarten */
+    /* ── Kanalen en Templates kaarten ── */
     .data-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;position:relative;overflow:hidden;animation:fadeUp .3s ease;}
     .data-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
     .data-card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
@@ -236,20 +214,18 @@
     .data-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
     .data-card-tag{font-family:var(--font-mono);font-size:0.65rem;padding:2px 7px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);color:var(--text-muted);}
     .data-card-desc{font-family:var(--font-sans);font-size:0.8rem;color:var(--text-muted);line-height:1.6;}
-    /* Template uitklap */
     .tpl-header{cursor:pointer;user-select:none;}
-    .tpl-header:hover .data-card-title{color:#fff;}
     .tpl-toggle{font-size:0.72rem;color:var(--text-muted);transition:transform .2s;}
     .data-card.open .tpl-toggle{transform:rotate(180deg);}
     .tpl-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border);}
     .data-card.open .tpl-body{display:block;}
     .tpl-text{font-family:var(--font-sans);font-size:0.8rem;color:var(--text-muted);line-height:1.8;white-space:pre-wrap;margin-top:10px;}
 
-    /* Info box */
+    /* ── Info box ── */
     .info-box{background:var(--accent-dim);border:1px solid var(--accent);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-sans);font-size:0.8rem;color:var(--text-primary);line-height:1.6;margin-bottom:1.25rem;}
     .info-box b{color:var(--accent);}
 
-    /* Modal */
+    /* ── Modal: identiek aan backlog.html ── */
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:100;padding:16px;}
     .modal-overlay.open{display:flex;}
     .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow);animation:fadeUp .25s ease;}
@@ -257,14 +233,14 @@
     .modal-header h2{font-family:var(--font-mono);font-size:0.95rem;font-weight:600;color:var(--accent);margin:0;}
     .modal-body{display:flex;flex-direction:column;gap:10px;}
     .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;border-top:1px solid var(--border);padding-top:10px;}
-    .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-    .form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-    @media(max-width:520px){.form-grid2,.form-grid3{grid-template-columns:1fr;}}
     .id-preview{font-family:var(--font-mono);font-size:0.68rem;color:var(--accent);opacity:.7;margin-top:3px;}
-    .pub-checkbox{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);cursor:pointer;}
-    .pub-checkbox input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
 
-    /* Toegang geweigerd */
+    /* ── Agenda checkbox: alleen voor agenda-koppeling ── */
+    .agenda-checkbox{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);cursor:pointer;padding:8px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);background:rgba(0,212,170,0.05);}
+    .agenda-checkbox input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+    .agenda-checkbox span{color:var(--accent);}
+
+    /* ── Toegang geweigerd ── */
     .access-denied{background:var(--bg-card);border:1px solid var(--danger);border-radius:var(--radius);padding:32px;text-align:center;max-width:480px;margin:60px auto;}
     .access-denied h2{font-size:1.1rem;color:var(--danger);margin-bottom:10px;font-family:var(--font-sans);}
     .access-denied p{font-size:0.88rem;color:var(--text-muted);line-height:1.6;}
@@ -282,9 +258,12 @@
 
       <!-- Project header -->
       <div class="proj-header">
-        <div class="proj-name"><span id="proj-name-txt">📣 Marketing & Communicatieplan</span><button class="proj-edit-btn" id="btn-edit-proj">✏️ bewerken</button></div>
+        <div class="proj-name">
+          <span id="proj-name-txt">&#x1F4E3; Marketing &amp; Communicatieplan</span>
+          <button class="proj-edit-btn" id="btn-edit-proj">&#x270F;&#xFE0F; bewerken</button>
+        </div>
         <div class="projinfo-dd" id="projinfo-dd">
-          <div><label class="form-label">Titel</label><input class="form-input" type="text" id="pi-name" placeholder="Marketing & Communicatieplan"/></div>
+          <div><label class="form-label">Titel</label><input class="form-input" type="text" id="pi-name" placeholder="Marketing &amp; Communicatieplan"/></div>
           <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0"/></div>
           <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
           <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
@@ -295,15 +274,17 @@
         <div class="proj-meta" id="proj-meta"></div>
       </div>
 
-      <div class="info-box">💬 <b>Kernboodschap:</b> "Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat." · <b>Budget:</b> Organisch · <b>Horizon:</b> 12 weken</div>
+      <div class="info-box">&#x1F4AC; <b>Kernboodschap:</b> "Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat." &middot; <b>Budget:</b> Organisch &middot; <b>Horizon:</b> 12 weken</div>
 
-      <!-- Acties -->
+      <!-- Acties: zelfde patroon als backlog.html -->
       <div class="bl-actions">
-        <button class="btn" id="btn-export-md">💾 Opslaan als .md</button>
-        <label class="btn" style="cursor:pointer">📂 Laden (.md)<input type="file" id="input-file" accept=".md" style="display:none"/></label>
+        <button class="btn" id="btn-export-md">&#x1F4BE; Opslaan als .md</button>
+        <label class="btn" style="cursor:pointer">&#x1F4C2; Laden (.md)<input type="file" id="input-file" accept=".md" style="display:none"/></label>
         <button class="btn btn-accent" id="btn-add-taak">+ Taak toevoegen</button>
+        <!-- Link naar centrale agenda: taken met startdatum via AgendaStore.sync() -->
+        <a class="btn" href="/MyFamTreeCollab/admin/agenda.html" style="text-decoration:none">&#x1F4C5; Naar agenda</a>
         <span style="flex:1"></span>
-        <button class="btn btn-danger" id="btn-clear-db">🗑 Data wissen</button>
+        <button class="btn btn-danger" id="btn-clear-db">&#x1F5D1; Data wissen</button>
       </div>
 
       <!-- Statistieken -->
@@ -317,17 +298,15 @@
           <input class="form-input" type="text" id="input-new-phase" placeholder="Naam fase" style="padding:3px 8px;font-size:12px"/>
           <input class="form-input" type="text" id="input-new-phase-desc" placeholder="Beschrijving" style="padding:3px 8px;font-size:12px"/>
           <button class="btn btn-accent" id="btn-add-phase" style="padding:4px 10px">+</button>
-          <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">✕</button>
+          <button class="btn btn-ghost" id="btn-cancel-phase" style="padding:4px 8px">&#x2715;</button>
         </div>
       </div>
 
-      <!-- Tabs -->
+      <!-- Tabs: Taken / Kanalen / Templates (kalender en KPI verwijderd) -->
       <div class="tab-bar">
-        <button class="tab-btn active" data-tab="taken">📋 Taken</button>
-        <button class="tab-btn" data-tab="kalender">📅 Kalender</button>
-        <button class="tab-btn" data-tab="kpi">📊 KPI's</button>
-        <button class="tab-btn" data-tab="kanalen">📡 Kanalen</button>
-        <button class="tab-btn" data-tab="templates">✉️ Templates</button>
+        <button class="tab-btn active" data-tab="taken">&#x1F4CB; Taken</button>
+        <button class="tab-btn" data-tab="kanalen">&#x1F4E1; Kanalen</button>
+        <button class="tab-btn" data-tab="templates">&#x2709;&#xFE0F; Templates</button>
       </div>
 
       <!-- Tab: Taken -->
@@ -335,12 +314,12 @@
         <div class="filter-section">
           <div class="filter-row">
             <span class="filter-row-label">Zoeken</span>
-            <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID…" style="flex:1;min-width:180px"/>
+            <input type="search" class="form-input" id="input-search" placeholder="Titel, omschrijving, ID&#x2026;" style="flex:1;min-width:180px"/>
             <div class="view-toggle">
               <button id="btn-view-board" class="active">Board</button>
               <button id="btn-view-list">Lijst</button>
             </div>
-            <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.68rem;padding:4px 10px">✕ Wissen</button>
+            <button class="btn btn-ghost" id="btn-clear-filters" style="font-size:0.68rem;padding:4px 10px">&#x2715; Wissen</button>
           </div>
           <div class="filter-row"><span class="filter-row-label">Status</span><div class="pills-wrap" id="fp-status"></div></div>
           <div class="filter-row"><span class="filter-row-label">Prioriteit</span><div class="pills-wrap" id="fp-priority"></div></div>
@@ -350,48 +329,13 @@
         <div id="bl-content"></div>
       </div>
 
-      <!-- Tab: Kalender -->
-      <div class="tab-panel" id="tab-kalender">
-        <div class="cal-nav">
-          <button class="btn" id="cal-prev">‹</button>
-          <div class="cal-nav-title" id="cal-title"></div>
-          <button class="btn" id="cal-next">›</button>
-          <button class="btn btn-accent" id="btn-add-event">+ Event toevoegen</button>
-          <div class="cal-view-toggle">
-            <button data-calview="month" class="active">Maand</button>
-            <button data-calview="week">Week</button>
-            <button data-calview="day">Dag</button>
-          </div>
-        </div>
-        <div id="cal-content"></div>
-        <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
-          <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);">Legenda:</span>
-          <span class="cal-event taak" style="white-space:nowrap">● Taak</span>
-          <span class="cal-event taak done" style="white-space:nowrap">● Taak gedaan</span>
-          <span class="cal-event kalender-event" style="white-space:nowrap">● Event</span>
-          <span class="cal-event gepubliceerd" style="white-space:nowrap">✓ Gepubliceerd</span>
-        </div>
-      </div>
-
-      <!-- Tab: KPI's -->
-      <div class="tab-panel" id="tab-kpi">
-        <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;">
-          <button class="btn btn-accent" id="btn-add-kpi">+ KPI toevoegen</button>
-        </div>
-        <div class="info-box">📝 Vul werkelijke cijfers in na week 4, 8 en 12. Worden automatisch opgeslagen.</div>
-        <div class="mk-table-wrap"><table class="mk-table">
-          <thead><tr><th>Metric</th><th>Doel W4</th><th>Werkelijk W4</th><th>Doel W8</th><th>Werkelijk W8</th><th>Doel W12</th><th>Werkelijk W12</th><th></th></tr></thead>
-          <tbody id="kpi-body"></tbody>
-        </table></div>
-      </div>
-
       <!-- Tab: Kanalen -->
       <div class="tab-panel" id="tab-kanalen">
         <div style="display:flex;gap:8px;margin-bottom:1rem;">
           <button class="btn btn-accent" id="btn-add-kanaal">+ Kanaal toevoegen</button>
         </div>
         <div id="kanalen-content"></div>
-        <div class="info-box" style="margin-top:1rem;">⚠️ <b>Let op:</b> Controleer altijd groepsregels vóór je een link plaatst.</div>
+        <div class="info-box" style="margin-top:1rem;">&#x26A0;&#xFE0F; <b>Let op:</b> Controleer altijd groepsregels v&#xF3;&#xF3;r je een link plaatst.</div>
       </div>
 
       <!-- Tab: Templates -->
@@ -405,54 +349,86 @@
     </div></main>
   </div>
 
-  <!-- Modal: Taak -->
+  <!-- Modal: Taak toevoegen / bewerken -->
   <div class="modal-overlay" id="modal-taak">
     <div class="modal">
-      <div class="modal-header"><h2 id="mt-title">Taak toevoegen</h2><button class="btn btn-ghost" id="btn-mt-close" style="font-size:18px;padding:4px 8px">✕</button></div>
+      <div class="modal-header">
+        <h2 id="mt-title">Taak toevoegen</h2>
+        <button class="btn btn-ghost" id="btn-mt-close" style="font-size:18px;padding:4px 8px">&#x2715;</button>
+      </div>
       <div class="modal-body">
-        <div><label class="form-label">ID <span style="opacity:.5;font-size:0.65rem">(auto · aanpasbaar)</span></label><input class="form-input" type="text" id="ft-id"/><div class="id-preview" id="ft-id-preview"></div></div>
-        <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="ft-title" placeholder="Korte, beschrijvende taakbenaming"/></div>
+        <!-- ID: automatisch gegenereerd, aanpasbaar -->
+        <div>
+          <label class="form-label">ID <span style="opacity:.5;font-size:0.65rem">(auto &middot; aanpasbaar)</span></label>
+          <input class="form-input" type="text" id="ft-id"/>
+          <div class="id-preview" id="ft-id-preview"></div>
+        </div>
+        <!-- Titel: verplicht veld -->
+        <div>
+          <label class="form-label">Titel *</label>
+          <input class="form-input" type="text" id="ft-title" placeholder="Korte, beschrijvende taakbenaming"/>
+        </div>
+        <!-- Fase en kanaal/type -->
         <div class="form-grid2">
           <div><label class="form-label">Fase</label><select class="form-input" id="ft-phase"></select></div>
-          <div><label class="form-label">Kanaal / Type</label>
+          <div>
+            <label class="form-label">Kanaal / Type</label>
             <select class="form-input" id="ft-type">
               <option>Facebook</option><option>Reddit</option><option>Product Hunt</option>
               <option>YouTube</option><option>Email</option><option>Website</option><option>Overig</option>
             </select>
           </div>
+        </div>
+        <!-- Datums -->
+        <div class="form-grid2">
           <div><label class="form-label">Startdatum</label><input class="form-input" type="date" id="ft-startdate"/></div>
           <div><label class="form-label">Einddatum</label><input class="form-input" type="date" id="ft-enddate"/></div>
-          <div><label class="form-label">Prioriteit</label>
+        </div>
+        <!-- Prioriteit en status: status bepaalt kleur badge in kaart/lijst -->
+        <div class="form-grid2">
+          <div>
+            <label class="form-label">Prioriteit</label>
             <select class="form-input" id="ft-priority">
               <option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option>
             </select>
           </div>
-          <div><label class="form-label">Status</label>
+          <div>
+            <label class="form-label">Status <span style="opacity:.5;font-size:0.65rem">(bepaalt kleur badge)</span></label>
             <select class="form-input" id="ft-status">
               <option selected>Open</option><option>In Progress</option><option>Review</option>
               <option>Done</option><option>Cancelled</option><option>Future</option>
             </select>
           </div>
         </div>
+        <!-- Toegewezen en tags -->
         <div><label class="form-label">Toegewezen aan</label><input class="form-input" type="text" id="ft-assignee" placeholder="Naam of @handle"/></div>
-        <div><label class="form-label">Tags / Week</label><input class="form-input" type="text" id="ft-tags" placeholder="W1, W2-3 …"/></div>
+        <div><label class="form-label">Tags / Week</label><input class="form-input" type="text" id="ft-tags" placeholder="W1, W2-3 &#x2026;"/></div>
+        <!-- Omschrijving: markdown + HTML-tags ondersteund in textarea -->
         <div>
-          <label class="form-label">Omschrijving</label>
+          <label class="form-label">Omschrijving <span style="opacity:.5;font-size:0.65rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-editor-wrap">
             <div class="md-toolbar">
               <button class="md-btn" data-md="bold" title="Vet">B</button>
               <button class="md-btn" data-md="italic" title="Cursief">I</button>
-              <button class="md-btn" data-md="list" title="Lijst">≡</button>
-              <button class="md-btn" data-md="table" title="Tabel">⊞</button>
+              <button class="md-btn" data-md="list" title="Lijst">&#x2261;</button>
+              <button class="md-btn" data-md="table" title="Tabel">&#x229E;</button>
               <button class="md-btn" data-md="code" title="Code">&lt;/&gt;</button>
-              <button class="md-btn" data-md="preview" title="Preview" id="btn-md-preview-desc">👁</button>
+              <button class="md-btn" data-md="link" title="Link">&#x1F517;</button>
+              <button class="md-btn" data-md="preview" title="Preview" id="btn-md-preview-desc">&#x1F441;</button>
             </div>
-            <textarea class="form-input" id="ft-description" rows="4" placeholder="Wat moet er gedaan worden? Markdown ondersteund."></textarea>
+            <!-- textarea ondersteunt HTML-tags als plain text voor opslag en export -->
+            <textarea class="form-input" id="ft-description" rows="4" placeholder="Wat moet er gedaan worden? Markdown &#xE9;n HTML-tags ondersteund."></textarea>
             <div class="md-preview" id="md-preview-desc" style="display:none"></div>
           </div>
         </div>
+        <!-- Verwacht resultaat -->
         <div><label class="form-label">Verwacht resultaat</label><input class="form-input" type="text" id="ft-result" placeholder="Wat levert deze taak op?"/></div>
-        <label class="pub-checkbox"><input type="checkbox" id="ft-pub"/> Gepubliceerd (verschijnt als afgevinkt in kalender)</label>
+        <!-- Agenda checkbox: alleen voor koppeling met agenda.html via AgendaStore -->
+        <label class="agenda-checkbox">
+          <input type="checkbox" id="ft-pub"/>
+          <span>&#x1F4C5; Publiceren in agenda</span>
+          <span style="color:var(--text-muted);font-size:0.68rem;margin-left:4px">&#x2014; zichtbaar in agenda.html via AgendaStore</span>
+        </label>
       </div>
       <div class="modal-footer">
         <button class="btn" id="btn-mt-cancel">Annuleren</button>
@@ -461,76 +437,23 @@
     </div>
   </div>
 
-  <!-- Modal: Kalender Event -->
-  <div class="modal-overlay" id="modal-event">
-    <div class="modal">
-      <div class="modal-header"><h2 id="me-title">Event toevoegen</h2><button class="btn btn-ghost" id="btn-me-close" style="font-size:18px;padding:4px 8px">✕</button></div>
-      <div class="modal-body">
-        <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="fe-title" placeholder="Event naam"/></div>
-        <div class="form-grid2">
-          <div><label class="form-label">Datum *</label><input class="form-input" type="date" id="fe-date"/></div>
-          <div><label class="form-label">Kanaal / Type</label>
-            <select class="form-input" id="fe-type">
-              <option>Facebook</option><option>Reddit</option><option>Product Hunt</option>
-              <option>YouTube</option><option>Email</option><option>Website</option><option>Overig</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="form-label">Beschrijving</label>
-          <div class="md-editor-wrap">
-            <div class="md-toolbar">
-              <button class="md-btn" data-md="bold">B</button>
-              <button class="md-btn" data-md="italic">I</button>
-              <button class="md-btn" data-md="list">≡</button>
-              <button class="md-btn" data-md="preview" id="btn-md-preview-ev">👁</button>
-            </div>
-            <textarea class="form-input" id="fe-desc" rows="3" placeholder="Beschrijving van het event…"></textarea>
-            <div class="md-preview" id="md-preview-ev" style="display:none"></div>
-          </div>
-        </div>
-        <label class="pub-checkbox"><input type="checkbox" id="fe-pub"/> Gepubliceerd</label>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="btn-me-cancel">Annuleren</button>
-        <button class="btn btn-accent" id="btn-me-save">Toevoegen</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: KPI -->
-  <div class="modal-overlay" id="modal-kpi">
-    <div class="modal">
-      <div class="modal-header"><h2 id="mk-title">KPI toevoegen</h2><button class="btn btn-ghost" id="btn-mk-close" style="font-size:18px">✕</button></div>
-      <div class="modal-body">
-        <div><label class="form-label">Metric *</label><input class="form-input" type="text" id="fk-metric" placeholder="bv. GitHub Pages bezoekers/maand"/></div>
-        <div class="form-grid3">
-          <div><label class="form-label">Doel W4</label><input class="form-input" type="text" id="fk-d4" placeholder="50-100"/></div>
-          <div><label class="form-label">Doel W8</label><input class="form-input" type="text" id="fk-d8" placeholder="200-400"/></div>
-          <div><label class="form-label">Doel W12</label><input class="form-input" type="text" id="fk-d12" placeholder="500+"/></div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" id="btn-mk-cancel">Annuleren</button>
-        <button class="btn btn-accent" id="btn-mk-save">Toevoegen</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Kanaal -->
+  <!-- Modal: Kanaal toevoegen / bewerken -->
   <div class="modal-overlay" id="modal-kanaal">
     <div class="modal">
-      <div class="modal-header"><h2 id="mkn-title">Kanaal toevoegen</h2><button class="btn btn-ghost" id="btn-mkn-close" style="font-size:18px">✕</button></div>
+      <div class="modal-header">
+        <h2 id="mkn-title">Kanaal toevoegen</h2>
+        <button class="btn btn-ghost" id="btn-mkn-close" style="font-size:18px">&#x2715;</button>
+      </div>
       <div class="modal-body">
         <div><label class="form-label">Kanaal naam *</label><input class="form-input" type="text" id="fkn-naam" placeholder="bv. Facebook"/></div>
         <div class="form-grid2">
           <div><label class="form-label">Taal</label><input class="form-input" type="text" id="fkn-taal" placeholder="NL / EN"/></div>
           <div><label class="form-label">Frequentie</label><input class="form-input" type="text" id="fkn-freq" placeholder="2 posts/week"/></div>
         </div>
-        <div><label class="form-label">Toon</label><input class="form-input" type="text" id="fkn-toon" placeholder="Vriendelijk, laagdrempelig…"/></div>
+        <div><label class="form-label">Toon</label><input class="form-input" type="text" id="fkn-toon" placeholder="Vriendelijk, laagdrempelig&#x2026;"/></div>
         <div><label class="form-label">Doel</label><input class="form-input" type="text" id="fkn-doel" placeholder="Wat wil je bereiken?"/></div>
-        <div><label class="form-label">Groepen / Subreddits</label><input class="form-input" type="text" id="fkn-groepen" placeholder="r/genealogy, Stamboomonderzoek NL…"/></div>
-        <div><label class="form-label">Notities</label><textarea class="form-input" id="fkn-notities" rows="2" placeholder="Aanvullende opmerkingen…"></textarea></div>
+        <div><label class="form-label">Groepen / Subreddits</label><input class="form-input" type="text" id="fkn-groepen" placeholder="r/genealogy, Stamboomonderzoek NL&#x2026;"/></div>
+        <div><label class="form-label">Notities</label><textarea class="form-input" id="fkn-notities" rows="2" placeholder="Aanvullende opmerkingen&#x2026;"></textarea></div>
       </div>
       <div class="modal-footer">
         <button class="btn" id="btn-mkn-cancel">Annuleren</button>
@@ -539,29 +462,33 @@
     </div>
   </div>
 
-  <!-- Modal: Template -->
+  <!-- Modal: Template toevoegen / bewerken -->
   <div class="modal-overlay" id="modal-template">
     <div class="modal">
-      <div class="modal-header"><h2 id="mtp-title">Template toevoegen</h2><button class="btn btn-ghost" id="btn-mtp-close" style="font-size:18px">✕</button></div>
+      <div class="modal-header">
+        <h2 id="mtp-title">Template toevoegen</h2>
+        <button class="btn btn-ghost" id="btn-mtp-close" style="font-size:18px">&#x2715;</button>
+      </div>
       <div class="modal-body">
         <div><label class="form-label">Titel *</label><input class="form-input" type="text" id="ftp-titel" placeholder="bv. Reddit lanceringspost (EN)"/></div>
-        <div><label class="form-label">Kanaal</label>
+        <div>
+          <label class="form-label">Kanaal</label>
           <select class="form-input" id="ftp-kanaal">
             <option>Facebook</option><option>Reddit</option><option>Product Hunt</option>
             <option>YouTube</option><option>Email</option><option>Website</option><option>Overig</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Tekst (markdown)</label>
+          <label class="form-label">Tekst (markdown + HTML)</label>
           <div class="md-editor-wrap">
             <div class="md-toolbar">
               <button class="md-btn" data-md="bold">B</button>
               <button class="md-btn" data-md="italic">I</button>
-              <button class="md-btn" data-md="list">≡</button>
-              <button class="md-btn" data-md="table">⊞</button>
-              <button class="md-btn" data-md="preview" id="btn-md-preview-tpl">👁</button>
+              <button class="md-btn" data-md="list">&#x2261;</button>
+              <button class="md-btn" data-md="table">&#x229E;</button>
+              <button class="md-btn" data-md="preview" id="btn-md-preview-tpl">&#x1F441;</button>
             </div>
-            <textarea class="form-input" id="ftp-tekst" rows="8" placeholder="Schrijf je post-template hier…"></textarea>
+            <textarea class="form-input" id="ftp-tekst" rows="8" placeholder="Schrijf je post-template hier&#x2026;"></textarea>
             <div class="md-preview" id="md-preview-tpl" style="display:none"></div>
           </div>
         </div>
@@ -575,828 +502,710 @@
 
   <div id="footer-placeholder"></div>
 
+  <!-- Scripts: verplichte volgorde identiek aan backlog.html -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/auth.js"></script>
   <script src="/MyFamTreeCollab/js/adminGuard.js"></script>
   <script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
+  <!-- agendaStore voor de module laden zodat AgendaStore.sync() beschikbaar is -->
+  <script src="../js/agendaStore.js"></script>
+
   <script>
-  fetch('/MyFamTreeCollab/Layout/TopBar.html').then(r=>r.text()).then(html=>{
-    document.getElementById('topbar-placeholder').innerHTML=html;
-    const s=document.createElement('script');s.src='../js/topbar.js';
-    s.onload=()=>AdminGuard.protect('admin').then(ok=>{if(ok)Mkt.init();});
+  // Layout laden: topbar -> admin-check -> Mkt.init()
+  fetch('/MyFamTreeCollab/Layout/TopBar.html').then(function(r){return r.text();}).then(function(html){
+    document.getElementById('topbar-placeholder').innerHTML=html; // topbar injecteren
+    var s=document.createElement('script'); s.src='../js/topbar.js'; // topbar.js laden
+    s.onload=function(){ AdminGuard.protect('admin').then(function(ok){ if(ok) Mkt.init(); }); }; // alleen admins
     document.body.appendChild(s);
   });
-  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(r=>r.text()).then(html=>{document.getElementById('navbar-placeholder').innerHTML=html;});
-  fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{document.getElementById('footer-placeholder').innerHTML=html;});
+  fetch('/MyFamTreeCollab/Layout/Navbar.html').then(function(r){return r.text();}).then(function(html){ document.getElementById('navbar-placeholder').innerHTML=html; }); // navbar
+  fetch('/MyFamTreeCollab/Layout/Footer.html').then(function(r){return r.text();}).then(function(html){ document.getElementById('footer-placeholder').innerHTML=html; }); // footer
 
-  const Mkt=(()=>{
-    // === State ===
-    let taken=[],phases=[],phaseDescs={};
-    let events=[],kpis=[],kanalen=[],templates=[];
-    let projName='',projVersion='',projDate='';
-    let view='board',search='',fPhase='All';
-    let fStatus=new Set(),fPriority=new Set(),fType=new Set(),fTags=new Set();
-    let editTaakId=null,editEventIdx=null,editKpiIdx=null,editKanaalIdx=null,editTplIdx=null;
-    let calView='month',calDate=new Date();
+  // ================================================================
+  // MARKETING MODULE v4.0.0 - vanilla JS
+  // Architectuur: identiek aan backlog.html (Backlog module v5.3.2)
+  // Tabs: Taken / Kanalen / Templates (kalender en KPI verwijderd)
+  // localStorage prefix: mk_* (geen conflict met bl_*, pl_*, ag_*)
+  // ================================================================
+  var Mkt = (function() {
+    // State variabelen
+    var taken=[], phases=[], phaseDescs={};
+    var kanalen=[], templates=[];
+    var projName='', projVersion='', projDate='';
+    var view='board', search='', fPhase='All';
+    var fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
+    var editTaakId=null, editKanaalIdx=null, editTplIdx=null;
 
-    // === Constanten ===
-    const STATUSES  =['Open','In Progress','Review','Done','Cancelled','Future'];
-    const PRIORITIES=['Critical','High','Medium','Low'];
-    const TYPES     =['Facebook','Reddit','Product Hunt','YouTube','Email','Website','Overig'];
-    const S_ICON={'Open':'📋','In Progress':'🔄','Review':'🔍','Done':'✅','Cancelled':'❌','Future':'🔮'};
-    const S_CSS ={'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
-    const S_TBL ={'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
-    const P_CSS ={'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
-    const P_TBL ={'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
-    const D_CSS ={'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
-    const DAYS  =['Ma','Di','Wo','Do','Vr','Za','Zo'];
-    const MONTHS=['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+    // Constanten: identiek aan backlog.html
+    var STATUSES  =['Open','In Progress','Review','Done','Cancelled','Future'];
+    var PRIORITIES=['Critical','High','Medium','Low'];
+    var TYPES     =['Facebook','Reddit','Product Hunt','YouTube','Email','Website','Overig'];
+    var S_ICON={'Open':'&#x1F4CB;','In Progress':'&#x1F504;','Review':'&#x1F50D;','Done':'&#x2705;','Cancelled':'&#x274C;','Future':'&#x1F52E;'};
+    var S_CSS ={'Open':'s-open','In Progress':'s-inprogress','Review':'s-review','Done':'s-done','Cancelled':'s-cancelled','Future':'s-future'};
+    var S_TBL ={'Open':'s-open-tbl','In Progress':'s-inprogress-tbl','Review':'s-review-tbl','Done':'s-done-tbl','Cancelled':'s-cancelled-tbl','Future':'s-future-tbl'};
+    var P_CSS ={'Critical':'p-critical','High':'p-high','Medium':'p-medium','Low':'p-low'};
+    var P_TBL ={'Critical':'p-critical-tbl','High':'p-high-tbl','Medium':'p-medium-tbl','Low':'p-low-tbl'};
+    var D_CSS ={'Critical':'dot-critical','High':'dot-high','Medium':'dot-medium','Low':'dot-low'};
 
-    const $=id=>document.getElementById(id);
-    const V=v=>v&&v.trim()?v.trim():'';
+    var $ = function(id){ return document.getElementById(id); }; // DOM helper
+    var V = function(v){ return v&&v.trim()?v.trim():''; }; // veilige string helper
 
-    // === Init ===
-    function init(){
-      _loadProjInfo();
-      const s=localStorage.getItem('mk_items');
-      if(s){
-        taken    =JSON.parse(s);
-        phases   =JSON.parse(localStorage.getItem('mk_phases')||'[]');
-        phaseDescs=JSON.parse(localStorage.getItem('mk_phasedescs')||'{}');
-        events   =JSON.parse(localStorage.getItem('mk_events')||'[]');
-        kpis     =JSON.parse(localStorage.getItem('mk_kpis')||'[]');
-        kanalen  =JSON.parse(localStorage.getItem('mk_kanalen')||'[]');
-        templates=JSON.parse(localStorage.getItem('mk_templates')||'[]');
+    // Initialisatie: data laden en UI opbouwen
+    function init() {
+      _loadProjInfo(); // projectinfo laden uit localStorage
+      var s=localStorage.getItem('mk_items'); // opgeslagen taken laden
+      if(s) {
+        taken     = JSON.parse(s); // taken parsen
+        phases    = JSON.parse(localStorage.getItem('mk_phases')    ||'[]'); // fases
+        phaseDescs= JSON.parse(localStorage.getItem('mk_phasedescs')||'{}'); // fase-beschrijvingen
+        kanalen   = JSON.parse(localStorage.getItem('mk_kanalen')   ||'[]'); // kanalen
+        templates = JSON.parse(localStorage.getItem('mk_templates') ||'[]'); // templates
       }
-      _bindEvents();
-      _renderAll();
+      _bindEvents(); // event listeners registreren
+      _renderAll();  // UI opbouwen
+      _agSync();     // initiële agenda sync
     }
 
-    function _bindEvents(){
+    // AgendaStore sync: roept AgendaStore.sync() aan na elke _saveAll()
+    function _agSync() {
+      if(typeof AgendaStore !== 'undefined') AgendaStore.sync(); // ag_cache herberekenen
+    }
+
+    // Event bindings: alle knoppen en inputs
+    function _bindEvents() {
       // Tabs
-      document.querySelectorAll('.tab-btn').forEach(b=>{
-        b.addEventListener('click',()=>{
-          document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-          document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
-          b.classList.add('active');
-          $('tab-'+b.dataset.tab).classList.add('active');
-          if(b.dataset.tab==='kalender') _renderCal();
+      document.querySelectorAll('.tab-btn').forEach(function(b){
+        b.addEventListener('click', function(){
+          document.querySelectorAll('.tab-btn').forEach(function(x){ x.classList.remove('active'); });
+          document.querySelectorAll('.tab-panel').forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active'); // actieve tab markeren
+          $('tab-'+b.dataset.tab).classList.add('active'); // bijbehorend panel tonen
         });
       });
 
       // Projectinfo
-      $('btn-edit-proj').addEventListener('click',()=>{ $('pi-name').value=projName;$('pi-version').value=projVersion;$('pi-date').value=projDate;$('projinfo-dd').classList.toggle('open'); });
-      $('btn-proj-save').addEventListener('click',()=>{ projName=$('pi-name').value.trim();projVersion=$('pi-version').value.trim();projDate=$('pi-date').value;_saveProjInfo();$('projinfo-dd').classList.remove('open');_renderMeta(); });
-      $('btn-proj-cancel').addEventListener('click',()=>$('projinfo-dd').classList.remove('open'));
+      $('btn-edit-proj').addEventListener('click', function(){ $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate; $('projinfo-dd').classList.toggle('open'); });
+      $('btn-proj-save').addEventListener('click', function(){ projName=$('pi-name').value.trim(); projVersion=$('pi-version').value.trim(); projDate=$('pi-date').value; _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta(); });
+      $('btn-proj-cancel').addEventListener('click', function(){ $('projinfo-dd').classList.remove('open'); });
 
       // Acties
-      $('btn-export-md').addEventListener('click',exportMD);
-      $('input-file').addEventListener('change',importMD);
-      $('btn-clear-db').addEventListener('click',()=>{
-        if(!confirm('Alle marketing data wissen?'))return;
-        Object.keys(localStorage).filter(k=>k.startsWith('mk_')).forEach(k=>localStorage.removeItem(k));
+      $('btn-export-md').addEventListener('click', _exportMD); // MD exporteren
+      $('input-file').addEventListener('change', _importMD);   // MD importeren
+      $('btn-clear-db').addEventListener('click', function(){ // alle data wissen
+        if(!confirm('Alle marketing data wissen?\nDit kan niet ongedaan worden gemaakt.')) return;
+        Object.keys(localStorage).filter(function(k){ return k.startsWith('mk_'); }).forEach(function(k){ localStorage.removeItem(k); }); // alle mk_* keys wissen
+        localStorage.removeItem('ag_cache'); // agenda cache ook wissen
         location.reload();
       });
 
-      // Fase
-      $('btn-new-phase').addEventListener('click',()=>{$('phase-input-wrap').classList.add('open');$('btn-new-phase').style.display='none';$('input-new-phase').focus();});
-      $('btn-cancel-phase').addEventListener('click',_cancelPhaseInput);
-      $('btn-add-phase').addEventListener('click',_addPhase);
-      $('input-new-phase').addEventListener('keydown',e=>{if(e.key==='Enter')_addPhase();if(e.key==='Escape')_cancelPhaseInput();});
+      // Fase beheer
+      $('btn-new-phase').addEventListener('click', function(){ $('phase-input-wrap').classList.add('open'); $('btn-new-phase').style.display='none'; $('input-new-phase').focus(); });
+      $('btn-cancel-phase').addEventListener('click', _cancelPhaseInput);
+      $('btn-add-phase').addEventListener('click', _addPhase);
+      $('input-new-phase').addEventListener('keydown', function(e){ if(e.key==='Enter') _addPhase(); if(e.key==='Escape') _cancelPhaseInput(); });
 
       // Filters
-      $('input-search').addEventListener('input',e=>{search=e.target.value;_renderTaken();});
-      $('btn-view-board').addEventListener('click',()=>{view='board';_toggleView();_renderTaken();});
-      $('btn-view-list').addEventListener('click', ()=>{view='list'; _toggleView();_renderTaken();});
-      $('btn-clear-filters').addEventListener('click',()=>{search='';fPhase='All';fStatus.clear();fPriority.clear();fType.clear();fTags.clear();$('input-search').value='';_renderAll();});
+      $('input-search').addEventListener('input', function(e){ search=e.target.value; _renderTaken(); });
+      $('btn-view-board').addEventListener('click', function(){ view='board'; _toggleView(); _renderTaken(); });
+      $('btn-view-list').addEventListener('click',  function(){ view='list';  _toggleView(); _renderTaken(); });
+      $('btn-clear-filters').addEventListener('click', function(){ search=''; fPhase='All'; fStatus.clear(); fPriority.clear(); fType.clear(); fTags.clear(); $('input-search').value=''; _renderAll(); });
 
       // Taak modal
-      $('btn-add-taak').addEventListener('click',()=>_openTaakModal());
-      $('btn-mt-close').addEventListener('click',()=>_closeModal('modal-taak'));
-      $('btn-mt-cancel').addEventListener('click',()=>_closeModal('modal-taak'));
-      $('btn-mt-save').addEventListener('click',_saveTaak);
-      $('modal-taak').addEventListener('click',e=>{if(e.target===$('modal-taak'))_closeModal('modal-taak');});
-      $('ft-phase').addEventListener('change',_updateAutoId);
-      $('ft-type').addEventListener('change',_updateAutoId);
-      $('ft-id').addEventListener('input',()=>{$('ft-id').dataset.manual='1';});
-      _bindMdToolbar('ft-description','md-preview-desc','btn-md-preview-desc');
+      $('btn-add-taak').addEventListener('click', function(){ _openTaakModal(); });
+      $('btn-mt-close').addEventListener('click', function(){ _closeModal('modal-taak'); });
+      $('btn-mt-cancel').addEventListener('click', function(){ _closeModal('modal-taak'); });
+      $('btn-mt-save').addEventListener('click', _saveTaak);
+      $('modal-taak').addEventListener('click', function(e){ if(e.target===$('modal-taak')) _closeModal('modal-taak'); });
+      $('ft-phase').addEventListener('change', _updateAutoId);
+      $('ft-type').addEventListener('change',  _updateAutoId);
+      $('ft-id').addEventListener('input', function(){ $('ft-id').dataset.manual='1'; }); // handmatige ID invoer markeren
 
-      // Kalender event modal
-      $('btn-add-event').addEventListener('click',()=>_openEventModal());
-      $('btn-me-close').addEventListener('click',()=>_closeModal('modal-event'));
-      $('btn-me-cancel').addEventListener('click',()=>_closeModal('modal-event'));
-      $('btn-me-save').addEventListener('click',_saveEvent);
-      $('modal-event').addEventListener('click',e=>{if(e.target===$('modal-event'))_closeModal('modal-event');});
-      _bindMdToolbar('fe-desc','md-preview-ev','btn-md-preview-ev');
-
-      // Kalender navigatie
-      $('cal-prev').addEventListener('click',()=>_calNav(-1));
-      $('cal-next').addEventListener('click',()=>_calNav(1));
-      document.querySelectorAll('.cal-view-toggle button').forEach(b=>{
-        b.addEventListener('click',()=>{
-          document.querySelectorAll('.cal-view-toggle button').forEach(x=>x.classList.remove('active'));
-          b.classList.add('active'); calView=b.dataset.calview; _renderCal();
-        });
-      });
-
-      // KPI modal
-      $('btn-add-kpi').addEventListener('click',()=>_openKpiModal());
-      $('btn-mk-close').addEventListener('click',()=>_closeModal('modal-kpi'));
-      $('btn-mk-cancel').addEventListener('click',()=>_closeModal('modal-kpi'));
-      $('btn-mk-save').addEventListener('click',_saveKpi);
+      // Markdown toolbars
+      _bindMdToolbar('ft-description', 'md-preview-desc', 'btn-md-preview-desc'); // omschrijving
+      _bindMdToolbar('ftp-tekst',      'md-preview-tpl',  'btn-md-preview-tpl');  // template tekst
 
       // Kanaal modal
-      $('btn-add-kanaal').addEventListener('click',()=>_openKanaalModal());
-      $('btn-mkn-close').addEventListener('click',()=>_closeModal('modal-kanaal'));
-      $('btn-mkn-cancel').addEventListener('click',()=>_closeModal('modal-kanaal'));
-      $('btn-mkn-save').addEventListener('click',_saveKanaal);
+      $('btn-add-kanaal').addEventListener('click', function(){ _openKanaalModal(); });
+      $('btn-mkn-close').addEventListener('click',  function(){ _closeModal('modal-kanaal'); });
+      $('btn-mkn-cancel').addEventListener('click', function(){ _closeModal('modal-kanaal'); });
+      $('btn-mkn-save').addEventListener('click', _saveKanaal);
+      $('modal-kanaal').addEventListener('click', function(e){ if(e.target===$('modal-kanaal')) _closeModal('modal-kanaal'); });
 
       // Template modal
-      $('btn-add-template').addEventListener('click',()=>_openTplModal());
-      $('btn-mtp-close').addEventListener('click',()=>_closeModal('modal-template'));
-      $('btn-mtp-cancel').addEventListener('click',()=>_closeModal('modal-template'));
-      $('btn-mtp-save').addEventListener('click',_saveTpl);
-      _bindMdToolbar('ftp-tekst','md-preview-tpl','btn-md-preview-tpl');
+      $('btn-add-template').addEventListener('click', function(){ _openTplModal(); });
+      $('btn-mtp-close').addEventListener('click',   function(){ _closeModal('modal-template'); });
+      $('btn-mtp-cancel').addEventListener('click',  function(){ _closeModal('modal-template'); });
+      $('btn-mtp-save').addEventListener('click', _saveTpl);
+      $('modal-template').addEventListener('click', function(e){ if(e.target===$('modal-template')) _closeModal('modal-template'); });
     }
 
-    // === Markdown toolbar ===
-    function _bindMdToolbar(textareaId,previewId,previewBtnId){
-      const ta=$( textareaId),prev=$(previewId),prevBtn=$(previewBtnId);
-      document.querySelectorAll(`#modal-taak .md-btn[data-md], #modal-event .md-btn[data-md], #modal-template .md-btn[data-md]`).forEach(btn=>{
-        // gebonden per modal
-      });
-      // Bind per textarea parent
-      const wrap=ta.closest('.md-editor-wrap');
-      wrap.querySelectorAll('.md-btn[data-md]').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          const md=btn.dataset.md;
-          if(md==='preview'){
-            const show=prev.style.display==='none';
-            prev.style.display=show?'block':'none';
-            ta.style.display=show?'none':'block';
-            if(show) prev.innerHTML=_mdToHtml(ta.value);
+    // Markdown toolbar: koppel toolbar knoppen aan textarea
+    function _bindMdToolbar(textareaId, previewId, previewBtnId) {
+      var ta=$(textareaId), prev=$(previewId); // textarea en preview elementen
+      var wrap=ta.closest('.md-editor-wrap'); // wrapper element
+      wrap.querySelectorAll('.md-btn[data-md]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var md=btn.dataset.md; // actie type
+          if(md==='preview') { // preview toggle
+            var show=prev.style.display==='none'; // huidige staat
+            prev.style.display=show?'block':'none'; // preview tonen/verbergen
+            ta.style.display=show?'none':'block';   // textarea verbergen/tonen
+            if(show) prev.innerHTML=_mdToHtml(ta.value); // MD naar HTML renderen
             return;
           }
-          _insertMd(ta,md);
+          _insertMd(ta, md); // markdown invoegen in textarea
         });
       });
     }
 
-    function _insertMd(ta,type){
-      const s=ta.selectionStart,e=ta.selectionEnd,v=ta.value,sel=v.slice(s,e);
-      let ins='';
-      if(type==='bold')   ins=`**${sel||'vet tekst'}**`;
-      if(type==='italic') ins=`_${sel||'cursief'}_`;
-      if(type==='list')   ins=`\n- ${sel||'item'}\n- item\n`;
-      if(type==='code')   ins=`\`${sel||'code'}\``;
-      if(type==='table')  ins=`\n| Kolom 1 | Kolom 2 | Kolom 3 |\n|---------|---------|----------|\n| Cel 1   | Cel 2   | Cel 3   |\n`;
-      ta.value=v.slice(0,s)+ins+v.slice(e);
-      ta.focus(); ta.selectionStart=ta.selectionEnd=s+ins.length;
+    // Markdown invoegen: wrap of prefix toepassen op geselecteerde tekst
+    function _insertMd(ta, type) {
+      var s=ta.selectionStart, e=ta.selectionEnd, v=ta.value, sel=v.slice(s,e); // selectie info
+      var ins='';
+      if(type==='bold')   ins='**'+(sel||'vet tekst')+'**'; // **bold**
+      if(type==='italic') ins='_'+(sel||'cursief')+'_';     // _cursief_
+      if(type==='list')   ins='\n- '+(sel||'item')+'\n- item\n'; // lijst
+      if(type==='code')   ins='`'+(sel||'code')+'`';        // `code`
+      if(type==='link')   ins='['+(sel||'tekst')+'](https://)'; // [tekst](url)
+      if(type==='table')  ins='\n| Kolom 1 | Kolom 2 |\n|---------|----------|\n| Cel 1   | Cel 2   |\n'; // tabel
+      ta.value=v.slice(0,s)+ins+v.slice(e); // tekst invoegen
+      ta.focus(); ta.selectionStart=ta.selectionEnd=s+ins.length; // cursor na invoeg
     }
 
-    // === Render alles ===
-    function _renderAll(){
+    // Render alles: meta, stats, pills, filters, taken, kanalen, templates
+    function _renderAll() {
       _renderMeta(); _renderStats(); _renderPhasePills();
       _renderFilterPills(); _renderTaken();
-      _renderKpi(); _renderKanalen(); _renderTemplates();
+      _renderKanalen(); _renderTemplates();
       _updatePhasesInModal();
     }
 
-    // === Meta ===
-    function _renderMeta(){
-      const t=taken.length,done=taken.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
-      $('proj-name-txt').textContent=projName||'📣 Marketing & Communicatieplan';
+    // Meta-balk: projectnaam en statistieken
+    function _renderMeta() {
+      var t=taken.length, done=taken.filter(function(i){ return i.status==='Done'; }).length;
+      var pct=t?Math.round(done/t*100):0; // voortgangspercentage
+      $('proj-name-txt').textContent=projName||'Marketing & Communicatieplan';
       $('proj-meta').innerHTML=
-        `${projVersion?`<span>📦 <b>${projVersion}</b></span>`:''}` +
-        `${projDate   ?`<span>📅 <b>${_fmtDate(projDate)}</b></span>`:''}` +
-        `<span>📋 <b>${t}</b> taken</span><span>✅ <b>${pct}%</b> afgerond</span>`;
+        (projVersion?'<span>&#x1F4E6; <b>'+projVersion+'</b></span>':'')+
+        (projDate   ?'<span>&#x1F4C5; <b>'+_fmtDate(projDate)+'</b></span>':'')+
+        '<span>&#x1F4CB; <b>'+t+'</b> taken</span>'+
+        '<span>&#x2705; <b>'+pct+'%</b> afgerond</span>';
     }
 
-    function _fmtDate(d){if(!d)return'';const p=d.split('-');return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d;}
+    // Datum formatteren: YYYY-MM-DD -> DD-MM-YYYY
+    function _fmtDate(d) { if(!d) return ''; var p=d.split('-'); return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:d; }
 
-    // === Stats ===
-    function _renderStats(){
-      const t=taken.length,done=taken.filter(i=>i.status==='Done').length,pct=t?Math.round(done/t*100):0;
-      $('stat-grid').innerHTML=`
-        <div class="stat-card"><div class="stat-label">Totaal taken</div><div class="stat-value">${t}</div></div>
-        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${taken.filter(i=>i.status==='Open').length}</div></div>
-        <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${taken.filter(i=>i.status==='In Progress').length}</div></div>
-        <div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">${done}</div></div>
-        <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
-        <div class="stat-card"><div class="stat-label">Events gepland</div><div class="stat-value">${events.length}</div></div>`;
+    // Statistieken: taken per status
+    function _renderStats() {
+      var t=taken.length;
+      var done=taken.filter(function(i){ return i.status==='Done'; }).length;
+      var pct=t?Math.round(done/t*100):0;
+      var inAgenda=taken.filter(function(i){ return i.gepubliceerd==='ja'&&i.startdate&&i.startdate.trim(); }).length; // in agenda: gepubliceerd + startdatum
+      $('stat-grid').innerHTML=
+        '<div class="stat-card"><div class="stat-label">Totaal taken</div><div class="stat-value">'+t+'</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">'+taken.filter(function(i){ return i.status==='Open'; }).length+'</div></div>'+
+        '<div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">'+taken.filter(function(i){ return i.status==='In Progress'; }).length+'</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">'+done+'</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">'+pct+'%</div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>'+
+        '<div class="stat-card" title="Taken gepubliceerd in agenda.html"><div class="stat-label">In agenda</div><div class="stat-value">'+inAgenda+'</div></div>';
     }
 
-    // === Fase pills ===
-    function _renderPhasePills(){
-      $('phase-pills').innerHTML=phases.map(ph=>`
-        <span class="phase-pill ${fPhase===ph?'active':''}" data-phase="${ph}">${ph}
-          <span data-remove="${ph}" style="margin-left:4px;opacity:.4;cursor:pointer">×</span>
-        </span>`).join('');
-      $('phase-pills').querySelectorAll('.phase-pill').forEach(el=>{
-        el.addEventListener('click',e=>{
-          if(e.target.dataset.remove){_removePhase(e.target.dataset.remove);return;}
-          fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; _renderTaken();
+    // Fase pills: actieve fase filteren
+    function _renderPhasePills() {
+      $('phase-pills').innerHTML=phases.map(function(ph){
+        return '<span class="phase-pill '+(fPhase===ph?'active':'')+'" data-phase="'+ph+'">'+ph+' <span data-remove="'+ph+'" style="margin-left:4px;opacity:.4;cursor:pointer">&times;</span></span>';
+      }).join('');
+      $('phase-pills').querySelectorAll('.phase-pill').forEach(function(el){
+        el.addEventListener('click', function(e){
+          if(e.target.dataset.remove){ _removePhase(e.target.dataset.remove); return; }
+          fPhase=fPhase===el.dataset.phase?'All':el.dataset.phase; // toggle filter
+          _renderTaken();
         });
       });
     }
 
-    // === Filter pills ===
-    function _renderFilterPills(){
-      const allTags=[...new Set(taken.flatMap(i=>(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].sort();
-      _buildPills('fp-status',   STATUSES,  fStatus,   S_ICON);
-      _buildPills('fp-priority', PRIORITIES,fPriority, {});
-      _buildPills('fp-type',     TYPES,     fType,     {});
-      _buildPills('fp-tags',     allTags,   fTags,     {});
+    // Filter pills: status, prioriteit, type, tags
+    function _renderFilterPills() {
+      var allTags=[]; var seen={};
+      taken.forEach(function(i){
+        (i.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean).forEach(function(t){
+          if(!seen[t]){ seen[t]=true; allTags.push(t); }
+        });
+      });
+      allTags.sort();
+      _buildPills('fp-status',   STATUSES,   fStatus,   S_ICON);
+      _buildPills('fp-priority', PRIORITIES, fPriority, {});
+      _buildPills('fp-type',     TYPES,      fType,     {});
+      _buildPills('fp-tags',     allTags,    fTags,     {});
     }
 
-    function _buildPills(cid,opts,activeSet,icons){
-      const el=$(cid);
-      el.innerHTML=opts.map(o=>`<button class="filter-pill ${activeSet.has(o)?'active':''}" data-val="${o}">${icons[o]?icons[o]+' ':''}${o}</button>`).join('');
-      el.querySelectorAll('.filter-pill').forEach(btn=>{
-        btn.addEventListener('click',()=>{const v=btn.dataset.val;activeSet.has(v)?activeSet.delete(v):activeSet.add(v);_renderFilterPills();_renderTaken();});
+    // Pills opbouwen voor een filtergroep
+    function _buildPills(cid, opts, activeSet, icons) {
+      var el=$(cid);
+      el.innerHTML=opts.map(function(o){
+        return '<button class="filter-pill '+(activeSet.has(o)?'active':'')+'" data-val="'+o+'">'+(icons[o]?icons[o]+' ':'')+o+'</button>';
+      }).join('');
+      el.querySelectorAll('.filter-pill').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var v=btn.dataset.val;
+          if(activeSet.has(v)) activeSet.delete(v); else activeSet.add(v); // toggle
+          _renderFilterPills(); _renderTaken();
+        });
       });
     }
 
-    // === Gefilterde taken ===
-    function _filtered(){
-      const q=search.toLowerCase();
-      return taken.filter(i=>{
-        const mq=!q||i.title.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||i.id.toLowerCase().includes(q);
-        const ms=!fStatus.size   ||fStatus.has(i.status);
-        const mp=!fPriority.size ||fPriority.has(i.priority);
-        const mt=!fType.size     ||fType.has(i.type);
-        const mph=fPhase==='All' ||i.phase===fPhase;
-        const it=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-        const mta=!fTags.size    ||[...fTags].some(t=>it.includes(t));
+    // Gefilterde taken op basis van zoekterm en actieve filters
+    function _filtered() {
+      var q=search.toLowerCase();
+      return taken.filter(function(i){
+        var mq=!q||(i.title+' '+(i.description||'')+' '+i.id).toLowerCase().includes(q); // zoekterm
+        var ms=!fStatus.size   ||fStatus.has(i.status);    // status filter
+        var mp=!fPriority.size ||fPriority.has(i.priority); // prioriteit filter
+        var mt=!fType.size     ||fType.has(i.type);         // type filter
+        var mph=fPhase==='All' ||i.phase===fPhase;           // fase filter
+        var it=(i.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+        var mta=!fTags.size    ||Array.from(fTags).some(function(t){ return it.includes(t); }); // tag filter
         return mq&&ms&&mp&&mt&&mph&&mta;
       });
     }
 
-    // === Taken renderen ===
-    function _renderTaken(){
-      const filtered=_filtered();
-      if(!taken.length){
-        $('bl-content').innerHTML=`<div class="empty"><div style="font-size:28px;margin-bottom:8px">📣</div><p>Nog geen taken. Laad een .md bestand of voeg je eerste taak toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste taak toevoegen</button></div>`;
-        $('btn-add-empty').addEventListener('click',()=>_openTaakModal()); return;
+    // Taken renderen: board of lijst weergave
+    function _renderTaken() {
+      var filtered=_filtered();
+      if(!taken.length) { // lege staat
+        $('bl-content').innerHTML='<div class="empty"><p>Nog geen taken. Laad een .md bestand of voeg je eerste taak toe.</p><button class="btn btn-accent" id="btn-add-empty">+ Eerste taak toevoegen</button></div>';
+        $('btn-add-empty').addEventListener('click', function(){ _openTaakModal(); });
+        return;
       }
-      $('bl-content').innerHTML=view==='board'?_boardHTML(filtered):_listHTML(filtered);
-      $('bl-content').querySelectorAll('[data-edit-taak]').forEach(b=>b.addEventListener('click',()=>_openTaakModal(b.dataset.editTaak)));
-      $('bl-content').querySelectorAll('[data-delete-taak]').forEach(b=>b.addEventListener('click',()=>_deleteTaak(b.dataset.deleteTaak)));
-      $('bl-content').querySelectorAll('.tbl-id,.card-id').forEach(el=>el.addEventListener('click',()=>_inlineEditId(el)));
+      if(view==='board') $('bl-content').innerHTML=_boardHTML(filtered); // board weergave
+      else               $('bl-content').innerHTML=_listHTML(filtered);  // lijst weergave
+
+      // Bewerken en verwijderen knoppen
+      $('bl-content').querySelectorAll('[data-edit-taak]').forEach(function(b){ b.addEventListener('click', function(){ _openTaakModal(b.dataset.editTaak); }); });
+      $('bl-content').querySelectorAll('[data-delete-taak]').forEach(function(b){ b.addEventListener('click', function(){ _deleteTaak(b.dataset.deleteTaak); }); });
+      $('bl-content').querySelectorAll('.tbl-id,.card-id').forEach(function(el){ el.addEventListener('click', function(){ _inlineEditId(el); }); });
     }
 
-    function _boardHTML(filtered){
-      const vis=fStatus.size>0?STATUSES.filter(s=>fStatus.has(s)):STATUSES;
-      return `<div class="board-scroll"><div class="board">${vis.map(s=>{
-        const col=filtered.filter(i=>i.status===s);
-        return `<div class="board-col"><div class="board-col-title">${S_ICON[s]} ${s.toUpperCase()} <span style="opacity:.4">(${col.length})</span></div>
-        <div class="board-col-items">${col.length?col.map(_cardHTML).join(''):'<div class="board-empty">—</div>'}</div></div>`;
-      }).join('')}</div></div>`;
-    }
-
-    function _cardHTML(i){
-      const pub=i.gepubliceerd==='ja'||i.gepubliceerd===true;
-      return `<div class="card">
-        <div class="card-header"><span class="card-id" data-id="${i.id}">${i.id}</span>
-          <div style="display:flex;gap:2px;">
-            <button class="btn btn-ghost" data-edit-taak="${i.id}" style="padding:2px 5px;font-size:11px">✏️</button>
-            <button class="btn btn-ghost" data-delete-taak="${i.id}" style="padding:2px 5px;font-size:11px">🗑</button>
-          </div></div>
-        <div class="card-title">${i.title}</div>
-        <div class="card-dates">
-          ${i.startdate?`📅 ${i.startdate}`:''} ${i.enddate&&i.enddate!==i.startdate?`→ ${i.enddate}`:''}
-          <span class="card-pub ${pub?'yes':'no'}">${pub?'✓ Gepubliceerd':'○ Concept'}</span>
-        </div>
-        ${i.description?`<div class="card-desc">${i.description.slice(0,80)}${i.description.length>80?'…':''}</div>`:''}
-        <div class="card-footer">
-          <span class="badge ${P_CSS[i.priority]||'p-medium'}"><span class="dot ${D_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span>
-          <span class="badge ${S_CSS[i.status]||'s-open'}">${S_ICON[i.status]||''} ${i.status}</span>
-          ${i.phase?`<span class="badge s-cancelled" style="font-size:0.62rem">${i.phase}</span>`:''}
-        </div>
-        ${i.tags?`<div class="card-tags">${i.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
-      </div>`;
-    }
-
-    function _listHTML(filtered){
-      if(!filtered.length)return`<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.78rem;padding:1rem 0;text-align:center">Geen taken gevonden.</p>`;
-      return`<div class="list-wrap"><table class="list-table">
-        <thead><tr><th>ID</th><th>Titel</th><th>Fase</th><th>Kanaal</th><th>Start</th><th>Eind</th><th>Pub</th><th>Tags</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
-        <tbody>${filtered.map(i=>{
-          const pub=i.gepubliceerd==='ja'||i.gepubliceerd===true;
-          return`<tr>
-            <td><span class="tbl-id" data-id="${i.id}">${i.id}</span></td>
-            <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</td>
-            <td>${i.phase||''}</td><td>${i.type||''}</td>
-            <td style="white-space:nowrap">${i.startdate||''}</td>
-            <td style="white-space:nowrap">${i.enddate||''}</td>
-            <td>${pub?'✅':'○'}</td>
-            <td>${(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')}</td>
-            <td><span class="${P_TBL[i.priority]||'p-medium-tbl'}">${i.priority||''}</span></td>
-            <td><span class="${S_TBL[i.status]||'s-open-tbl'}">${S_ICON[i.status]||''} ${i.status||''}</span></td>
-            <td style="white-space:nowrap">
-              <button class="btn btn-ghost" data-edit-taak="${i.id}" style="padding:2px 5px">✏️</button>
-              <button class="btn btn-ghost" data-delete-taak="${i.id}" style="padding:2px 5px">🗑</button>
-            </td></tr>`;
-        }).join('')}</tbody></table></div>`;
-    }
-
-    // === Kalender ===
-    function _renderCal(){
-      const y=calDate.getFullYear(),m=calDate.getMonth();
-      if(calView==='month'){
-        $('cal-title').textContent=`${MONTHS[m]} ${y}`;
-        _renderCalMonth(y,m);
-      } else if(calView==='week'){
-        const mon=_getMonday(calDate);
-        $('cal-title').textContent=`Week van ${mon.toLocaleDateString('nl-BE')}`;
-        _renderCalWeek(mon);
-      } else {
-        $('cal-title').textContent=calDate.toLocaleDateString('nl-BE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-        _renderCalDay(calDate);
-      }
-    }
-
-    function _renderCalMonth(y,m){
-      const first=new Date(y,m,1),last=new Date(y,m+1,0);
-      let startDay=(first.getDay()+6)%7; // Maandag = 0
-      let html=`<div class="cal-grid">${DAYS.map(d=>`<div class="cal-day-header">${d}</div>`).join('')}`;
-      // Lege cellen voor
-      for(let i=0;i<startDay;i++){
-        const d=new Date(y,m,i-startDay+1);
-        html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${d.getDate()}</div></div>`;
-      }
-      for(let d=1;d<=last.getDate();d++){
-        const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const isToday=dateStr===_today();
-        const dayTaken=taken.filter(i=>i.startdate&&i.startdate<=dateStr&&(!i.enddate||i.enddate>=dateStr));
-        const dayEvents=events.filter(e=>e.date===dateStr);
-        html+=`<div class="cal-cell ${isToday?'today':''}" data-date="${dateStr}">
-          <div class="cal-cell-num">${d}</div>
-          ${dayTaken.slice(0,2).map(i=>`<div class="cal-event taak ${i.status==='Done'?'done':''} ${i.gepubliceerd==='ja'?'gepubliceerd':''}" data-edit-taak="${i.id}" title="${i.title}">${i.gepubliceerd==='ja'?'✓ ':''} ${i.title}</div>`).join('')}
-          ${dayTaken.length>2?`<div class="cal-event taak" style="opacity:.5">+${dayTaken.length-2} meer</div>`:''}
-          ${dayEvents.slice(0,2).map((e,ei)=>`<div class="cal-event ${e.gepubliceerd==='ja'?'gepubliceerd':'kalender-event'}" data-edit-event="${ei}" title="${e.title}">${e.gepubliceerd==='ja'?'✓ ':''} ${e.title}</div>`).join('')}
-        </div>`;
-      }
-      // Lege cellen na
-      const lastDay=(last.getDay()+6)%7;
-      for(let i=1;i<7-lastDay;i++) html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${i}</div></div>`;
-      html+='</div>';
-      $('cal-content').innerHTML=html;
-      // Events
-      $('cal-content').querySelectorAll('[data-edit-taak]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();_openTaakModal(el.dataset.editTaak);}));
-      $('cal-content').querySelectorAll('[data-edit-event]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();_openEventModal(parseInt(el.dataset.editEvent));}));
-      $('cal-content').querySelectorAll('.cal-cell').forEach(el=>{
-        el.addEventListener('click',()=>{
-          const d=el.dataset.date;
-          if(d){$('fe-date').value=d;_openEventModal();}
-        });
+    // Board HTML: kolommen per status
+    function _boardHTML(filtered) {
+      var vis=fStatus.size>0?STATUSES.filter(function(s){ return fStatus.has(s); }):STATUSES;
+      var html='<div class="board-scroll"><div class="board">';
+      vis.forEach(function(s){
+        var col=filtered.filter(function(i){ return i.status===s; });
+        html+='<div class="board-col">';
+        html+='<div class="board-col-title">'+S_ICON[s]+' '+s.toUpperCase()+' <span style="opacity:.4">('+col.length+')</span></div>';
+        html+='<div class="board-col-items">'+(col.length?col.map(_cardHTML).join(''):'<div class="board-empty">&mdash;</div>')+'</div>';
+        html+='</div>';
       });
-    }
-
-    function _renderCalWeek(mon){
-      let html=`<div class="week-grid">`;
-      html+=`<div></div>`;
-      for(let d=0;d<7;d++){
-        const day=new Date(mon);day.setDate(mon.getDate()+d);
-        const isToday=_dateStr(day)===_today();
-        html+=`<div style="font-family:var(--font-mono);font-size:0.68rem;text-align:center;padding:4px;color:${isToday?'var(--accent)':'var(--text-muted)'}">${DAYS[d]} ${day.getDate()}</div>`;
-      }
-      for(let h=8;h<20;h++){
-        html+=`<div class="week-time">${h}:00</div>`;
-        for(let d=0;d<7;d++){
-          const day=new Date(mon);day.setDate(mon.getDate()+d);
-          const ds=_dateStr(day);
-          const dayTaken=taken.filter(i=>i.startdate===ds);
-          const dayEvents=events.filter(e=>e.date===ds);
-          html+=`<div class="week-cell">${h===8?[...dayTaken.map(i=>`<div class="cal-event taak ${i.gepubliceerd==='ja'?'gepubliceerd':''}" style="margin-bottom:2px" data-edit-taak="${i.id}">${i.gepubliceerd==='ja'?'✓ ':''} ${i.title}</div>`),
-            ...dayEvents.map((e,ei)=>`<div class="cal-event kalender-event" data-edit-event="${ei}">${e.gepubliceerd==='ja'?'✓ ':''} ${e.title}</div>`)].join(''):''}
-          </div>`;
-        }
-      }
-      html+='</div>';
-      $('cal-content').innerHTML=html;
-      $('cal-content').querySelectorAll('[data-edit-taak]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();_openTaakModal(el.dataset.editTaak);}));
-    }
-
-    function _renderCalDay(date){
-      const ds=_dateStr(date);
-      const dayTaken=taken.filter(i=>i.startdate&&i.startdate<=ds&&(!i.enddate||i.enddate>=ds));
-      const dayEvents=events.filter(e=>e.date===ds);
-      const all=[
-        ...dayTaken.map(i=>({title:i.title,type:i.type,pub:i.gepubliceerd==='ja',isTaak:true,id:i.id})),
-        ...dayEvents.map((e,ei)=>({title:e.title,type:e.type,pub:e.gepubliceerd==='ja',isTaak:false,idx:ei}))
-      ];
-      if(!all.length){$('cal-content').innerHTML=`<div class="empty"><p>Geen taken of events op deze dag.</p></div>`;return;}
-      $('cal-content').innerHTML=`<div class="day-list">${all.map(item=>`
-        <div class="day-event-card">
-          <div class="day-event-time">${item.pub?'✓ Pub':'○'}</div>
-          <div><div class="day-event-title">${item.title}</div><div class="day-event-type">${item.type}${item.isTaak?' · Taak':' · Event'}</div></div>
-          <div style="margin-left:auto">
-            <button class="btn btn-sm" data-edit="${item.isTaak?'taak':'event'}" data-ref="${item.isTaak?item.id:item.idx}">✏️</button>
-          </div>
-        </div>`).join('')}</div>`;
-      $('cal-content').querySelectorAll('[data-edit]').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          if(btn.dataset.edit==='taak') _openTaakModal(btn.dataset.ref);
-          else _openEventModal(parseInt(btn.dataset.ref));
-        });
-      });
-    }
-
-    function _calNav(dir){
-      if(calView==='month')     calDate=new Date(calDate.getFullYear(),calDate.getMonth()+dir,1);
-      else if(calView==='week') calDate=new Date(calDate.getTime()+dir*7*864e5);
-      else                      calDate=new Date(calDate.getTime()+dir*864e5);
-      _renderCal();
-    }
-
-    function _getMonday(d){const day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);return new Date(d.getFullYear(),d.getMonth(),diff);}
-    function _today(){return _dateStr(new Date());}
-    function _dateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-
-    // === KPI ===
-    function _renderKpi(){
-      $('kpi-body').innerHTML=kpis.map((k,i)=>`<tr>
-        <td><b>${k.metric}</b></td>
-        <td>${k.doel4}</td>
-        <td><input class="kpi-input" data-ki="${i}" data-kf="w4" value="${k.w4||''}" placeholder="—"/></td>
-        <td>${k.doel8}</td>
-        <td><input class="kpi-input" data-ki="${i}" data-kf="w8" value="${k.w8||''}" placeholder="—"/></td>
-        <td>${k.doel12}</td>
-        <td><input class="kpi-input" data-ki="${i}" data-kf="w12" value="${k.w12||''}" placeholder="—"/></td>
-        <td><button class="btn btn-ghost btn-sm" data-edit-kpi="${i}">✏️</button> <button class="btn btn-ghost btn-sm" data-delete-kpi="${i}">🗑</button></td>
-      </tr>`).join('');
-      $('kpi-body').querySelectorAll('.kpi-input').forEach(inp=>{
-        inp.addEventListener('change',e=>{
-          kpis[parseInt(e.target.dataset.ki)][e.target.dataset.kf]=e.target.value;
-          _saveAll();
-        });
-      });
-      $('kpi-body').querySelectorAll('[data-edit-kpi]').forEach(b=>b.addEventListener('click',()=>_openKpiModal(parseInt(b.dataset.editKpi))));
-      $('kpi-body').querySelectorAll('[data-delete-kpi]').forEach(b=>b.addEventListener('click',()=>{kpis.splice(parseInt(b.dataset.deleteKpi),1);_saveAll();_renderKpi();}));
-    }
-
-    // === Kanalen ===
-    function _renderKanalen(){
-      $('kanalen-content').innerHTML=kanalen.length?kanalen.map((k,i)=>`
-        <div class="data-card">
-          <div class="data-card-header">
-            <div class="data-card-title">${k.naam}</div>
-            <div style="display:flex;gap:6px;">
-              <button class="btn btn-ghost btn-sm" data-edit-kanaal="${i}">✏️</button>
-              <button class="btn btn-ghost btn-sm" data-delete-kanaal="${i}">🗑</button>
-            </div>
-          </div>
-          <div class="data-card-body">
-            <div class="data-card-meta">
-              <span class="data-card-tag">🌐 ${k.taal}</span>
-              <span class="data-card-tag">📅 ${k.freq}</span>
-            </div>
-            <div class="data-card-desc"><b style="color:var(--accent)">Toon:</b> ${k.toon}<br><b style="color:var(--accent)">Doel:</b> ${k.doel}${k.groepen?`<br><b style="color:var(--accent)">Groepen:</b> ${k.groepen}`:''}${k.notities?`<br><span style="opacity:.7">${k.notities}</span>`:''}</div>
-          </div>
-        </div>`).join(''):`<div class="empty"><p>Nog geen kanalen. Voeg je eerste kanaal toe.</p></div>`;
-      $('kanalen-content').querySelectorAll('[data-edit-kanaal]').forEach(b=>b.addEventListener('click',()=>_openKanaalModal(parseInt(b.dataset.editKanaal))));
-      $('kanalen-content').querySelectorAll('[data-delete-kanaal]').forEach(b=>b.addEventListener('click',()=>{kanalen.splice(parseInt(b.dataset.deleteKanaal),1);_saveAll();_renderKanalen();}));
-    }
-
-    // === Templates ===
-    function _renderTemplates(){
-      $('templates-content').innerHTML=templates.length?templates.map((t,i)=>`
-        <div class="data-card" id="tpl-${i}">
-          <div class="data-card-header tpl-header" data-tpl="${i}">
-            <div><div class="data-card-title">✉️ ${t.titel}</div><span class="data-card-tag" style="display:inline-block;margin-top:4px">${t.kanaal}</span></div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <button class="btn btn-ghost btn-sm" data-edit-tpl="${i}">✏️</button>
-              <button class="btn btn-ghost btn-sm" data-delete-tpl="${i}">🗑</button>
-              <span class="tpl-toggle">▼</span>
-            </div>
-          </div>
-          <div class="tpl-body">
-            <div class="tpl-text">${t.tekst}</div>
-            <div style="margin-top:10px;display:flex;gap:8px;">
-              <button class="btn btn-accent btn-sm" data-copy-tpl="${i}">📋 Kopiëren</button>
-            </div>
-          </div>
-        </div>`).join(''):`<div class="empty"><p>Nog geen templates. Voeg je eerste template toe.</p></div>`;
-      $('templates-content').querySelectorAll('.tpl-header').forEach(h=>{
-        h.addEventListener('click',e=>{if(e.target.closest('button'))return;document.getElementById('tpl-'+h.dataset.tpl).classList.toggle('open');});
-      });
-      $('templates-content').querySelectorAll('[data-edit-tpl]').forEach(b=>b.addEventListener('click',()=>_openTplModal(parseInt(b.dataset.editTpl))));
-      $('templates-content').querySelectorAll('[data-delete-tpl]').forEach(b=>b.addEventListener('click',()=>{templates.splice(parseInt(b.dataset.deleteTpl),1);_saveAll();_renderTemplates();}));
-      $('templates-content').querySelectorAll('[data-copy-tpl]').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          navigator.clipboard.writeText(templates[parseInt(btn.dataset.copyTpl)].tekst).then(()=>{btn.textContent='✅ Gekopieerd!';setTimeout(()=>btn.textContent='📋 Kopiëren',2000);});
-        });
-      });
-    }
-
-    // === Modals ===
-    function _closeModal(id){$(id).classList.remove('open');editTaakId=editEventIdx=editKpiIdx=editKanaalIdx=editTplIdx=null;}
-
-    function _openTaakModal(id){
-      editTaakId=id||null;
-      $('mt-title').textContent=id?'Taak bewerken':'Taak toevoegen';
-      $('btn-mt-save').textContent=id?'Opslaan':'Toevoegen';
-      $('ft-id').dataset.manual='';
-      _updatePhasesInModal();
-      if(id){
-        const item=taken.find(i=>i.id===id);if(!item)return;
-        $('ft-id').value=item.id;$('ft-id').dataset.manual='1';$('ft-id-preview').textContent='';
-        $('ft-title').value=item.title||'';$('ft-phase').value=item.phase||'';
-        $('ft-type').value=item.type||'Facebook';$('ft-priority').value=item.priority||'Medium';
-        $('ft-status').value=item.status||'Open';$('ft-assignee').value=item.assignee||'';
-        $('ft-tags').value=item.tags||'';$('ft-description').value=item.description||'';
-        $('ft-result').value=item.ai||'';
-        $('ft-startdate').value=item.startdate||'';$('ft-enddate').value=item.enddate||'';
-        $('ft-pub').checked=item.gepubliceerd==='ja';
-      } else {
-        ['ft-title','ft-assignee','ft-tags','ft-description','ft-result','ft-startdate','ft-enddate'].forEach(fid=>$(fid).value='');
-        $('ft-type').value='Facebook';$('ft-priority').value='Medium';$('ft-status').value='Open';$('ft-phase').value='';$('ft-pub').checked=false;
-        _updateAutoId();
-      }
-      // Reset preview
-      $('md-preview-desc').style.display='none';$('ft-description').style.display='block';
-      $('modal-taak').classList.add('open');$('ft-title').focus();
-    }
-
-    function _saveTaak(){
-      const title=$('ft-title').value.trim();if(!title){$('ft-title').focus();return;}
-      const id=$('ft-id').value.trim()||_genId($('ft-phase').value,$('ft-type').value);
-      if(!editTaakId&&taken.find(i=>i.id===id)){alert('ID bestaat al.');$('ft-id').focus();return;}
-      const item={id,title,phase:$('ft-phase').value,type:$('ft-type').value,priority:$('ft-priority').value,status:$('ft-status').value,
-        assignee:$('ft-assignee').value.trim(),tags:$('ft-tags').value.trim(),
-        description:$('ft-description').value.trim(),ai:$('ft-result').value.trim(),
-        startdate:$('ft-startdate').value,enddate:$('ft-enddate').value,
-        gepubliceerd:$('ft-pub').checked?'ja':'nee'};
-      if(editTaakId) taken=taken.map(i=>i.id===editTaakId?item:i); else taken.push(item);
-      _saveAll();_closeModal('modal-taak');_renderAll();
-    }
-
-    function _deleteTaak(id){if(!confirm('Taak verwijderen?'))return;taken=taken.filter(i=>i.id!==id);_saveAll();_renderAll();}
-
-    function _openEventModal(idx){
-      editEventIdx=idx!=null?idx:null;
-      $('me-title').textContent=idx!=null?'Event bewerken':'Event toevoegen';
-      $('btn-me-save').textContent=idx!=null?'Opslaan':'Toevoegen';
-      if(idx!=null){const e=events[idx];$('fe-title').value=e.title;$('fe-date').value=e.date;$('fe-type').value=e.type||'Overig';$('fe-desc').value=e.beschrijving||'';$('fe-pub').checked=e.gepubliceerd==='ja';}
-      else{['fe-title','fe-desc'].forEach(id=>$(id).value='');$('fe-type').value='Overig';$('fe-pub').checked=false;}
-      $('md-preview-ev').style.display='none';$('fe-desc').style.display='block';
-      $('modal-event').classList.add('open');$('fe-title').focus();
-    }
-
-    function _saveEvent(){
-      const title=$('fe-title').value.trim(),date=$('fe-date').value;
-      if(!title||!date){alert('Titel en datum zijn verplicht.');return;}
-      const ev={title,date,type:$('fe-type').value,beschrijving:$('fe-desc').value.trim(),gepubliceerd:$('fe-pub').checked?'ja':'nee'};
-      if(editEventIdx!=null) events[editEventIdx]=ev; else events.push(ev);
-      _saveAll();_closeModal('modal-event');if($('tab-kalender').classList.contains('active'))_renderCal();
-    }
-
-    function _openKpiModal(idx){
-      editKpiIdx=idx!=null?idx:null;
-      $('mk-title').textContent=idx!=null?'KPI bewerken':'KPI toevoegen';
-      $('btn-mk-save').textContent=idx!=null?'Opslaan':'Toevoegen';
-      if(idx!=null){const k=kpis[idx];$('fk-metric').value=k.metric;$('fk-d4').value=k.doel4;$('fk-d8').value=k.doel8;$('fk-d12').value=k.doel12;}
-      else{['fk-metric','fk-d4','fk-d8','fk-d12'].forEach(id=>$(id).value='');}
-      $('modal-kpi').classList.add('open');$('fk-metric').focus();
-    }
-
-    function _saveKpi(){
-      const metric=$('fk-metric').value.trim();if(!metric)return;
-      const k={metric,doel4:$('fk-d4').value.trim(),doel8:$('fk-d8').value.trim(),doel12:$('fk-d12').value.trim(),w4:'',w8:'',w12:''};
-      if(editKpiIdx!=null){k.w4=kpis[editKpiIdx].w4;k.w8=kpis[editKpiIdx].w8;k.w12=kpis[editKpiIdx].w12;kpis[editKpiIdx]=k;}
-      else kpis.push(k);
-      _saveAll();_closeModal('modal-kpi');_renderKpi();
-    }
-
-    function _openKanaalModal(idx){
-      editKanaalIdx=idx!=null?idx:null;
-      $('mkn-title').textContent=idx!=null?'Kanaal bewerken':'Kanaal toevoegen';
-      $('btn-mkn-save').textContent=idx!=null?'Opslaan':'Toevoegen';
-      if(idx!=null){const k=kanalen[idx];$('fkn-naam').value=k.naam;$('fkn-taal').value=k.taal;$('fkn-freq').value=k.freq;$('fkn-toon').value=k.toon;$('fkn-doel').value=k.doel;$('fkn-groepen').value=k.groepen||'';$('fkn-notities').value=k.notities||'';}
-      else{['fkn-naam','fkn-taal','fkn-freq','fkn-toon','fkn-doel','fkn-groepen','fkn-notities'].forEach(id=>$(id).value='');}
-      $('modal-kanaal').classList.add('open');$('fkn-naam').focus();
-    }
-
-    function _saveKanaal(){
-      const naam=$('fkn-naam').value.trim();if(!naam)return;
-      const k={naam,taal:$('fkn-taal').value.trim(),freq:$('fkn-freq').value.trim(),toon:$('fkn-toon').value.trim(),doel:$('fkn-doel').value.trim(),groepen:$('fkn-groepen').value.trim(),notities:$('fkn-notities').value.trim()};
-      if(editKanaalIdx!=null) kanalen[editKanaalIdx]=k; else kanalen.push(k);
-      _saveAll();_closeModal('modal-kanaal');_renderKanalen();
-    }
-
-    function _openTplModal(idx){
-      editTplIdx=idx!=null?idx:null;
-      $('mtp-title').textContent=idx!=null?'Template bewerken':'Template toevoegen';
-      $('btn-mtp-save').textContent=idx!=null?'Opslaan':'Toevoegen';
-      if(idx!=null){const t=templates[idx];$('ftp-titel').value=t.titel;$('ftp-kanaal').value=t.kanaal;$('ftp-tekst').value=t.tekst;}
-      else{['ftp-titel','ftp-tekst'].forEach(id=>$(id).value='');$('ftp-kanaal').value='Facebook';}
-      $('md-preview-tpl').style.display='none';$('ftp-tekst').style.display='block';
-      $('modal-template').classList.add('open');$('ftp-titel').focus();
-    }
-
-    function _saveTpl(){
-      const titel=$('ftp-titel').value.trim();if(!titel)return;
-      const t={titel,kanaal:$('ftp-kanaal').value,tekst:$('ftp-tekst').value.trim()};
-      if(editTplIdx!=null) templates[editTplIdx]=t; else templates.push(t);
-      _saveAll();_closeModal('modal-template');_renderTemplates();
-    }
-
-    // === ID generatie ===
-    function _genId(phase,type){
-      const fl=(phase||'M')[0].toUpperCase(),tl=(type||'O')[0].toUpperCase();
-      const prefix='M'+fl+tl+'-';
-      const used=new Set(taken.filter(i=>i.id&&i.id.startsWith(prefix)).map(i=>parseInt(i.id.slice(prefix.length))||0));
-      let n=1;while(used.has(n))n++;
-      return prefix+String(n).padStart(3,'0');
-    }
-
-    function _updateAutoId(){
-      if(editTaakId)return;
-      const id=_genId($('ft-phase').value,$('ft-type').value);
-      if(!$('ft-id').dataset.manual)$('ft-id').value=id;
-      $('ft-id-preview').textContent=`→ ${id}`;
-    }
-
-    function _inlineEditId(el){
-      const oldId=el.dataset.id;
-      const input=document.createElement('input');input.className='tbl-id-input id-edit-input';input.value=oldId;
-      el.replaceWith(input);input.focus();input.select();
-      const commit=()=>{
-        const newId=input.value.trim();
-        if(newId&&newId!==oldId){if(taken.find(i=>i.id===newId)){alert('ID bestaat al.');input.focus();return;}taken=taken.map(i=>i.id===oldId?{...i,id:newId}:i);_saveAll();}
-        _renderTaken();
-      };
-      input.addEventListener('blur',commit);
-      input.addEventListener('keydown',e=>{if(e.key==='Enter')commit();if(e.key==='Escape')_renderTaken();});
-    }
-
-    // === Fase beheer ===
-    function _addPhase(){const v=$('input-new-phase').value.trim(),d=$('input-new-phase-desc').value.trim();if(v&&!phases.includes(v)){phases.push(v);if(d)phaseDescs[v]=d;_saveAll();}_cancelPhaseInput();_renderPhasePills();}
-    function _removePhase(ph){phases=phases.filter(p=>p!==ph);if(fPhase===ph)fPhase='All';_saveAll();_renderPhasePills();}
-    function _cancelPhaseInput(){$('input-new-phase').value='';$('input-new-phase-desc').value='';$('phase-input-wrap').classList.remove('open');$('btn-new-phase').style.display='';}
-    function _updatePhasesInModal(){if($('ft-phase'))$('ft-phase').innerHTML=`<option value="">— geen —</option>`+phases.map(p=>`<option value="${p}">${p}</option>`).join('');}
-    function _toggleView(){$('btn-view-board').classList.toggle('active',view==='board');$('btn-view-list').classList.toggle('active',view==='list');}
-
-    // === Persistentie ===
-    function _saveAll(){
-      localStorage.setItem('mk_items',JSON.stringify(taken));
-      localStorage.setItem('mk_phases',JSON.stringify(phases));
-      localStorage.setItem('mk_phasedescs',JSON.stringify(phaseDescs));
-      localStorage.setItem('mk_events',JSON.stringify(events));
-      localStorage.setItem('mk_kpis',JSON.stringify(kpis));
-      localStorage.setItem('mk_kanalen',JSON.stringify(kanalen));
-      localStorage.setItem('mk_templates',JSON.stringify(templates));
-    }
-    function _saveProjInfo(){localStorage.setItem('mk_proj',JSON.stringify({projName,projVersion,projDate}));}
-    function _loadProjInfo(){const p=JSON.parse(localStorage.getItem('mk_proj')||'{}');projName=p.projName||'';projVersion=p.projVersion||'';projDate=p.projDate||'';}
-
-    // === Markdown renderer (simpel) ===
-    function _mdToHtml(t){
-      if(!t)return'';
-      let html='',inList=false,inTable=false,rows=[];
-      const flush=()=>{if(!rows.length){inTable=false;return;}html+=`<table><thead><tr>${rows[0].map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;rows.slice(2).forEach(r=>{html+=`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`;});html+=`</tbody></table>`;rows=[];inTable=false;};
-      t.split('\n').forEach(line=>{
-        if(line.startsWith('|')){inTable=true;if(inList){html+='</ul>';inList=false;}rows.push(line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1));return;}
-        if(inTable)flush();
-        if(!line.trim()){if(inList){html+='</ul>';inList=false;}return;}
-        if(line.startsWith('- ')){if(!inList){html+='<ul>';inList=true;}html+=`<li>${_inlineHtml(line.slice(2))}</li>`;return;}
-        if(inList){html+='</ul>';inList=false;}
-        if(line.startsWith('---'))return;
-        html+=`<p>${_inlineHtml(line)}</p>`;
-      });
-      if(inList)html+='</ul>';if(inTable)flush();
+      html+='</div></div>';
       return html;
     }
-    function _inlineHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/_(.+?)_/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>');}
 
-    // === Import MD ===
-    function importMD(e){
-      const file=e.target.files[0];if(!file)return;
-      if(!confirm('Alle huidige data vervangen door '+file.name+'?')){e.target.value='';return;}
-      const reader=new FileReader();
-      reader.onload=ev=>{_parseMD(ev.target.result);e.target.value='';alert('Geladen: '+taken.length+' taken, '+events.length+' events, '+kpis.length+' KPI\'s, '+kanalen.length+' kanalen, '+templates.length+' templates.');_renderAll();};
+    // Kaart HTML: status badge kleur op basis van status-waarde
+    function _cardHTML(i) {
+      var pub=i.gepubliceerd==='ja'; // in agenda gepubliceerd
+      var tags=(i.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+      var html='<div class="card">';
+      html+='<div class="card-header">';
+      html+='<span class="card-id" data-id="'+i.id+'">'+i.id+'</span>';
+      html+='<div style="display:flex;gap:2px;">';
+      html+='<button class="btn btn-ghost" data-edit-taak="'+i.id+'" style="padding:2px 5px;font-size:11px">&#x270F;&#xFE0F;</button>';
+      html+='<button class="btn btn-ghost" data-delete-taak="'+i.id+'" style="padding:2px 5px;font-size:11px">&#x1F5D1;</button>';
+      html+='</div></div>';
+      html+='<div class="card-title">'+i.title+'</div>';
+      html+='<div class="card-dates">';
+      if(i.startdate) html+='&#x1F4C5; '+i.startdate; // startdatum
+      if(i.enddate&&i.enddate!==i.startdate) html+=' &rarr; '+i.enddate; // einddatum
+      // Agenda-indicator: toont of item in agenda.html zichtbaar is
+      html+='<span class="card-agenda '+(pub?'yes':'no')+'">'+(pub?'&#x2713; In agenda':'&#x25CB; Concept')+'</span>';
+      html+='</div>';
+      if(i.description) html+='<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;line-height:1.4;">'+(i.description.length>80?i.description.slice(0,80)+'&hellip;':i.description)+'</div>';
+      html+='<div class="card-footer">';
+      // Prioriteit badge
+      html+='<span class="badge '+(P_CSS[i.priority]||'p-medium')+'"><span class="dot '+(D_CSS[i.priority]||'dot-medium')+'"></span>'+i.priority+'</span>';
+      // Status badge: kleur bepaald door S_CSS op basis van status-waarde
+      html+='<span class="badge '+(S_CSS[i.status]||'s-open')+'">'+S_ICON[i.status]+' '+i.status+'</span>';
+      if(i.phase) html+='<span class="badge s-cancelled" style="font-size:0.62rem">'+i.phase+'</span>';
+      html+='</div>';
+      if(tags.length) html+='<div class="card-tags">'+tags.map(function(t){ return '<span class="tag">'+t+'</span>'; }).join('')+'</div>';
+      html+='</div>';
+      return html;
+    }
+
+    // Lijst HTML: tabelweergave met status badge op basis van status-waarde
+    function _listHTML(filtered) {
+      if(!filtered.length) return '<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.78rem;padding:1rem;text-align:center">Geen taken gevonden.</p>';
+      var html='<div class="list-wrap"><table class="list-table">';
+      html+='<thead><tr><th>ID</th><th>Titel</th><th>Fase</th><th>Kanaal</th><th>Start</th><th>Eind</th><th>Agenda</th><th>Tags</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead><tbody>';
+      filtered.forEach(function(i){
+        var pub=i.gepubliceerd==='ja';
+        var tags=(i.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+        html+='<tr>';
+        html+='<td><span class="tbl-id" data-id="'+i.id+'">'+i.id+'</span></td>';
+        html+='<td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+i.title+'</td>';
+        html+='<td>'+V(i.phase)+'</td>';
+        html+='<td>'+V(i.type)+'</td>';
+        html+='<td style="white-space:nowrap">'+V(i.startdate)+'</td>';
+        html+='<td style="white-space:nowrap">'+V(i.enddate)+'</td>';
+        html+='<td>'+(pub?'&#x2705;':'&#x25CB;')+'</td>'; // agenda indicator
+        html+='<td>'+tags.map(function(t){ return '<span class="tag" style="background:#e5e7eb;color:#374151">'+t+'</span>'; }).join(' ')+'</td>';
+        html+='<td><span class="'+(P_TBL[i.priority]||'p-medium-tbl')+'">'+V(i.priority)+'</span></td>';
+        // Status badge: kleur op basis van status-waarde via S_TBL
+        html+='<td><span class="'+(S_TBL[i.status]||'s-open-tbl')+'">'+S_ICON[i.status]+' '+V(i.status)+'</span></td>';
+        html+='<td style="white-space:nowrap">';
+        html+='<button class="btn btn-ghost" data-edit-taak="'+i.id+'" style="padding:2px 5px">&#x270F;&#xFE0F;</button>';
+        html+='<button class="btn btn-ghost" data-delete-taak="'+i.id+'" style="padding:2px 5px">&#x1F5D1;</button>';
+        html+='</td></tr>';
+      });
+      html+='</tbody></table></div>';
+      return html;
+    }
+
+    // Kanalen renderen
+    function _renderKanalen() {
+      if(!kanalen.length) { $('kanalen-content').innerHTML='<div class="empty"><p>Nog geen kanalen. Voeg je eerste kanaal toe.</p></div>'; return; }
+      var html='';
+      kanalen.forEach(function(k, i){
+        html+='<div class="data-card">';
+        html+='<div class="data-card-header">';
+        html+='<div class="data-card-title">'+k.naam+'</div>';
+        html+='<div style="display:flex;gap:6px;">';
+        html+='<button class="btn btn-ghost btn-sm" data-edit-kanaal="'+i+'">&#x270F;&#xFE0F;</button>';
+        html+='<button class="btn btn-ghost btn-sm" data-delete-kanaal="'+i+'">&#x1F5D1;</button>';
+        html+='</div></div>';
+        html+='<div class="data-card-body">';
+        html+='<div class="data-card-meta"><span class="data-card-tag">&#x1F310; '+k.taal+'</span><span class="data-card-tag">&#x1F4C5; '+k.freq+'</span></div>';
+        html+='<div class="data-card-desc"><b style="color:var(--accent)">Toon:</b> '+k.toon+'<br><b style="color:var(--accent)">Doel:</b> '+k.doel;
+        if(k.groepen) html+='<br><b style="color:var(--accent)">Groepen:</b> '+k.groepen;
+        if(k.notities) html+='<br><span style="opacity:.7">'+k.notities+'</span>';
+        html+='</div></div></div>';
+      });
+      $('kanalen-content').innerHTML=html;
+      $('kanalen-content').querySelectorAll('[data-edit-kanaal]').forEach(function(b){ b.addEventListener('click', function(){ _openKanaalModal(parseInt(b.dataset.editKanaal)); }); });
+      $('kanalen-content').querySelectorAll('[data-delete-kanaal]').forEach(function(b){ b.addEventListener('click', function(){ kanalen.splice(parseInt(b.dataset.deleteKanaal),1); _saveAll(); _renderKanalen(); }); });
+    }
+
+    // Templates renderen
+    function _renderTemplates() {
+      if(!templates.length) { $('templates-content').innerHTML='<div class="empty"><p>Nog geen templates. Voeg je eerste template toe.</p></div>'; return; }
+      var html='';
+      templates.forEach(function(t, i){
+        html+='<div class="data-card" id="tpl-'+i+'">';
+        html+='<div class="data-card-header tpl-header" data-tpl="'+i+'">';
+        html+='<div><div class="data-card-title">&#x2709;&#xFE0F; '+t.titel+'</div><span class="data-card-tag" style="display:inline-block;margin-top:4px">'+t.kanaal+'</span></div>';
+        html+='<div style="display:flex;align-items:center;gap:6px;">';
+        html+='<button class="btn btn-ghost btn-sm" data-edit-tpl="'+i+'">&#x270F;&#xFE0F;</button>';
+        html+='<button class="btn btn-ghost btn-sm" data-delete-tpl="'+i+'">&#x1F5D1;</button>';
+        html+='<span class="tpl-toggle">&#x25BC;</span>';
+        html+='</div></div>';
+        html+='<div class="tpl-body">';
+        html+='<div class="tpl-text">'+t.tekst+'</div>';
+        html+='<div style="margin-top:10px;"><button class="btn btn-accent btn-sm" data-copy-tpl="'+i+'">&#x1F4CB; Kopi&euml;ren</button></div>';
+        html+='</div></div>';
+      });
+      $('templates-content').innerHTML=html;
+      $('templates-content').querySelectorAll('.tpl-header').forEach(function(h){
+        h.addEventListener('click', function(e){ if(e.target.closest('button')) return; document.getElementById('tpl-'+h.dataset.tpl).classList.toggle('open'); });
+      });
+      $('templates-content').querySelectorAll('[data-edit-tpl]').forEach(function(b){ b.addEventListener('click', function(){ _openTplModal(parseInt(b.dataset.editTpl)); }); });
+      $('templates-content').querySelectorAll('[data-delete-tpl]').forEach(function(b){ b.addEventListener('click', function(){ templates.splice(parseInt(b.dataset.deleteTpl),1); _saveAll(); _renderTemplates(); }); });
+      $('templates-content').querySelectorAll('[data-copy-tpl]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          navigator.clipboard.writeText(templates[parseInt(btn.dataset.copyTpl)].tekst).then(function(){ btn.textContent='&#x2705; Gekopi\u00eberd!'; setTimeout(function(){ btn.innerHTML='&#x1F4CB; Kopi\u00ebren'; }, 2000); });
+        });
+      });
+    }
+
+    // Modal sluiten
+    function _closeModal(id) { $(id).classList.remove('open'); editTaakId=editKanaalIdx=editTplIdx=null; }
+
+    // Taak modal openen: bewerken of nieuw
+    function _openTaakModal(id) {
+      editTaakId=id||null; // bewerkings-ID opslaan
+      $('mt-title').textContent    = id ? 'Taak bewerken'  : 'Taak toevoegen';
+      $('btn-mt-save').textContent = id ? 'Opslaan'        : 'Toevoegen';
+      $('ft-id').dataset.manual=''; // handmatige ID reset
+      _updatePhasesInModal(); // fases bijwerken in select
+      if(id) { // bestaande taak: velden invullen
+        var item=taken.find(function(i){ return i.id===id; }); if(!item) return;
+        $('ft-id').value=item.id; $('ft-id').dataset.manual='1';
+        $('ft-id-preview').textContent='';
+        $('ft-title').value=item.title||'';
+        $('ft-phase').value=item.phase||'';
+        $('ft-type').value=item.type||'Facebook';
+        $('ft-priority').value=item.priority||'Medium';
+        $('ft-status').value=item.status||'Open';
+        $('ft-assignee').value=item.assignee||'';
+        $('ft-tags').value=item.tags||'';
+        $('ft-description').value=item.description||''; // HTML-tags behouden als plain text
+        $('ft-result').value=item.ai||'';
+        $('ft-startdate').value=item.startdate||'';
+        $('ft-enddate').value=item.enddate||'';
+        $('ft-pub').checked=item.gepubliceerd==='ja'; // agenda checkbox
+      } else { // nieuwe taak: lege velden
+        ['ft-title','ft-assignee','ft-tags','ft-description','ft-result','ft-startdate','ft-enddate'].forEach(function(fid){ $(fid).value=''; });
+        $('ft-type').value='Facebook'; $('ft-priority').value='Medium'; $('ft-status').value='Open';
+        $('ft-phase').value=''; $('ft-pub').checked=false; // agenda checkbox uit
+        _updateAutoId(); // auto ID genereren
+      }
+      $('md-preview-desc').style.display='none'; // preview verbergen
+      $('ft-description').style.display='block'; // textarea tonen
+      $('modal-taak').classList.add('open'); // modal tonen
+      $('ft-title').focus();
+    }
+
+    // Taak opslaan vanuit modal
+    function _saveTaak() {
+      var title=$('ft-title').value.trim(); if(!title){ $('ft-title').focus(); return; } // titel verplicht
+      var id=$('ft-id').value.trim()||_genId($('ft-phase').value, $('ft-type').value); // ID ophalen of genereren
+      if(!editTaakId && taken.find(function(i){ return i.id===id; })){ alert('ID bestaat al.'); $('ft-id').focus(); return; }
+      var item={
+        id:id, title:title, phase:$('ft-phase').value, type:$('ft-type').value,
+        priority:$('ft-priority').value, status:$('ft-status').value,
+        assignee:$('ft-assignee').value.trim(), tags:$('ft-tags').value.trim(),
+        description:$('ft-description').value.trim(), // HTML-tags opslaan als plain text
+        ai:$('ft-result').value.trim(),
+        startdate:$('ft-startdate').value, enddate:$('ft-enddate').value,
+        gepubliceerd:$('ft-pub').checked?'ja':'nee' // agenda-flag
+      };
+      if(editTaakId) taken=taken.map(function(i){ return i.id===editTaakId?item:i; }); // bewerken
+      else taken.push(item); // nieuw toevoegen
+      _saveAll(); _closeModal('modal-taak'); _renderAll();
+    }
+
+    // Taak verwijderen
+    function _deleteTaak(id) {
+      if(!confirm('Taak verwijderen?')) return;
+      taken=taken.filter(function(i){ return i.id!==id; });
+      _saveAll(); _renderAll();
+    }
+
+    // Kanaal modal openen
+    function _openKanaalModal(idx) {
+      editKanaalIdx=(idx!=null)?idx:null;
+      $('mkn-title').textContent    = idx!=null ? 'Kanaal bewerken' : 'Kanaal toevoegen';
+      $('btn-mkn-save').textContent = idx!=null ? 'Opslaan'         : 'Toevoegen';
+      if(idx!=null) { var k=kanalen[idx]; $('fkn-naam').value=k.naam; $('fkn-taal').value=k.taal; $('fkn-freq').value=k.freq; $('fkn-toon').value=k.toon; $('fkn-doel').value=k.doel; $('fkn-groepen').value=k.groepen||''; $('fkn-notities').value=k.notities||''; }
+      else { ['fkn-naam','fkn-taal','fkn-freq','fkn-toon','fkn-doel','fkn-groepen','fkn-notities'].forEach(function(id){ $(id).value=''; }); }
+      $('modal-kanaal').classList.add('open'); $('fkn-naam').focus();
+    }
+
+    // Kanaal opslaan
+    function _saveKanaal() {
+      var naam=$('fkn-naam').value.trim(); if(!naam) return;
+      var k={naam:naam, taal:$('fkn-taal').value.trim(), freq:$('fkn-freq').value.trim(), toon:$('fkn-toon').value.trim(), doel:$('fkn-doel').value.trim(), groepen:$('fkn-groepen').value.trim(), notities:$('fkn-notities').value.trim()};
+      if(editKanaalIdx!=null) kanalen[editKanaalIdx]=k; else kanalen.push(k);
+      _saveAll(); _closeModal('modal-kanaal'); _renderKanalen();
+    }
+
+    // Template modal openen
+    function _openTplModal(idx) {
+      editTplIdx=(idx!=null)?idx:null;
+      $('mtp-title').textContent    = idx!=null ? 'Template bewerken' : 'Template toevoegen';
+      $('btn-mtp-save').textContent = idx!=null ? 'Opslaan'           : 'Toevoegen';
+      if(idx!=null) { var t=templates[idx]; $('ftp-titel').value=t.titel; $('ftp-kanaal').value=t.kanaal; $('ftp-tekst').value=t.tekst; }
+      else { ['ftp-titel','ftp-tekst'].forEach(function(id){ $(id).value=''; }); $('ftp-kanaal').value='Facebook'; }
+      $('md-preview-tpl').style.display='none'; $('ftp-tekst').style.display='block';
+      $('modal-template').classList.add('open'); $('ftp-titel').focus();
+    }
+
+    // Template opslaan
+    function _saveTpl() {
+      var titel=$('ftp-titel').value.trim(); if(!titel) return;
+      var t={titel:titel, kanaal:$('ftp-kanaal').value, tekst:$('ftp-tekst').value.trim()};
+      if(editTplIdx!=null) templates[editTplIdx]=t; else templates.push(t);
+      _saveAll(); _closeModal('modal-template'); _renderTemplates();
+    }
+
+    // ID generatie: [M][fase][type]-[volgnummer]
+    function _genId(phase, type) {
+      var fl=(phase||'M')[0].toUpperCase(), tl=(type||'O')[0].toUpperCase(); // eerste letters
+      var prefix='M'+fl+tl+'-'; // prefix samenstellen
+      var used=new Set(taken.filter(function(i){ return i.id&&i.id.startsWith(prefix); }).map(function(i){ return parseInt(i.id.slice(prefix.length))||0; })); // gebruikte nummers
+      var n=1; while(used.has(n)) n++; // eerste vrije nummer
+      return prefix+String(n).padStart(3,'0'); // bijv. MFF-001
+    }
+
+    // Auto ID bijwerken bij fase/type wijziging
+    function _updateAutoId() {
+      if(editTaakId) return; // niet bij bewerken
+      var id=_genId($('ft-phase').value, $('ft-type').value);
+      if(!$('ft-id').dataset.manual) $('ft-id').value=id; // alleen als niet handmatig
+      $('ft-id-preview').textContent='\u2192 '+id;
+    }
+
+    // Inline ID bewerken in tabel
+    function _inlineEditId(el) {
+      var oldId=el.dataset.id;
+      var input=document.createElement('input'); input.className='tbl-id-input id-edit-input'; input.value=oldId;
+      el.replaceWith(input); input.focus(); input.select();
+      var commit=function(){
+        var newId=input.value.trim();
+        if(newId&&newId!==oldId){ if(taken.find(function(i){ return i.id===newId; })){ alert('ID bestaat al.'); input.focus(); return; } taken=taken.map(function(i){ return i.id===oldId?Object.assign({},i,{id:newId}):i; }); _saveAll(); }
+        _renderTaken();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', function(e){ if(e.key==='Enter') commit(); if(e.key==='Escape') _renderTaken(); });
+    }
+
+    // Fase beheer
+    function _addPhase() { var v=$('input-new-phase').value.trim(), d=$('input-new-phase-desc').value.trim(); if(v&&!phases.includes(v)){ phases.push(v); if(d) phaseDescs[v]=d; _saveAll(); } _cancelPhaseInput(); _renderPhasePills(); _updatePhasesInModal(); }
+    function _removePhase(ph) { phases=phases.filter(function(p){ return p!==ph; }); if(fPhase===ph) fPhase='All'; _saveAll(); _renderPhasePills(); }
+    function _cancelPhaseInput() { $('input-new-phase').value=''; $('input-new-phase-desc').value=''; $('phase-input-wrap').classList.remove('open'); $('btn-new-phase').style.display=''; }
+    function _updatePhasesInModal() { if($('ft-phase')) $('ft-phase').innerHTML='<option value="">&mdash; geen &mdash;</option>'+phases.map(function(p){ return '<option value="'+p+'">'+p+'</option>'; }).join(''); }
+    function _toggleView() { $('btn-view-board').classList.toggle('active', view==='board'); $('btn-view-list').classList.toggle('active', view==='list'); }
+
+    // Persistentie: opslaan en agenda sync
+    function _saveAll() {
+      localStorage.setItem('mk_items',      JSON.stringify(taken));       // taken opslaan
+      localStorage.setItem('mk_phases',     JSON.stringify(phases));      // fases opslaan
+      localStorage.setItem('mk_phasedescs', JSON.stringify(phaseDescs));  // fase-beschrijvingen
+      localStorage.setItem('mk_kanalen',    JSON.stringify(kanalen));     // kanalen opslaan
+      localStorage.setItem('mk_templates',  JSON.stringify(templates));   // templates opslaan
+      _agSync(); // agenda bijwerken na elke save
+    }
+    function _saveProjInfo() { localStorage.setItem('mk_proj', JSON.stringify({projName:projName,projVersion:projVersion,projDate:projDate})); }
+    function _loadProjInfo() { var p=JSON.parse(localStorage.getItem('mk_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; }
+
+    // MD naar HTML converter (voor preview)
+    function _mdToHtml(t) {
+      if(!t) return '';
+      var html='', inList=false, inTable=false, rows=[];
+      var flush=function(){ if(!rows.length){ inTable=false; return; } html+='<table><thead><tr>'+rows[0].map(function(c){ return '<th>'+c+'</th>'; }).join('')+'</tr></thead><tbody>'; rows.slice(2).forEach(function(r){ html+='<tr>'+r.map(function(c){ return '<td>'+c+'</td>'; }).join('')+'</tr>'; }); html+='</tbody></table>'; rows=[]; inTable=false; };
+      t.split('\n').forEach(function(line){
+        if(line.startsWith('|')){ inTable=true; if(inList){ html+='</ul>'; inList=false; } rows.push(line.split('|').map(function(c){ return c.trim(); }).filter(function(_,i,a){ return i>0&&i<a.length-1; })); return; }
+        if(inTable) flush();
+        if(!line.trim()){ if(inList){ html+='</ul>'; inList=false; } return; }
+        if(line.startsWith('- ')){ if(!inList){ html+='<ul>'; inList=true; } html+='<li>'+_inlineHtml(line.slice(2))+'</li>'; return; }
+        if(inList){ html+='</ul>'; inList=false; }
+        if(line.startsWith('---')) return;
+        html+='<p>'+_inlineHtml(line)+'</p>';
+      });
+      if(inList) html+='</ul>'; if(inTable) flush();
+      return html;
+    }
+
+    // Inline HTML: escapen + markdown opmaak
+    function _inlineHtml(t) {
+      return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') // **bold**
+        .replace(/_(.+?)_/g,'<em>$1</em>')               // _cursief_
+        .replace(/`([^`]+)`/g,'<code>$1</code>');         // `code`
+    }
+
+    // MD importeren
+    function _importMD(e) {
+      var file=e.target.files[0]; if(!file) return;
+      if(!confirm('Alle huidige data vervangen door '+file.name+'?')){ e.target.value=''; return; }
+      var reader=new FileReader();
+      reader.onload=function(ev){ _parseMD(ev.target.result); e.target.value=''; alert('Geladen: '+taken.length+' taken, '+kanalen.length+' kanalen, '+templates.length+' templates.'); _renderAll(); };
       reader.readAsText(file);
     }
 
-    function _parseMD(text){
-      taken=[];phases=[];phaseDescs={};events=[];kpis=[];kanalen=[];templates=[];
-      const lines=text.split('\n');
-      let section='',curPhase='',tplBuf=[],tplTitle='',tplKanaal='',inTpl=false;
+    // MD parser: verwerkt [TAKEN], [KANALEN], [TEMPLATES] secties
+    function _parseMD(text) {
+      taken=[]; phases=[]; phaseDescs={}; kanalen=[]; templates=[];
+      var lines=text.split('\n');
+      var section='', curPhase='', tplBuf=[], tplTitle='', tplKanaal='', inTpl=false;
 
-      // Projectinfo
-      const h1=lines.find(l=>l.startsWith('# '));
-      if(h1){const raw=h1.replace(/^#\s*/,'').trim();const d=raw.indexOf('—');projName=d>-1?raw.slice(d+1).trim():raw;}
-      const ver=lines.find(l=>l.startsWith('> Versie:'));
-      if(ver){const m=ver.match(/Versie:\s*([^\s·]+)/);if(m&&m[1]&&m[1]!=='—')projVersion=m[1];}
+      // Projectinfo uit header
+      var h1=lines.find(function(l){ return l.startsWith('# '); });
+      if(h1){ var raw=h1.replace(/^#\s*/,'').trim(); var d=raw.indexOf('\u2014'); projName=d>-1?raw.slice(d+1).trim():raw; }
+      var ver=lines.find(function(l){ return l.startsWith('> Versie:'); });
+      if(ver){ var m=ver.match(/Versie:\s*([^\s·\u00b7]+)/); if(m&&m[1]&&m[1]!=='\u2014') projVersion=m[1]; }
       _saveProjInfo();
 
-      for(let li=0;li<lines.length;li++){
-        const line=lines[li];
+      for(var li=0;li<lines.length;li++) {
+        var line=lines[li];
+        if(line.match(/^\[TAKEN\]$/))     { section='taken';     continue; }
+        if(line.match(/^\[KANALEN\]$/))   { section='kanalen';   continue; }
+        if(line.match(/^\[TEMPLATES\]$/)) { section='templates'; continue; }
+        // KPI en KALENDER secties overslaan (verwijderd in v4.0.0)
+        if(line.match(/^\[KPI\]$/))       { section='skip';      continue; }
+        if(line.match(/^\[KALENDER\]$/))  { section='skip';      continue; }
+        if(section==='skip') continue;
 
-        // Sectie headers
-        if(line.match(/^\[TAKEN\]$/))    {section='taken';continue;}
-        if(line.match(/^\[KALENDER\]$/)) {section='kalender';continue;}
-        if(line.match(/^\[KPI\]$/))      {section='kpi';continue;}
-        if(line.match(/^\[KANALEN\]$/))  {section='kanalen';continue;}
-        if(line.match(/^\[TEMPLATES\]$/)){section='templates';continue;}
-
-        // TEMPLATES: complexer — lees blokken
-        if(section==='templates'){
-          if(line.startsWith('### ')){
-            if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
-            tplTitle=line.replace(/^###\s*/,'').trim();tplKanaal='Overig';tplBuf=[];inTpl=true;continue;
-          }
-          if(inTpl&&line.startsWith('---')&&tplTitle){templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});tplTitle='';tplBuf=[];inTpl=false;continue;}
+        // Templates: blokken per ###
+        if(section==='templates') {
+          if(line.startsWith('### ')){ if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()}); tplTitle=line.replace(/^###\s*/,'').trim(); tplKanaal='Overig'; tplBuf=[]; inTpl=true; continue; }
+          if(inTpl&&line.startsWith('---')&&tplTitle){ templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()}); tplTitle=''; tplBuf=[]; inTpl=false; continue; }
           if(inTpl) tplBuf.push(line);
           continue;
         }
 
-        // Tabelrijen
-        if(line.startsWith('|')&&!line.includes('---')){
-          const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
-          if(!cells.length||cells[0]==='ID'||cells[0]==='Metric'||cells[0]==='Kanaal'||cells[0]==='Datum'||cells[0]==='Titel')continue;
+        // Tabelrijen verwerken
+        if(line.startsWith('|')&&!line.includes('---')) {
+          var cells=line.split('|').map(function(c){ return c.trim(); }).filter(function(_,i,a){ return i>0&&i<a.length-1; });
+          if(!cells.length||cells[0]==='ID'||cells[0]==='Kanaal'||cells[0]==='Titel') continue;
 
-          if(section==='taken'&&cells.length>=10){
-            const [id,titel,type,start,eind,pub,prio,status,assign,tags,...rest]=cells;
-            const desc=rest[0]||'',result=rest[1]||'';
-            if(id&&titel){
-              if(!phases.includes(curPhase)&&curPhase)phases.push(curPhase);
-              taken.push({id,title:titel,phase:curPhase,type:type||'Overig',startdate:start,enddate:eind,gepubliceerd:pub,priority:_mapPrio(prio),status:_mapStatus(status),assignee:assign,tags,description:desc,ai:result});
-            }
+          if(section==='taken'&&cells.length>=9) {
+            var id=cells[0],titel=cells[1],type=cells[2],start=cells[3],eind=cells[4],pub=cells[5],prio=cells[6],status=cells[7],assign=cells[8],tags=cells[9]||'',desc=cells[10]||'',result=cells[11]||'';
+            if(id&&titel){ if(!phases.includes(curPhase)&&curPhase) phases.push(curPhase); taken.push({id:id,title:titel,phase:curPhase,type:type||'Overig',startdate:start,enddate:eind,gepubliceerd:pub,priority:_mapPrio(prio),status:_mapStatus(status),assignee:assign,tags:tags,description:desc,ai:result}); }
           }
-          if(section==='kalender'&&cells.length>=4){
-            const [datum,titel,type,beschrijving,pub]=cells;
-            if(datum&&titel) events.push({date:datum,title:titel,type:type||'Overig',beschrijving,gepubliceerd:pub==='ja'?'ja':'nee'});
-          }
-          if(section==='kpi'&&cells.length>=7){
-            const [metric,d4,,d8,,d12,]=cells;
-            if(metric) kpis.push({metric,doel4:d4,doel8:d8,doel12:d12,w4:'',w8:'',w12:''});
-          }
-          if(section==='kanalen'&&cells.length>=4){
-            const [naam,taal,freq,toon,doel,groepen,notities]=cells;
-            if(naam) kanalen.push({naam,taal,freq,toon,doel,groepen:groepen||'',notities:notities||''});
+          if(section==='kanalen'&&cells.length>=4) {
+            var naam=cells[0],taal=cells[1],freq=cells[2],toon=cells[3],doel=cells[4]||'',groepen=cells[5]||'',notities=cells[6]||'';
+            if(naam) kanalen.push({naam:naam,taal:taal,freq:freq,toon:toon,doel:doel,groepen:groepen,notities:notities});
           }
           continue;
         }
 
-        // Fase koptekst binnen TAKEN sectie
-        if(section==='taken'&&line.startsWith('## ')&&!line.includes('[')){ curPhase=line.replace(/^##\s*/,'').trim(); }
+        // Fase koptekst binnen TAKEN
+        if(section==='taken'&&line.startsWith('## ')&&!line.includes('[')) curPhase=line.replace(/^##\s*/,'').trim();
       }
-      // Laatste template
+      // Laatste template toevoegen
       if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
-      // Fases afleiden uit taken
-      const seen=new Set();phases=taken.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
       _saveAll();
     }
 
-    function _mapStatus(s){if(!s)return'Open';if(s.includes('✅'))return'Done';if(s.includes('🔄'))return'In Progress';if(s.includes('🔍'))return'Review';if(s.includes('❌'))return'Cancelled';if(s.includes('🔮'))return'Future';return'Open';}
-    function _mapPrio(s){if(!s)return'Medium';if(s.includes('🔴'))return'High';if(s.includes('🟡'))return'Medium';if(s.includes('🟢'))return'Low';if(s.toLowerCase().includes('critical'))return'Critical';return'Medium';}
+    // Status mapping van MD naar JS
+    function _mapStatus(s){ if(!s) return 'Open'; if(s.includes('\u2705')) return 'Done'; if(s.includes('\u1F504')) return 'In Progress'; if(s.toLowerCase().includes('progress')) return 'In Progress'; if(s.toLowerCase().includes('review')) return 'Review'; if(s.includes('\u274C')) return 'Cancelled'; if(s.includes('\u1F52E')) return 'Future'; return 'Open'; }
+    // Prioriteit mapping van MD naar JS
+    function _mapPrio(s){ if(!s) return 'Medium'; if(s.includes('\uD83D\uDD34')) return 'High'; if(s.includes('\uD83D\uDFE1')) return 'Medium'; if(s.includes('\uD83D\uDFE2')) return 'Low'; if(s.toLowerCase().includes('critical')) return 'Critical'; return 'Medium'; }
 
-    // === Export MD ===
-    function exportMD(){
-      let md=`# MyFamTreeCollab — ${V(projName)||'Marketing & Communicatieplan'}\n## Bijgewerkt: ${_fmtDate(projDate)||new Date().toLocaleDateString('nl-BE')}\n\n`;
-      md+=`> Versie: ${V(projVersion)||'—'} · Project: MyFamTreeCollab · Horizon: 12 weken\n\n---\n\n`;
+    // MD exporteren: [TAKEN], [KANALEN], [TEMPLATES]
+    function _exportMD() {
+      var md='# MyFamTreeCollab \u2014 '+V(projName||'Marketing & Communicatieplan')+'\n';
+      md+='## Bijgewerkt: '+(projDate?_fmtDate(projDate):new Date().toLocaleDateString('nl-BE'))+'\n\n';
+      md+='> Versie: '+(V(projVersion)||'\u2014')+' \u00b7 Project: MyFamTreeCollab \u00b7 Horizon: 12 weken\n\n---\n\n';
 
       // TAKEN
-      md+=`## [TAKEN]\n\n`;
-      const byPhase={};
-      taken.forEach(i=>{const ph=i.phase||'Overig';(byPhase[ph]=byPhase[ph]||[]).push(i);});
-      for(const ph of [...phases,...Object.keys(byPhase).filter(p=>!phases.includes(p))]){
-        if(!byPhase[ph])continue;
-        md+=`## ${ph}\n\n| ID | Titel | Type | Startdatum | Einddatum | Gepubliceerd | Prioriteit | Status | Toegewezen | Tags | Omschrijving | Resultaat |\n|----|-------|------|------------|-----------|-------------|-----------|--------|------------|------|-------------|----------|\n`;
-        byPhase[ph].forEach(i=>{
-          const p={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡';
-          md+=`| ${V(i.id)} | ${V(i.title)} | ${V(i.type)} | ${V(i.startdate)} | ${V(i.enddate)} | ${i.gepubliceerd||'nee'} | ${p} ${V(i.priority)} | ${S_ICON[i.status]||'📋'} ${V(i.status)} | ${V(i.assignee)} | ${V(i.tags)} | ${V(i.description).replace(/\n/g,' ')} | ${V(i.ai)} |\n`;
+      md+='## [TAKEN]\n\n';
+      var byPhase={};
+      taken.forEach(function(i){ var ph=i.phase||'Overig'; if(!byPhase[ph]) byPhase[ph]=[]; byPhase[ph].push(i); });
+      var allPhases=phases.concat(Object.keys(byPhase).filter(function(p){ return !phases.includes(p); }));
+      allPhases.forEach(function(ph){
+        if(!byPhase[ph]) return;
+        md+='## '+ph+'\n\n';
+        md+='| ID | Titel | Type | Startdatum | Einddatum | Gepubliceerd | Prioriteit | Status | Toegewezen | Tags | Omschrijving | Resultaat |\n';
+        md+='|----|-------|------|------------|-----------|-------------|-----------|--------|------------|------|-------------|----------|\n';
+        byPhase[ph].forEach(function(i){
+          var p={'Critical':'\uD83D\uDD34','High':'\uD83D\uDD34','Medium':'\uD83D\uDFE1','Low':'\uD83D\uDFE2'}[i.priority]||'\uD83D\uDFE1';
+          var sIcon={'Open':'\uD83D\uDCCB','In Progress':'\uD83D\uDD04','Review':'\uD83D\uDD0D','Done':'\u2705','Cancelled':'\u274C','Future':'\uD83D\uDD2E'}[i.status]||'\uD83D\uDCCB';
+          md+='| '+V(i.id)+' | '+V(i.title)+' | '+V(i.type)+' | '+V(i.startdate)+' | '+V(i.enddate)+' | '+(i.gepubliceerd||'nee')+' | '+p+' '+V(i.priority)+' | '+sIcon+' '+V(i.status)+' | '+V(i.assignee)+' | '+V(i.tags)+' | '+V(i.description).replace(/\n/g,' ')+' | '+V(i.ai)+' |\n';
         });
         md+='\n';
-      }
-
-      // KALENDER
-      md+=`## [KALENDER]\n\n| Datum | Titel | Type | Beschrijving | Gepubliceerd |\n|-------|-------|------|-------------|-------------|\n`;
-      events.forEach(e=>{md+=`| ${e.date} | ${e.title} | ${e.type} | ${(e.beschrijving||'').replace(/\n/g,' ')} | ${e.gepubliceerd} |\n`;});
-      md+='\n';
-
-      // KPI
-      md+=`## [KPI]\n\n| Metric | Doel W4 | Werkelijk W4 | Doel W8 | Werkelijk W8 | Doel W12 | Werkelijk W12 |\n|--------|---------|-------------|---------|-------------|---------|---------------|\n`;
-      kpis.forEach(k=>{md+=`| ${k.metric} | ${k.doel4} | ${k.w4||''} | ${k.doel8} | ${k.w8||''} | ${k.doel12} | ${k.w12||''} |\n`;});
-      md+='\n';
+      });
 
       // KANALEN
-      md+=`## [KANALEN]\n\n| Kanaal | Taal | Frequentie | Toon | Doel | Subreddits / Groepen | Notities |\n|--------|------|-----------|------|------|---------------------|----------|\n`;
-      kanalen.forEach(k=>{md+=`| ${k.naam} | ${k.taal} | ${k.freq} | ${k.toon} | ${k.doel} | ${k.groepen||''} | ${k.notities||''} |\n`;});
+      md+='## [KANALEN]\n\n';
+      md+='| Kanaal | Taal | Frequentie | Toon | Doel | Groepen | Notities |\n';
+      md+='|--------|------|-----------|------|------|---------|----------|\n';
+      kanalen.forEach(function(k){ md+='| '+k.naam+' | '+k.taal+' | '+k.freq+' | '+k.toon+' | '+k.doel+' | '+(k.groepen||'')+' | '+(k.notities||'')+' |\n'; });
       md+='\n';
 
       // TEMPLATES
-      md+=`## [TEMPLATES]\n\n`;
-      templates.forEach(t=>{md+=`### ${t.titel}\n\n${t.tekst}\n\n---\n\n`;});
+      md+='## [TEMPLATES]\n\n';
+      templates.forEach(function(t){ md+='### '+t.titel+'\n\n'+t.tekst+'\n\n---\n\n'; });
 
-      const name=(V(projName)||'Marketing').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
-      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download=name;a.click();
+      var name=(V(projName)||'Marketing').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.md';
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));
+      a.download=name;
+      a.click(); // download starten
     }
 
-    return{init};
+    return { init:init }; // publieke interface
   })();
   </script>
 </body>
