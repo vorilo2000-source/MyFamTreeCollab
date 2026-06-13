@@ -99,7 +99,9 @@
     .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
     .form-input:focus { border-color:var(--accent); }
     select.form-input { cursor:pointer; }
-    textarea.form-input { resize:vertical; font-family:var(--font-sans); font-size:0.82rem; line-height:1.6; }
+    textarea.form-input { resize:vertical; font-family:var(--font-sans); font-size:0.9rem; line-height:1.7; min-height:180px; }
+    textarea.form-input.ta-sm { min-height:120px; }
+    textarea.form-input.ta-lg { min-height:240px; }
     .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
 
@@ -279,38 +281,49 @@
             <input class="form-input" type="text" id="f-tags" placeholder="bugfix, feature, admin"/>
           </div>
         </div>
-        <!-- Uitgevoerd: markdown-ondersteund textarea -->
+        <!-- Uitgevoerd: markdown-ondersteund textarea, groot voor leesbaarheid -->
         <div>
-          <label class="form-label">Uitgevoerd <span style="opacity:.5;font-size:0.68rem">(markdown ondersteund)</span></label>
+          <label class="form-label">Uitgevoerd <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-toolbar" id="toolbar-done">
             <button type="button" data-target="f-done" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-done" data-wrap="*|*" title="Cursief">I</button>
             <button type="button" data-target="f-done" data-wrap="`|`" title="Code">&#x60;</button>
-            <button type="button" data-target="f-done" data-prefix="- " title="Lijst">&#x2022; Lijst</button>
+            <button type="button" data-target="f-done" data-prefix="- " title="Lijst">&#x2022;</button>
+            <button type="button" data-target="f-done" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
           </div>
-          <textarea class="form-input" id="f-done" rows="5" placeholder="- Item 1&#10;- Item 2"></textarea>
+          <textarea class="form-input ta-lg" id="f-done" rows="8" placeholder="- Item 1&#10;- Item 2"></textarea>
         </div>
-        <!-- Niet uitgevoerd: markdown-ondersteund textarea -->
+        <!-- Niet uitgevoerd: markdown-ondersteund textarea, groot voor leesbaarheid -->
         <div>
-          <label class="form-label">Niet uitgevoerd <span style="opacity:.5;font-size:0.68rem">(markdown ondersteund)</span></label>
+          <label class="form-label">Niet uitgevoerd <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-toolbar" id="toolbar-notdone">
             <button type="button" data-target="f-notdone" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-notdone" data-wrap="*|*" title="Cursief">I</button>
             <button type="button" data-target="f-notdone" data-wrap="`|`" title="Code">&#x60;</button>
-            <button type="button" data-target="f-notdone" data-prefix="- " title="Lijst">&#x2022; Lijst</button>
+            <button type="button" data-target="f-notdone" data-prefix="- " title="Lijst">&#x2022;</button>
+            <button type="button" data-target="f-notdone" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
           </div>
-          <textarea class="form-input" id="f-notdone" rows="3" placeholder="- Item 1&#10;- Item 2"></textarea>
+          <textarea class="form-input" id="f-notdone" rows="5" placeholder="- Item 1&#10;- Item 2"></textarea>
         </div>
-        <!-- Notities: volledige markdown toolbar -->
+        <!-- Notities: volledige markdown + HTML toolbar, extra groot -->
         <div>
-          <label class="form-label">Notities / versie-overzicht <span style="opacity:.5;font-size:0.68rem">(markdown ondersteund)</span></label>
+          <label class="form-label">Notities / versie-overzicht <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-toolbar" id="toolbar-notes">
             <button type="button" data-target="f-notes" data-wrap="**|**" title="Vet">B</button>
             <button type="button" data-target="f-notes" data-wrap="*|*" title="Cursief">I</button>
-            <button type="button" data-target="f-notes" data-wrap="`|`" title="Code">&#x60;</button>
+            <button type="button" data-target="f-notes" data-prefix="# "   title="Koptekst 1">H1</button>
+            <button type="button" data-target="f-notes" data-prefix="## "  title="Koptekst 2">H2</button>
+            <button type="button" data-target="f-notes" data-prefix="### " title="Koptekst 3">H3</button>
             <button type="button" data-target="f-notes" data-prefix="- " title="Lijst">&#x2022;</button>
-            <button type="button" data-target="f-notes" data-prefix="### " title="Koptekst">H3</button>
             <button type="button" data-target="f-notes" data-table="1" title="Tabel invoegen">&#x22EE; Tabel</button>
+            <button type="button" data-target="f-notes" data-wrap="`|`" title="Code">&lt;/&gt;</button>
+            <button type="button" data-target="f-notes" data-link="1" title="Link">&#x1F517;</button>
+            <button type="button" data-target="f-notes" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
+            <button type="button" data-target="f-notes" data-insert="\n<hr>\n" title="Horizontale lijn">&lt;hr&gt;</button>
+            <button type="button" data-target="f-notes" data-preview="1" title="Preview">&#x1F441;</button>
           </div>
-          <textarea class="form-input" id="f-notes" rows="6" placeholder="### Versie-overzicht&#10;&#10;| Bestand | Van | Naar | Wijziging |&#10;|---------|-----|------|-----------|&#10;| `admin/projectlog.html` | v1.1.0 | v2.0.0 | Herschrijving |"></textarea>
+          <textarea class="form-input ta-lg" id="f-notes" rows="10" placeholder="### Versie-overzicht&#10;&#10;| Bestand | Van | Naar | Wijziging |&#10;|---------|-----|------|-----------|&#10;| `admin/projectlog.html` | v1.1.0 | v2.0.0 | Herschrijving |"></textarea>
+          <div class="log-md" id="preview-notes" style="display:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:6px;background:#2a2a2a"></div>
         </div>
       </div>
       <div class="modal-footer">
@@ -400,13 +413,35 @@
       $('btn-view-list').addEventListener('click', function(){ view='list'; _updateViewToggle(); _renderContent(); }); // lijst weergave
       $('btn-clear-filters').addEventListener('click', _clearFilters); // filters wissen
 
-      // Markdown toolbar knoppen: wrap of prefix toepassen op textarea
+      // Markdown toolbar knoppen: wrap, prefix, insert, link, table of preview toepassen op textarea
       document.querySelectorAll('.md-toolbar button').forEach(function(btn){
         btn.addEventListener('click', function(){
           var ta=$(btn.dataset.target); // target textarea ophalen
           if(!ta) return; // textarea niet gevonden
           var start=ta.selectionStart, end=ta.selectionEnd; // cursor positie
           var val=ta.value; // huidige waarde
+          if(btn.dataset.preview) { // preview-modus: toggle MD-rendering
+            var prev=document.getElementById('preview-'+ta.id.replace('f-','')); // bijbehorend preview-element
+            if(!prev) return;
+            var show=prev.style.display==='none'; // huidige staat
+            prev.style.display=show?'block':'none'; // preview tonen/verbergen
+            ta.style.display=show?'none':'block'; // textarea verbergen/tonen
+            if(show) prev.innerHTML=_mdToHtml(ta.value); // MD naar HTML renderen
+            return;
+          }
+          if(btn.dataset.link) { // link-modus: selectie als [tekst](url)
+            var sel=val.slice(start,end)||'tekst'; // geselecteerde tekst of placeholder
+            var ins='['+sel+'](https://)'; // markdown link formaat
+            ta.value=val.slice(0,start)+ins+val.slice(end); // tekst invoegen
+            ta.focus(); ta.selectionStart=ta.selectionEnd=start+ins.length; // cursor na invoeg
+            return;
+          }
+          if(btn.dataset.insert) { // insert-modus: literal tekst invoegen op cursorpositie (bv. <br>, <hr>)
+            var literal=btn.dataset.insert.replace('\\n','\n'); // \n in attribuut omzetten naar echte newline
+            ta.value=val.slice(0,start)+literal+val.slice(end); // tekst invoegen
+            ta.focus(); ta.selectionStart=ta.selectionEnd=start+literal.length; // cursor na invoeg
+            return;
+          }
           if(btn.dataset.wrap) { // wrap-modus: tekst omhullen
             var parts=btn.dataset.wrap.split('|'); // split op | voor voor/na
             var before=parts[0], after=parts[1]; // voor en na de selectie
@@ -787,13 +822,16 @@
         if(inTable) flushTable(); // tabel sluiten
         if(!line.trim()){ if(inList){html+='</ul>';inList=false;} continue; } // lege regel
         if(line.startsWith('### ')){ if(inList){html+='</ul>';inList=false;} html+='<h3>'+_inline(line.slice(4))+'</h3>'; continue; } // h3
+        if(line.startsWith('## ')) { if(inList){html+='</ul>';inList=false;} html+='<h2>'+_inline(line.slice(3))+'</h2>'; continue; } // h2
+        if(line.startsWith('# '))  { if(inList){html+='</ul>';inList=false;} html+='<h1>'+_inline(line.slice(2))+'</h1>'; continue; } // h1
+        if(line.trim()==='<hr>')  { if(inList){html+='</ul>';inList=false;} html+='<hr>'; continue; } // horizontale lijn
         if(line.match(/^[-*]\s/)){ // lijstitem
           if(!inList){html+='<ul>';inList=true;}
           html+='<li>'+_inline(line.replace(/^[-*]\s/,''))+'</li>';
           continue;
         }
         if(inList){html+='</ul>';inList=false;}
-        if(line.startsWith('## ')||line.startsWith('---')||line.startsWith('> ')) continue; // meta overslaan
+        if(line.startsWith('---')||line.startsWith('> ')) continue; // meta overslaan
         if(line.trim()) html+='<p>'+_inline(line)+'</p>'; // paragraaf
       }
       if(inList) html+='</ul>';   // open lijst sluiten
@@ -801,12 +839,14 @@
       return html;
     }
 
-    // ── Inline markdown: **bold**, *cursief*, `code` ──
+    // ── Inline markdown: **bold**, *cursief*, `code`, <br>, [tekst](url) ──
     function _inline(t) {
       return _esc(t)
         .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') // **bold**
         .replace(/\*([^*]+)\*/g,'<em>$1</em>')           // *cursief*
-        .replace(/`([^`]+)`/g,'<code>$1</code>');         // `code`
+        .replace(/`([^`]+)`/g,'<code>$1</code>')         // `code`
+        .replace(/&lt;br&gt;/g,'<br>')                    // <br> toestaan als regeleinde
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>'); // [tekst](url)
     }
 
     // ── HTML escapen voor weergave ──
