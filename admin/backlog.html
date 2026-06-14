@@ -85,22 +85,45 @@
     .btn-danger { background:rgba(240,128,128,0.15); color:var(--color-danger); border-color:var(--color-danger); }
     .btn-danger:hover { background:rgba(240,128,128,0.28); }
     .btn-sm { padding:3px 10px; font-size:0.7rem; }
-    .btn-ai-ready { border-color:var(--accent)!important; color:var(--accent)!important; }
-
-    /* ── API key dropdown ── */
-    .apikey-wrap { position:relative; }
-    .apikey-dd { display:none; position:absolute; left:0; top:38px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; width:300px; z-index:60; box-shadow:var(--shadow); }
-    .apikey-dd.open { display:block; animation:fadeUp .2s ease; }
-    .apikey-dd p { font-size:11px; color:var(--text-muted); line-height:1.5; margin-top:6px; }
 
     /* ── Form ── */
     .form-label { font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); display:block; margin-bottom:4px; }
     .form-input { font-family:var(--font-mono); font-size:0.82rem; width:100%; padding:7px 10px; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); background:#2a2a2a; color:var(--text-primary); outline:none; box-sizing:border-box; }
     .form-input:focus { border-color:var(--accent); }
     select.form-input { cursor:pointer; }
-    textarea.form-input { resize:vertical; }
+    textarea.form-input { resize:vertical; font-family:var(--font-sans); font-size:0.9rem; line-height:1.7; min-height:180px; }
+    textarea.form-input.ta-sm { min-height:120px; }
+    textarea.form-input.ta-lg { min-height:240px; }
     .form-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     @media(max-width:500px){ .form-grid2{ grid-template-columns:1fr; } }
+
+    /* ── Markdown/HTML toolbar ── */
+    .md-toolbar { display:flex; gap:4px; margin-bottom:4px; flex-wrap:wrap; }
+    .md-toolbar button { font-family:var(--font-mono); font-size:0.72rem; padding:2px 8px; border:1px solid rgba(255,255,255,0.15); border-radius:4px; background:var(--bg-card-alt); color:var(--text-muted); cursor:pointer; transition:background .15s; }
+    .md-toolbar button:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+
+    /* ── Preview (Omschrijving) ── */
+    .log-md { padding-top:4px; }
+    .log-md h1 { font-family:var(--font-mono); font-size:1rem; color:var(--accent); margin:14px 0 6px; }
+    .log-md h2 { font-family:var(--font-mono); font-size:0.9rem; color:var(--accent); margin:12px 0 6px; }
+    .log-md h3 { font-family:var(--font-mono); font-size:0.82rem; color:var(--accent); margin:10px 0 6px; text-transform:uppercase; letter-spacing:0.5px; }
+    .log-md p { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.7; margin:4px 0 8px; }
+    .log-md ul { padding-left:18px; margin:4px 0 12px; }
+    .log-md li { font-family:var(--font-sans); font-size:0.82rem; color:var(--text-muted); line-height:1.7; margin-bottom:2px; }
+    .log-md code { font-family:var(--font-mono); font-size:0.75rem; background:rgba(0,212,170,0.1); color:var(--accent); padding:1px 6px; border-radius:4px; }
+    .log-md strong { color:var(--text-primary); font-weight:600; }
+    .log-md a { color:var(--accent); }
+    .log-md hr { border:none; border-top:1px solid var(--border); margin:10px 0; }
+    .log-md table { width:100%; border-collapse:separate; border-spacing:0; margin:10px 0 16px; font-family:var(--font-mono); font-size:0.72rem; border-radius:var(--radius); overflow:hidden; }
+    .log-md thead th { background:#1a7a4a; color:#fff; padding:8px 12px; text-align:left; font-size:0.68rem; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #0f5c35; }
+    .log-md tbody td { padding:7px 12px; background:#c8c8c8; color:#1a1a1a; border-bottom:1px solid #aaa; }
+    .log-md tbody tr:last-child td { border-bottom:none; }
+    .log-md tbody tr:hover td { background:#d8d8d8; }
+
+    /* ── Agenda checkbox: alleen voor agenda-koppeling ── */
+    .agenda-checkbox { display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted); cursor:pointer; padding:8px 10px; border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius); background:rgba(0,212,170,0.05); }
+    .agenda-checkbox input { width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+    .agenda-checkbox span { color:var(--accent); }
 
     /* ── Statistieken ── */
     .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:1.75rem; }
@@ -164,10 +187,15 @@
     .card-actions { display:flex; gap:2px; }
     .card-title { font-weight:600; font-size:0.85rem; margin-bottom:4px; line-height:1.4; color:var(--text-primary); }
     .card-desc { font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .card-dates { font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); margin-bottom:4px; }
+    .card-dates { font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted); margin-bottom:4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .card-footer { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
     .card-tags { margin-top:6px; display:flex; gap:4px; flex-wrap:wrap; }
     .id-edit-input { font-family:var(--font-mono); font-size:10px; background:#2a2a2a; border:1px solid var(--accent); border-radius:4px; color:var(--accent); padding:1px 6px; width:90px; outline:none; }
+
+    /* ── Agenda-indicator ── */
+    .card-agenda { font-size:0.65rem; padding:1px 6px; border-radius:99px; border:1px solid; }
+    .card-agenda.yes { background:rgba(0,212,170,0.15); color:var(--accent); border-color:var(--accent); }
+    .card-agenda.no  { background:rgba(255,255,255,0.05); color:var(--text-muted); border-color:rgba(255,255,255,0.15); }
 
     /* ── Badges & tags ── */
     .badge { display:inline-flex; align-items:center; gap:4px; font-family:var(--font-mono); font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
@@ -215,15 +243,12 @@
     /* ── Modal ── */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:100; padding:16px; }
     .modal-overlay.open { display:flex; }
-    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
+    .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; width:100%; max-width:640px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); animation:fadeUp .25s ease; }
     .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:12px; }
     .modal-header h2 { font-family:var(--font-mono); font-size:1rem; font-weight:600; color:var(--accent); margin:0; }
     .modal-body { display:flex; flex-direction:column; gap:12px; }
     .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.5rem; border-top:1px solid var(--border); padding-top:12px; }
     .id-preview { font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); opacity:.7; margin-top:4px; }
-    .ai-section { border-top:1px solid var(--border); padding-top:12px; }
-    .ai-warning { font-family:var(--font-mono); font-size:0.72rem; color:#fb923c; margin-left:8px; }
-    .ai-box { margin-top:10px; font-family:var(--font-mono); font-size:0.75rem; background:#2a2a2a; border-radius:var(--radius); padding:10px 14px; white-space:pre-wrap; line-height:1.6; color:var(--text-muted); border:1px solid var(--border); }
 
     /* ── Toegang geweigerd ── */
     .access-denied { background:var(--bg-card); border:1px solid var(--color-danger); border-radius:var(--radius); padding:32px; text-align:center; max-width:480px; margin:60px auto; }
@@ -268,14 +293,6 @@
 
       <!-- Acties -->
       <div class="bl-actions">
-        <div class="apikey-wrap">
-          <button class="btn" id="btn-apikey">🔑 <span id="apikey-label">API key instellen</span></button>
-          <div class="apikey-dd" id="apikey-dd">
-            <label class="form-label">Anthropic API key</label>
-            <input class="form-input" type="password" id="input-apikey" placeholder="sk-ant-…"/>
-            <p>Sleutel wordt opgeslagen in localStorage en alleen naar de Anthropic API gestuurd.</p>
-          </div>
-        </div>
         <button class="btn" id="btn-export-csv">💾 CSV opslaan</button>
         <button class="btn" id="btn-export-md">📝 MD exporteren</button>
         <label class="btn" style="cursor:pointer">📂 Laden (CSV/MD)<input type="file" id="input-file" accept=".csv,.md" style="display:none"/></label>
@@ -361,19 +378,38 @@
               <option>Done</option><option>Cancelled</option><option>Future</option>
             </select>
           </div>
-          <!-- Datumvelden: zichtbaar in agenda.html als item een startdatum heeft -->
-          <div><label class="form-label">Startdatum</label><input class="form-input" type="date" id="f-startdate"/></div>
-          <div><label class="form-label">Einddatum</label><input class="form-input" type="date" id="f-enddate"/></div>
+          <!-- Datumvelden met tijd: zichtbaar in agenda.html als item een startdatum heeft -->
+          <div><label class="form-label">Startdatum &amp; tijd</label><input class="form-input" type="datetime-local" id="f-startdate"/></div>
+          <div><label class="form-label">Einddatum &amp; tijd</label><input class="form-input" type="datetime-local" id="f-enddate"/></div>
         </div>
         <div><label class="form-label">Toegewezen aan</label><input class="form-input" type="text" id="f-assignee" placeholder="Naam of @handle"/></div>
         <div><label class="form-label">Tags</label><input class="form-input" type="text" id="f-tags" placeholder="tag1, tag2, tag3"/></div>
-        <div><label class="form-label">Omschrijving</label><textarea class="form-input" id="f-description" rows="3" placeholder="Wat moet er gedaan worden? Waarom?"></textarea></div>
-        <div><label class="form-label">AI suggestie</label><textarea class="form-input" id="f-ai" rows="2" placeholder="Via ✦ AI suggestie of handmatig…"></textarea></div>
-        <div class="ai-section">
-          <button class="btn" id="btn-ai">✦ AI suggestie ophalen</button>
-          <span class="ai-warning" id="ai-warning" style="display:none">Stel eerst je API key in</span>
-          <div class="ai-box" id="ai-box" style="display:none"></div>
+        <!-- Omschrijving: volledige markdown + HTML toolbar, groot voor leesbaarheid -->
+        <div>
+          <label class="form-label">Omschrijving <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
+          <div class="md-toolbar" id="toolbar-description">
+            <button type="button" data-target="f-description" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-description" data-wrap="*|*" title="Cursief">I</button>
+            <button type="button" data-target="f-description" data-prefix="# "   title="Koptekst 1">H1</button>
+            <button type="button" data-target="f-description" data-prefix="## "  title="Koptekst 2">H2</button>
+            <button type="button" data-target="f-description" data-prefix="### " title="Koptekst 3">H3</button>
+            <button type="button" data-target="f-description" data-prefix="- " title="Lijst">&#x2022;</button>
+            <button type="button" data-target="f-description" data-table="1" title="Tabel invoegen">&#x22EE; Tabel</button>
+            <button type="button" data-target="f-description" data-wrap="`|`" title="Code">&lt;/&gt;</button>
+            <button type="button" data-target="f-description" data-link="1" title="Link">&#x1F517;</button>
+            <button type="button" data-target="f-description" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
+            <button type="button" data-target="f-description" data-insert="\n<hr>\n" title="Horizontale lijn">&lt;hr&gt;</button>
+            <button type="button" data-target="f-description" data-preview="1" title="Preview">&#x1F441;</button>
+          </div>
+          <textarea class="form-input ta-lg" id="f-description" rows="10" placeholder="Wat moet er gedaan worden? Waarom?"></textarea>
+          <div class="log-md" id="preview-description" style="display:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:6px;background:#2a2a2a"></div>
         </div>
+        <!-- Agenda checkbox: alleen voor koppeling met agenda.html via AgendaStore -->
+        <label class="agenda-checkbox">
+          <input type="checkbox" id="f-pub"/>
+          <span>&#x1F4C5; Publiceren in agenda</span>
+          <span style="color:var(--text-muted);font-size:0.68rem;margin-left:4px">&#x2014; zichtbaar in agenda.html via AgendaStore</span>
+        </label>
       </div>
       <div class="modal-footer">
         <button class="btn" id="btn-modal-cancel">Annuleren</button>
@@ -404,14 +440,14 @@
   fetch('/MyFamTreeCollab/Layout/Footer.html').then(r=>r.text()).then(html=>{document.getElementById('footer-placeholder').innerHTML=html;});
 
   // ════════════════════════════════════════════════════════════════
-  // BACKLOG MODULE v5.3.2
+  // BACKLOG MODULE v5.4.0
   // ════════════════════════════════════════════════════════════════
   const Backlog = (() => {
     // ── State ──
     let items=[], phases=[], phaseDescs={};
     let view='board', search='', fPhase='All';
     let fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
-    let editId=null, apiKey='';
+    let editId=null;
     let projName='', projVersion='', projDate='';
 
     // ── Constanten ──
@@ -432,9 +468,6 @@
     // INITIALISATIE
     // ─────────────────────────────────────────────
     function init() {
-      apiKey = localStorage.getItem('bl_apikey') || '';
-      _updateApiKeyUI();
-
       const savedItems = localStorage.getItem('bl_items');
       if(savedItems) {
         items      = JSON.parse(savedItems);
@@ -471,19 +504,6 @@
         _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta();
       });
       $('btn-proj-cancel').addEventListener('click', ()=>$('projinfo-dd').classList.remove('open'));
-
-      // API key
-      $('btn-apikey').addEventListener('click', ()=>$('apikey-dd').classList.toggle('open'));
-      $('input-apikey').value = apiKey;
-      $('input-apikey').addEventListener('change', e=>{
-        apiKey=e.target.value.trim();
-        localStorage.setItem('bl_apikey', apiKey);
-        _updateApiKeyUI();
-      });
-      document.addEventListener('click', e=>{
-        if(!$('btn-apikey').contains(e.target) && !$('apikey-dd').contains(e.target))
-          $('apikey-dd').classList.remove('open');
-      });
 
       // Acties
       $('btn-export-csv').addEventListener('click', exportCSV);
@@ -522,8 +542,42 @@
       $('btn-view-list').addEventListener('click',  ()=>{view='list'; _updateViewToggle();_renderContent();});
       $('btn-clear-filters').addEventListener('click', clearFilters);
 
-      // AI
-      $('btn-ai').addEventListener('click', _getAiSuggestion);
+      // Markdown/HTML toolbar: wrap, prefix, insert, link, table of preview toepassen op textarea
+      document.querySelectorAll('.md-toolbar button').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const ta=$(btn.dataset.target); if(!ta) return; // target textarea ophalen
+          const start=ta.selectionStart, end=ta.selectionEnd, val=ta.value; // cursor en waarde
+          if(btn.dataset.preview) { // preview-modus: toggle MD-rendering
+            const prev=$('preview-'+ta.id.replace('f-','')); if(!prev) return;
+            const show=prev.style.display==='none';
+            prev.style.display=show?'block':'none'; ta.style.display=show?'none':'block';
+            if(show) prev.innerHTML=_mdToHtml(ta.value); // MD naar HTML renderen
+            return;
+          }
+          if(btn.dataset.link) { // link-modus: selectie wordt [tekst](https://)
+            const sel=val.slice(start,end)||'tekst', ins=`[${sel}](https://)`;
+            ta.value=val.slice(0,start)+ins+val.slice(end);
+            ta.focus(); ta.selectionStart=ta.selectionEnd=start+ins.length; return;
+          }
+          if(btn.dataset.insert) { // insert-modus: literal tekst invoegen (<br>, <hr>)
+            const lit=btn.dataset.insert.replace('\\n','\n');
+            ta.value=val.slice(0,start)+lit+val.slice(end);
+            ta.focus(); ta.selectionStart=ta.selectionEnd=start+lit.length; return;
+          }
+          if(btn.dataset.wrap) { // wrap-modus: tekst omhullen
+            const [before,after]=btn.dataset.wrap.split('|');
+            ta.value=val.slice(0,start)+before+val.slice(start,end)+after+val.slice(end);
+            ta.selectionStart=start+before.length; ta.selectionEnd=end+before.length;
+          } else if(btn.dataset.prefix) { // prefix-modus: voor elke geselecteerde regel
+            const lines=val.slice(start,end).split('\n');
+            ta.value=val.slice(0,start)+lines.map(l=>btn.dataset.prefix+l).join('\n')+val.slice(end);
+          } else if(btn.dataset.table) { // tabel-modus: standaard tabel invoegen
+            const tbl='\n| Kolom 1 | Kolom 2 | Kolom 3 |\n|---------|---------|----------|\n| Cel 1   | Cel 2   | Cel 3   |\n';
+            ta.value=val.slice(0,start)+tbl+val.slice(end);
+          }
+          ta.focus();
+        });
+      });
     }
 
     // ─────────────────────────────────────────────
@@ -544,17 +598,31 @@
 
     function _fmtDate(d) { if(!d)return''; const p=d.split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; }
 
+    // Datetime-local waarde (YYYY-MM-DDTHH:mm) -> weergave DD-MM-YYYY HH:mm (24h)
+    function _fmtDateTime(d) {
+      if(!d) return '';
+      const parts=d.split('T'); // datum en tijd splitsen
+      const datePart=_fmtDate(parts[0]); // datum omdraaien naar DD-MM-YYYY
+      return parts[1] ? datePart+' '+parts[1] : datePart; // tijd toevoegen indien aanwezig
+    }
+
+    // Migratie: oude date-only waarden (YYYY-MM-DD) aanvullen met T00:00 voor datetime-local input
+    function _toDatetimeLocal(d) {
+      if(!d) return ''; // geen waarde
+      return d.includes('T') ? d : d+'T00:00'; // tijd toevoegen indien nog niet aanwezig
+    }
+
     function _renderStats() {
       const t=items.length, done=items.filter(i=>i.status==='Done').length, pct=t?Math.round(done/t*100):0;
-      // Agenda-items: items met een startdatum (zichtbaar in agenda.html)
-      const metDatum=items.filter(i=>i.startdate&&i.startdate.trim()).length;
+      // Agenda-items: items met startdatum + gepubliceerd (zichtbaar in agenda.html)
+      const inAgenda=items.filter(i=>i.gepubliceerd==='ja'&&i.startdate&&i.startdate.trim()).length;
       $('stat-grid').innerHTML=`
         <div class="stat-card"><div class="stat-label">Totaal</div><div class="stat-value">${t}</div></div>
         <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value">${items.filter(i=>i.status==='Open').length}</div></div>
         <div class="stat-card"><div class="stat-label">In uitvoering</div><div class="stat-value">${items.filter(i=>i.status==='In Progress').length}</div></div>
         <div class="stat-card"><div class="stat-label">Gedaan</div><div class="stat-value">${done}</div></div>
         <div class="stat-card"><div class="stat-label">Voortgang</div><div class="stat-value">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
-        <div class="stat-card" title="Items met startdatum — zichtbaar in agenda.html"><div class="stat-label">In agenda</div><div class="stat-value">${metDatum}</div></div>`;
+        <div class="stat-card" title="Items gepubliceerd in agenda.html"><div class="stat-label">In agenda</div><div class="stat-value">${inAgenda}</div></div>`;
     }
 
     function _renderPhasePills() {
@@ -633,11 +701,10 @@
 
     function _cardHTML(i) {
       const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-      // Kleine agenda-indicator als het item een startdatum heeft
-      const agIndicator=i.startdate?`<span title="Zichtbaar in agenda" style="font-size:10px;opacity:.5">📅</span>`:'';
+      const pub=i.gepubliceerd==='ja'; // agenda-publicatie status
       return `<div class="card">
         <div class="card-header">
-          <span class="card-id" data-id="${i.id}">${i.id} ${agIndicator}</span>
+          <span class="card-id" data-id="${i.id}">${i.id}</span>
           <div class="card-actions">
             <button class="btn btn-ghost" data-edit="${i.id}" style="padding:2px 6px;font-size:11px">✏️</button>
             <button class="btn btn-ghost" data-delete="${i.id}" style="padding:2px 6px;font-size:11px">🗑</button>
@@ -645,7 +712,7 @@
         </div>
         <div class="card-title">${i.title}</div>
         ${i.description?`<div class="card-desc">${i.description}</div>`:''}
-        ${(i.startdate||i.enddate)?`<div class="card-dates">📅 ${i.startdate||''}${i.enddate&&i.enddate!==i.startdate?' → '+i.enddate:''}</div>`:''}
+        ${(i.startdate||i.enddate)?`<div class="card-dates">📅 ${_fmtDateTime(i.startdate)}${i.enddate&&i.enddate!==i.startdate?' → '+_fmtDateTime(i.enddate):''}<span class="card-agenda ${pub?'yes':'no'}">${pub?'✓ In agenda':'○ Concept'}</span></div>`:''}
         <div class="card-footer">
           <span class="badge ${P_CSS[i.priority]||'p-medium'}"><span class="dot ${D_CSS[i.priority]||'dot-medium'}"></span>${i.priority}</span>
           <span class="badge ${S_CSS[i.status]||'s-open'}">${S_ICON[i.status]||''} ${i.status}</span>
@@ -659,18 +726,19 @@
     function _listHTML(filtered) {
       if(!filtered.length) return `<p style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.82rem;padding:1rem 0;text-align:center">Geen items gevonden.</p>`;
       return `<div class="list-wrap"><table class="list-table">
-        <thead><tr><th>ID</th><th>Tags</th><th>Taak</th><th>Omschrijving</th><th>AI</th><th>Type</th><th>Start</th><th>Eind</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Tags</th><th>Taak</th><th>Omschrijving</th><th>Type</th><th>Start</th><th>Eind</th><th>Agenda</th><th>Toegewezen</th><th>Prioriteit</th><th>Status</th><th></th></tr></thead>
         <tbody>${filtered.map(i=>{
           const tags=(i.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+          const pub=i.gepubliceerd==='ja';
           return `<tr>
-            <td><span class="tbl-id" data-id="${i.id}">${i.id}${i.startdate?' 📅':''}</span></td>
+            <td><span class="tbl-id" data-id="${i.id}">${i.id}</span></td>
             <td>${tags.map(t=>`<span class="tag" style="background:#e5e7eb;color:#374151">${t}</span>`).join(' ')||''}</td>
             <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title||''}</td>
-            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.description||''}</td>
-            <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;font-size:0.72rem">${i.ai||''}</td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${i.description||''}</td>
             <td>${i.type||''}</td>
-            <td style="white-space:nowrap">${i.startdate||''}</td>
-            <td style="white-space:nowrap">${i.enddate||''}</td>
+            <td style="white-space:nowrap">${_fmtDateTime(i.startdate)}</td>
+            <td style="white-space:nowrap">${_fmtDateTime(i.enddate)}</td>
+            <td>${pub?'&#x2705;':'&#x25CB;'}</td>
             <td>${i.assignee||''}</td>
             <td><span class="${P_TBL[i.priority]||'p-medium-tbl'}">${i.priority||''}</span></td>
             <td><span class="${S_TBL[i.status]||'s-open-tbl'}">${S_ICON[i.status]||''} ${i.status||''}</span></td>
@@ -705,9 +773,9 @@
       editId=id||null;
       $('modal-title').textContent    = id?'Item bewerken':'Item toevoegen';
       $('btn-modal-save').textContent = id?'Opslaan':'Toevoegen';
-      $('ai-box').style.display='none'; $('ai-box').textContent='';
-      $('ai-warning').style.display=apiKey?'none':'inline';
       $('f-id').dataset.manual='';
+      $('preview-description').style.display='none'; // preview verbergen
+      $('f-description').style.display='block'; // textarea tonen
       _updatePhasesInModal();
       if(id) {
         const item=items.find(i=>i.id===id); if(!item)return;
@@ -716,12 +784,14 @@
         $('f-title').value=item.title||''; $('f-phase').value=item.phase||'';
         $('f-type').value=item.type||'Feature'; $('f-priority').value=item.priority||'Medium';
         $('f-status').value=item.status||'Open';
-        $('f-startdate').value=item.startdate||''; $('f-enddate').value=item.enddate||'';
+        $('f-startdate').value=_toDatetimeLocal(item.startdate); $('f-enddate').value=_toDatetimeLocal(item.enddate);
         $('f-assignee').value=item.assignee||''; $('f-tags').value=item.tags||'';
-        $('f-description').value=item.description||''; $('f-ai').value=item.ai||'';
+        $('f-description').value=item.description||'';
+        $('f-pub').checked=item.gepubliceerd==='ja'; // agenda checkbox
       } else {
-        ['f-title','f-assignee','f-tags','f-description','f-ai','f-startdate','f-enddate'].forEach(fid=>$(fid).value='');
+        ['f-title','f-assignee','f-tags','f-description','f-startdate','f-enddate'].forEach(fid=>$(fid).value='');
         $('f-type').value='Feature'; $('f-priority').value='Medium'; $('f-status').value='Open'; $('f-phase').value='';
+        $('f-pub').checked=false; // agenda checkbox uit
         _updateAutoId();
       }
       $('f-id').addEventListener('input', ()=>{$('f-id').dataset.manual='1';});
@@ -734,12 +804,16 @@
       const title=$('f-title').value.trim(); if(!title){$('f-title').focus();return;}
       const id=$('f-id').value.trim()||_genId($('f-phase').value,$('f-type').value);
       if(!editId&&items.find(i=>i.id===id)){alert('ID "'+id+'" bestaat al.');$('f-id').focus();return;}
+      // Bestaand item ophalen om 'ai'-veld (oude AI suggestie data) te behouden bij roundtrip
+      const existing=editId?items.find(i=>i.id===editId):null;
       const item={
         id, title, phase:$('f-phase').value, type:$('f-type').value,
         priority:$('f-priority').value, status:$('f-status').value,
         startdate:$('f-startdate').value, enddate:$('f-enddate').value,
         assignee:$('f-assignee').value.trim(), tags:$('f-tags').value.trim(),
-        description:$('f-description').value.trim(), ai:$('f-ai').value.trim(),
+        description:$('f-description').value.trim(),
+        gepubliceerd:$('f-pub').checked?'ja':'nee', // agenda-flag
+        ai: existing?existing.ai||'':'', // oude AI-data behouden, niet meer bewerkbaar
       };
       if(editId) items=items.map(i=>i.id===editId?item:i); else items.push(item);
       _save(); closeModal(); _renderAll();
@@ -784,7 +858,51 @@
     // UI HULPFUNCTIES
     // ─────────────────────────────────────────────
     function _updateViewToggle() { $('btn-view-board').classList.toggle('active',view==='board');$('btn-view-list').classList.toggle('active',view==='list'); }
-    function _updateApiKeyUI()   { $('apikey-label').textContent=apiKey?'AI gereed':'API key instellen';$('btn-apikey').classList.toggle('btn-ai-ready',!!apiKey); }
+
+    // ─────────────────────────────────────────────
+    // MARKDOWN PREVIEW (Omschrijving)
+    // ─────────────────────────────────────────────
+    function _mdToHtml(text) {
+      const lines=text.split('\n'); let html='', inList=false, inTable=false, tableRows=[];
+      const flushTable=()=>{
+        if(!tableRows.length){inTable=false;return;}
+        html+=`<table><thead><tr>${tableRows[0].map(c=>`<th>${_inline(c)}</th>`).join('')}</tr></thead><tbody>`;
+        tableRows.slice(2).forEach(row=>{ html+=`<tr>${row.map(c=>`<td>${_inline(c)}</td>`).join('')}</tr>`; });
+        html+=`</tbody></table>`; tableRows=[]; inTable=false;
+      };
+      for(const line of lines) {
+        if(line.startsWith('|')) {
+          if(inList){html+='</ul>';inList=false;}
+          inTable=true; tableRows.push(line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1));
+          continue;
+        }
+        if(inTable) flushTable();
+        if(!line.trim()){ if(inList){html+='</ul>';inList=false;} continue; }
+        if(line.startsWith('### ')){ if(inList){html+='</ul>';inList=false;} html+=`<h3>${_inline(line.slice(4))}</h3>`; continue; }
+        if(line.startsWith('## '))  { if(inList){html+='</ul>';inList=false;} html+=`<h2>${_inline(line.slice(3))}</h2>`; continue; }
+        if(line.startsWith('# '))   { if(inList){html+='</ul>';inList=false;} html+=`<h1>${_inline(line.slice(2))}</h1>`; continue; }
+        if(line.trim()==='<hr>')   { if(inList){html+='</ul>';inList=false;} html+='<hr>'; continue; }
+        if(line.match(/^[-*]\s/)){
+          if(!inList){html+='<ul>';inList=true;}
+          html+=`<li>${_inline(line.replace(/^[-*]\s/,''))}</li>`;
+          continue;
+        }
+        if(inList){html+='</ul>';inList=false;}
+        if(line.startsWith('---')) continue;
+        if(line.trim()) html+=`<p>${_inline(line)}</p>`;
+      }
+      if(inList) html+='</ul>'; if(inTable) flushTable();
+      return html;
+    }
+    function _inline(t) {
+      return _esc(t)
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+        .replace(/`([^`]+)`/g,'<code>$1</code>')
+        .replace(/&lt;br&gt;/g,'<br>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    }
+    function _esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     // ─────────────────────────────────────────────
     // PERSISTENTIE — AgendaStore.sync() NA ELKE SAVE
@@ -827,7 +945,7 @@
       const seen=new Set(); phases=items.map(i=>i.phase).filter(p=>p&&!seen.has(p)&&seen.add(p));
       _save();
     }
-    
+
     // ─────────────────────────────────────────────
     // Markdown import parser
     // ─────────────────────────────────────────────
@@ -851,12 +969,17 @@
         if(line.startsWith('|')&&!line.includes('---')&&section==='backlog'){
           const cells=line.split('|').map(c=>c.trim()).filter((_,i,a)=>i>0&&i<a.length-1);
           if(!cells.length||cells[0]==='ID'||cells[0]==='Taak')continue;
-          if(cells.length>=9){
+          if(cells.length>=12){
+            // Nieuw formaat: ID|Tags|Taak|Omschrijving|AI|Type|Start|Eind|Toegewezen|Prioriteit|Status|Agenda
+            const [id,tags,title,desc,ai,type,startdate,enddate,assignee,prio,status,agenda]=cells;
+            if(id&&title)items.push({id,phase:curPhase,tags,title,description:desc,ai,type:type||'Feature',startdate:_toDatetimeLocal(startdate)||'',enddate:_toDatetimeLocal(enddate)||'',assignee,priority:_mapPrio(prio),status:_mapStatus(status),gepubliceerd:_mapAgenda(agenda)});
+          } else if(cells.length>=9){
+            // Oud formaat zonder Agenda-kolom: gepubliceerd standaard 'nee'
             const [id,tags,title,desc,ai,type,startdate,enddate,assignee,prio,status]=cells;
-            if(id&&title)items.push({id,phase:curPhase,tags,title,description:desc,ai,type:type||'Feature',startdate:startdate||'',enddate:enddate||'',assignee,priority:_mapPrio(prio),status:_mapStatus(status)});
+            if(id&&title)items.push({id,phase:curPhase,tags,title,description:desc,ai,type:type||'Feature',startdate:_toDatetimeLocal(startdate)||'',enddate:_toDatetimeLocal(enddate)||'',assignee,priority:_mapPrio(prio),status:_mapStatus(status),gepubliceerd:'nee'});
           } else if(cells.length>=4){
             const [id,tags,title,desc,ai,type,assignee,prio,status]=cells;
-            if(id&&title)items.push({id,phase:curPhase,tags:tags||'',title,description:desc||'',ai:ai||'',type:type||'Feature',startdate:'',enddate:'',assignee:assignee||'',priority:_mapPrio(prio),status:_mapStatus(status)});
+            if(id&&title)items.push({id,phase:curPhase,tags:tags||'',title,description:desc||'',ai:ai||'',type:type||'Feature',startdate:'',enddate:'',assignee:assignee||'',priority:_mapPrio(prio),status:_mapStatus(status),gepubliceerd:'nee'});
           }
         }
       }
@@ -867,12 +990,14 @@
 
     function _mapStatus(s){if(!s)return'Open';if(s.includes('✅')||s.toLowerCase().includes('gedaan'))return'Done';if(s.includes('🔄')||s.toLowerCase().includes('uitvoering'))return'In Progress';if(s.toLowerCase().includes('review'))return'Review';if(s.includes('❌')||s.toLowerCase().includes('geannuleerd'))return'Cancelled';if(s.includes('🔮')||s.toLowerCase().includes('toekomst'))return'Future';return'Open';}
     function _mapPrio(s){if(!s)return'Medium';if(s.includes('🔴'))return'High';if(s.includes('🟡'))return'Medium';if(s.includes('🟢'))return'Low';if(s.toLowerCase().includes('critical'))return'Critical';return'Medium';}
+    // Agenda-kolom mapping: ✅/ja -> 'ja', anders 'nee'
+    function _mapAgenda(s){ if(!s) return 'nee'; const t=s.toLowerCase(); return (t.includes('✅')||t.includes('ja'))?'ja':'nee'; }
 
     // ─────────────────────────────────────────────
     // EXPORT
     // ─────────────────────────────────────────────
     function exportCSV() {
-      const cols=['id','phase','tags','title','description','ai','type','startdate','enddate','assignee','priority','status'];
+      const cols=['id','phase','tags','title','description','type','startdate','enddate','gepubliceerd','assignee','priority','status'];
       const rows=[cols.join(','),...items.map(i=>cols.map(c=>'"'+V(i[c]).replace(/"/g,'""')+'"').join(','))];
       const name=(V(projName)||'backlog').replace(/\s+/g,'-')+(V(projVersion)?'-'+V(projVersion):'')+'.csv';
       _download(name,rows.join('\n'),'text/csv');
@@ -888,11 +1013,12 @@
         if(!byPhase[ph])continue;
         const desc=phaseDescs[ph]?` — ${phaseDescs[ph]}`:'';
         md+=`## ${ph}${desc}\n\n`;
-        md+=`| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status |\n`;
-        md+=`|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|\n`;
+        md+=`| ID | Tags | Taak | Omschrijving | AI suggestie | Type | Startdatum | Einddatum | Toegewezen | Prioriteit | Status | Agenda |\n`;
+        md+=`|----|------|------|--------------|-------------|------|-----------|----------|------------|-----------|--------|--------|\n`;
         byPhase[ph].forEach(i=>{
           const pIcon={'Critical':'🔴','High':'🔴','Medium':'🟡','Low':'🟢'}[i.priority]||'🟡';
-          md+=`| ${V(i.id)} | ${V(i.tags)} | ${V(i.title)} | ${V(i.description)} | ${V(i.ai)} | ${V(i.type)} | ${V(i.startdate)} | ${V(i.enddate)} | ${V(i.assignee)} | ${pIcon} ${V(i.priority)} | ${S_ICON[i.status]||'📋'} ${V(i.status)} |\n`;
+          const agenda=i.gepubliceerd==='ja'?'✅ ja':'nee';
+          md+=`| ${V(i.id)} | ${V(i.tags)} | ${V(i.title)} | ${V(i.description)} | ${V(i.ai)} | ${V(i.type)} | ${V(i.startdate)} | ${V(i.enddate)} | ${V(i.assignee)} | ${pIcon} ${V(i.priority)} | ${S_ICON[i.status]||'📋'} ${V(i.status)} | ${agenda} |\n`;
         });
         md+='\n';
       }
@@ -901,25 +1027,6 @@
     }
 
     function _download(filename,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=filename;a.click();}
-
-    // ─────────────────────────────────────────────
-    // AI SUGGESTIE
-    // ─────────────────────────────────────────────
-    async function _getAiSuggestion() {
-      const title=$('f-title').value.trim(); if(!title||!apiKey)return;
-      $('btn-ai').textContent='…bezig'; $('btn-ai').disabled=true; $('ai-box').style.display='none';
-      try {
-        const res=await fetch('https://api.anthropic.com/v1/messages',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:`Je bent een product manager assistent. Geef voor dit backlog item:\n1) Aanbevolen prioriteit (Critical/High/Medium/Low) met 1-zin reden\n2) 2-3 concrete acceptatiecriteria\n3) Relevante tags\n\nTitel: ${title}\nOmschrijving: ${$('f-description').value||'(geen)'}\nType: ${$('f-type').value}\n\nFormaat:\nPRIORITEIT: [niveau] — [reden]\nACCEPTATIECRITERIA:\n- …\nTAGS: …`}]})
-        });
-        const data=await res.json();
-        const s=data.content?.[0]?.text||'Geen suggestie ontvangen.';
-        $('ai-box').textContent=s; $('ai-box').style.display='block'; $('f-ai').value=s;
-      } catch(e){$('ai-box').textContent='Fout: '+e.message;$('ai-box').style.display='block';}
-      $('btn-ai').textContent='✦ AI suggestie ophalen'; $('btn-ai').disabled=false;
-    }
 
     return { init };
   })();
