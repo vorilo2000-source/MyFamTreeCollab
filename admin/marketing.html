@@ -1,4 +1,4 @@
-<!-- ======================= admin/marketing.html v4.0.0 =======================
+<!-- ======================= admin/marketing.html v4.1.0 =======================
     Marketing & Communicatieplan — admin only
 
     Wijzigingen v3.0.0 (sessie 37):
@@ -18,6 +18,15 @@
      - Status badge in kaart/lijst: kleur op basis van status (identiek aan backlog.html)
      - Tabs: Taken / Kanalen / Templates
      - "Naar agenda" knop toegevoegd in actiebalk
+
+    Wijzigingen v4.1.0 (sessie 40):
+     - Fix: _mapStatus/_mapPrio gebruikten ongeldige unicode-escapes, MD import faalde
+     - Kernboodschap komt dynamisch uit marketing.md (> Kernboodschap: regel)
+       en is bewerkbaar via projectinfo-paneel, niet meer hardcoded
+     - Textarea's vergroot voor leesbaarheid: standaard 180px, lange velden 240px
+     - Markdown/HTML toolbar uitgebreid: H1, H2, H3, <br>, <hr>, link bij omschrijving en templates
+     - MD-preview ondersteunt nu # / ## / ### koppen, <br>, <hr> en [tekst](url) links
+     - MD export bevat > Kernboodschap: regel indien aanwezig
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -74,7 +83,11 @@
     .form-input{font-family:var(--font-mono);font-size:0.8rem;width:100%;padding:6px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius);background:#2a2a2a;color:var(--text-primary);outline:none;box-sizing:border-box;}
     .form-input:focus{border-color:var(--accent);}
     select.form-input{cursor:pointer;}
-    textarea.form-input{resize:vertical;min-height:80px;font-family:var(--font-sans);font-size:0.82rem;line-height:1.6;}
+    textarea.form-input{resize:vertical;min-height:180px;font-family:var(--font-sans);font-size:0.9rem;line-height:1.7;}
+    /* Korte velden (tags, resultaat) blijven compact via inline override min-height:80px */
+    textarea.form-input.ta-sm{min-height:80px;}
+    /* Lange velden (notities, omschrijving, templates) extra ruimte */
+    textarea.form-input.ta-lg{min-height:240px;}
     .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     .form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
     @media(max-width:520px){.form-grid2,.form-grid3{grid-template-columns:1fr;}}
@@ -266,6 +279,8 @@
           <div><label class="form-label">Titel</label><input class="form-input" type="text" id="pi-name" placeholder="Marketing &amp; Communicatieplan"/></div>
           <div><label class="form-label">Versie</label><input class="form-input" type="text" id="pi-version" placeholder="v1.0"/></div>
           <div><label class="form-label">Datum</label><input class="form-input" type="date" id="pi-date"/></div>
+          <!-- Kernboodschap: handmatig bewerkbaar, ook leesbaar/opslaanbaar via marketing.md -->
+          <div style="grid-column:1/-1"><label class="form-label">Kernboodschap</label><textarea class="form-input" id="pi-kernboodschap" rows="2" placeholder="Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat."></textarea></div>
           <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
             <button class="btn" id="btn-proj-cancel">Annuleren</button>
             <button class="btn btn-accent" id="btn-proj-save">Opslaan</button>
@@ -274,7 +289,8 @@
         <div class="proj-meta" id="proj-meta"></div>
       </div>
 
-      <div class="info-box">&#x1F4AC; <b>Kernboodschap:</b> "Bouw en beheer je stamboom gratis, zonder account, zonder dat je data ergens naartoe gaat." &middot; <b>Budget:</b> Organisch &middot; <b>Horizon:</b> 12 weken</div>
+      <!-- Kernboodschap: dynamisch geladen uit marketing.md via mk_proj localStorage, verborgen tot geladen -->
+      <div class="info-box" id="info-kernboodschap" style="display:none"></div>
 
       <!-- Acties: zelfde patroon als backlog.html -->
       <div class="bl-actions">
@@ -403,21 +419,26 @@
         <!-- Toegewezen en tags -->
         <div><label class="form-label">Toegewezen aan</label><input class="form-input" type="text" id="ft-assignee" placeholder="Naam of @handle"/></div>
         <div><label class="form-label">Tags / Week</label><input class="form-input" type="text" id="ft-tags" placeholder="W1, W2-3 &#x2026;"/></div>
-        <!-- Omschrijving: markdown + HTML-tags ondersteund in textarea -->
+        <!-- Omschrijving: markdown + HTML-tags ondersteund in textarea, groot voor leesbaarheid -->
         <div>
           <label class="form-label">Omschrijving <span style="opacity:.5;font-size:0.65rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-editor-wrap">
             <div class="md-toolbar">
-              <button class="md-btn" data-md="bold" title="Vet">B</button>
+              <button class="md-btn" data-md="bold"   title="Vet">B</button>
               <button class="md-btn" data-md="italic" title="Cursief">I</button>
-              <button class="md-btn" data-md="list" title="Lijst">&#x2261;</button>
-              <button class="md-btn" data-md="table" title="Tabel">&#x229E;</button>
-              <button class="md-btn" data-md="code" title="Code">&lt;/&gt;</button>
-              <button class="md-btn" data-md="link" title="Link">&#x1F517;</button>
+              <button class="md-btn" data-md="h1"     title="Koptekst 1">H1</button>
+              <button class="md-btn" data-md="h2"     title="Koptekst 2">H2</button>
+              <button class="md-btn" data-md="h3"     title="Koptekst 3">H3</button>
+              <button class="md-btn" data-md="list"   title="Lijst">&#x2261;</button>
+              <button class="md-btn" data-md="table"  title="Tabel">&#x229E;</button>
+              <button class="md-btn" data-md="code"   title="Code">&lt;/&gt;</button>
+              <button class="md-btn" data-md="link"   title="Link">&#x1F517;</button>
+              <button class="md-btn" data-md="br"     title="Regeleinde">&lt;br&gt;</button>
+              <button class="md-btn" data-md="hr"     title="Horizontale lijn">&lt;hr&gt;</button>
               <button class="md-btn" data-md="preview" title="Preview" id="btn-md-preview-desc">&#x1F441;</button>
             </div>
             <!-- textarea ondersteunt HTML-tags als plain text voor opslag en export -->
-            <textarea class="form-input" id="ft-description" rows="4" placeholder="Wat moet er gedaan worden? Markdown &#xE9;n HTML-tags ondersteund."></textarea>
+            <textarea class="form-input ta-lg" id="ft-description" rows="8" placeholder="Wat moet er gedaan worden? Markdown &#xE9;n HTML-tags ondersteund."></textarea>
             <div class="md-preview" id="md-preview-desc" style="display:none"></div>
           </div>
         </div>
@@ -453,7 +474,7 @@
         <div><label class="form-label">Toon</label><input class="form-input" type="text" id="fkn-toon" placeholder="Vriendelijk, laagdrempelig&#x2026;"/></div>
         <div><label class="form-label">Doel</label><input class="form-input" type="text" id="fkn-doel" placeholder="Wat wil je bereiken?"/></div>
         <div><label class="form-label">Groepen / Subreddits</label><input class="form-input" type="text" id="fkn-groepen" placeholder="r/genealogy, Stamboomonderzoek NL&#x2026;"/></div>
-        <div><label class="form-label">Notities</label><textarea class="form-input" id="fkn-notities" rows="2" placeholder="Aanvullende opmerkingen&#x2026;"></textarea></div>
+        <div><label class="form-label">Notities</label><textarea class="form-input ta-sm" id="fkn-notities" rows="2" placeholder="Aanvullende opmerkingen&#x2026;"></textarea></div>
       </div>
       <div class="modal-footer">
         <button class="btn" id="btn-mkn-cancel">Annuleren</button>
@@ -479,16 +500,22 @@
           </select>
         </div>
         <div>
-          <label class="form-label">Tekst (markdown + HTML)</label>
+          <label class="form-label">Tekst <span style="opacity:.5;font-size:0.65rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-editor-wrap">
             <div class="md-toolbar">
-              <button class="md-btn" data-md="bold">B</button>
-              <button class="md-btn" data-md="italic">I</button>
-              <button class="md-btn" data-md="list">&#x2261;</button>
-              <button class="md-btn" data-md="table">&#x229E;</button>
+              <button class="md-btn" data-md="bold"   title="Vet">B</button>
+              <button class="md-btn" data-md="italic" title="Cursief">I</button>
+              <button class="md-btn" data-md="h1"     title="Koptekst 1">H1</button>
+              <button class="md-btn" data-md="h2"     title="Koptekst 2">H2</button>
+              <button class="md-btn" data-md="h3"     title="Koptekst 3">H3</button>
+              <button class="md-btn" data-md="list"   title="Lijst">&#x2261;</button>
+              <button class="md-btn" data-md="table"  title="Tabel">&#x229E;</button>
+              <button class="md-btn" data-md="link"   title="Link">&#x1F517;</button>
+              <button class="md-btn" data-md="br"     title="Regeleinde">&lt;br&gt;</button>
+              <button class="md-btn" data-md="hr"     title="Horizontale lijn">&lt;hr&gt;</button>
               <button class="md-btn" data-md="preview" id="btn-md-preview-tpl">&#x1F441;</button>
             </div>
-            <textarea class="form-input" id="ftp-tekst" rows="8" placeholder="Schrijf je post-template hier&#x2026;"></textarea>
+            <textarea class="form-input ta-lg" id="ftp-tekst" rows="10" placeholder="Schrijf je post-template hier&#x2026;"></textarea>
             <div class="md-preview" id="md-preview-tpl" style="display:none"></div>
           </div>
         </div>
@@ -533,6 +560,7 @@
     var taken=[], phases=[], phaseDescs={};
     var kanalen=[], templates=[];
     var projName='', projVersion='', projDate='';
+    var projKernboodschap=''; // kernboodschap uit marketing.md, dynamisch geladen
     var view='board', search='', fPhase='All';
     var fStatus=new Set(), fPriority=new Set(), fType=new Set(), fTags=new Set();
     var editTaakId=null, editKanaalIdx=null, editTplIdx=null;
@@ -585,8 +613,8 @@
       });
 
       // Projectinfo
-      $('btn-edit-proj').addEventListener('click', function(){ $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate; $('projinfo-dd').classList.toggle('open'); });
-      $('btn-proj-save').addEventListener('click', function(){ projName=$('pi-name').value.trim(); projVersion=$('pi-version').value.trim(); projDate=$('pi-date').value; _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta(); });
+      $('btn-edit-proj').addEventListener('click', function(){ $('pi-name').value=projName; $('pi-version').value=projVersion; $('pi-date').value=projDate; $('pi-kernboodschap').value=projKernboodschap; $('projinfo-dd').classList.toggle('open'); });
+      $('btn-proj-save').addEventListener('click', function(){ projName=$('pi-name').value.trim(); projVersion=$('pi-version').value.trim(); projDate=$('pi-date').value; projKernboodschap=$('pi-kernboodschap').value.trim(); _saveProjInfo(); $('projinfo-dd').classList.remove('open'); _renderMeta(); });
       $('btn-proj-cancel').addEventListener('click', function(){ $('projinfo-dd').classList.remove('open'); });
 
       // Acties
@@ -665,9 +693,14 @@
       var ins='';
       if(type==='bold')   ins='**'+(sel||'vet tekst')+'**'; // **bold**
       if(type==='italic') ins='_'+(sel||'cursief')+'_';     // _cursief_
+      if(type==='h1')     ins='\n# '+(sel||'Koptekst 1')+'\n';   // # H1
+      if(type==='h2')     ins='\n## '+(sel||'Koptekst 2')+'\n';  // ## H2
+      if(type==='h3')     ins='\n### '+(sel||'Koptekst 3')+'\n'; // ### H3
       if(type==='list')   ins='\n- '+(sel||'item')+'\n- item\n'; // lijst
       if(type==='code')   ins='`'+(sel||'code')+'`';        // `code`
       if(type==='link')   ins='['+(sel||'tekst')+'](https://)'; // [tekst](url)
+      if(type==='br')     ins='<br>\n'; // regeleinde (HTML)
+      if(type==='hr')     ins='\n<hr>\n'; // horizontale lijn (HTML)
       if(type==='table')  ins='\n| Kolom 1 | Kolom 2 |\n|---------|----------|\n| Cel 1   | Cel 2   |\n'; // tabel
       ta.value=v.slice(0,s)+ins+v.slice(e); // tekst invoegen
       ta.focus(); ta.selectionStart=ta.selectionEnd=s+ins.length; // cursor na invoeg
@@ -691,7 +724,20 @@
         (projDate   ?'<span>&#x1F4C5; <b>'+_fmtDate(projDate)+'</b></span>':'')+
         '<span>&#x1F4CB; <b>'+t+'</b> taken</span>'+
         '<span>&#x2705; <b>'+pct+'%</b> afgerond</span>';
+      // Kernboodschap tonen als aanwezig in mk_proj (uit marketing.md geladen)
+      var kbEl=$('info-kernboodschap');
+      if(kbEl) {
+        if(projKernboodschap) {
+          kbEl.innerHTML='&#x1F4AC; <b>Kernboodschap:</b> '+_esc(projKernboodschap)+' &middot; <b>Horizon:</b> 12 weken'; // kernboodschap + vaste horizon
+          kbEl.style.display='block'; // tonen
+        } else {
+          kbEl.style.display='none'; // verbergen als geen kernboodschap geladen
+        }
+      }
     }
+
+    // HTML escapen voor weergave van tekst uit MD
+    function _esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     // Datum formatteren: YYYY-MM-DD -> DD-MM-YYYY
     function _fmtDate(d) { if(!d) return ''; var p=d.split('-'); return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:d; }
@@ -1065,8 +1111,8 @@
       localStorage.setItem('mk_templates',  JSON.stringify(templates));   // templates opslaan
       _agSync(); // agenda bijwerken na elke save
     }
-    function _saveProjInfo() { localStorage.setItem('mk_proj', JSON.stringify({projName:projName,projVersion:projVersion,projDate:projDate})); }
-    function _loadProjInfo() { var p=JSON.parse(localStorage.getItem('mk_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; }
+    function _saveProjInfo() { localStorage.setItem('mk_proj', JSON.stringify({projName:projName,projVersion:projVersion,projDate:projDate,projKernboodschap:projKernboodschap})); }
+    function _loadProjInfo() { var p=JSON.parse(localStorage.getItem('mk_proj')||'{}'); projName=p.projName||''; projVersion=p.projVersion||''; projDate=p.projDate||''; projKernboodschap=p.projKernboodschap||''; }
 
     // MD naar HTML converter (voor preview)
     function _mdToHtml(t) {
@@ -1077,6 +1123,10 @@
         if(line.startsWith('|')){ inTable=true; if(inList){ html+='</ul>'; inList=false; } rows.push(line.split('|').map(function(c){ return c.trim(); }).filter(function(_,i,a){ return i>0&&i<a.length-1; })); return; }
         if(inTable) flush();
         if(!line.trim()){ if(inList){ html+='</ul>'; inList=false; } return; }
+        if(line.startsWith('### ')){ if(inList){ html+='</ul>'; inList=false; } html+='<h3>'+_inlineHtml(line.slice(4))+'</h3>'; return; } // ### h3
+        if(line.startsWith('## '))  { if(inList){ html+='</ul>'; inList=false; } html+='<h2>'+_inlineHtml(line.slice(3))+'</h2>'; return; } // ## h2
+        if(line.startsWith('# '))   { if(inList){ html+='</ul>'; inList=false; } html+='<h1>'+_inlineHtml(line.slice(2))+'</h1>'; return; } // # h1
+        if(line.trim()==='<hr>') { if(inList){ html+='</ul>'; inList=false; } html+='<hr>'; return; } // horizontale lijn
         if(line.startsWith('- ')){ if(!inList){ html+='<ul>'; inList=true; } html+='<li>'+_inlineHtml(line.slice(2))+'</li>'; return; }
         if(inList){ html+='</ul>'; inList=false; }
         if(line.startsWith('---')) return;
@@ -1091,7 +1141,9 @@
       return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
         .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>') // **bold**
         .replace(/_(.+?)_/g,'<em>$1</em>')               // _cursief_
-        .replace(/`([^`]+)`/g,'<code>$1</code>');         // `code`
+        .replace(/`([^`]+)`/g,'<code>$1</code>')         // `code`
+        .replace(/&lt;br&gt;/g,'<br>')                    // <br> toestaan als regeleinde
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>'); // [tekst](url)
     }
 
     // MD importeren
@@ -1114,6 +1166,9 @@
       if(h1){ var raw=h1.replace(/^#\s*/,'').trim(); var d=raw.indexOf('\u2014'); projName=d>-1?raw.slice(d+1).trim():raw; }
       var ver=lines.find(function(l){ return l.startsWith('> Versie:'); });
       if(ver){ var m=ver.match(/Versie:\s*([^\s·\u00b7]+)/); if(m&&m[1]&&m[1]!=='\u2014') projVersion=m[1]; }
+      // Kernboodschap lezen uit MD: regel die begint met '> Kernboodschap:'
+      var kb=lines.find(function(l){ return l.startsWith('> Kernboodschap:'); });
+      projKernboodschap = kb ? kb.replace(/^>\s*Kernboodschap:\s*/,'').trim() : ''; // leeg als niet aanwezig
       _saveProjInfo();
 
       for(var li=0;li<lines.length;li++) {
@@ -1159,15 +1214,33 @@
     }
 
     // Status mapping van MD naar JS
-    function _mapStatus(s){ if(!s) return 'Open'; if(s.includes('\u2705')) return 'Done'; if(s.includes('\u1F504')) return 'In Progress'; if(s.toLowerCase().includes('progress')) return 'In Progress'; if(s.toLowerCase().includes('review')) return 'Review'; if(s.includes('\u274C')) return 'Cancelled'; if(s.includes('\u1F52E')) return 'Future'; return 'Open'; }
-    // Prioriteit mapping van MD naar JS
-    function _mapPrio(s){ if(!s) return 'Medium'; if(s.includes('\uD83D\uDD34')) return 'High'; if(s.includes('\uD83D\uDFE1')) return 'Medium'; if(s.includes('\uD83D\uDFE2')) return 'Low'; if(s.toLowerCase().includes('critical')) return 'Critical'; return 'Medium'; }
+    function _mapStatus(s){
+      if(!s) return 'Open'; // geen waarde: standaard Open
+      var t=s.toLowerCase(); // case-insensitive matching op de Engelse statusnaam
+      if(t.includes('done'))     return 'Done';     // ✅ Done
+      if(t.includes('progress')) return 'In Progress'; // 🔄 In Progress
+      if(t.includes('review'))   return 'Review';   // 🔍 Review
+      if(t.includes('cancel'))   return 'Cancelled';// ❌ Cancelled
+      if(t.includes('future'))   return 'Future';   // 🔮 Future
+      return 'Open'; // 📋 Open of onbekend
+    }
+    // Prioriteit mapping van MD naar JS: matcht op de Engelse prioriteitsnaam (taal-onafhankelijk van emoji)
+    function _mapPrio(s){
+      if(!s) return 'Medium'; // geen waarde: standaard Medium
+      var t=s.toLowerCase(); // case-insensitive matching
+      if(t.includes('critical')) return 'Critical'; // 🔴 Critical
+      if(t.includes('high'))     return 'High';     // 🔴 High
+      if(t.includes('low'))      return 'Low';      // 🟢 Low
+      return 'Medium'; // 🟡 Medium of onbekend
+    }
 
     // MD exporteren: [TAKEN], [KANALEN], [TEMPLATES]
     function _exportMD() {
       var md='# MyFamTreeCollab \u2014 '+V(projName||'Marketing & Communicatieplan')+'\n';
       md+='## Bijgewerkt: '+(projDate?_fmtDate(projDate):new Date().toLocaleDateString('nl-BE'))+'\n\n';
-      md+='> Versie: '+(V(projVersion)||'\u2014')+' \u00b7 Project: MyFamTreeCollab \u00b7 Horizon: 12 weken\n\n---\n\n';
+      md+='> Versie: '+(V(projVersion)||'\u2014')+' \u00b7 Project: MyFamTreeCollab \u00b7 Horizon: 12 weken\n';
+      if(V(projKernboodschap)) md+='> Kernboodschap: '+V(projKernboodschap)+'\n'; // kernboodschap exporteren indien aanwezig
+      md+='\n---\n\n';
 
       // TAKEN
       md+='## [TAKEN]\n\n';
