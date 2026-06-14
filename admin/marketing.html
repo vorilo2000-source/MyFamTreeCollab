@@ -1,4 +1,4 @@
-<!-- ======================= admin/marketing.html v4.1.0 =======================
+<!-- ======================= admin/marketing.html v4.2.0 =======================
     Marketing & Communicatieplan — admin only
 
     Wijzigingen v3.0.0 (sessie 37):
@@ -27,6 +27,12 @@
      - Markdown/HTML toolbar uitgebreid: H1, H2, H3, <br>, <hr>, link bij omschrijving en templates
      - MD-preview ondersteunt nu # / ## / ### koppen, <br>, <hr> en [tekst](url) links
      - MD export bevat > Kernboodschap: regel indien aanwezig
+
+    Wijzigingen v4.2.0 (sessie 40):
+     - "Verwacht resultaat" veld verwijderd uit modal, data en MD-export (kolom Resultaat vervalt)
+     - Start/einddatum: type="date" -> type="datetime-local" (datum + tijd, 24h)
+     - Migratie: oude date-only waarden krijgen automatisch T00:00 bij bewerken
+     - _fmtDateTime() toont datum+tijd als DD-MM-YYYY HH:mm in kaart en lijst
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -397,8 +403,8 @@
         </div>
         <!-- Datums -->
         <div class="form-grid2">
-          <div><label class="form-label">Startdatum</label><input class="form-input" type="date" id="ft-startdate"/></div>
-          <div><label class="form-label">Einddatum</label><input class="form-input" type="date" id="ft-enddate"/></div>
+          <div><label class="form-label">Startdatum &amp; tijd</label><input class="form-input" type="datetime-local" id="ft-startdate"/></div>
+          <div><label class="form-label">Einddatum &amp; tijd</label><input class="form-input" type="datetime-local" id="ft-enddate"/></div>
         </div>
         <!-- Prioriteit en status: status bepaalt kleur badge in kaart/lijst -->
         <div class="form-grid2">
@@ -442,8 +448,6 @@
             <div class="md-preview" id="md-preview-desc" style="display:none"></div>
           </div>
         </div>
-        <!-- Verwacht resultaat -->
-        <div><label class="form-label">Verwacht resultaat</label><input class="form-input" type="text" id="ft-result" placeholder="Wat levert deze taak op?"/></div>
         <!-- Agenda checkbox: alleen voor koppeling met agenda.html via AgendaStore -->
         <label class="agenda-checkbox">
           <input type="checkbox" id="ft-pub"/>
@@ -742,6 +746,20 @@
     // Datum formatteren: YYYY-MM-DD -> DD-MM-YYYY
     function _fmtDate(d) { if(!d) return ''; var p=d.split('-'); return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:d; }
 
+    // Datetime-local waarde (YYYY-MM-DDTHH:mm) -> weergave DD-MM-YYYY HH:mm (24h)
+    function _fmtDateTime(d) {
+      if(!d) return '';
+      var parts=d.split('T'); // datum en tijd splitsen
+      var datePart=_fmtDate(parts[0]); // datum omdraaien naar DD-MM-YYYY
+      return parts[1] ? datePart+' '+parts[1] : datePart; // tijd toevoegen indien aanwezig
+    }
+
+    // Migratie: oude date-only waarden (YYYY-MM-DD, zonder tijd) aanvullen met T00:00 voor datetime-local input
+    function _toDatetimeLocal(d) {
+      if(!d) return ''; // geen waarde
+      return d.includes('T') ? d : d+'T00:00'; // tijd toevoegen indien nog niet aanwezig
+    }
+
     // Statistieken: taken per status
     function _renderStats() {
       var t=taken.length;
@@ -861,8 +879,8 @@
       html+='</div></div>';
       html+='<div class="card-title">'+i.title+'</div>';
       html+='<div class="card-dates">';
-      if(i.startdate) html+='&#x1F4C5; '+i.startdate; // startdatum
-      if(i.enddate&&i.enddate!==i.startdate) html+=' &rarr; '+i.enddate; // einddatum
+      if(i.startdate) html+='&#x1F4C5; '+_fmtDateTime(i.startdate); // startdatum + tijd
+      if(i.enddate&&i.enddate!==i.startdate) html+=' &rarr; '+_fmtDateTime(i.enddate); // einddatum + tijd
       // Agenda-indicator: toont of item in agenda.html zichtbaar is
       html+='<span class="card-agenda '+(pub?'yes':'no')+'">'+(pub?'&#x2713; In agenda':'&#x25CB; Concept')+'</span>';
       html+='</div>';
@@ -892,8 +910,8 @@
         html+='<td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+i.title+'</td>';
         html+='<td>'+V(i.phase)+'</td>';
         html+='<td>'+V(i.type)+'</td>';
-        html+='<td style="white-space:nowrap">'+V(i.startdate)+'</td>';
-        html+='<td style="white-space:nowrap">'+V(i.enddate)+'</td>';
+        html+='<td style="white-space:nowrap">'+_fmtDateTime(i.startdate)+'</td>';
+        html+='<td style="white-space:nowrap">'+_fmtDateTime(i.enddate)+'</td>';
         html+='<td>'+(pub?'&#x2705;':'&#x25CB;')+'</td>'; // agenda indicator
         html+='<td>'+tags.map(function(t){ return '<span class="tag" style="background:#e5e7eb;color:#374151">'+t+'</span>'; }).join(' ')+'</td>';
         html+='<td><span class="'+(P_TBL[i.priority]||'p-medium-tbl')+'">'+V(i.priority)+'</span></td>';
@@ -985,12 +1003,11 @@
         $('ft-assignee').value=item.assignee||'';
         $('ft-tags').value=item.tags||'';
         $('ft-description').value=item.description||''; // HTML-tags behouden als plain text
-        $('ft-result').value=item.ai||'';
-        $('ft-startdate').value=item.startdate||'';
-        $('ft-enddate').value=item.enddate||'';
+        $('ft-startdate').value=_toDatetimeLocal(item.startdate);
+        $('ft-enddate').value=_toDatetimeLocal(item.enddate);
         $('ft-pub').checked=item.gepubliceerd==='ja'; // agenda checkbox
       } else { // nieuwe taak: lege velden
-        ['ft-title','ft-assignee','ft-tags','ft-description','ft-result','ft-startdate','ft-enddate'].forEach(function(fid){ $(fid).value=''; });
+        ['ft-title','ft-assignee','ft-tags','ft-description','ft-startdate','ft-enddate'].forEach(function(fid){ $(fid).value=''; });
         $('ft-type').value='Facebook'; $('ft-priority').value='Medium'; $('ft-status').value='Open';
         $('ft-phase').value=''; $('ft-pub').checked=false; // agenda checkbox uit
         _updateAutoId(); // auto ID genereren
@@ -1011,7 +1028,6 @@
         priority:$('ft-priority').value, status:$('ft-status').value,
         assignee:$('ft-assignee').value.trim(), tags:$('ft-tags').value.trim(),
         description:$('ft-description').value.trim(), // HTML-tags opslaan als plain text
-        ai:$('ft-result').value.trim(),
         startdate:$('ft-startdate').value, enddate:$('ft-enddate').value,
         gepubliceerd:$('ft-pub').checked?'ja':'nee' // agenda-flag
       };
@@ -1195,8 +1211,8 @@
           if(!cells.length||cells[0]==='ID'||cells[0]==='Kanaal'||cells[0]==='Titel') continue;
 
           if(section==='taken'&&cells.length>=9) {
-            var id=cells[0],titel=cells[1],type=cells[2],start=cells[3],eind=cells[4],pub=cells[5],prio=cells[6],status=cells[7],assign=cells[8],tags=cells[9]||'',desc=cells[10]||'',result=cells[11]||'';
-            if(id&&titel){ if(!phases.includes(curPhase)&&curPhase) phases.push(curPhase); taken.push({id:id,title:titel,phase:curPhase,type:type||'Overig',startdate:start,enddate:eind,gepubliceerd:pub,priority:_mapPrio(prio),status:_mapStatus(status),assignee:assign,tags:tags,description:desc,ai:result}); }
+            var id=cells[0],titel=cells[1],type=cells[2],start=cells[3],eind=cells[4],pub=cells[5],prio=cells[6],status=cells[7],assign=cells[8],tags=cells[9]||'',desc=cells[10]||'';
+            if(id&&titel){ if(!phases.includes(curPhase)&&curPhase) phases.push(curPhase); taken.push({id:id,title:titel,phase:curPhase,type:type||'Overig',startdate:start,enddate:eind,gepubliceerd:pub,priority:_mapPrio(prio),status:_mapStatus(status),assignee:assign,tags:tags,description:desc}); }
           }
           if(section==='kanalen'&&cells.length>=4) {
             var naam=cells[0],taal=cells[1],freq=cells[2],toon=cells[3],doel=cells[4]||'',groepen=cells[5]||'',notities=cells[6]||'';
@@ -1250,12 +1266,12 @@
       allPhases.forEach(function(ph){
         if(!byPhase[ph]) return;
         md+='## '+ph+'\n\n';
-        md+='| ID | Titel | Type | Startdatum | Einddatum | Gepubliceerd | Prioriteit | Status | Toegewezen | Tags | Omschrijving | Resultaat |\n';
-        md+='|----|-------|------|------------|-----------|-------------|-----------|--------|------------|------|-------------|----------|\n';
+        md+='| ID | Titel | Type | Startdatum | Einddatum | Gepubliceerd | Prioriteit | Status | Toegewezen | Tags | Omschrijving |\n';
+        md+='|----|-------|------|------------|-----------|-------------|-----------|--------|------------|------|-------------|\n';
         byPhase[ph].forEach(function(i){
           var p={'Critical':'\uD83D\uDD34','High':'\uD83D\uDD34','Medium':'\uD83D\uDFE1','Low':'\uD83D\uDFE2'}[i.priority]||'\uD83D\uDFE1';
           var sIcon={'Open':'\uD83D\uDCCB','In Progress':'\uD83D\uDD04','Review':'\uD83D\uDD0D','Done':'\u2705','Cancelled':'\u274C','Future':'\uD83D\uDD2E'}[i.status]||'\uD83D\uDCCB';
-          md+='| '+V(i.id)+' | '+V(i.title)+' | '+V(i.type)+' | '+V(i.startdate)+' | '+V(i.enddate)+' | '+(i.gepubliceerd||'nee')+' | '+p+' '+V(i.priority)+' | '+sIcon+' '+V(i.status)+' | '+V(i.assignee)+' | '+V(i.tags)+' | '+V(i.description).replace(/\n/g,' ')+' | '+V(i.ai)+' |\n';
+          md+='| '+V(i.id)+' | '+V(i.title)+' | '+V(i.type)+' | '+V(i.startdate)+' | '+V(i.enddate)+' | '+(i.gepubliceerd||'nee')+' | '+p+' '+V(i.priority)+' | '+sIcon+' '+V(i.status)+' | '+V(i.assignee)+' | '+V(i.tags)+' | '+V(i.description).replace(/\n/g,' ')+' |\n';
         });
         md+='\n';
       });
