@@ -293,25 +293,35 @@
             <input class="form-input" type="text" id="f-tags" placeholder="bugfix, feature, admin"/>
           </div>
         </div>
-        <!-- Omschrijving: enige inhoudsveld, volledige markdown + HTML toolbar -->
+        <!-- Uitgevoerd -->
         <div>
-          <label class="form-label">Omschrijving <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
+          <label class="form-label">Uitgevoerd</label>
+          <textarea class="form-input ta-lg" id="f-done" rows="8" placeholder="- Item 1&#10;- Item 2"></textarea>
+        </div>
+        <!-- Niet uitgevoerd -->
+        <div>
+          <label class="form-label">Niet uitgevoerd</label>
+          <textarea class="form-input ta-lg" id="f-notdone" rows="8" placeholder="- Item 3"></textarea>
+        </div>
+        <!-- Notities -->
+        <div>
+          <label class="form-label">Notities <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-toolbar" id="toolbar-description">
-            <button type="button" data-target="f-description" data-wrap="**|**" title="Vet">B</button>
-            <button type="button" data-target="f-description" data-wrap="*|*" title="Cursief">I</button>
-            <button type="button" data-target="f-description" data-prefix="# "   title="Koptekst 1">H1</button>
-            <button type="button" data-target="f-description" data-prefix="## "  title="Koptekst 2">H2</button>
-            <button type="button" data-target="f-description" data-prefix="### " title="Koptekst 3">H3</button>
-            <button type="button" data-target="f-description" data-prefix="- " title="Lijst">&#x2022;</button>
-            <button type="button" data-target="f-description" data-table="1" title="Tabel invoegen">&#x22EE; Tabel</button>
-            <button type="button" data-target="f-description" data-wrap="`|`" title="Code">&lt;/&gt;</button>
-            <button type="button" data-target="f-description" data-link="1" title="Link">&#x1F517;</button>
-            <button type="button" data-target="f-description" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
-            <button type="button" data-target="f-description" data-insert="\n<hr>\n" title="Horizontale lijn">&lt;hr&gt;</button>
-            <button type="button" data-target="f-description" data-preview="1" title="Preview">&#x1F441;</button>
+            <button type="button" data-target="f-notes" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-notes" data-wrap="*|*" title="Cursief">I</button>
+            <button type="button" data-target="f-notes" data-prefix="# "   title="Koptekst 1">H1</button>
+            <button type="button" data-target="f-notes" data-prefix="## "  title="Koptekst 2">H2</button>
+            <button type="button" data-target="f-notes" data-prefix="### " title="Koptekst 3">H3</button>
+            <button type="button" data-target="f-notes" data-prefix="- " title="Lijst">&#x2022;</button>
+            <button type="button" data-target="f-notes" data-table="1" title="Tabel invoegen">&#x22EE; Tabel</button>
+            <button type="button" data-target="f-notes" data-wrap="`|`" title="Code">&lt;/&gt;</button>
+            <button type="button" data-target="f-notes" data-link="1" title="Link">&#x1F517;</button>
+            <button type="button" data-target="f-notes" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
+            <button type="button" data-target="f-notes" data-insert="\n<hr>\n" title="Horizontale lijn">&lt;hr&gt;</button>
+            <button type="button" data-target="f-notes" data-preview="1" title="Preview">&#x1F441;</button>
           </div>
-          <textarea class="form-input ta-lg" id="f-description" rows="12" placeholder="### Uitgevoerd&#10;- Item 1&#10;- Item 2&#10;&#10;### Niet uitgevoerd&#10;- Item 3&#10;&#10;### Versie-overzicht&#10;| Bestand | Van | Naar | Wijziging |&#10;|---------|-----|------|-----------|&#10;| `admin/projectlog.html` | v2.1.0 | v2.2.0 | Herschrijving |"></textarea>
-          <div class="log-md" id="preview-description" style="display:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:6px;background:#2a2a2a"></div>
+          <textarea class="form-input ta-lg" id="f-notes" rows="12" placeholder="### Versie-overzicht&#10;| Bestand | Van | Naar | Wijziging |&#10;|---------|-----|------|-----------|&#10;| `admin/projectlog.html` | v2.1.0 | v2.2.0 | Herschrijving |"></textarea>
+          <div class="log-md" id="preview-notes" style="display:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:6px;background:#2a2a2a"></div>
         </div>
         <!-- Agenda checkbox: alleen voor koppeling met agenda.html via AgendaStore -->
         <label class="agenda-checkbox">
