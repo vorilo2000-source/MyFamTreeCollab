@@ -1,4 +1,4 @@
-<!-- ======================= admin/projectlog.html v2.0.0 =======================
+<!-- ======================= admin/projectlog.html v2.1.0 =======================
     Project Log Editor — admin only
 
     Wijzigingen v1.0.0 (sessie 37):
@@ -23,6 +23,13 @@
      - AgendaStore.sync() na elke _save() zodat sessiedatums in agenda.html verschijnen
      - Markdown toolbar in notities-veld (bold, code, lijst, tabel)
      - Tags per sessie (zelfde structuur als backlog items)
+
+    Wijzigingen v2.1.0 (sessie 40):
+     - Textarea's vergroot voor leesbaarheid: standaard 180px, notities/uitgevoerd 240px
+     - Toolbar uitgebreid: H1, H2, H3, link, <br>, <hr>, preview (uitgevoerd/niet-uitgevoerd/notities)
+     - Toolbar handler ondersteunt data-insert, data-link en data-preview
+     - MD-preview ondersteunt # / ## / ### koppen, <br>, <hr> en [tekst](url) links
+     - Preview-staat wordt gereset bij openen van modal
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -706,6 +713,8 @@
       editId=id||null; // bewerkings-ID opslaan
       $('modal-title').textContent    = editId ? 'Sessie bewerken' : 'Sessie toevoegen'; // modal-titel
       $('btn-modal-save').textContent = editId ? 'Opslaan'         : 'Toevoegen'; // knop-label
+      $('preview-notes').style.display='none'; // preview verbergen
+      $('f-notes').style.display='block'; // textarea tonen
 
       if(editId) { // bestaande sessie: velden invullen
         var s=items.find(function(x){ return x.id===editId; }); // sessie opzoeken
