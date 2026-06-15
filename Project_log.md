@@ -1,5 +1,49 @@
 # MyFamTreeCollab — Project Log
 
+## Sessie 40 — Admin toolset: modal-standaardisatie, planner & agenda-uitbreiding
+
+**Datum:** 10-06-2026
+**Versie:** projectlog.html v2.2.0, marketing.html v4.2.0, backlog.html v5.4.0, js/agendaStore.js v1.1.0, admin/agenda.html v1.1.0
+
+### Uitgevoerd
+- CLAUDE.md uitgebreid met "Standaard Modal" sectie: vaste velden, agenda-checkbox patroon, textarea-groottes per veldlabel, volledige markdown/HTML toolbar-specificatie (B I H1 H2 H3 lijst tabel code link br hr preview), status-badge CSS+JS mapping — bron van waarheid voor alle admin-pagina's
+- admin/projectlog.html v2.0.0 → v2.2.0:
+  - v2.0.0: volledige herschrijving viewer → editor (board/lijst, modal, MD import/export, AgendaStore.sync())
+  - v2.1.0: textarea's vergroot, toolbar uitgebreid (H1-H3, link, `<br>`, `<hr>`, preview)
+  - v2.2.0: Uitgevoerd/Niet uitgevoerd/Notities samengevoegd tot 1 Omschrijving-veld (markdown+HTML, volledige toolbar), agenda checkbox toegevoegd, datum → datetime-local, datamodel naar description+gepubliceerd
+- admin/marketing.html v4.0.0 → v4.2.0:
+  - v4.0.0: kalender/KPI tabs verwijderd (centraal via agenda.html), agenda checkbox, status badges
+  - v4.1.0: bugfix _mapStatus/_mapPrio (kapotte unicode-escapes, MD-import faalde), kernboodschap dynamisch uit marketing.md (`> Kernboodschap:` regel, bewerkbaar via projectinfo-paneel)
+  - v4.2.0: "Verwacht resultaat" veld + kolom volledig verwijderd, start/einddatum → datetime-local
+- admin/backlog.html v5.3.2 → v5.4.0: 🔑 API key + AI suggestie volledig verwijderd (UI, data, MD), start/einddatum → datetime-local, omschrijving volledige toolbar + preview, agenda checkbox + "In agenda" stat, MD-export Agenda-kolom (backward compatible met oude 11-kolom bestanden)
+- js/agendaStore.js v1.0.0 → v1.1.0: bron 'projectlog' toegevoegd (pl_items, kleur amber), `requiresPublish`-filter zodat backlog/marketing/projectlog alleen met `gepubliceerd==='ja'` in agenda verschijnen, datetime-local velden gesplitst naar startdate/starttime + enddate/endtime
+- admin/agenda.html v1.0.0 → v1.1.0: nieuwe Planner-weergave (horizontale Gantt-achtige tijdlijn), periode-toggle Maand/Kwartaal/Jaar, rijen gegroepeerd per bron, statusicoon vóór titel in rij-labels en balken, navigatie volgt actieve periode
+- MARKETING.md herstructureerd: `> Kernboodschap:` regel toegevoegd, versie lowercase, `[KALENDER]`/`[KPI]` secties verwijderd (niet meer gebruikt sinds v4.0.0)
+- BACKLOG.md bijgewerkt: F10-020 t/m F10-025 toegevoegd, TD-012 (gedeelde modal-component — toekomstig, lage prioriteit)
+
+### Niet uitgevoerd (verschoven naar sessie 41)
+- handleiding-nl.html bijwerken — file-per-file aanpak afgesproken, volgt apart
+- admin/release-notes.html nieuw (Prioriteit 2, uit sessie 39)
+- admin/roadmap.html nieuw (Prioriteit 3, uit sessie 39)
+
+### Belangrijke les
+- Copilot corrumpeert HTML-tags in JS template strings/innerHTML. Regel vastgelegd in CLAUDE.md: grote bestanden met innerHTML/template strings altijd als download leveren, nooit via Copilot-instructie. Emoji's in JS-strings die in HTML terechtkomen: HTML entities gebruiken (bv. 📅 → `&#x1F4C5;`).
+
+### Versie-overzicht
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `admin/projectlog.html` | v1.1.0 | v2.2.0 | Editor-herschrijving + omschrijving-veld + agenda checkbox + datetime-local |
+| `admin/marketing.html` | v4.0.0 | v4.2.0 | Kalender/KPI weg, kernboodschap dynamisch, resultaat-veld weg, datetime-local |
+| `admin/backlog.html` | v5.3.2 | v5.4.0 | API key/AI weg, datetime-local, omschrijving toolbar, agenda checkbox |
+| `js/agendaStore.js` | v1.0.0 | v1.1.0 | Bron projectlog, requiresPublish-filter, datetime-splitsing |
+| `admin/agenda.html` | v1.0.0 | v1.1.0 | Planner-weergave (Maand/Kwartaal/Jaar), statusicoon |
+| `MARKETING.md` | — | v1.0.0 | Kernboodschap-regel, kalender/KPI secties verwijderd |
+| `CLAUDE.md` | — | — | Standaard Modal-sectie toegevoegd |
+| `BACKLOG.md` | v1.1.4 | v1.1.5 | F10-020 t/m F10-025, TD-012 toegevoegd |
+
+---
+
 ## Sessie 39 — Setup Claude Code & backlog.html fixes
 
 **Datum:** 09-06-2026
