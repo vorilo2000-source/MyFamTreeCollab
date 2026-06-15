@@ -805,21 +805,45 @@ var desc = phaseDescs[ph] || '';
       _buildPills('fp-tags',     allTags,    fTags,     {});
     }
 
-    // Pills opbouwen voor een filtergroep
-    function _buildPills(cid, opts, activeSet, icons) {
-      var el=$(cid);
-      el.innerHTML=opts.map(function(o){
-        return '<button class="filter-pill '+(activeSet.has(o)?'active':'')+'" data-val="'+o+'">'+(icons[o]?icons[o]+' ':'')+o+'</button>';
-      }).join('');
-      el.querySelectorAll('.filter-pill').forEach(function(btn){
-        btn.addEventListener('click', function(){
-          var v=btn.dataset.val;
-          if(activeSet.has(v)) activeSet.delete(v); else activeSet.add(v); // toggle
-          _renderFilterPills(); _renderTaken();
-        });
-      });
-    }
+    // ======================= FILTER PILLS BUILDER =======================
+// Bouwt filter pills en ondersteunt optioneel hover descriptions (phaseDescs)
+function _buildPills(cid, opts, activeSet, icons)
+{
+  var el=$(cid);
 
+  el.innerHTML=opts.map(function(o)
+  {
+    // ======================= OPTIONAL HOVER DESCRIPTION =======================
+    // Alleen tonen als phaseDescs bestaat en een match heeft
+    var desc = (typeof phaseDescs !== 'undefined' && phaseDescs[o])
+      ? phaseDescs[o]
+      : '';
+
+    return '<button class="filter-pill ' +
+           (activeSet.has(o) ? 'active' : '') +
+           '" data-val="'+o+'" title="'+desc+'">' +
+           (icons[o] ? icons[o]+' ' : '') +
+           o +
+           '</button>';
+  }).join('');
+
+  // ======================= CLICK HANDLER =======================
+  el.querySelectorAll('.filter-pill').forEach(function(btn)
+  {
+    btn.addEventListener('click', function()
+    {
+      var v=btn.dataset.val;
+
+      if(activeSet.has(v))
+        activeSet.delete(v);
+      else
+        activeSet.add(v);
+
+      _renderFilterPills();
+      _renderTaken();
+    });
+  });
+}
     // Gefilterde taken op basis van zoekterm en actieve filters
     function _filtered() {
       var q=search.toLowerCase();
