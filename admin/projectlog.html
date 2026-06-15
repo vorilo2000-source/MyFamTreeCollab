@@ -1,4 +1,4 @@
-<!-- ======================= admin/projectlog.html v2.1.0 =======================
+<!-- ======================= admin/projectlog.html v2.2.0 =======================
     Project Log Editor — admin only
 
     Wijzigingen v1.0.0 (sessie 37):
@@ -30,6 +30,17 @@
      - Toolbar handler ondersteunt data-insert, data-link en data-preview
      - MD-preview ondersteunt # / ## / ### koppen, <br>, <hr> en [tekst](url) links
      - Preview-staat wordt gereset bij openen van modal
+
+    Wijzigingen v2.2.0 (sessie 40):
+     - Velden Uitgevoerd/Niet uitgevoerd/Notities samengevoegd tot 1 veld "Omschrijving"
+       (markdown + HTML ondersteund, volledige toolbar)
+     - Agenda checkbox toegevoegd: "Publiceren in agenda — zichtbaar in agenda.html via AgendaStore"
+     - Datum -> datetime-local (datum + tijd, 24h)
+     - Datamodel: sessie kreeg description + gepubliceerd i.p.v. done/notdone/notes
+     - _parseMD: alle niet-metadata regels (### koppen, lijsten, tabellen) gaan naar description
+     - _exportMD schrijft **Agenda:** ja/nee regel
+     - "In agenda"-stat gebaseerd op gepubliceerd + datum
+     - Sessiekaart toont agenda-indicator (✓ In agenda)
 
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
@@ -153,6 +164,9 @@
     .session-card-left { display:flex; flex-direction:column; gap:3px; flex:1; }
     .session-card-title { font-family:var(--font-mono); font-size:0.88rem; font-weight:600; color:var(--accent); }
     .session-card-meta { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); }
+    /* ── Agenda-indicator ── */
+    .card-agenda { font-size:0.65rem; padding:1px 6px; border-radius:99px; border:1px solid; }
+    .card-agenda.yes { background:rgba(0,212,170,0.15); color:var(--accent); border-color:var(--accent); }
     .session-card-toggle { font-size:0.75rem; color:var(--text-muted); transition:transform .2s; flex-shrink:0; }
     .session-card.open .session-card-toggle { transform:rotate(180deg); } /* toggle pijl draaien bij open */
     .session-card-body { display:none; padding:0 18px 18px; border-top:1px solid var(--border); }
@@ -293,35 +307,25 @@
             <input class="form-input" type="text" id="f-tags" placeholder="bugfix, feature, admin"/>
           </div>
         </div>
-        <!-- Uitgevoerd -->
+        <!-- Omschrijving: enige inhoudsveld, volledige markdown + HTML toolbar -->
         <div>
-          <label class="form-label">Uitgevoerd</label>
-          <textarea class="form-input ta-lg" id="f-done" rows="8" placeholder="- Item 1&#10;- Item 2"></textarea>
-        </div>
-        <!-- Niet uitgevoerd -->
-        <div>
-          <label class="form-label">Niet uitgevoerd</label>
-          <textarea class="form-input ta-lg" id="f-notdone" rows="8" placeholder="- Item 3"></textarea>
-        </div>
-        <!-- Notities -->
-        <div>
-          <label class="form-label">Notities <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
+          <label class="form-label">Omschrijving <span style="opacity:.5;font-size:0.68rem">(markdown + HTML ondersteund)</span></label>
           <div class="md-toolbar" id="toolbar-description">
-            <button type="button" data-target="f-notes" data-wrap="**|**" title="Vet">B</button>
-            <button type="button" data-target="f-notes" data-wrap="*|*" title="Cursief">I</button>
-            <button type="button" data-target="f-notes" data-prefix="# "   title="Koptekst 1">H1</button>
-            <button type="button" data-target="f-notes" data-prefix="## "  title="Koptekst 2">H2</button>
-            <button type="button" data-target="f-notes" data-prefix="### " title="Koptekst 3">H3</button>
-            <button type="button" data-target="f-notes" data-prefix="- " title="Lijst">&#x2022;</button>
-            <button type="button" data-target="f-notes" data-table="1" title="Tabel invoegen">&#x22EE; Tabel</button>
-            <button type="button" data-target="f-notes" data-wrap="`|`" title="Code">&lt;/&gt;</button>
-            <button type="button" data-target="f-notes" data-link="1" title="Link">&#x1F517;</button>
-            <button type="button" data-target="f-notes" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
-            <button type="button" data-target="f-notes" data-insert="\n<hr>\n" title="Horizontale lijn">&lt;hr&gt;</button>
-            <button type="button" data-target="f-notes" data-preview="1" title="Preview">&#x1F441;</button>
+            <button type="button" data-target="f-description" data-wrap="**|**" title="Vet">B</button>
+            <button type="button" data-target="f-description" data-wrap="*|*" title="Cursief">I</button>
+            <button type="button" data-target="f-description" data-prefix="# "   title="Koptekst 1">H1</button>
+            <button type="button" data-target="f-description" data-prefix="## "  title="Koptekst 2">H2</button>
+            <button type="button" data-target="f-description" data-prefix="### " title="Koptekst 3">H3</button>
+            <button type="button" data-target="f-description" data-prefix="- " title="Lijst">&#x2022;</button>
+            <button type="button" data-target="f-description" data-table="1" title="Tabel invoegen">&#x22EE; Tabel</button>
+            <button type="button" data-target="f-description" data-wrap="`|`" title="Code">&lt;/&gt;</button>
+            <button type="button" data-target="f-description" data-link="1" title="Link">&#x1F517;</button>
+            <button type="button" data-target="f-description" data-insert="<br>\n" title="Regeleinde">&lt;br&gt;</button>
+            <button type="button" data-target="f-description" data-insert="\n<hr>\n" title="Horizontale lijn">&lt;hr&gt;</button>
+            <button type="button" data-target="f-description" data-preview="1" title="Preview">&#x1F441;</button>
           </div>
-          <textarea class="form-input ta-lg" id="f-notes" rows="12" placeholder="### Versie-overzicht&#10;| Bestand | Van | Naar | Wijziging |&#10;|---------|-----|------|-----------|&#10;| `admin/projectlog.html` | v2.1.0 | v2.2.0 | Herschrijving |"></textarea>
-          <div class="log-md" id="preview-notes" style="display:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:6px;background:#2a2a2a"></div>
+          <textarea class="form-input ta-lg" id="f-description" rows="12" placeholder="### Uitgevoerd&#10;- Item 1&#10;- Item 2&#10;&#10;### Niet uitgevoerd&#10;- Item 3&#10;&#10;### Versie-overzicht&#10;| Bestand | Van | Naar | Wijziging |&#10;|---------|-----|------|-----------|&#10;| `admin/projectlog.html` | v2.1.0 | v2.2.0 | Herschrijving |"></textarea>
+          <div class="log-md" id="preview-description" style="display:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:6px;background:#2a2a2a"></div>
         </div>
         <!-- Agenda checkbox: alleen voor koppeling met agenda.html via AgendaStore -->
         <label class="agenda-checkbox">
@@ -516,18 +520,11 @@
       for(var i=0;i<items.length;i++) { // itereer over alle sessies
         var s=items[i]; // huidige sessie
         md+='## Sessie '+s.nr+' \u2014 '+s.title+'\n\n'; // sessie-header
-        if(s.date)    md+='**Datum:** '+s.date+'\n'; // datum
+        if(s.date)    md+='**Datum:** '+s.date+'\n'; // datum (+tijd)
         if(s.version) md+='**Versie:** '+s.version+'\n'; // versie
+        md+='**Agenda:** '+(s.gepubliceerd==='ja'?'ja':'nee')+'\n'; // agenda-flag
         md+='\n'; // lege regel na metadata
-        if(s.done && s.done.trim()) { // uitgevoerd sectie
-          md+='### Uitgevoerd\n';
-          md+=s.done.trim().split('\n').map(function(l){ return l.startsWith('-')?l:'- '+l; }).join('\n')+'\n\n'; // - prefix
-        }
-        if(s.notdone && s.notdone.trim()) { // niet uitgevoerd sectie
-          md+='### Niet uitgevoerd\n';
-          md+=s.notdone.trim().split('\n').map(function(l){ return l.startsWith('-')?l:'- '+l; }).join('\n')+'\n\n'; // - prefix
-        }
-        if(s.notes && s.notes.trim()) md+=s.notes.trim()+'\n\n'; // notities ongewijzigd
+        if(s.description && s.description.trim()) md+=s.description.trim()+'\n\n'; // omschrijving (### Uitgevoerd, ### Niet uitgevoerd, etc. door gebruiker zelf geschreven)
         md+='---\n\n'; // sessie-scheiding
       }
 
@@ -555,11 +552,12 @@
     function _renderStats() {
       var total=items.length; // totaal
       var metDatum=items.filter(function(s){ return s.date&&s.date.trim(); }).length; // met datum
+      var inAgenda=items.filter(function(s){ return s.gepubliceerd==='ja'&&s.date&&s.date.trim(); }).length; // gepubliceerd + datum
       var metTags=items.filter(function(s){ return s.tags&&s.tags.trim(); }).length; // met tags
       $('stat-grid').innerHTML=
         '<div class="stat-card"><div class="stat-label">Sessies</div><div class="stat-value">'+total+'</div></div>'+
         '<div class="stat-card"><div class="stat-label">Met datum</div><div class="stat-value">'+metDatum+'</div></div>'+
-        '<div class="stat-card" title="Sessies met startdatum zichtbaar in agenda.html"><div class="stat-label">In agenda</div><div class="stat-value">'+metDatum+'</div></div>'+
+        '<div class="stat-card" title="Sessies gepubliceerd in agenda.html"><div class="stat-label">In agenda</div><div class="stat-value">'+inAgenda+'</div></div>'+
         '<div class="stat-card"><div class="stat-label">Met tags</div><div class="stat-value">'+metTags+'</div></div>';
     }
 
@@ -593,7 +591,7 @@
     function _filtered() {
       var q=search.toLowerCase(); // zoekterm
       return items.filter(function(s){
-        var mq=!q || (s.nr+s.title+s.version+s.tags+s.done+s.notdone+s.notes).toLowerCase().includes(q); // zoek in alle velden
+        var mq=!q || (s.nr+s.title+s.version+s.tags+s.description).toLowerCase().includes(q); // zoek in alle velden
         var mt=!fTags.size || (s.tags||'').split(',').map(function(t){return t.trim();}).some(function(t){ return fTags.has(t); }); // tag filter
         return mq && mt; // beide filters moeten matchen
       });
@@ -644,6 +642,7 @@
         html+='<div class="session-card-meta">'; // meta-informatie
         if(s.date) html+='&#x1F4C5; '+_esc(s.date); // datum
         if(s.version) html+=(s.date?' &middot; ':'')+_esc(s.version); // versie
+        if(s.gepubliceerd==='ja') html+=' <span class="card-agenda yes">&#x2713; In agenda</span>'; // agenda-indicator
         if(tags.length) html+=' '+tags.map(function(t){ return '<span class="tag">'+_esc(t)+'</span>'; }).join(' '); // tags
         html+='</div></div>'; // einde meta en linker blok
         html+='<div style="display:flex;gap:4px;flex-shrink:0">'; // actie knoppen
@@ -684,21 +683,7 @@
     // ── Sessie-body: markdown naar HTML ──
     function _renderBody(s) {
       var html=''; // HTML output
-      if(s.done && s.done.trim()) { // uitgevoerd sectie
-        html+='<h3>Uitgevoerd</h3><ul>';
-        s.done.trim().split('\n').filter(function(l){ return l.trim(); }).forEach(function(l){
-          html+='<li>'+_inline(l.replace(/^[-*]\s*/,''))+'</li>'; // list-prefix strippen
-        });
-        html+='</ul>';
-      }
-      if(s.notdone && s.notdone.trim()) { // niet uitgevoerd sectie
-        html+='<h3>Niet uitgevoerd</h3><ul>';
-        s.notdone.trim().split('\n').filter(function(l){ return l.trim(); }).forEach(function(l){
-          html+='<li>'+_inline(l.replace(/^[-*]\s*/,''))+'</li>';
-        });
-        html+='</ul>';
-      }
-      if(s.notes && s.notes.trim()) html+=_mdToHtml(s.notes); // notities via volledige MD parser
+      if(s.description && s.description.trim()) html+=_mdToHtml(s.description); // omschrijving via volledige MD parser
       return html || '<p style="color:var(--text-muted);font-size:0.8rem">Geen inhoud.</p>'; // lege staat
     }
 
@@ -707,30 +692,28 @@
       editId=id||null; // bewerkings-ID opslaan
       $('modal-title').textContent    = editId ? 'Sessie bewerken' : 'Sessie toevoegen'; // modal-titel
       $('btn-modal-save').textContent = editId ? 'Opslaan'         : 'Toevoegen'; // knop-label
-      $('preview-notes').style.display='none'; // preview verbergen
-      $('f-notes').style.display='block'; // textarea tonen
+      $('preview-description').style.display='none'; // preview verbergen
+      $('f-description').style.display='block'; // textarea tonen
 
       if(editId) { // bestaande sessie: velden invullen
         var s=items.find(function(x){ return x.id===editId; }); // sessie opzoeken
         if(!s) return; // sessie niet gevonden
         $('f-nr').value      = s.nr      || ''; // sessienummer
         $('f-title').value   = s.title   || ''; // titel
-        $('f-date').value    = _toInputDate(s.date); // datum naar input formaat
+        $('f-date').value    = _toInputDate(s.date); // datum naar input formaat (datetime-local)
         $('f-version').value = s.version || ''; // versie
         $('f-tags').value    = s.tags    || ''; // tags
-        $('f-done').value    = s.done    || ''; // uitgevoerd
-        $('f-notdone').value = s.notdone || ''; // niet uitgevoerd
-        $('f-notes').value   = s.notes   || ''; // notities
+        $('f-description').value = s.description || ''; // omschrijving
+        $('f-pub').checked   = s.gepubliceerd==='ja'; // agenda checkbox
       } else { // nieuwe sessie: automatisch volgend nummer
         var maxNr=items.reduce(function(m,s){ return Math.max(m,parseInt(s.nr)||0); },0); // hoogste nummer
         $('f-nr').value      = maxNr+1; // volgend sessienummer
         $('f-title').value   = ''; // lege titel
-        $('f-date').value    = new Date().toISOString().slice(0,10); // vandaag
+        $('f-date').value    = new Date().toISOString().slice(0,16); // vandaag + huidige tijd (datetime-local)
         $('f-version').value = ''; // lege versie
         $('f-tags').value    = ''; // lege tags
-        $('f-done').value    = ''; // leeg
-        $('f-notdone').value = ''; // leeg
-        $('f-notes').value   = ''; // leeg
+        $('f-description').value = ''; // leeg
+        $('f-pub').checked   = false; // agenda checkbox uit
       }
       $('modal').classList.add('open'); // modal tonen
       $('f-title').focus(); // focus op titelveld
@@ -746,12 +729,11 @@
         id:      editId || 'PL-'+Date.now(), // bestaand ID of nieuw timestamp-ID
         nr:      $('f-nr').value.trim(), // sessienummer
         title:   title, // titel
-        date:    _fromInputDate($('f-date').value), // datum naar weergave-formaat
+        date:    _fromInputDate($('f-date').value), // datum+tijd naar weergave-formaat
         version: $('f-version').value.trim(), // versie
         tags:    $('f-tags').value.trim(), // tags
-        done:    $('f-done').value.trim(), // uitgevoerd
-        notdone: $('f-notdone').value.trim(), // niet uitgevoerd
-        notes:   $('f-notes').value.trim() // notities
+        description: $('f-description').value.trim(), // omschrijving
+        gepubliceerd: $('f-pub').checked?'ja':'nee' // agenda-flag
       };
       if(editId) { // bestaande sessie overschrijven
         items=items.map(function(x){ return x.id===editId?item:x; });
@@ -786,19 +768,23 @@
     }
 
     // ── Datum helpers ──
-    function _toInputDate(d) { // DD-MM-YYYY of YYYY-MM-DD -> YYYY-MM-DD voor input[type=date]
+    function _toInputDate(d) { // DD-MM-YYYY [HH:mm] of YYYY-MM-DD -> YYYY-MM-DDTHH:mm voor datetime-local input
       if(!d) return '';
-      if(d.includes('-') && d.length===10) {
-        var p=d.split('-');
-        if(p[0].length===4) return d; // al YYYY-MM-DD
-        return p[2]+'-'+p[1]+'-'+p[0]; // omdraaien
+      var parts=d.split(' '); // datum en tijd splitsen op spatie
+      var datePart=parts[0], timePart=parts[1]||'00:00'; // tijd standaard 00:00 als ontbrekend
+      if(datePart.includes('-')) {
+        var p=datePart.split('-');
+        if(p[0].length===4) return datePart+'T'+timePart; // al YYYY-MM-DD
+        return p[2]+'-'+p[1]+'-'+p[0]+'T'+timePart; // DD-MM-YYYY -> YYYY-MM-DD
       }
       return d;
     }
-    function _fromInputDate(d) { // YYYY-MM-DD -> DD-MM-YYYY voor weergave en export
+    function _fromInputDate(d) { // YYYY-MM-DDTHH:mm -> DD-MM-YYYY HH:mm voor weergave en export
       if(!d) return '';
-      var p=d.split('-');
-      return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : d; // omdraaien
+      var parts=d.split('T'); // datum en tijd splitsen
+      var p=parts[0].split('-'); // datumdelen
+      var datePart = p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : parts[0]; // omdraaien naar DD-MM-YYYY
+      return parts[1] ? datePart+' '+parts[1] : datePart; // tijd toevoegen indien aanwezig
     }
 
     // ── MD naar HTML converter (voor notities-veld) ──
