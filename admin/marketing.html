@@ -1171,65 +1171,92 @@
       reader.readAsText(file);
     }
 
-    // MD parser: verwerkt [TAKEN], [KANALEN], [TEMPLATES] secties
-    function _parseMD(text) {
-      taken=[]; phases=[]; phaseDescs={}; kanalen=[]; templates=[];
-      var lines=text.split('\n');
-      var section='', curPhase='', tplBuf=[], tplTitle='', tplKanaal='', inTpl=false;
+// MD parser: verwerkt [TAKEN], [KANALEN], [TEMPLATES] secties
+function _parseMD(text)
+{
+  taken=[]; phases=[]; phaseDescs={}; kanalen=[]; templates=[];
+  var lines=text.split('\n');
+  var section='', curPhase='', tplBuf=[], tplTitle='', tplKanaal='Overig', inTpl=false;
 
-      // Projectinfo uit header
-      var h1=lines.find(function(l){ return l.startsWith('# '); });
-      if(h1){ var raw=h1.replace(/^#\s*/,'').trim(); var d=raw.indexOf('\u2014'); projName=d>-1?raw.slice(d+1).trim():raw; }
-      var ver=lines.find(function(l){ return l.startsWith('> Versie:'); });
-      if(ver){ var m=ver.match(/Versie:\s*([^\s·\u00b7]+)/); if(m&&m[1]&&m[1]!=='\u2014') projVersion=m[1]; }
-      // Kernboodschap lezen uit MD: regel die begint met '> Kernboodschap:'
-      var kb=lines.find(function(l){ return l.startsWith('> Kernboodschap:'); });
-      projKernboodschap = kb ? kb.replace(/^>\s*Kernboodschap:\s*/,'').trim() : ''; // leeg als niet aanwezig
-      _saveProjInfo();
+  // Projectinfo uit header
+  var h1=lines.find(function(l){ return l.trim().startsWith('# '); });
+  if(h1){
+    var raw=h1.replace(/^#\s*/,'').trim();
+    var m=raw.match(/[-—]\s*(.+)$/);
+    projName=m?m[1].trim():raw;
+  }
 
-      for(var li=0;li<lines.length;li++) {
-        var line=lines[li];
-        if(line.match(/^\[TAKEN\]$/))     { section='taken';     continue; }
-        if(line.match(/^\[KANALEN\]$/))   { section='kanalen';   continue; }
-        if(line.match(/^\[TEMPLATES\]$/)) { section='templates'; continue; }
-        // KPI en KALENDER secties overslaan (verwijderd in v4.0.0)
-        if(line.match(/^\[KPI\]$/))       { section='skip';      continue; }
-        if(line.match(/^\[KALENDER\]$/))  { section='skip';      continue; }
-        if(section==='skip') continue;
+  var ver=lines.find(function(l){ return l.trim().startsWith('> Versie:'); });
+  if(ver){
+    var m=ver.match(/Versie:\s*([^\s·]+)/);
+    if(m) projVersion=m[1];
+  }
 
-        // Templates: blokken per ###
-        if(section==='templates') {
-          if(line.startsWith('### ')){ if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()}); tplTitle=line.replace(/^###\s*/,'').trim(); tplKanaal='Overig'; tplBuf=[]; inTpl=true; continue; }
-          if(inTpl&&line.startsWith('---')&&tplTitle){ templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()}); tplTitle=''; tplBuf=[]; inTpl=false; continue; }
-          if(inTpl) tplBuf.push(line);
-          continue;
-        }
+  var dt=lines.find(function(l){ return l.trim().startsWith('## Bijgewerkt:'); });
+  if(dt) projDate=dt.replace(/^##\s*Bijgewerkt:\s*/,'').trim();
 
-        // Tabelrijen verwerken
-        if(line.startsWith('|')&&!line.includes('---')) {
-          var cells=line.split('|').map(function(c){ return c.trim(); }).filter(function(_,i,a){ return i>0&&i<a.length-1; });
-          if(!cells.length||cells[0]==='ID'||cells[0]==='Kanaal'||cells[0]==='Titel') continue;
+  var kb=lines.find(function(l){ return l.trim().startsWith('> Kernboodschap:'); });
+  projKernboodschap=kb?kb.replace(/^>\s*Kernboodschap:\s*/,'').trim():'';
 
-          if(section==='taken'&&cells.length>=9) {
-            var id=cells[0],titel=cells[1],type=cells[2],start=cells[3],eind=cells[4],pub=cells[5],prio=cells[6],status=cells[7],assign=cells[8],tags=cells[9]||'',desc=cells[10]||'';
-            if(id&&titel){ if(!phases.includes(curPhase)&&curPhase) phases.push(curPhase); taken.push({id:id,title:titel,phase:curPhase,type:type||'Overig',startdate:start,enddate:eind,gepubliceerd:pub,priority:_mapPrio(prio),status:_mapStatus(status),assignee:assign,tags:tags,description:desc}); }
-          }
-          if(section==='kanalen'&&cells.length>=4) {
-            var naam=cells[0],taal=cells[1],freq=cells[2],toon=cells[3],doel=cells[4]||'',groepen=cells[5]||'',notities=cells[6]||'';
-            if(naam) kanalen.push({naam:naam,taal:taal,freq:freq,toon:toon,doel:doel,groepen:groepen,notities:notities});
-          }
-          continue;
-        }
+  _saveProjInfo();
 
-        // Fase koptekst binnen TAKEN
-        if(section==='taken'&&line.startsWith('## ')&&!line.includes('[')) curPhase=line.replace(/^##\s*/,'').trim();
+  for(var li=0;li<lines.length;li++){
+    var line=lines[li].trim();
+
+    if(/^##\s*\[TAKEN\]$/i.test(line)){ section='taken'; continue; }
+    if(/^##\s*\[KANALEN\]$/i.test(line)){ section='kanalen'; continue; }
+    if(/^##\s*\[TEMPLATES\]$/i.test(line)){ section='templates'; continue; }
+    if(/^##\s*\[KPI\]$/i.test(line) || /^##\s*\[KALENDER\]$/i.test(line)){ section='skip'; continue; }
+    if(section==='skip') continue;
+
+    // Templates
+    if(section==='templates'){
+      if(line.startsWith('### ')){
+        if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
+        tplTitle=line.replace(/^###\s*/,'').trim();
+        tplKanaal='Overig'; tplBuf=[]; inTpl=true;
+        continue;
       }
-      // Laatste template toevoegen
-      if(inTpl&&tplTitle) templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
-      _saveAll();
+      if(inTpl&&line==='---'){
+        templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
+        tplTitle=''; tplBuf=[]; inTpl=false;
+        continue;
+      }
+      if(inTpl) tplBuf.push(line);
+      continue;
     }
 
-    // Status mapping van MD naar JS
+    // Tabellen
+    if(line.startsWith('|')&&!line.includes('---')){
+      var c=line.split('|').map(function(x){return x.trim();}).filter(function(_,i,a){return i>0&&i<a.length-1;});
+      if(!c.length||c[0]==='ID'||c[0]==='Kanaal'||c[0]==='Titel') continue;
+
+      if(section==='taken'&&c.length>=9){
+        var id=c[0],titel=c[1],type=c[2],start=c[3],eind=c[4],pub=c[5],prio=c[6],status=c[7],assign=c[8],tags=c[9]||'',desc=c[10]||'';
+        if(id&&titel){
+          if(!phases.includes(curPhase)&&curPhase) phases.push(curPhase);
+          taken.push({id:id,title:titel,phase:curPhase,type:type||'Overig',startdate:start,enddate:eind,gepubliceerd:pub,priority:_mapPrio(prio),status:_mapStatus(status),assignee:assign,tags:tags,description:desc});
+        }
+      }
+
+      if(section==='kanalen'&&c.length>=4){
+        kanalen.push({naam:c[0],taal:c[1],freq:c[2],toon:c[3],doel:c[4]||'',groepen:c[5]||'',notities:c[6]||''});
+      }
+      continue;
+    }
+
+    // Fase
+    if(section==='taken'&&line.startsWith('## ')&&!line.includes('['))
+      curPhase=line.replace(/^##\s*/,'').trim();
+  }
+
+  if(inTpl&&tplTitle)
+    templates.push({titel:tplTitle,kanaal:tplKanaal,tekst:tplBuf.join('\n').trim()});
+
+  _saveAll();
+}
+
+      // Status mapping van MD naar JS
     function _mapStatus(s){
       if(!s) return 'Open'; // geen waarde: standaard Open
       var t=s.toLowerCase(); // case-insensitive matching op de Engelse statusnaam
