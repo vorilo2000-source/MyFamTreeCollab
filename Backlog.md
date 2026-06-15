@@ -1,7 +1,7 @@
-# BACKLOG.md — Backlog_MyFamTreeCollab
+Backlog_MyFamTreeCollab
 ## Bijgewerkt: 10/6/2026
 
-> Versie: v1.1.4 · 114 item
+> Versie: v1.1.5 · 120 items
 
 ## [BACKLOG]
 
@@ -149,6 +149,12 @@
 | F10-017 | sessie, 38 | agenda.html | Centrale agenda v1.1.0 — maand/week/dag, kleurcodering per bron, filter op bron+status+zoek, standalone events met herhaling, .ics export + import, conflict modal | | Feature | 2026-06-08 | 2026-06-08 | | 🔴 High | ✅ Done |
 | F10-018 | sessie, 38 | backlog.html | v5.2.0 → v5.3.0 — kalender en KPI tabs verwijderd, agendaStore.js geladen, AgendaStore.sync() na elke _save(), "In agenda" stat-card, 📅 indicator | | Improvement | 2026-06-08 | 2026-06-08 | | 🔴 High | ✅ Done |
 | F10-019 | sessie, 38 | backlog.html | v5.1.0 → v5.2.0 — tabs Backlog/Kalender/KPI's, kalender maand/week/dag, items als blok start-eind, KPI modal met naam+beschrijving tooltip+metriek-type+maand/kwartaal/jaar | | Feature | 2026-06-08 | 2026-06-08 | | 🟡 Medium | ✅ Done |
+| F10-020 | sessie, 40 | projectlog.html | v2.0.0 → v2.2.0 — herschrijving viewer naar editor (board/lijst, modal, MD import/export); v2.2.0: velden Uitgevoerd/Niet uitgevoerd/Notities samengevoegd tot 1 omschrijving-veld (markdown+HTML, volledige toolbar), agenda checkbox, datum → datetime-local | | Feature | 2026-06-10 | 2026-06-10 | | 🔴 High | ✅ Done |
+| F10-021 | sessie, 40 | marketing.html | v4.0.0 → v4.2.0 — kalender/KPI tabs verwijderd (centraal via agenda.html), agenda checkbox, status badges, kernboodschap dynamisch uit marketing.md; v4.2.0: "Verwacht resultaat" veld verwijderd, start/einddatum → datetime-local | | Improvement | 2026-06-10 | 2026-06-10 | | 🟡 Medium | ✅ Done |
+| F10-022 | sessie, 40 | backlog.html | v5.3.2 → v5.4.0 — 🔑 API key + AI suggestie volledig verwijderd, start/einddatum → datetime-local, omschrijving volledige toolbar + preview, agenda checkbox + "In agenda" stat, MD-export Agenda-kolom (backward compatible) | | Improvement | 2026-06-10 | 2026-06-10 | | 🔴 High | ✅ Done |
+| F10-023 | sessie, 40 | agendaStore.js | v1.0.0 → v1.1.0 — bron 'projectlog' toegevoegd (pl_items), requiresPublish-filter (alleen gepubliceerd='ja' zichtbaar in agenda), datetime-local velden gesplitst naar startdate/starttime + enddate/endtime | | Feature | 2026-06-10 | 2026-06-10 | | 🔴 High | ✅ Done |
+| F10-024 | sessie, 40 | agenda.html | v1.0.0 → v1.1.0 — nieuwe Planner-weergave (horizontale Gantt-achtige tijdlijn) met periode-toggle Maand/Kwartaal/Jaar, rijen per bron, statusicoon vóór titel in rij-labels en balken | | Feature | 2026-06-10 | 2026-06-10 | | 🟡 Medium | ✅ Done |
+| F10-025 | sessie, 40 | CLAUDE.md | Standaard Modal-sectie toegevoegd: vaste velden, agenda-checkbox patroon, textarea-groottes per veldlabel, volledige MD/HTML toolbar-specificatie, status-badge CSS+JS mapping — bron van waarheid voor alle admin-pagina's | | Description | 2026-06-10 | 2026-06-10 | | 🟡 Medium | ✅ Done |
 
 ## Fase A — Account & donaties
 
@@ -179,6 +185,7 @@
 | TD-008 |  | async/await mismatch | async/await mismatch — call-sites van storage.add() controleren |  | Tech Debt |  |  |  | 🟡 Medium | 📋 Open |
 | TD-009 |  | topbar.j | `lang-link` handlers in `topbar.js` — vervangen door i18n.js, handlers verwijderen |  | Tech Debt |  |  |  | 🟡 Medium | ✅ Done |
 | TD-011 |  | template.html | Import-parser leest rij 1 als header — moet rij 2 lezen na template.html me |  | Tech Debt |  |  |  | 🔴 High | ✅ Done |
+| TD-012 | sessie, 40 | Gedeelde modal-component | Onderzoek: 1 gedeelde modal-component (js/modalComponent.js) voor backlog/marketing/projectlog/etc, configuratie-gedreven (velden-array per pagina). Voordeel: centrale CSS/toolbar/badges. Nadeel: grote refactor, hoog risico. Voorlopig: CLAUDE.md als bron van waarheid (kopiëren i.p.v. shared module) |  | Tech Debt |  |  |  | 🟢 Low | 📋 Open |
 
 ## Supabase — Action, task & backlog
 
