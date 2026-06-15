@@ -1,4 +1,4 @@
-<!-- ======================= admin/agenda.html v1.0.0 =======================
+<!-- ======================= admin/agenda.html v1.1.0 =======================
     Centrale Agenda — admin only
 
     Wijzigingen v1.0.0 (sessie 38):
@@ -11,10 +11,24 @@
      - Filter op bron, status, zoekterm
      - localStorage: ag_events (standalone), ag_cache (bron-items via agendaStore)
 
+    Wijzigingen v1.1.0 (sessie 40):
+     - Nieuwe 4e weergave: Planner (horizontale Gantt-achtige tijdlijn)
+     - Planner periode-toggle: Maand / Kwartaal / Jaar
+       - Maand: dagkolommen voor de huidige maand
+       - Kwartaal: dagkolommen voor 3 maanden, smaller
+       - Jaar: 12 maandkolommen (fractionele balkpositie)
+     - Planner groepeert items per bron (backlog/projectlog/marketing/...),
+       balken tonen titel + statusicoon, geclipt aan zichtbare periode
+     - Statusicoon (S_ICON) nu ook voor de titel in planner rij-labels en balken
+     - Navigatie (‹ Vandaag ›) volgt de actieve planner-periode
+     - Items zonder "Publiceren in agenda" (gepubliceerd=nee) worden al
+       gefilterd door agendaStore.js v1.1.0 (requiresPublish), dus ook
+       niet zichtbaar in de planner
+
     Afhankelijkheden:
      - ../js/utils.js · ../js/auth.js
      - /MyFamTreeCollab/js/adminGuard.js · /MyFamTreeCollab/js/siteAnalytics.js
-     - ../js/agendaStore.js
+     - ../js/agendaStore.js (v1.1.0+ vereist voor projectlog-bron en requiresPublish)
      - ../js/topbar.js (via fetch)
     ======================================================================= -->
 <!DOCTYPE html>
@@ -408,6 +422,7 @@
 
     // ── State ──
     let calView='month', calDate=new Date();
+    let plannerPeriod='maand'; // 'maand' | 'kwartaal' | 'jaar' — alleen relevant bij calView==='planner'
     let allItems=[];                          // gecombineerd: bron-items + standalone
     let fBron=new Set(), fStatus=new Set();   // actieve filters (leeg = alles tonen)
     let search='';
@@ -457,11 +472,22 @@
       $('cal-today').addEventListener('click', ()=>{ calDate=new Date(); _renderCal(); _updateMeta(); });
 
       // View toggle (maand/week/dag/planner)
-      document.querySelectorAll('.view-toggle button').forEach(b=>{
+      document.querySelectorAll('.view-toggle button[data-view]').forEach(b=>{
         b.addEventListener('click', ()=>{
-          document.querySelectorAll('.view-toggle button').forEach(x=>x.classList.remove('active'));
+          document.querySelectorAll('.view-toggle button[data-view]').forEach(x=>x.classList.remove('active'));
           b.classList.add('active');
           calView=b.dataset.view;
+          $('planner-period-toggle').style.display = calView==='planner' ? 'flex' : 'none'; // periode-toggle alleen bij planner
+          _renderCal();
+        });
+      });
+
+      // Planner periode-toggle (Maand/Kwartaal/Jaar)
+      document.querySelectorAll('#planner-period-toggle button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          document.querySelectorAll('#planner-period-toggle button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          plannerPeriod=b.dataset.period;
           _renderCal();
         });
       });
@@ -741,22 +767,38 @@
       });
     }
 
-    // ── Plannerweergave: horizontale Gantt-achtige tijdlijn (4 weken, rijen per bron) ──
+    // ── Plannerweergave: horizontale Gantt-achtige tijdlijn (maand/kwartaal/jaar, rijen per bron) ──
     function _renderPlanner() {
       const filtered=_filtered();
-      // Planner-start: maandag van de week van calDate; 28 dagen (4 weken)
-      const start=_getMonday(calDate);
-      const days=[];
-      for(let i=0;i<28;i++) { const d=new Date(start); d.setDate(start.getDate()+i); days.push(d); }
-      const rangeStartDs=_ds(days[0]), rangeEndDs=_ds(days[27]);
+      const y=calDate.getFullYear(), m=calDate.getMonth();
+      let cols=[], unit='day', rangeStartDs, rangeEndDs, colWidth;
 
-      // Titel: bereik weergeven, bv. "9 jun – 6 jul 2026"
-      const f=days[0], l=days[27];
-      $('cal-title').textContent = f.getFullYear()===l.getFullYear()
-        ? `${f.getDate()} ${MONTHS_SHORT[f.getMonth()]} \u2013 ${l.getDate()} ${MONTHS_SHORT[l.getMonth()]} ${l.getFullYear()}`
-        : `${f.getDate()} ${MONTHS_SHORT[f.getMonth()]} ${f.getFullYear()} \u2013 ${l.getDate()} ${MONTHS_SHORT[l.getMonth()]} ${l.getFullYear()}`;
+      if(plannerPeriod==='maand') {
+        // Alle dagen van de huidige maand
+        const last=new Date(y,m+1,0);
+        for(let d=1;d<=last.getDate();d++) cols.push(new Date(y,m,d));
+        unit='day'; colWidth=34;
+        $('cal-title').textContent=`${MONTHS[m]} ${y}`;
+      } else if(plannerPeriod==='kwartaal') {
+        // Alle dagen van het kwartaal (3 maanden) waarin calDate valt
+        const qStart=Math.floor(m/3)*3;
+        for(let mm=qStart; mm<qStart+3; mm++) {
+          const last=new Date(y,mm+1,0);
+          for(let d=1;d<=last.getDate();d++) cols.push(new Date(y,mm,d));
+        }
+        unit='day'; colWidth=12;
+        $('cal-title').textContent=`Q${Math.floor(m/3)+1} ${y} \u2014 ${MONTHS[qStart]}\u2013${MONTHS[qStart+2]}`;
+      } else {
+        // Jaar: 12 maand-kolommen (grovere weergave)
+        for(let mm=0;mm<12;mm++) cols.push(new Date(y,mm,1));
+        unit='month'; colWidth=70;
+        $('cal-title').textContent=`${y}`;
+      }
+      const numCols=cols.length;
+      rangeStartDs = unit==='day' ? _ds(cols[0]) : `${y}-01-01`;
+      rangeEndDs   = unit==='day' ? _ds(cols[numCols-1]) : `${y}-12-31`;
 
-      // Items die overlappen met het 28-dagen bereik en een geldige periode hebben
+      // Items die overlappen met het zichtbare bereik en een geldige periode hebben
       const inRange=filtered.filter(i=>{
         const eind=i.enddate||i.startdate;
         return i.startdate && eind>=rangeStartDs && i.startdate<=rangeEndDs;
@@ -775,16 +817,23 @@
         return (ia===-1?99:ia)-(ib===-1?99:ib);
       });
 
-      let html=`<div class="planner-wrap"><div class="planner-grid">`;
-      // Header rij: lege hoek + 28 dag-headers
+      let html=`<div class="planner-wrap"><div class="planner-grid" style="grid-template-columns:170px repeat(${numCols},minmax(${colWidth}px,1fr))">`;
+      // Header rij: lege hoek + dag/maand-headers
       html+=`<div class="planner-corner"></div>`;
-      days.forEach(d=>{
-        const ds=_ds(d);
-        const isToday=ds===_today();
-        const isWeekend=d.getDay()===0||d.getDay()===6;
-        html+=`<div class="planner-day-header ${isWeekend?'weekend':''} ${isToday?'today':''}">
-          ${DAYS[(d.getDay()+6)%7]}<span class="pd-num">${d.getDate()}</span>
-        </div>`;
+      cols.forEach(d=>{
+        if(unit==='day') {
+          const ds=_ds(d);
+          const isToday=ds===_today();
+          const isWeekend=d.getDay()===0||d.getDay()===6;
+          // Bij kwartaal (smalle kolommen): geen weekdag-letter, alleen dagnummer
+          html+=`<div class="planner-day-header ${isWeekend?'weekend':''} ${isToday?'today':''}">
+            ${plannerPeriod==='maand'?DAYS[(d.getDay()+6)%7]:''}<span class="pd-num">${d.getDate()}</span>
+          </div>`;
+        } else {
+          // Maand-kolom (jaarweergave)
+          const isCurMonth=d.getFullYear()===new Date().getFullYear() && d.getMonth()===new Date().getMonth();
+          html+=`<div class="planner-day-header ${isCurMonth?'today':''}"><span class="pd-num">${MONTHS_SHORT[d.getMonth()]}</span></div>`;
+        }
       });
 
       // Per bron: header-rij + item-rijen
@@ -794,21 +843,33 @@
         const kleur=items[0].kleur||'#9ca3af';
         html+=`<div class="planner-bron-header"><span class="pill-dot" style="background:${kleur}"></span>${label} <span style="opacity:.5">(${items.length})</span></div>`;
         items.forEach(i=>{
-          // Balk clippen aan zichtbaar bereik
           const itemEnd=i.enddate||i.startdate;
-          const barStart=i.startdate<rangeStartDs?rangeStartDs:i.startdate;
-          const barEnd  =itemEnd>rangeEndDs?rangeEndDs:itemEnd;
-          const offsetDays=_daysBetween(rangeStartDs, barStart);
-          const spanDays=_daysBetween(barStart, barEnd)+1;
-          const leftPct=(offsetDays/28*100);
-          const widthPct=(spanDays/28*100);
+          const icon=S_ICON[i.status]||''; // statusicoon vóór de titel
           const isDone=i.status==='Done', isCancelled=i.status==='Cancelled';
-          html+=`<div class="planner-row-label" data-ev-id="${i.id}" title="${i.titel}">${i.titel}</div>`;
+          let leftPct, widthPct;
+
+          if(unit==='day') {
+            // Balk clippen aan zichtbaar bereik, positie in dagen
+            const barStart=i.startdate<rangeStartDs?rangeStartDs:i.startdate;
+            const barEnd  =itemEnd>rangeEndDs?rangeEndDs:itemEnd;
+            const offsetDays=_daysBetween(rangeStartDs, barStart);
+            const spanDays=_daysBetween(barStart, barEnd)+1;
+            leftPct=(offsetDays/numCols*100);
+            widthPct=(spanDays/numCols*100);
+          } else {
+            // Jaarweergave: fractionele maand-positie, geclipt op het jaar
+            const startOff=i.startdate<rangeStartDs?0:_monthOffset(i.startdate);
+            const endOff  =itemEnd>rangeEndDs?12:_monthOffset(itemEnd)+_monthFrac(itemEnd);
+            leftPct=(startOff/12*100);
+            widthPct=Math.max((endOff-startOff)/12*100, 1.5); // minimale breedte voor zichtbaarheid
+          }
+
+          html+=`<div class="planner-row-label" data-ev-id="${i.id}" title="${i.titel}">${icon} ${i.titel}</div>`;
           html+=`<div class="planner-track">
             <div class="planner-bar ${isDone?'done':''} ${isCancelled?'cancelled':''}" data-ev-id="${i.id}"
               style="left:${leftPct}%;width:${widthPct}%;background:${i.kleur}"
-              title="${i.titel} (${i.startdate}${itemEnd!==i.startdate?' \u2192 '+itemEnd:''})">
-              ${i.titel}
+              title="${icon} ${i.titel} (${i.startdate}${itemEnd!==i.startdate?' \u2192 '+itemEnd:''})">
+              ${icon} ${i.titel}
             </div>
           </div>`;
         });
@@ -1091,7 +1152,11 @@
     function _navCal(dir) {
       if(calView==='month')        calDate=new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
       else if(calView==='week')    calDate=new Date(calDate.getTime()+dir*7*864e5);
-      else if(calView==='planner') calDate=new Date(calDate.getTime()+dir*28*864e5); // 4 weken per stap
+      else if(calView==='planner') {
+        if(plannerPeriod==='maand')    calDate=new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
+        else if(plannerPeriod==='kwartaal') calDate=new Date(calDate.getFullYear(), calDate.getMonth()+dir*3, 1);
+        else                            calDate=new Date(calDate.getFullYear()+dir, calDate.getMonth(), 1); // jaar
+      }
       else                         calDate=new Date(calDate.getTime()+dir*864e5);
       _renderCal();
       _updateMeta();
@@ -1105,6 +1170,10 @@
     function _ds(d)        { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     // Aantal dagen tussen twee YYYY-MM-DD datums (inclusief negatieve waarden)
     function _daysBetween(d1,d2) { return Math.round((new Date(d2)-new Date(d1))/864e5); }
+    // Fractionele maand-index (0-11) voor jaar-planner: maand + (dag-1)/dagen-in-maand
+    function _monthOffset(ds) { const d=new Date(ds); return d.getMonth(); }
+    // Fractie binnen de maand (0-1) voor jaar-planner
+    function _monthFrac(ds) { const d=new Date(ds); const dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); return d.getDate()/dim; }
 
 
     // ─────────────────────────────────────────────
