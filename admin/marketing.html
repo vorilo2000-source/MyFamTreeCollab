@@ -778,7 +778,8 @@
     // Fase pills: actieve fase filteren
     function _renderPhasePills() {
       $('phase-pills').innerHTML=phases.map(function(ph){
-        return '<span class="phase-pill '+(fPhase===ph?'active':'')+'" data-phase="'+ph+'">'+ph+' <span data-remove="'+ph+'" style="margin-left:4px;opacity:.4;cursor:pointer">&times;</span></span>';
+var desc = phaseDescs[ph] || '';
+    return '<span class="phase-pill '+(fPhase===ph?'active':'')+'" data-phase="'+ph+'" title="'+desc+'">'+ph+' <span data-remove="'+ph+'" style="margin-left:4px;opacity:.4;cursor:pointer">&times;</span></span>';
       }).join('');
       $('phase-pills').querySelectorAll('.phase-pill').forEach(function(el){
         el.addEventListener('click', function(e){
