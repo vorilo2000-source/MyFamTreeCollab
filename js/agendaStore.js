@@ -1,4 +1,4 @@
-// ========================= js/agendaStore.js v1.0.0 =========================
+// ========================= js/agendaStore.js v1.1.0 =========================
 // Centrale agenda store — brug tussen alle admin modules en agenda.html
 //
 // Wijzigingen v1.0.0 (sessie 38):
@@ -7,6 +7,16 @@
 //  - AgendaStore.getAll()   — geeft genormaliseerde items terug (voor agenda.html)
 //  - Agenda schrijft NOOIT terug naar bronmodules — bronpagina's zijn bron van waarheid
 //  - ag_events (standalone) worden door agenda.html zelf beheerd, niet door deze store
+//
+// Wijzigingen v1.1.0 (sessie 40):
+//  - Bron 'projectlog' toegevoegd (pl_items, kleur amber #fbbf24)
+//  - Datetime-local velden (YYYY-MM-DDTHH:mm) van backlog/marketing worden gesplitst
+//    in startdate/enddate (YYYY-MM-DD) + starttime/endtime (HH:mm) zodat agenda.html's
+//    datumvergelijkingen (string-based) blijven werken
+//  - Projectlog datum (DD-MM-YYYY [HH:mm]) wordt omgezet naar YYYY-MM-DD + HH:mm
+//  - 'requiresPublish' vlag per bron: backlog/marketing/projectlog tonen alleen items
+//    met gepubliceerd==='ja' in agenda.html (checkbox "Publiceren in agenda")
+//  - gepubliceerd-veld meegenomen in genormaliseerd item (voor eventuele UI-indicatie)
 //
 // Gebruik in elke module na _save():
 //   AgendaStore.sync();
@@ -25,61 +35,129 @@ const AgendaStore = (() => {
   const SOURCE_COLORS = {
     backlog:       '#60a5fa',  // blauw
     marketing:     '#a78bfa',  // paars
+    projectlog:    '#fbbf24',  // amber
     roadmap:       '#fb923c',  // oranje
     releasenotes:  '#4ade80',  // groen
     standalone:    '#9ca3af',  // grijs — ag_events
   };
 
+  // ── Hulpfunctie: datetime-local waarde (YYYY-MM-DDTHH:mm) splitsen ──
+  // in {date:'YYYY-MM-DD', time:'HH:mm'}. Ondersteunt ook pure datums (geen 'T').
+  function _splitDateTime(v) {
+    if(!v) return { date:'', time:'' };
+    const [date, time] = v.split('T');
+    return { date: date||'', time: time||'' };
+  }
+
+  // ── Hulpfunctie: projectlog-datum (DD-MM-YYYY [HH:mm] of YYYY-MM-DD) ──
+  // omzetten naar {date:'YYYY-MM-DD', time:'HH:mm'} voor agenda-vergelijkingen.
+  function _plDateToIso(d) {
+    if(!d) return { date:'', time:'' };
+    const parts = d.split(' '); // datum en tijd gescheiden door spatie
+    const dp = parts[0].split('-');
+    const date = (dp.length===3 && dp[0].length===2) ? `${dp[2]}-${dp[1]}-${dp[0]}` : parts[0]; // DD-MM-YYYY -> YYYY-MM-DD
+    return { date, time: parts[1]||'' };
+  }
+
   // ── Standaard bronnen — worden automatisch geregistreerd ──
   // Elke bron beschrijft hoe zijn localStorage data gemapped wordt naar het
   // genormaliseerde agenda-formaat:
-  //   { id, bron, bronUrl, kleur, titel, startdate, enddate, status, type, fase, prioriteit }
+  //   { id, bron, bronUrl, kleur, titel, startdate, starttime, enddate, endtime,
+  //     status, type, fase, prioriteit, gepubliceerd }
+  // 'requiresPublish: true' betekent: alleen items met gepubliceerd==='ja' worden
+  // meegenomen in _collectAll() (zichtbaar in agenda.html).
   const DEFAULT_SOURCES = [
     {
       key:    'backlog',          // unieke naam van de bron
       label:  'Backlog',         // leesbare naam voor legenda/filter
       lsKey:  'bl_items',        // localStorage sleutel
       url:    '/MyFamTreeCollab/admin/backlog.html',
-      map: item => ({            // mapping van bronveld naar agenda-veld
-        id:        item.id,
-        bron:      'backlog',
-        bronLabel: 'Backlog',
-        bronUrl:   '/MyFamTreeCollab/admin/backlog.html',
-        kleur:     SOURCE_COLORS.backlog,
-        titel:     item.title    || '',
-        startdate: item.startdate|| '',
-        enddate:   item.enddate  || item.startdate || '',
-        status:    item.status   || 'Open',
-        type:      item.type     || '',
-        fase:      item.phase    || '',
-        prioriteit:item.priority || '',
-        omschrijving: item.description || '',
-        tags:      item.tags     || '',
-        assignee:  item.assignee || '',
-      }),
+      requiresPublish: true,     // alleen items met "Publiceren in agenda" aangevinkt
+      map: item => {
+        const start=_splitDateTime(item.startdate);            // datum + tijd splitsen
+        const end  =_splitDateTime(item.enddate||item.startdate); // einddatum (val terug op start)
+        return {
+          id:        item.id,
+          bron:      'backlog',
+          bronLabel: 'Backlog',
+          bronUrl:   '/MyFamTreeCollab/admin/backlog.html',
+          kleur:     SOURCE_COLORS.backlog,
+          titel:     item.title    || '',
+          startdate: start.date,
+          starttime: start.time,
+          enddate:   end.date || start.date,
+          endtime:   end.time,
+          status:    item.status   || 'Open',
+          type:      item.type     || '',
+          fase:      item.phase    || '',
+          prioriteit:item.priority || '',
+          omschrijving: item.description || '',
+          tags:      item.tags     || '',
+          assignee:  item.assignee || '',
+          gepubliceerd: item.gepubliceerd || 'nee',
+        };
+      },
     },
     {
       key:    'marketing',
       label:  'Marketing',
       lsKey:  'mk_items',
       url:    '/MyFamTreeCollab/admin/marketing.html',
-      map: item => ({
-        id:        item.id,
-        bron:      'marketing',
-        bronLabel: 'Marketing',
-        bronUrl:   '/MyFamTreeCollab/admin/marketing.html',
-        kleur:     SOURCE_COLORS.marketing,
-        titel:     item.title    || '',
-        startdate: item.startdate|| '',
-        enddate:   item.enddate  || item.startdate || '',
-        status:    item.status   || 'Open',
-        type:      item.type     || '',
-        fase:      item.phase    || '',
-        prioriteit:item.priority || '',
-        omschrijving: item.description || '',
-        tags:      item.tags     || '',
-        assignee:  item.assignee || '',
-      }),
+      requiresPublish: true,     // alleen items met "Publiceren in agenda" aangevinkt
+      map: item => {
+        const start=_splitDateTime(item.startdate);
+        const end  =_splitDateTime(item.enddate||item.startdate);
+        return {
+          id:        item.id,
+          bron:      'marketing',
+          bronLabel: 'Marketing',
+          bronUrl:   '/MyFamTreeCollab/admin/marketing.html',
+          kleur:     SOURCE_COLORS.marketing,
+          titel:     item.title    || '',
+          startdate: start.date,
+          starttime: start.time,
+          enddate:   end.date || start.date,
+          endtime:   end.time,
+          status:    item.status   || 'Open',
+          type:      item.type     || '',
+          fase:      item.phase    || '',
+          prioriteit:item.priority || '',
+          omschrijving: item.description || '',
+          tags:      item.tags     || '',
+          assignee:  item.assignee || '',
+          gepubliceerd: item.gepubliceerd || 'nee',
+        };
+      },
+    },
+    {
+      key:    'projectlog',
+      label:  'Projectlog',
+      lsKey:  'pl_items',
+      url:    '/MyFamTreeCollab/admin/projectlog.html',
+      requiresPublish: true,     // alleen sessies met "Publiceren in agenda" aangevinkt
+      map: item => {
+        const dt=_plDateToIso(item.date); // DD-MM-YYYY [HH:mm] -> YYYY-MM-DD + HH:mm
+        return {
+          id:        item.id,
+          bron:      'projectlog',
+          bronLabel: 'Projectlog',
+          bronUrl:   '/MyFamTreeCollab/admin/projectlog.html',
+          kleur:     SOURCE_COLORS.projectlog,
+          titel:     'Sessie '+(item.nr||'')+' \u2014 '+(item.title||''),
+          startdate: dt.date,
+          starttime: dt.time,
+          enddate:   dt.date,        // projectlog sessies zijn 1-daags (geen einddatum)
+          endtime:   dt.time,
+          status:    'Done',         // sessies zijn afgeronde werksessies
+          type:      'Sessie',
+          fase:      '',
+          prioriteit:'',
+          omschrijving: item.description || '',
+          tags:      item.tags     || '',
+          assignee:  '',
+          gepubliceerd: item.gepubliceerd || 'nee',
+        };
+      },
     },
     {
       key:    'roadmap',
@@ -138,7 +216,7 @@ const AgendaStore = (() => {
 
   /**
    * register() — externe module registreert een aangepaste bron
-   * Gebruik: AgendaStore.register({ key, label, lsKey, url, map })
+   * Gebruik: AgendaStore.register({ key, label, lsKey, url, map, requiresPublish })
    * Roep aan vóór AgendaStore.sync() — bij voorkeur bij module init
    */
   function register(config) {
@@ -235,7 +313,8 @@ const AgendaStore = (() => {
 
   /**
    * _collectAll() — leest alle geregistreerde bronnen uit localStorage
-   * en normaliseert via hun map() functie
+   * en normaliseert via hun map() functie. Bronnen met requiresPublish:true
+   * worden gefilterd op gepubliceerd==='ja' (checkbox "Publiceren in agenda").
    */
   function _collectAll() {
     const result = [];
@@ -248,7 +327,10 @@ const AgendaStore = (() => {
         items.forEach(item => {
           try {
             const normalized = src.map(item);    // Mapping toepassen
-            if(normalized && normalized.id) result.push(normalized);
+            if(!normalized || !normalized.id) return;
+            // Alleen gepubliceerde items tonen voor bronnen die dit vereisen
+            if(src.requiresPublish && normalized.gepubliceerd !== 'ja') return;
+            result.push(normalized);
           } catch(mapErr) {
             console.warn(`[AgendaStore] map() fout in bron "${src.key}":`, mapErr);
           }
