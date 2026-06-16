@@ -1,11 +1,20 @@
-<!-- ======================= admin/handleiding-admin.html v1.0.0 =======================
+<!-- ======================= admin/handleiding-admin.html v2.0.0 =======================
      Admin handleiding voor MyFamTreeCollab
      Alleen voor intern gebruik — beschrijft rechten en functies van het Admin account
+     en de admin tool-pagina's (accountbeheer, analytics, analyse, supabase-analyse,
+     backlog, projectlog, marketing, agenda)
 
      v1.0.0 (sessie 21):
      - Initieel aangemaakt: admin-content losgeknipt uit bronnen/handleiding.html v2.3.0
      - Bevat: admin account beschrijving, admin-kolom in account types tabel,
               admin dashboard toegang, importeren als admin, onbeperkt versiebeheer
+
+     v2.0.0 (sessie 40):
+     - 8 nieuwe secties toegevoegd (7 t/m 14): korte beschrijving van elke admin
+       tool-pagina (doel + belangrijkste knoppen/functies)
+       7. Accountbeheer · 8. Analytics · 9. Analyse · 10. Supabase analyse
+       11. Backlog · 12. Project Log · 13. Marketing & communicatie · 14. Centrale agenda
+     - Inhoudsopgave uitgebreid met links naar de 8 nieuwe secties
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -139,7 +148,7 @@
 
         <!-- ===== WELKOMBLOK ===== -->
         <div class="welkom-blok">
-            <h1>Admin handleiding <span class="admin-badge">🛡️ Admin</span> <span class="versie-badge">v1.0.0</span></h1>
+            <h1>Admin handleiding <span class="admin-badge">🛡️ Admin</span> <span class="versie-badge">v2.0.0</span></h1>
             <p>
                 Deze handleiding beschrijft de rechten en functies die exclusief beschikbaar zijn
                 voor het Admin account. Voor algemene functies zie de
@@ -162,6 +171,14 @@
                 <li><a href="#importeren">Importeren als Admin</a></li>
                 <li><a href="#versiebeheer">Versiebeheer (onbeperkt)</a></li>
                 <li><a href="#stamboom-beheer">Stambomen &amp; samenwerking</a></li>
+                <li><a href="#tool-accountbeheer">Accountbeheer</a></li>
+                <li><a href="#tool-analytics">Analytics</a></li>
+                <li><a href="#tool-analyse">Analyse</a></li>
+                <li><a href="#tool-supabase-analyse">Supabase analyse</a></li>
+                <li><a href="#tool-backlog">Backlog</a></li>
+                <li><a href="#tool-projectlog">Project Log</a></li>
+                <li><a href="#tool-marketing">Marketing &amp; communicatie</a></li>
+                <li><a href="#tool-agenda">Centrale agenda</a></li>
             </ol>
         </div>
 
@@ -411,6 +428,153 @@
                 Huidig admin-voordeel ten opzichte van Owner: dashboard + onbeperkt versiebeheer + importeren.
             </div>
 
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             7. Accountbeheer
+             ================================================================ -->
+        <div class="sectie" id="tool-accountbeheer">
+            <h2>7. Accountbeheer</h2>
+            <p>
+                <code>admin/accountbeheer.html</code> geeft een overzicht van alle geregistreerde
+                gebruikersaccounts en hun tier (guest / owner / admin).
+            </p>
+            <ul>
+                <li><strong>Overzichtstabel</strong> — alle accounts met e-mail, tier, aanmaakdatum</li>
+                <li><strong>Tier wijzigen</strong> — account upgraden of downgraden</li>
+                <li><strong>Zoeken</strong> — filteren op gebruikersnaam of e-mailadres</li>
+            </ul>
+            <div class="admin-noot">
+                <strong>Beveiliging:</strong> Toegang via <code>AdminGuard.protect('admin')</code>.
+                Wijzigingen aan tier raken direct de <code>profiles</code> tabel in Supabase.
+            </div>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             8. Analytics
+             ================================================================ -->
+        <div class="sectie" id="tool-analytics">
+            <h2>8. Analytics</h2>
+            <p>
+                <code>admin/analytics.html</code> toont platform-brede statistieken op basis van
+                <code>siteAnalytics.js</code> tracking.
+            </p>
+            <ul>
+                <li><strong>Paginabezoeken</strong> — per dag en per pagina</li>
+                <li><strong>Actieve gebruikers</strong> — unieke bezoekers over tijd</li>
+                <li><strong>Account type verdeling</strong> — guest / owner / admin</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             9. Analyse
+             ================================================================ -->
+        <div class="sectie" id="tool-analyse">
+            <h2>9. Analyse</h2>
+            <p>
+                <code>admin/analyse.html</code> biedt verdiepende cijfers over stamboomgebruik:
+                gemiddeld aantal personen per stamboom, meest gebruikte functies en
+                samenwerkingsstatistieken (gedeelde stambomen, berichten).
+            </p>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             10. Supabase analyse
+             ================================================================ -->
+        <div class="sectie" id="tool-supabase-analyse">
+            <h2>10. Supabase analyse</h2>
+            <p>
+                <code>admin/supabase-analyse.html</code> geeft inzicht in de Supabase-backend:
+                tabelgroottes, rijenaantallen, RLS-status per tabel en API-gebruik.
+            </p>
+            <div class="waarschuwing">
+                <strong>Let op:</strong> Storage-secties tonen "geen data" — de app gebruikt
+                geen Supabase Storage, dit is verwacht gedrag.
+            </div>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             11. Backlog
+             ================================================================ -->
+        <div class="sectie" id="tool-backlog">
+            <h2>11. Backlog</h2>
+            <p>
+                <code>admin/backlog.html</code> is de takenbeheer-tool voor projectontwikkeling:
+                board- en lijstweergave, gegroepeerd per fase.
+            </p>
+            <ul>
+                <li><strong>+ Toevoegen</strong> — nieuwe taak met titel, fase, type, prioriteit, status</li>
+                <li><strong>Omschrijving</strong> — markdown + HTML ondersteund, volledige toolbar</li>
+                <li><strong>📅 Publiceren in agenda</strong> — checkbox, maakt taak zichtbaar in de centrale agenda</li>
+                <li><strong>Filters</strong> — op status, prioriteit, type en tags (klikbare pills)</li>
+                <li><strong>📝 MD exporteren / 📂 Laden</strong> — synchroniseren met <code>BACKLOG.md</code></li>
+                <li><strong>💾 CSV opslaan</strong> — export voor extern gebruik</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             12. Project Log
+             ================================================================ -->
+        <div class="sectie" id="tool-projectlog">
+            <h2>12. Project Log</h2>
+            <p>
+                <code>admin/projectlog.html</code> houdt een chronologisch logboek bij van
+                ontwikkelsessies: wat is er per sessie gedaan, in welke versie.
+            </p>
+            <ul>
+                <li><strong>+ Toevoegen</strong> — sessienummer, titel, datum &amp; tijd, versie, tags</li>
+                <li><strong>Omschrijving</strong> — markdown + HTML ondersteund, volledige toolbar</li>
+                <li><strong>📅 Publiceren in agenda</strong> — checkbox, toont sessie in de centrale agenda</li>
+                <li><strong>📝 MD exporteren / 📂 Laden</strong> — synchroniseren met <code>PROJECT_LOG.md</code></li>
+            </ul>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             13. Marketing & communicatie
+             ================================================================ -->
+        <div class="sectie" id="tool-marketing">
+            <h2>13. Marketing &amp; communicatie</h2>
+            <p>
+                <code>admin/marketing.html</code> beheert het marketing- en communicatieplan:
+                taken per fase, kanalen en post-templates.
+            </p>
+            <ul>
+                <li><strong>Kernboodschap</strong> — bovenaan de pagina, bewerkbaar en opgeslagen in <code>marketing.md</code></li>
+                <li><strong>Taken</strong> — per fase, met start/einddatum, status en omschrijving</li>
+                <li><strong>📅 Publiceren in agenda</strong> — checkbox, toont taak in de centrale agenda</li>
+                <li><strong>Kanalen</strong> — overzicht van actieve kanalen (Facebook, Reddit, Product Hunt)</li>
+                <li><strong>Templates</strong> — herbruikbare post-teksten met markdown preview</li>
+            </ul>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <!-- ================================================================
+             14. Centrale agenda
+             ================================================================ -->
+        <div class="sectie" id="tool-agenda">
+            <h2>14. Centrale agenda</h2>
+            <p>
+                <code>admin/agenda.html</code> verzamelt alle gepubliceerde items uit Backlog,
+                Project Log en Marketing op één tijdlijn, plus eigen (standalone) events.
+            </p>
+            <ul>
+                <li><strong>Maand / Week / Dag</strong> — klassieke kalenderweergaven</li>
+                <li><strong>Planner</strong> — horizontale tijdlijn, periode Maand/Kwartaal/Jaar, gegroepeerd per bron</li>
+                <li><strong>Filters</strong> — op bron en status, plus zoekbalk</li>
+                <li><strong>+ Event toevoegen</strong> — eigen event met locatie, deelnemers, herhaling</li>
+                <li><strong>📥 .ics export / 📤 .ics importeren</strong> — koppeling met Google Calendar, Outlook, Apple Calendar</li>
+            </ul>
+            <div class="tip">
+                Alleen items met <strong>"📅 Publiceren in agenda"</strong> aangevinkt in Backlog,
+                Project Log of Marketing verschijnen hier — de agenda schrijft nooit terug naar de bronpagina's.
+            </div>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
