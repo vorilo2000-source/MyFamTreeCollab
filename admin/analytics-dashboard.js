@@ -1,12 +1,13 @@
-
 /**
  * =============================================================================
  * admin/analytics-dashboard.js — MyFamTreeCollab Analytics Dashboard
  * =============================================================================
- * Version    : 3.9.0
- * Wijziging  : renderTierVerdeling — uitklapbare e-maillijst per tier toegevoegd.
- *              trackPage() vervangen door SiteAnalytics.trackPage() — ReferenceError opgelost.
- *              analytics-dashboard.js bevat alleen nog dashboard render-logica.
+ * Version    : 4.0.0
+ * Wijziging  : v4.0.0 — Tier badge in recente bezoeken tabel: vaste achtergrond-
+ *              en tekstkleuren per tier (geen opacity/blur meer). Leesbaar op
+ *              donkere achtergrond. Kleuren consistent met accountbeheer.html.
+ * Wijziging  : v3.9.0 — renderTierVerdeling — uitklapbare e-maillijst per tier.
+ *              trackPage() vervangen door SiteAnalytics.trackPage().
  * Structuur  : 1. Supabase config (singleton)
  *              2. Dashboard — renderDashboard()
  *              3. Init     — admin-check + koppeling
@@ -292,7 +293,6 @@
     /**
      * renderDeviceGrid(bezoeken)
      * Toont totaal unieke sessies en totaal bezoeken als pills.
-     * (Device user-agent niet opgeslagen — uitbreiding mogelijk via page_visits kolom)
      */
     function renderDeviceGrid(bezoeken) {
         const container = el("device-grid");                       // container ophalen
@@ -312,6 +312,15 @@
      * renderRecenteTabel(bezoeken)
      * Toont de 50 meest recente rijen uit de (al gefilterde) dataset.
      * Filtering gebeurt upstream in filterBezoeken() — deze functie toont alleen.
+     *
+     * v4.0.0: tier badges hebben vaste achtergrond- en tekstkleuren per tier.
+     *         Geen opacity of blur — leesbaar op donkere achtergrond.
+     *         Kleuren consistent met accountbeheer.html CSS variabelen:
+     *           guest  → bg #2a2a2a, fg #aaaaaa
+     *           owner  → bg #3a2e0a, fg #f0c040
+     *           admin  → bg #3a1a1a, fg #f08080
+     *           overig → bg #333333, fg #888888
+     *
      * @param {Array} bezoeken - reeds gefilterde bezoek-rijen
      */
     function renderRecenteTabel(bezoeken) {
@@ -325,10 +334,12 @@
             return;
         }
 
-        const tierKleuren = {                                      // kleur per account type
-            guest:  "#aaaacc",                                     // guest — grijsblauw
-            owner:  "#f0c040",                                     // owner — goud
-            admin:  "#f08080"                                      // admin — rood
+        // Vaste badge stijlen per tier — achtergrond en tekst apart gedefinieerd
+        // zodat tekst altijd leesbaar is ongeacht de pagina-achtergrond
+        const tierStijlen = {
+            guest: { bg: "#2a2a2a", fg: "#aaaaaa" },               // guest  — donker grijs / licht grijs
+            owner: { bg: "#3a2e0a", fg: "#f0c040" },               // owner  — donker bruin / goud
+            admin: { bg: "#3a1a1a", fg: "#f08080" }                // admin  — donker rood / licht rood
         };
 
         let html = (
@@ -343,7 +354,7 @@
         );
 
         recente.forEach(function (r) {
-            const tierKleur = tierKleuren[r.tier] || "#888888";   // grijs voor niet-ingelogd (null tier)
+            const stijl    = tierStijlen[r.tier] || { bg: "#333333", fg: "#888888" }; // fallback voor null/onbekend
             const tierLabel = r.tier || "niet ingelogd";           // leesbaar label voor null tier
             const tijdstip  = r.visited_at
                 ? new Date(r.visited_at).toLocaleString("nl-BE")   // Belgisch datum+tijd formaat
@@ -351,15 +362,26 @@
 
             html += (
                 '<tr>' +
-                '<td>' + escHtml(r.page || "—") + '</td>' +
-                '<td><span class="badge" style="color:' + tierKleur + ';background:' + tierKleur + '22;">' +
-                    escHtml(tierLabel) + '</span></td>' +          // tier badge met correct label
+                '<td>' + escHtml(r.page || "—") + '</td>' +        // bezochte pagina
+                '<td>' +
+                  '<span class="badge" style="' +
+                    'display:inline-block;' +                       // badge als blok zodat padding werkt
+                    'padding:3px 10px;' +                           // ruimte rondom tekst
+                    'border-radius:12px;' +                         // afgeronde hoeken
+                    'font-size:0.75rem;' +                          // kleinere tekst
+                    'font-weight:600;' +                            // vet
+                    'text-transform:uppercase;' +                   // hoofdletters
+                    'letter-spacing:0.04em;' +                      // kleine spatiëring
+                    'background:' + stijl.bg + ';' +                // vaste achtergrondkleur per tier
+                    'color:'      + stijl.fg + ';' +                // vaste tekstkleur per tier — altijd leesbaar
+                  '">' + escHtml(tierLabel) + '</span>' +
+                '</td>' +
                 '<td style="font-size:0.74rem;color:var(--text-muted);">' +
-                    escHtml(r.email || "—") + '</td>' +            // e-mail of streepje voor gasten
-                '<td>' + escHtml(formatDuur(r.duration_sec)) + '</td>' +
-                '<td style="font-size:0.76rem;">' + escHtml(tijdstip) + '</td>' +
+                    escHtml(r.email || "—") + '</td>' +             // e-mail of streepje voor gasten
+                '<td>' + escHtml(formatDuur(r.duration_sec)) + '</td>' + // verblijfsduur
+                '<td style="font-size:0.76rem;">' + escHtml(tijdstip) + '</td>' + // tijdstip
                 '<td style="color:#888;font-size:0.68rem;">' +
-                    escHtml((r.session_id || "").slice(0, 16) + "…") + '</td>' +
+                    escHtml((r.session_id || "").slice(0, 16) + "…") + '</td>' + // sessie ID ingekort
                 '</tr>'
             );
         });
@@ -371,7 +393,6 @@
     /**
      * filterBezoeken(bezoeken, tier)
      * Filtert de volledige dataset op account type.
-     * Centraliseert de filterlogica — gebruikt door alle render-functies.
      * @param {Array}  bezoeken - alle bezoek-rijen uit Supabase
      * @param {string} tier     - "all" | "anoniem" | "guest" | "owner" | "admin"
      * @returns {Array} gefilterde subset
@@ -393,7 +414,6 @@
     /**
      * renderAlles(bezoeken, tier)
      * Rendert alle dashboard-secties opnieuw met de gefilterde dataset.
-     * Aangeroepen bij paginalaad én bij elke filterklik.
      * @param {Array}  bezoeken - volledige ongefilterde dataset
      * @param {string} tier     - actieve filter
      */
@@ -404,14 +424,13 @@
         renderPaginaStats(data);                                   // pagina balkgrafiek — gefilterd
         renderTierVerdeling(data);                                 // tier verdeling — gefilterd
         renderDeviceGrid(data);                                    // sessie pills — gefilterd
-        renderRecenteTabel(data, "all");                           // tabel — data al gefilterd, geen extra filter
+        renderRecenteTabel(data, "all");                           // tabel — data al gefilterd
         renderFooter();                                            // timestamp bijwerken
     }
 
     /**
      * initTierFilter(bezoeken)
      * Koppelt de filterknoppen aan alle dashboard-secties.
-     * Bij elke klik wordt de volledige pagina herrenderd met gefilterde data.
      * @param {Array} bezoeken - volledige ongefilterde dataset
      */
     function initTierFilter(bezoeken) {
@@ -419,13 +438,8 @@
 
         knoppen.forEach(function (knop) {
             knop.addEventListener("click", function () {
-                // Stap 1: active class van alle knoppen verwijderen
-                knoppen.forEach(function (k) { k.classList.remove("active"); });
-
-                // Stap 2: active class op geklikte knop zetten
+                knoppen.forEach(function (k) { k.classList.remove("active"); }); // alle knoppen deactiveren
                 knop.classList.add("active");                      // geselecteerde knop markeren
-
-                // Stap 3: alle secties herrenderen met gefilterde data
                 const tier = knop.dataset.tier;                    // tier waarde uit data-tier attribuut
                 renderAlles(bezoeken, tier);                       // volledige pagina updaten
             });
@@ -447,7 +461,6 @@
     /**
      * renderDashboard()
      * Haalt data op uit Supabase, rendert alle secties en koppelt de filter.
-     * Na laden staat de filter op "all" — alle data zichtbaar.
      */
     async function renderDashboard() {
         showLaad("stat-grid",      "Laden…");                      // laad-berichten tonen
@@ -484,35 +497,29 @@
 
     /**
      * Controleer of gebruiker admin is voordat dashboard getoond wordt.
-     * Gebruikt AuthModule.getProfile() uit auth.js.
      */
     window.addEventListener("load", function () {
 
-        // Stap 1: AuthModule beschikbaar?
         if (typeof window.AuthModule === "undefined") {
             console.error("[Dashboard] AuthModule niet gevonden.");      // log fout
             window.location.href = "/MyFamTreeCollab/index.html";        // doorsturen
             return;
         }
 
-        // Stap 2: profiel ophalen uit Supabase
         AuthModule.getProfile().then(function (result) {
             const profile = result.profile;                        // profiel object ophalen
 
-            // Stap 3: niet ingelogd → doorsturen
-            if (!profile) {
+            if (!profile) {                                        // niet ingelogd → doorsturen
                 window.location.href = "/MyFamTreeCollab/index.html";
                 return;
             }
 
-            // Stap 4: geen admin → doorsturen
-            if (!profile.is_admin) {
+            if (!profile.is_admin) {                               // geen admin → doorsturen
                 window.location.href = "/MyFamTreeCollab/index.html";
                 return;
             }
 
-            // Stap 5: admin bevestigd — bezoek registreren + dashboard laden
-            SiteAnalytics.trackPage("analytics-dashboard");       // paginabezoek registreren via siteAnalytics.js
+            SiteAnalytics.trackPage("analytics-dashboard");       // paginabezoek registreren
             renderDashboard();                                     // dashboard renderen
         });
     });
