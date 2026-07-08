@@ -1,8 +1,23 @@
+# ==============================================================================
+# File: .github/workflows/supabase-keep-alive.yml
+# Version: 1.2.0
+# Description: Prevents Supabase project from being paused due to inactivity.
+#              Runs at randomized times across the week to avoid a predictable
+#              pattern. Each trigger sends a lightweight REST ping to Supabase.
+# ==============================================================================
+
 name: Supabase Keep Alive
 
 on:
+  # Multiple randomized triggers spread across the week
+  # Monday 07:17, Wednesday 14:43, Friday 09:31, Sunday 21:08
   schedule:
-    - cron: "0 8 * * 1"
+    - cron: "17 7 * * 1"
+    - cron: "43 14 * * 3"
+    - cron: "31 9 * * 5"
+    - cron: "8 21 * * 0"
+
+  # Allow manual trigger via GitHub Actions UI
   workflow_dispatch:
 
 jobs:
@@ -11,32 +26,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check secrets presence
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: |
-          if [ -z "$SUPABASE_URL" ]; then
-            echo "ERROR: SUPABASE_URL secret is empty or not set"
-            exit 1
-          else
-            echo "SUPABASE_URL is set (length: ${#SUPABASE_URL})"
-          fi
-
-          if [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "ERROR: SUPABASE_ANON_KEY secret is empty or not set"
-            exit 1
-          else
-            echo "SUPABASE_ANON_KEY is set (length: ${#SUPABASE_ANON_KEY})"
-          fi
-
       - name: Ping Supabase REST API
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           ENDPOINT="${SUPABASE_URL}/rest/v1/page_visits?select=id&limit=1"
-          echo "Endpoint length: ${#ENDPOINT}"
 
           RESPONSE=$(curl --silent --show-error \
             --write-out "%{http_code}" \
@@ -46,11 +41,10 @@ jobs:
             "${ENDPOINT}")
 
           echo "Supabase response status: $RESPONSE"
-          echo "Supabase response body:"
-          cat /tmp/curl_body.txt
 
           if [[ "$RESPONSE" -lt 200 || "$RESPONSE" -ge 300 ]]; then
             echo "ERROR: Unexpected response code $RESPONSE"
+            cat /tmp/curl_body.txt
             exit 1
           fi
 
