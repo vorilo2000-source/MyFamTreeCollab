@@ -155,6 +155,7 @@ Backlog_MyFamTreeCollab
 | F10-023 | sessie, 40 | agendaStore.js | v1.0.0 → v1.1.0 — bron 'projectlog' toegevoegd (pl_items), requiresPublish-filter (alleen gepubliceerd='ja' zichtbaar in agenda), datetime-local velden gesplitst naar startdate/starttime + enddate/endtime | | Feature | 2026-06-10 | 2026-06-10 | | 🔴 High | ✅ Done |
 | F10-024 | sessie, 40 | agenda.html | v1.0.0 → v1.1.0 — nieuwe Planner-weergave (horizontale Gantt-achtige tijdlijn) met periode-toggle Maand/Kwartaal/Jaar, rijen per bron, statusicoon vóór titel in rij-labels en balken | | Feature | 2026-06-10 | 2026-06-10 | | 🟡 Medium | ✅ Done |
 | F10-025 | sessie, 40 | CLAUDE.md | Standaard Modal-sectie toegevoegd: vaste velden, agenda-checkbox patroon, textarea-groottes per veldlabel, volledige MD/HTML toolbar-specificatie, status-badge CSS+JS mapping — bron van waarheid voor alle admin-pagina's | | Description | 2026-06-10 | 2026-06-10 | | 🟡 Medium | ✅ Done |
+| F10-026 | sessie, 41 | supabase-keep-alive.yml | GitHub Actions workflow om Supabase-project actief te houden — wekelijkse ping via REST API op `page_visits`. v1.2.0: willekeurige tijdstippen (ma/wo/vr/zo) i.p.v. vaste dag, `GRANT SELECT` toegevoegd voor anon role, RLS policy `keep-alive: anon mag lezen` aangemaakt | | Feature | 2026-07-08 | 2026-07-08 | | 🔴 High | ✅ Done |
 
 ## Fase A — Account & donaties
 
