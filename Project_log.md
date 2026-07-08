@@ -1,5 +1,32 @@
 # MyFamTreeCollab — Project Log
 
+## Sessie 41 — GitHub Actions: Supabase Keep Alive
+
+**Datum:** 08-07-2026
+**Versie:** .github/workflows/supabase-keep-alive.yml v1.2.0
+
+### Uitgevoerd
+- `.github/workflows/supabase-keep-alive.yml` aangemaakt — voorkomt dat Supabase project automatisch gepauzeerd wordt wegens inactiviteit
+- Workflow pings `page_visits` tabel via REST API met anon key
+- v1.0.0: eerste opzet — vaste cron maandag 08:00 UTC
+- v1.1.0: secrets als `env` variabelen geladen (fix curl exit code 3)
+- v1.2.0: meerdere willekeurige tijdstippen (ma 07:17 / wo 14:43 / vr 09:31 / zo 21:08) om geen vast patroon te vertonen
+- GitHub Secrets aangemaakt: `SUPABASE_URL` en `SUPABASE_ANON_KEY`
+- Supabase SQL uitgevoerd: `GRANT SELECT ON page_visits TO anon`
+- RLS policy aangemaakt: `keep-alive: anon mag lezen` (USING true, role anon)
+- Workflow succesvol getest via `workflow_dispatch`
+
+### Niet uitgevoerd
+- Geen
+
+### Versie-overzicht
+
+| Bestand | Van | Naar | Wijziging |
+|---------|-----|------|-----------|
+| `.github/workflows/supabase-keep-alive.yml` | — | v1.2.0 | Nieuw — willekeurige ping 4x per week |
+
+---
+
 ## Sessie 40 — Admin toolset: modal-standaardisatie, planner & agenda-uitbreiding
 
 **Datum:** 10-06-2026
