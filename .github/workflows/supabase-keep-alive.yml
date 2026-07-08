@@ -1,6 +1,6 @@
 # ==============================================================================
 # File: .github/workflows/supabase-keep-alive.yml
-# Version: 1.0.0
+# Version: 1.1.0
 # Description: Weekly workflow to prevent Supabase project from being paused
 #              due to inactivity. Sends a lightweight REST request to Supabase.
 # ==============================================================================
@@ -8,11 +8,8 @@
 name: Supabase Keep Alive
 
 on:
-  # Run automatically every week on Monday at 08:00 UTC
   schedule:
     - cron: "0 8 * * 1"
-
-  # Allow manual trigger via GitHub Actions UI
   workflow_dispatch:
 
 jobs:
@@ -21,26 +18,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Send a lightweight SELECT query to page_visits using curl
       - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          # Send GET request to Supabase REST endpoint
-          # Uses GitHub Secrets for URL and anon key — no hardcoded credentials
-          RESPONSE=$(curl --silent --show-error --fail \
-            --output /dev/null \
-            --write-out "%{http_code}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/page_visits?select=id&limit=1" \
-            --header "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            --header "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          ENDPOINT="${SUPABASE_URL}/rest/v1/page_visits?select=id&limit=1"
 
-          # Log the HTTP status code for debugging
+          echo "Pinging: $ENDPOINT"
+
+          RESPONSE=$(curl --silent --show-error \
+            --write-out "%{http_code}" \
+            --output /dev/null \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${ENDPOINT}")
+
           echo "Supabase response status: $RESPONSE"
 
-          # Fail the workflow if the response is not 2xx
           if [[ "$RESPONSE" -lt 200 || "$RESPONSE" -ge 300 ]]; then
             echo "ERROR: Unexpected response code $RESPONSE"
             exit 1
           fi
 
-          # Confirm success
           echo "Supabase ping successful."
