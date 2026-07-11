@@ -60,6 +60,3 @@ els.btnAddPhotoGridBlock.addEventListener("click", () => { state.storyBlocks.pus
 els.btnAddLinkBlock.addEventListener("click",      () => { state.storyBlocks.push({ type: "link",       name: "", url: "" });       renderBlockEditor(); updatePreview(); });
 
 window.renderBlockEditor = renderBlockEditor;
-window.addStoryBlock = addStoryBlock;
-window.removeStoryBlock = removeStoryBlock;
-window.moveStoryBlock = moveStoryBlock;
