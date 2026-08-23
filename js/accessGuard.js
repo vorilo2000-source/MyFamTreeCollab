@@ -220,4 +220,3 @@
     window.AccessGuard = {
         check    // (toegestaneRollen: string[]) → void (async)
     };
-    })();
