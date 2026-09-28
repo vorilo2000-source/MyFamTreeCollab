@@ -1,5 +1,8 @@
-<!-- ======================= home/confirm.html v1.3.2 =======================
-     Wijziging v1.3.2:
+<!-- ======================= home/confirm.html v1.3.3 =======================
+     Wijziging v1.3.3:
+     - Paden naar gedeelde CSS en JS vanaf de projecthoofdmap geladen.
+     - Navbar toegevoegd tussen TopBar en bevestigingsblok.
+     v1.3.2:
      - Verificatie gaat ook door als het laden van vertalingen mislukt of te lang duurt.
      v1.3.1:
      - Succes en doorsturing volgen direct na een geslaagde verificatie.
@@ -22,17 +25,17 @@
     <title>E-mail bevestigen — MyFamTreeCollab</title>
 
     <!-- ======================= Favicon ======================= -->
-    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Laad het pictogram vanaf de projecthoofdmap. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png"> <!-- Laad het kleine pictogram vanaf de projecthoofdmap. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png"> <!-- Laad het Apple pictogram vanaf de projecthoofdmap. -->
 
     <!-- ======================= i18next bibliotheken ======================= -->
     <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
-    <script src="js/i18n.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Laad de gedeelde vertaalmodule vanaf de juiste map. -->
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/MyFamTreeCollab/css/style.css"> <!-- Laad de algemene pagina- en Navbar-stijlen. -->
 
     <style>
         .confirm-wrap {
@@ -65,22 +68,27 @@
 <!-- ======================= TopBar placeholder ======================= -->
 <div id="topbar-placeholder"></div>
 
+<!-- ======================= Navbar placeholder ======================= -->
+<div id="navbar-placeholder"></div> <!-- Ontvangt de navigatie onder de TopBar. -->
+
 <!-- ======================= Bevestiging blok ======================= -->
 <!-- Teksten worden via JS ingevuld na i18n init -->
+<main> <!-- Houd het bevestigingsblok onder de vaste TopBar en Navbar. -->
 <div class="confirm-wrap loading" id="confirmBox">
     <span class="confirm-icon" id="confirmIcon"></span>
     <h1 id="confirmTitle"></h1>
     <p class="confirm-msg" id="confirmMsg"></p>
     <div id="confirmAction"></div>
 </div>
+</main> <!-- Sluit de hoofdinhoud af. -->
 
 <!-- ======================= Footer placeholder ======================= -->
 <div id="footer-placeholder"></div>
 
 <!-- ======================= Scripts ======================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/utils.js"></script>
-<script src="js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/utils.js"></script> <!-- Laad de gedeelde hulpfuncties vanaf de projecthoofdmap. -->
+<script src="/MyFamTreeCollab/js/auth.js"></script> <!-- Laad de Supabase-client vanaf de projecthoofdmap. -->
 
 <script>
 // ======================= Vertalingen met Nederlandse terugval =======================
@@ -121,9 +129,17 @@ Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de 
             if (translationsReady) i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder')); // Vertaal de TopBar indien mogelijk.
             else document.getElementById('topbar-placeholder').innerHTML = html; // Toon de TopBar ook zonder vertalingen.
             var s = document.createElement('script');
-            s.src = 'js/topbar.js';
+            s.src = '/MyFamTreeCollab/js/topbar.js'; // Laad de TopBar-logica vanaf de projecthoofdmap.
             document.body.appendChild(s);
         });
+
+    // ======================= Navbar laden =======================
+    fetch('/MyFamTreeCollab/Layout/Navbar.html') // Haal de gedeelde navigatie op.
+        .then(function (r) { if (!r.ok) throw new Error('Navbar HTTP ' + r.status); return r.text(); }) // Controleer of het bestand bestaat.
+        .then(function (html) { // Plaats de navigatie na het ophalen.
+            if (translationsReady) i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder')); // Vertaal de Navbar als i18n werkt.
+            else document.getElementById('navbar-placeholder').innerHTML = html; // Toon de Navbar in de brontaal als i18n faalt.
+        }).catch(function (error) { console.error('[confirm] Navbar laden mislukt:', error); }); // Laat een fout de bevestiging niet blokkeren.
 
     // Laad Footer en activeer i18n
     fetch('/MyFamTreeCollab/Layout/Footer.html')
@@ -163,10 +179,10 @@ Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de 
         title.textContent = t('auth:confirm.successTitle'); // Toon een vertaald of Nederlands succesbericht.
         msg.textContent   = t('auth:confirm.successMsg'); // Leg uit dat de doorsturing volgt.
         action.innerHTML  =
-            '<a href="/MyFamTreeCollab/home/index.html" class="btn-primary">' +
+            '<a href="/MyFamTreeCollab/index.html" class="btn-primary">' +
             t('auth:confirm.successBtn') + '</a>'; // Gebruik de beschikbare knoptekst.
         setTimeout(function () {
-            window.location.href = '/MyFamTreeCollab/home/index.html';
+            window.location.href = '/MyFamTreeCollab/index.html'; // Stuur door naar de werkelijke homepage.
         }, 3000);
     }
 
@@ -176,7 +192,7 @@ Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de 
         title.textContent = t('auth:confirm.errorTitle'); // Toon een vertaald of Nederlands foutbericht.
         msg.textContent   = errMsg || t('auth:confirm.errorDefault'); // Toon de fout of een veilige terugvaltekst.
         action.innerHTML  =
-            '<a href="/MyFamTreeCollab/home/register.html" class="btn-primary">' +
+            '<a href="/MyFamTreeCollab/index.html" class="btn-primary">' +
             t('auth:confirm.errorBtn') + '</a>'; // Gebruik de beschikbare knoptekst.
     }
 
