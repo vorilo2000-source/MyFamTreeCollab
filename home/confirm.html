@@ -1,5 +1,7 @@
-<!-- ======================= home/confirm.html v1.3.1 =======================
-     Wijziging v1.3.1:
+<!-- ======================= home/confirm.html v1.3.2 =======================
+     Wijziging v1.3.2:
+     - Verificatie gaat ook door als het laden van vertalingen mislukt of te lang duurt.
+     v1.3.1:
      - Succes en doorsturing volgen direct na een geslaagde verificatie.
      - Initialisatie- en verificatiefouten tonen een melding in plaats van de zandloper.
      v1.3.0 (sessie 26):
@@ -81,20 +83,43 @@
 <script src="js/auth.js"></script>
 
 <script>
-// ======================= i18n initialisatie =======================
-Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
-    .then(function () { return i18nModule.init(); }) // Start de vertalingen pas binnen de foutafhandeling.
-    .then(function () { return i18nModule.loadNamespace('auth'); })
-    .then(function () {
+// ======================= Vertalingen met Nederlandse terugval =======================
+var translationsReady = false; // Gebruik vertalingen pas na volledige initialisatie.
+var fallbackText = { // Zorg dat bevestigen ook zonder i18n leesbaar blijft.
+    'auth:confirm.pageTitle': 'E-mail bevestigen — MyFamTreeCollab', // Titel van de pagina.
+    'auth:confirm.loadingTitle': 'E-mail wordt bevestigd', // Titel tijdens verificatie.
+    'auth:confirm.loadingMsg': 'Een ogenblik geduld...', // Bericht tijdens verificatie.
+    'auth:confirm.successTitle': 'E-mail bevestigd', // Titel na succesvolle verificatie.
+    'auth:confirm.successMsg': 'Je e-mailadres is bevestigd. Je wordt doorgestuurd.', // Bericht na succesvolle verificatie.
+    'auth:confirm.successBtn': 'Verder', // Knop na succesvolle verificatie.
+    'auth:confirm.errorTitle': 'Bevestiging mislukt', // Titel bij een ongeldige link.
+    'auth:confirm.errorDefault': 'De bevestiging kon niet worden verwerkt. Probeer het later opnieuw.', // Bericht bij een technische fout.
+    'auth:confirm.errorBtn': 'Opnieuw registreren', // Knop bij een ongeldige link.
+    'auth:confirm.invalidLink': 'De bevestigingslink is ongeldig of onvolledig.' // Bericht als parameters ontbreken.
+}; // Einde Nederlandse terugval.
+function t(key) { // Geef een vertaling of de Nederlandse terugval terug.
+    return translationsReady ? i18nModule.t(key) : fallbackText[key]; // Voorkom afhankelijkheid van de vertaalmodule.
+} // Einde vertaalhulpfunctie.
+var translationLoad = Promise.resolve() // Start de vertaalmodule binnen een afgevangen belofte.
+    .then(function () { return i18nModule.init(); }) // Initialiseer i18n als de module beschikbaar is.
+    .then(function () { return i18nModule.loadNamespace('auth'); }); // Laad daarna de bevestigingsteksten.
+Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de wachttijd voor vertalingen.
+    setTimeout(function () { reject(new Error('Vertalingen laden te lang')); }, 5000); // Ga na vijf seconden verder zonder vertalingen.
+})]).then(function () { // Verwerk geslaagde vertaalinitialisatie.
+    translationsReady = true; // Maak de vertalingen beschikbaar voor de pagina.
+}).catch(function (error) { // Verwerk ontbrekende, defecte of trage vertalingen.
+    console.warn('[confirm] Vertalingen niet beschikbaar:', error); // Bewaar de oorzaak in de browserconsole.
+}).then(function () { // Start de verificatie ook als vertalingen niet beschikbaar zijn.
 
     // Paginatitel vertalen
-    document.title = i18nModule.t('auth:confirm.pageTitle');
+    document.title = t('auth:confirm.pageTitle');
 
     // Laad TopBar en activeer i18n + topbar.js
     fetch('/MyFamTreeCollab/Layout/TopBar.html')
         .then(function (r) { return r.text(); })
         .then(function (html) {
-            i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder'));
+            if (translationsReady) i18nModule.onComponentLoaded(html, document.getElementById('topbar-placeholder')); // Vertaal de TopBar indien mogelijk.
+            else document.getElementById('topbar-placeholder').innerHTML = html; // Toon de TopBar ook zonder vertalingen.
             var s = document.createElement('script');
             s.src = 'js/topbar.js';
             document.body.appendChild(s);
@@ -104,7 +129,8 @@ Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
     fetch('/MyFamTreeCollab/Layout/Footer.html')
         .then(function (r) { return r.text(); })
         .then(function (html) {
-            i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder'));
+            if (translationsReady) i18nModule.onComponentLoaded(html, document.getElementById('footer-placeholder')); // Vertaal de Footer indien mogelijk.
+            else document.getElementById('footer-placeholder').innerHTML = html; // Toon de Footer ook zonder vertalingen.
         });
 
     // ======================= DOM elementen =======================
@@ -115,8 +141,8 @@ Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
     var action = document.getElementById('confirmAction');
 
     // Laadtekst tonen via i18n
-    title.textContent = i18nModule.t('auth:confirm.loadingTitle');
-    msg.textContent   = i18nModule.t('auth:confirm.loadingMsg');
+    title.textContent = t('auth:confirm.loadingTitle'); // Toon de laadtekst in de beschikbare taal.
+    msg.textContent   = t('auth:confirm.loadingMsg'); // Toon de toelichting in de beschikbare taal.
 
     // ======================= notifyAdmin(email) =======================
     async function notifyAdmin(email) {
@@ -134,11 +160,11 @@ Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
     // ======================= Toon succes — via i18n =======================
     function showSuccess() {
         box.className     = 'confirm-wrap success';
-        title.textContent = i18nModule.t('auth:confirm.successTitle');
-        msg.textContent   = i18nModule.t('auth:confirm.successMsg');
+        title.textContent = t('auth:confirm.successTitle'); // Toon een vertaald of Nederlands succesbericht.
+        msg.textContent   = t('auth:confirm.successMsg'); // Leg uit dat de doorsturing volgt.
         action.innerHTML  =
             '<a href="/MyFamTreeCollab/home/index.html" class="btn-primary">' +
-            i18nModule.t('auth:confirm.successBtn') + '</a>';
+            t('auth:confirm.successBtn') + '</a>'; // Gebruik de beschikbare knoptekst.
         setTimeout(function () {
             window.location.href = '/MyFamTreeCollab/home/index.html';
         }, 3000);
@@ -147,11 +173,11 @@ Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
     // ======================= Toon fout — via i18n =======================
     function showError(errMsg) {
         box.className     = 'confirm-wrap error';
-        title.textContent = i18nModule.t('auth:confirm.errorTitle');
-        msg.textContent   = errMsg || i18nModule.t('auth:confirm.errorDefault');
+        title.textContent = t('auth:confirm.errorTitle'); // Toon een vertaald of Nederlands foutbericht.
+        msg.textContent   = errMsg || t('auth:confirm.errorDefault'); // Toon de fout of een veilige terugvaltekst.
         action.innerHTML  =
             '<a href="/MyFamTreeCollab/home/register.html" class="btn-primary">' +
-            i18nModule.t('auth:confirm.errorBtn') + '</a>';
+            t('auth:confirm.errorBtn') + '</a>'; // Gebruik de beschikbare knoptekst.
     }
 
     // ======================= URL parameters =======================
@@ -160,7 +186,7 @@ Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
     var type      = params.get('type');
 
     if (!tokenHash || !type) {
-        showError(i18nModule.t('auth:confirm.invalidLink')); // Vertaald
+        showError(t('auth:confirm.invalidLink')); // Toon ook zonder vertalingen een begrijpelijke fout.
         return;
     }
 
@@ -182,7 +208,7 @@ Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
         void notifyAdmin(email); // Stuur de niet-kritieke adminmelding zonder de doorsturing op te houden.
     })().catch(function (error) { // Verwerk onverwachte fouten van de client of het netwerk.
         console.error('[confirm] Verificatie mislukt:', error); // Bewaar de technische oorzaak in de console.
-        showError(i18nModule.t('auth:confirm.errorDefault')); // Toon een begrijpelijke fout in plaats van de zandloper.
+        showError(t('auth:confirm.errorDefault')); // Toon een begrijpelijke fout in plaats van de zandloper.
     });
 
 }).catch(function (error) { // Verwerk fouten voordat de bevestiging kan beginnen.
