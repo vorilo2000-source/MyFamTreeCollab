@@ -1,5 +1,8 @@
-<!-- ======================= home/confirm.html v1.3.0 =======================
-     Wijziging v1.3.0 (sessie 26):
+<!-- ======================= home/confirm.html v1.3.1 =======================
+     Wijziging v1.3.1:
+     - Succes en doorsturing volgen direct na een geslaagde verificatie.
+     - Initialisatie- en verificatiefouten tonen een melding in plaats van de zandloper.
+     v1.3.0 (sessie 26):
      - i18n geïntegreerd: i18next scripts + i18n.js toegevoegd aan <head>
      - Alle statische en dynamische teksten via i18nModule.t('auth:confirm.*')
      - TopBar via i18nModule.onComponentLoaded()
@@ -79,7 +82,8 @@
 
 <script>
 // ======================= i18n initialisatie =======================
-i18nModule.init()
+Promise.resolve() // Vangt ook een ontbrekende of defecte i18n-module op.
+    .then(function () { return i18nModule.init(); }) // Start de vertalingen pas binnen de foutafhandeling.
     .then(function () { return i18nModule.loadNamespace('auth'); })
     .then(function () {
 
@@ -173,12 +177,26 @@ i18nModule.init()
             return;
         }
 
-        var email = result.data.user ? result.data.user.email : '';
-        await notifyAdmin(email);
-        showSuccess();
-    })();
+        var email = result.data && result.data.user ? result.data.user.email : ''; // Lees het e-mailadres alleen als er een gebruiker is.
+        showSuccess(); // Toon succes en plan de doorsturing zodra de verificatie slaagt.
+        void notifyAdmin(email); // Stuur de niet-kritieke adminmelding zonder de doorsturing op te houden.
+    })().catch(function (error) { // Verwerk onverwachte fouten van de client of het netwerk.
+        console.error('[confirm] Verificatie mislukt:', error); // Bewaar de technische oorzaak in de console.
+        showError(i18nModule.t('auth:confirm.errorDefault')); // Toon een begrijpelijke fout in plaats van de zandloper.
+    });
 
-}); // einde i18n.then()
+}).catch(function (error) { // Verwerk fouten voordat de bevestiging kan beginnen.
+    console.error('[confirm] Initialisatie mislukt:', error); // Maak de technische oorzaak zichtbaar in de console.
+    document.getElementById('confirmBox').className = 'confirm-wrap error'; // Verwijder de zandloper.
+    document.getElementById('confirmTitle').textContent = 'Bevestiging niet beschikbaar'; // Toon een titel zonder vertalingen.
+    document.getElementById('confirmMsg').textContent = 'De pagina kon niet worden geladen. Vernieuw de pagina of probeer het later opnieuw.'; // Geef een herstelstap.
+    var retry = document.createElement('button'); // Maak een veilige knop zonder HTML-injectie.
+    retry.type = 'button'; // Voorkom dat de knop een formulier verstuurt.
+    retry.className = 'btn-primary'; // Gebruik dezelfde stijl als de andere knoppen.
+    retry.textContent = 'Opnieuw proberen'; // Beschrijf de actie op de knop.
+    retry.addEventListener('click', function () { window.location.reload(); }); // Herlaad alleen als de bezoeker klikt.
+    document.getElementById('confirmAction').replaceChildren(retry); // Zet de herstelknop op de pagina.
+}); // Einde initialisatie en foutafhandeling.
 </script>
 
 </body>
