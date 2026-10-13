@@ -1,4 +1,4 @@
-/* ======================= js/import.js v2.3.0 ======================= */
+﻿/* ======================= js/import.js v2.3.0 ======================= */
 /* Wijziging v2.3.0 (sessie F3-62):
    - F3-62: Duplicate ID detectie bij CSV import
    - Bij duplicaten: modal met keuze overslaan / overschrijven / toch alles importeren
@@ -368,3 +368,194 @@ document.addEventListener("DOMContentLoaded", function() {
         console.log("Import voltooid. Keuze:", choice, "| Opgeslagen:", finalRows.length || newRows.length, "| Type:", headerInfo.type); // debug
     });
 });
+
+
+
+// ======================= STAMBOOM JSON IMPORT =======================
+document.addEventListener("DOMContentLoaded", function() {
+
+    const stamboomJsonBtn = document.getElementById("stamboomJsonImportBtn"); // Zoek de aparte stamboom JSON-importknop
+    if(!stamboomJsonBtn) return;                                               // Stop stil als deze pagina de sectie niet bevat
+
+    stamboomJsonBtn.addEventListener("click", async function() {
+
+        const status = document.getElementById("stamboomJsonImportStatus");    // Statusveld van stamboom JSON-import
+
+        if(typeof StamboomStorage === "undefined"){                            // Controleer of storage.js geladen is
+            status.textContent = "❌ " + i18nModule.t("import:status.storageError"); // Bestaande opslagfoutmelding
+            status.style.color = "red";
+            return;
+        }
+
+        const fileInput = document.getElementById("stamboomJsonImportFile");   // Stamboom JSON bestandsinput
+        const file = fileInput.files[0];                                       // Geselecteerd JSON-backupbestand
+
+        if(!file){                                                             // Geen bestand gekozen
+            status.textContent = "❌ " + i18nModule.t("import:status.stamboomJsonNoFile"); // Vertaalde melding
+            status.style.color = "red";
+            return;
+        }
+
+        const text = await new Promise(function(resolve, reject){              // Lees JSON-bestand lokaal in de browser
+            const reader = new FileReader();                                   // Browser FileReader gebruiken
+            reader.onload = function(e){ resolve(e.target.result); };          // Geef tekst terug na succesvol lezen
+            reader.onerror = function(){ reject(new Error("Bestandsleesfout")); }; // Meld leesfout
+            reader.readAsText(file);                                           // Start tekstlezing
+        }).catch(function(err){
+            status.textContent = "❌ " + i18nModule.t("import:status.stamboomJsonReadError"); // Vertaalde leesfout
+            status.style.color = "red";
+            console.error("Stamboom JSON import FileReader fout:", err);       // Technische fout naar console
+            return null;
+        });
+
+        if(text === null) return;                                              // Stop wanneer lezen mislukt is
+
+        let persons;                                                           // Hier komt de geparste stamboom-array
+        try {
+            persons = JSON.parse(text.replace(/^\uFEFF/, ""));                  // Verwijder eventuele BOM en parse JSON
+        } catch(err) {
+            status.textContent = "❌ " + i18nModule.t("import:status.stamboomJsonInvalidJson"); // Ongeldige JSON
+            status.style.color = "red";
+            return;
+        }
+
+        if(!Array.isArray(persons)){                                           // Stamboom JSON-export is een array van personen
+            status.textContent = "❌ " + i18nModule.t("import:status.stamboomJsonInvalidData"); // Verkeerd JSON-model
+            status.style.color = "red";
+            return;
+        }
+
+        if(!persons.length){                                                   // Lege back-up niet gebruiken om de stamboom te wissen
+            status.textContent = "❌ " + i18nModule.t("import:status.stamboomJsonNoData"); // Geen personen aanwezig
+            status.style.color = "red";
+            return;
+        }
+
+        const validPersons = persons.every(function(person){                   // Controleer elk record op minimaal object + persoons-ID
+            return person && typeof person === "object" && !Array.isArray(person) &&
+                typeof person.ID === "string" && person.ID.trim().length > 0;
+        });
+
+        if(!validPersons){                                                     // Stop als het bestand geen geldige stamboom-back-up is
+            status.textContent = "❌ " + i18nModule.t("import:status.stamboomJsonInvalidData"); // Vertaalde validatiefout
+            status.style.color = "red";
+            return;
+        }
+
+        const confirmed = confirm(                                            // Vraag expliciete bevestiging vóór volledige vervanging
+            i18nModule.t("import:stamboomJson.confirmReplace", { count: persons.length })
+        );
+
+        if(!confirmed){                                                        // Annuleren laat bestaande StamboomStorage volledig intact
+            status.textContent = "ℹ️ " + i18nModule.t("import:status.stamboomJsonCancelled"); // Vertaalde annulering
+            status.style.color = "gray";
+            return;
+        }
+
+        const saved = StamboomStorage.set(persons);                            // Vervang volledige stamboom via bestaande opslag-API
+
+        if(saved === false){                                                   // Alleen expliciete false geldt als mislukte opslag
+            status.textContent = "❌ " + i18nModule.t("import:status.stamboomJsonFailed"); // Vertaalde foutmelding
+            status.style.color = "red";
+            return;
+        }
+
+        status.textContent = "✅ " + i18nModule.t("import:status.stamboomJsonSuccess", { count: persons.length }); // Succes met aantal personen
+        status.style.color = "green";
+    });
+});
+
+// ======================= EVENT JSON IMPORT =======================
+document.addEventListener("DOMContentLoaded", function() {
+
+    const eventBtn = document.getElementById("eventImportBtn"); // Zoek de aparte event-importknop
+    if(!eventBtn) return;                                        // Stop stil als deze pagina geen event-importsectie heeft
+
+    eventBtn.addEventListener("click", async function() {
+
+        const status = document.getElementById("eventImportStatus"); // Statusveld van event-import
+
+        if(typeof EventStorage === "undefined"){                     // Controleer of eventStorage.js geladen is
+            status.textContent = "❌ " + i18nModule.t("import:status.eventStorageError"); // Vertaalde opslagfout
+            status.style.color = "red";
+            return;
+        }
+
+        const fileInput = document.getElementById("eventImportFile"); // Event JSON bestandsinput
+        const file = fileInput.files[0];                              // Geselecteerd eventbestand
+
+        if(!file){                                                    // Geen bestand gekozen
+            status.textContent = "❌ " + i18nModule.t("import:status.eventNoFile"); // Vertaalde melding
+            status.style.color = "red";
+            return;
+        }
+
+        const text = await new Promise(function(resolve, reject){     // Lees eventbestand lokaal in de browser
+            const reader = new FileReader();                          // Browser FileReader gebruiken
+            reader.onload = function(e){ resolve(e.target.result); }; // Geef tekst terug na succesvol lezen
+            reader.onerror = function(){ reject(new Error("Bestandsleesfout")); }; // Meld leesfout
+            reader.readAsText(file);                                  // Start tekstlezing
+        }).catch(function(err){
+            status.textContent = "❌ " + i18nModule.t("import:status.eventReadError"); // Vertaalde leesfout
+            status.style.color = "red";
+            console.error("Event import FileReader fout:", err);      // Technische fout naar console
+            return null;
+        });
+
+        if(text === null) return;                                     // Stop wanneer lezen mislukt is
+
+        let events;                                                   // Hier komt de geparseerde event-array
+        try {
+            events = JSON.parse(text.replace(/^\uFEFF/, ""));         // Verwijder eventuele BOM en parse JSON
+        } catch(err) {
+            status.textContent = "❌ " + i18nModule.t("import:status.eventInvalidJson"); // Ongeldige JSON
+            status.style.color = "red";
+            return;
+        }
+
+        if(!Array.isArray(events)){                                   // Event-back-up moet een array zijn
+            status.textContent = "❌ " + i18nModule.t("import:status.eventInvalidData"); // Verkeerd JSON-model
+            status.style.color = "red";
+            return;
+        }
+
+        if(!events.length){                                           // Lege back-up niet gebruiken om EventStorage te wissen
+            status.textContent = "❌ " + i18nModule.t("import:status.eventNoData"); // Geen eventdata aanwezig
+            status.style.color = "red";
+            return;
+        }
+
+        const validEvents = events.every(function(event){             // Controleer ieder record op minimaal eventobject + Event ID
+            return event && typeof event === "object" && !Array.isArray(event) &&
+                typeof event.id === "string" && event.id.trim().length > 0;
+        });
+
+        if(!validEvents){                                             // Stop bij een bestand dat geen geldige event-back-up is
+            status.textContent = "❌ " + i18nModule.t("import:status.eventInvalidData"); // Vertaalde validatiefout
+            status.style.color = "red";
+            return;
+        }
+
+        const confirmed = confirm(                                   // Vraag expliciete bevestiging vóór volledige vervanging
+            i18nModule.t("import:events.confirmReplace", { count: events.length })
+        );
+
+        if(!confirmed){                                               // Annuleren laat bestaande EventStorage volledig intact
+            status.textContent = "ℹ️ " + i18nModule.t("import:status.eventCancelled"); // Vertaalde annulering
+            status.style.color = "gray";
+            return;
+        }
+
+        const saved = EventStorage.replaceAll(events);                // Vervang volledige EventStorage via bestaande publieke API
+
+        if(!saved){                                                   // EventStorage rapporteerde mislukte opslag
+            status.textContent = "❌ " + i18nModule.t("import:status.eventFailed"); // Vertaalde foutmelding
+            status.style.color = "red";
+            return;
+        }
+
+        status.textContent = "✅ " + i18nModule.t("import:status.eventSuccess", { count: events.length }); // Succes met aantal events
+        status.style.color = "green";
+    });
+});
+

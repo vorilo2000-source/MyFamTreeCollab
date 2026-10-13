@@ -1,4 +1,4 @@
-/* ======================= js/export.js v2.1.0 =======================
+﻿/* ======================= js/export.js v2.1.0 =======================
    Wijziging v2.1.0 (sessie 25):
    - Alle hardcoded statusmeldingen vervangen door i18nModule.t('export:status.*')
    - Bestandsnaam interpolatie via {{filename}}
@@ -36,6 +36,19 @@
         return `${jaar}${maand}${dag}`;                                    // Combineer tot JJJJMMDD
     }
 
+    function familienaamVoorBestandsnaam() {
+        const data = StamboomStorage.get();                                // Lees de stamboom in bestaande opslagvolgorde
+        const eerstePersoon = data.length ? data[0] : null;                // Gebruik de eerste persoon als naamgever van de stamboom
+        const achternaam = eerstePersoon && eerstePersoon.Achternaam       // Lees uitsluitend de achternaam van die eerste persoon
+            ? String(eerstePersoon.Achternaam).trim()
+            : 'familie';                                                   // Veilige fallback wanneer geen achternaam beschikbaar is
+
+        return achternaam
+            .replace(/[\\/:*?"<>|]/g, '')                                // Verwijder tekens die niet in bestandsnamen mogen voorkomen
+            .replace(/\s+/g, '_')                                         // Zet spaties om naar underscores
+            || 'familie';                                                  // Behoud altijd een geldige bestandsnaam
+    }
+
     /* ======================= CSV EXPORT ======================= */
 
     /**
@@ -59,13 +72,7 @@
             ? [...window.StamboomSchema.fields]
             : Object.keys(data[0]);                                        // Fallback: sleutels van eerste object
 
-        const standaardNaam = `stamboom_${datumVoorBestandsnaam()}`;       // Standaard bestandsnaam met datum
-        let bestandsnaam = prompt(
-            i18nModule.t('export:status.promptFilename'),                  // Vertaalde prompttekst
-            standaardNaam
-        );
-        if (!bestandsnaam) bestandsnaam = standaardNaam;                   // Fallback bij annuleren of leeg
-        const volledigeNaam = `${bestandsnaam}.csv`;                       // Voeg .csv extensie toe
+        const volledigeNaam = `${familienaamVoorBestandsnaam()}_stamboom_${datumVoorBestandsnaam()}.csv`; // Vaste naam: familienaam_stamboom_JJJJMMDD.csv
 
         // Bouw CSV-inhoud op
         const csvRegels = [];
@@ -139,7 +146,7 @@
             return;
         }
 
-        const standaardNaam = `stamboom_${datumVoorBestandsnaam()}.json`;  // Bestandsnaam met datum
+        const standaardNaam = `${familienaamVoorBestandsnaam()}_stamboom_${datumVoorBestandsnaam()}.json`; // Vaste naam: familienaam_stamboom_JJJJMMDD.json
         const blob = new Blob(
             [JSON.stringify(data, null, 2)],                               // Leesbare JSON met 2 spaties inspringing
             { type: 'application/json' }
@@ -159,10 +166,59 @@
         }
     }
 
+
+    /* ======================= EVENTS JSON EXPORT ======================= */
+
+    /**
+     * Exporteert de volledige EventStorage als JSON-bestand.
+     * De bestaande stamboomexport blijft volledig gescheiden.
+     * @param {HTMLElement} [statusEl] - Optioneel element voor statusmelding
+     */
+    function exportEventsJSON(statusEl) {
+        if (!window.EventStorage) {                                          // Controleer of eventStorage.js geladen is
+            if (statusEl) {
+                statusEl.textContent = '❌ ' + i18nModule.t('export:status.eventStorageError'); // Meld ontbrekende EventStorage
+                statusEl.style.color = 'red';
+            }
+            return;                                                          // Stop zonder de stamboomexport te beïnvloeden
+        }
+
+        const data = EventStorage.get();                                     // Haal uitsluitend de lokale eventdata op
+
+        if (!data.length) {                                                  // Controleer of er events zijn
+            if (statusEl) {
+                statusEl.textContent = '⚠️ ' + i18nModule.t('export:status.eventNoData'); // Vertaalde waarschuwing
+                statusEl.style.color = 'red';
+            }
+            return;
+        }
+
+        const standaardNaam = `${familienaamVoorBestandsnaam()}_event_${datumVoorBestandsnaam()}.json`; // Vaste naam: familienaam_event_JJJJMMDD.json
+        const blob = new Blob(
+            [JSON.stringify(data, null, 2)],                                 // Exporteer volledige EventStorage als leesbare JSON
+            { type: 'application/json' }
+        );
+
+        const url = URL.createObjectURL(blob);                               // Maak tijdelijke download-URL
+        const a   = document.createElement('a');                             // Maak tijdelijke downloadlink
+        a.href = url;                                                        // Koppel download-URL
+        a.download = standaardNaam;                                          // Stel bestandsnaam in
+        document.body.appendChild(a);                                        // Voeg link tijdelijk toe
+        a.click();                                                           // Start download
+        document.body.removeChild(a);                                        // Verwijder tijdelijke link
+        URL.revokeObjectURL(url);                                            // Geef tijdelijke URL vrij
+
+        if (statusEl) {
+            statusEl.textContent = '✅ ' + i18nModule.t('export:status.eventJsonSaved', { filename: standaardNaam }); // Succesmelding
+            statusEl.style.color = 'green';
+        }
+    }
+
     /* ======================= EXPORTEER ALS GLOBAAL OBJECT ======================= */
-    window.ExportModule = {                                                // Exporteer beide functies onder één namespace
+    window.ExportModule = {                                                // Exporteer alle exportfuncties onder één namespace
         exportCSV,                                                         // window.ExportModule.exportCSV(statusEl)
-        exportJSON                                                         // window.ExportModule.exportJSON(statusEl)
+        exportJSON,                                                        // window.ExportModule.exportJSON(statusEl)
+        exportEventsJSON                                                   // window.ExportModule.exportEventsJSON(statusEl)
     };
 
-})();                                                                      // Sluit en voer de zelfuitvoerende functie direct uit
+})();                                                                      // Sluit en voer de zelfuit

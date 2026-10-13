@@ -1,7 +1,14 @@
-// ========================= js/cloudSync.js v2.2.1 =========================
+// ========================= js/cloudSync.js v2.3.0 =========================
 // Cloud sync module for MyFamTreeCollab
 //
-// Fix v2.2.1:
+// Nieuw v2.3.0:
+ // - Cloud-events gekoppeld aan dezelfde stambomen.id als de persoonsdata
+ // - listStambomen() geeft ook aantalEvents terug
+ // - saveEventsToCloud() werkt uitsluitend de events-kolom bij
+ // - loadEventsFromCloud() laadt uitsluitend de events-kolom naar EventStorage
+ // - Viewer blijft read-only; owner en gedeelde editor mogen events opslaan
+ //
+ // Fix v2.2.1:
 // - loadFromCloud() en listSharedWithMe() doen geen _checkCloudAccess() meer
 //   Viewers en editors mogen gedeelde stambomen laden — alleen opslaan is beperkt
 //
@@ -89,7 +96,7 @@
 
         var result = await client
             .from(TABLE)
-            .select('id, naam, updated_at, data')
+            .select('id, naam, updated_at, data, events')
             .eq('user_id', userId)
             .order('updated_at', { ascending: false });
 
@@ -103,7 +110,8 @@
                 id:             rij.id,
                 naam:           rij.naam || 'Naamloos',
                 updatedAt:      rij.updated_at,
-                aantalPersonen: Array.isArray(rij.data) ? rij.data.length : 0
+                aantalPersonen: Array.isArray(rij.data) ? rij.data.length : 0,
+                aantalEvents:   Array.isArray(rij.events) ? rij.events.length : 0
             };
         });
 
@@ -275,15 +283,127 @@
     }
 
     // -----------------------------------------------------------------------
+    // _getRoleForTree
+    // Hergebruikt ShareModule om de bestaande owner/viewer/editor rechten te bepalen.
+    // -----------------------------------------------------------------------
+    async function _getRoleForTree(stamboumId) {
+        if (!window.ShareModule || typeof window.ShareModule.getMyRoleForTree !== 'function') {
+            return { rol: null, error: 'share_module_unavailable' };
+        }
+
+        return await window.ShareModule.getMyRoleForTree(stamboumId);
+    }
+
+    // -----------------------------------------------------------------------
+    // saveEventsToCloud(stamboumId)
+    // Werkt alleen de events-kolom van de bestaande cloudstamboom bij.
+    // Personen, naam en sharing blijven ongemoeid.
+    // Owner en gedeelde editor mogen schrijven; viewer niet.
+    // -----------------------------------------------------------------------
+    async function saveEventsToCloud(stamboumId) {
+        if (!stamboumId) return { success: false, error: 'geen_id' };
+
+        var userId = await _getCurrentUserId();
+        if (!userId) return { success: false, error: 'not_logged_in' };
+
+        if (!window.EventStorage || typeof window.EventStorage.get !== 'function') {
+            return { success: false, error: 'event_storage_unavailable' };
+        }
+
+        var roleResult = await _getRoleForTree(stamboumId);
+        if (roleResult.error) return { success: false, error: roleResult.error };
+        if (roleResult.rol !== 'owner' && roleResult.rol !== 'editor') {
+            return { success: false, error: 'no_write_access' };
+        }
+
+        var events = window.EventStorage.get();
+        var nu = new Date().toISOString();
+        var client = _getClient();
+
+        var result = await client
+            .from(TABLE)
+            .update({ events: events, updated_at: nu })
+            .eq('id', stamboumId);
+
+        if (result.error) {
+            console.error('[cloudSync] saveEventsToCloud fout:', result.error);
+            return { success: false, error: result.error.message };
+        }
+
+        return {
+            success: true,
+            id: stamboumId,
+            count: events.length,
+            updatedAt: nu,
+            rol: roleResult.rol
+        };
+    }
+
+    // -----------------------------------------------------------------------
+    // loadEventsFromCloud(stamboumId)
+    // Laadt events van dezelfde cloudstamboom naar EventStorage.
+    // RLS bepaalt of de ingelogde gebruiker de stamboom mag lezen.
+    // -----------------------------------------------------------------------
+    async function loadEventsFromCloud(stamboumId) {
+        if (!stamboumId) return { success: false, error: 'geen_id' };
+
+        var userId = await _getCurrentUserId();
+        if (!userId) return { success: false, error: 'not_logged_in' };
+
+        if (!window.EventStorage || typeof window.EventStorage.replaceAll !== 'function') {
+            return { success: false, error: 'event_storage_unavailable' };
+        }
+
+        var client = _getClient();
+
+        var result = await client
+            .from(TABLE)
+            .select('id, naam, events, updated_at')
+            .eq('id', stamboumId)
+            .single();
+
+        if (result.error) {
+            console.error('[cloudSync] loadEventsFromCloud fout:', result.error);
+            return { success: false, error: result.error.message };
+        }
+
+        var cloudEvents = Array.isArray(result.data.events) ? result.data.events : [];
+        var naam = result.data.naam || 'Naamloos';
+        var updatedAt = result.data.updated_at;
+
+        var replaced = window.EventStorage.replaceAll(cloudEvents);
+        if (!replaced) return { success: false, error: 'event_storage_write_failed' };
+
+        if (window.StamboomStorage) {
+            if (typeof window.StamboomStorage.setActiveTreeId === 'function') {
+                window.StamboomStorage.setActiveTreeId(stamboumId);
+            }
+            if (typeof window.StamboomStorage.setActiveTreeName === 'function') {
+                window.StamboomStorage.setActiveTreeName(naam);
+            }
+        }
+
+        return {
+            success: true,
+            id: stamboumId,
+            naam: naam,
+            count: cloudEvents.length,
+            updatedAt: updatedAt
+        };
+    }
+
+    // -----------------------------------------------------------------------
     // Publieke API
     // -----------------------------------------------------------------------
     window.CloudSync = {
-        saveToCloud:     saveToCloud,
-        loadFromCloud:   loadFromCloud,     // Toegankelijk voor alle ingelogde gebruikers
-        deleteFromCloud: deleteFromCloud,
-        listStambomen:   listStambomen,     // Alleen voor owner/admin
-        getCloudMeta:    getCloudMeta,
-        MAX_PERSONS:     MAX_PERSONS
+        saveToCloud:       saveToCloud,
+        loadFromCloud:     loadFromCloud,       // Toegankelijk voor alle ingelogde gebruikers
+        saveEventsToCloud: saveEventsToCloud,   // Owner/editor: werk alleen events van bestaande stamboom bij
+        loadEventsFromCloud: loadEventsFromCloud, // Alle gebruikers met RLS-leestoegang: laad alleen events
+        deleteFromCloud:   deleteFromCloud,
+        listStambomen:     listStambomen,       // Alleen voor owner/admin
+        getCloudMeta:      getCloudMeta,
+        MAX_PERSONS:       MAX_PERSONS
     };
 
 })();

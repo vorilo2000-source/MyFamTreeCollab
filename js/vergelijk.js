@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file js/vergelijk.js
  * @version 1.0.0
  * @description Page script for abonnementen/vergelijk.html.
@@ -75,7 +75,7 @@ i18nModule.loadNamespace('vergelijk').then(function() {
         });
 
     // Navbar: no auth dependency, may load in parallel
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
         .then(function(resp) { return resp.text(); })                                         // Fetch HTML
         .then(function(data) {
             i18nModule.onComponentLoaded(data, document.getElementById('navbar-placeholder')); // Inject + translate Navbar
@@ -96,3 +96,4 @@ i18nModule.loadNamespace('vergelijk').then(function() {
     // Track visit after fetch calls so an error here does not block layout loading
     SiteAnalytics.trackPage('vergelijk'); // Register visit in Supabase page_visits table
 });
+

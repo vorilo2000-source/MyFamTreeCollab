@@ -1,6 +1,6 @@
 /**
  * @file i18n.js
- * @version 1.0.0
+ * @version 1.0.1
  * @description Core internationalisation module for MyFamTreeCollab.
  *              Uses i18next + i18next-http-backend + i18next-browser-languagedetector.
  *              Supports dynamic namespace loading and real-time language switching.
@@ -26,7 +26,7 @@ const FALLBACK_LANGUAGE = 'nl';
  * Must match the folder structure:  /locales/{lng}/{ns}.json
  * On GitHub Pages this resolves from the repo root.
  */
-const LOCALES_BASE_PATH = '/MyFamTreeCollab/locales/{{lng}}/{{ns}}.json';
+const LOCALES_BASE_PATH = '/MyFamTreeCollab/locales/{{lng}}/{{ns}}.json?v=1.0.1';
 
 // ─────────────────────────────────────────────
 // 2. i18next INITIALISATION

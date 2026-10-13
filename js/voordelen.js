@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file js/voordelen.js
  * @version 1.0.0
  * @description Page script for abonnementen/voordelen.html.
@@ -42,7 +42,7 @@ i18nModule.loadNamespace('voordelen').then(function() {
         });
 
     // Navbar: no auth dependency, may load in parallel
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
         .then(function(resp) { return resp.text(); })                                         // Fetch HTML
         .then(function(data) {
             i18nModule.onComponentLoaded(data, document.getElementById('navbar-placeholder')); // Inject + translate Navbar
@@ -63,3 +63,4 @@ i18nModule.loadNamespace('voordelen').then(function() {
     // Track visit after fetch calls so an error here does not block layout loading
     SiteAnalytics.trackPage('voordelen'); // Register visit in Supabase page_visits table
 });
+

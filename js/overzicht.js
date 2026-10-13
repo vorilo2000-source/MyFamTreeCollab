@@ -1,6 +1,9 @@
+# overzicht.js
+
+```javascript
 /**
  * @file js/overzicht.js
- * @version 1.0.0
+ * @version 1.1.0
  * @description Page script for abonnementen/overzicht.html.
  *              Loaded AFTER i18nModule.init() resolves to prevent the race condition
  *              where updateContent() runs before the 'overzicht' namespace is available,
@@ -13,7 +16,7 @@
  *                  rechten-intro  — contains <strong>, <code>, <em>
  *                  donatie-noot   — contains <strong>
  *              - Register languageChanged listener to retranslate on language switch
- *              - Fetch and inject TopBar, Navbar, Footer
+ *              - Load shared TopBar, Navbar and Footer through LayoutLoader
  *              - Track page visit via SiteAnalytics
  */
 
@@ -63,39 +66,21 @@ i18nModule.loadNamespace('overzicht').then(function() {
     i18next.on('languageChanged', _translateHTMLBlocks);
 
     // ─────────────────────────────────────────────
-    // 3. LAYOUT COMPONENT FETCHES
+    // 3. CENTRALE LAYOUT LOADER
     // ─────────────────────────────────────────────
 
-    // TopBar: fetch HTML, inject via onComponentLoaded (translates + rebuilds switcher),
-    // then inject topbar.js to guarantee #top-auth is in DOM before topbar.js runs
-    fetch('/MyFamTreeCollab/Layout/TopBar.html')
-        .then(function(resp) { return resp.text(); })                                         // Fetch HTML as text
-        .then(function(data) {
-            i18nModule.onComponentLoaded(data, document.getElementById('topbar-placeholder')); // Inject + translate TopBar
-            var s = document.createElement('script');                                          // Create script element
-            s.src = '../js/topbar.js';                                                         // Path to topbar.js
-            document.body.appendChild(s);                                                      // Append — browser executes immediately
-        });
-
-    // Navbar: no auth dependency, may load in parallel
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
-        .then(function(resp) { return resp.text(); })                                         // Fetch HTML
-        .then(function(data) {
-            i18nModule.onComponentLoaded(data, document.getElementById('navbar-placeholder')); // Inject + translate Navbar
-        });
-
-    // Footer: no dependencies, may load in parallel
-    fetch('/MyFamTreeCollab/Layout/Footer.html')
-        .then(function(resp) { return resp.text(); })                                         // Fetch HTML
-        .then(function(data) {
-            var ph = document.getElementById('footer-placeholder');                            // Fetch placeholder element
-            if (ph) ph.innerHTML = data;                                                       // Inject Footer into DOM
-        });
+    // TopBar, Navbar en Footer worden niet meer door deze pagina afzonderlijk opgehaald.
+    // LayoutLoader is de enige uitvoerende loader voor gedeelde layoutcomponenten.
+    return LayoutLoader.load().then(function() {
 
     // ─────────────────────────────────────────────
     // 4. PAGE VISIT TRACKING
     // ─────────────────────────────────────────────
 
-    // Track visit after fetch calls so an error here does not block layout loading
-    SiteAnalytics.trackPage('overzicht'); // Register visit in Supabase page_visits table
+    // Track visit nadat de centrale layout-loader gereed is.
+    SiteAnalytics.trackPage('overzicht'); // Register visit in Supabase page_visits table.
+    });
+}).catch(function(error) {
+    console.error('Overzicht initialisatie mislukt:', error); // Toon initialisatiefout zonder een tweede fallback-loader te starten.
 });
+```
