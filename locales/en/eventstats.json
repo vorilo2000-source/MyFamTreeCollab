@@ -1,0 +1,27 @@
+{
+  "page": {
+    "title": "Event statistics"
+  },
+  "welcome": {
+    "heading": "Event statistics",
+    "intro": "An overview of your events in numbers. All data comes directly from local event storage and is calculated live."
+  },
+  "section": {
+    "eventTypes": "Event type overview"
+  },
+  "kpi": {
+    "totalEvents": "Total events",
+    "lastModified": "Last modified",
+    "storageVersion": "Storage version",
+    "eventTypes": "Event types",
+    "upcomingEvents": "Upcoming events",
+    "withParticipants": "With participants",
+    "uniquePlaces": "Unique places"
+  },
+  "eventTypes": {
+    "unknown": "Unknown"
+  },
+  "empty": {
+    "events": "No events available."
+  }
+}

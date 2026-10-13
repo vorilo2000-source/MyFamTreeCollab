@@ -23,11 +23,42 @@
     "noFile": "No file selected",
     "selected": "Selected: "
   },
+  "events": {
+    "heading": "Import events",
+    "subtitle": "Supported format: .json",
+    "body": "Import a complete EventStorage backup. After confirmation, the currently stored local events will be fully replaced by the events in the file.",
+    "button": "Import events JSON",
+    "confirmReplace": "This file contains {{count}} event(s). The current EventStorage will be fully replaced. Continue?"
+  },
   "status": {
     "storageError": "storage.js not loaded",
     "schemaError": "schema.js not loaded",
     "noFile": "No file selected",
     "noData": "CSV contains no data",
-    "success": "Import complete: {{count}} people added"
+    "success": "Import complete: {{count}} people added",
+    "eventStorageError": "eventStorage.js is not loaded",
+    "eventNoFile": "No event file selected",
+    "eventReadError": "Event file could not be read",
+    "eventInvalidJson": "Event file does not contain valid JSON",
+    "eventInvalidData": "This file is not a valid EventStorage backup",
+    "eventNoData": "Event file contains no events",
+    "eventCancelled": "Event import cancelled",
+    "eventFailed": "Event import could not be saved",
+    "eventSuccess": "Event import complete: {{count}} events restored",
+    "stamboomJsonNoFile": "No family tree JSON file selected",
+    "stamboomJsonReadError": "Family tree JSON file could not be read",
+    "stamboomJsonInvalidJson": "Family tree JSON file does not contain valid JSON",
+    "stamboomJsonInvalidData": "This file is not a valid family tree JSON backup",
+    "stamboomJsonNoData": "Family tree JSON file contains no people",
+    "stamboomJsonCancelled": "Family tree JSON import cancelled",
+    "stamboomJsonFailed": "Family tree JSON import could not be saved",
+    "stamboomJsonSuccess": "Family tree JSON import complete: {{count}} people restored"
+  },
+  "stamboomJson": {
+    "heading": "Import family tree as JSON",
+    "subtitle": "Supported format: .json",
+    "body": "Import a complete family tree backup previously saved as JSON from the export page. After confirmation, the current local family tree will be fully replaced by the people from the file.",
+    "button": "Import family tree JSON",
+    "confirmReplace": "This file contains {{count}} people. The current family tree will be fully replaced. Continue?"
   }
 }

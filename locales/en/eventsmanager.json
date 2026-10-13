@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Event Manager"
+  },
+  "welcome": {
+    "heading": "Welcome to your Event Manager",
+    "intro": "Search for a person to manage events."
+  },
+  "search": {
+    "placeholder": "Search by ID, name or date of birth..."
+  },
+  "btn": {
+    "refresh": "Refresh",
+    "copy": "Copy",
+    "save": "Save"
+  },
+  "table": {
+    "id": "ID",
+    "doopnaam": "Given name",
+    "roepnaam": "Preferred name",
+    "prefix": "Prefix",
+    "achternaam": "Surname",
+    "geslacht": "Gender",
+    "geboortedatum": "Date of birth",
+    "eventId": "Event ID",
+    "type": "Type",
+    "title": "Title",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "place": "Place",
+    "participants": "Participants",
+    "sources": "Sources",
+    "notes": "Notes"
+  },
+  "eventTypes": {
+    "religion": "Religion",
+    "relationship": "Relationship",
+    "marriage": "Marriage",
+    "divorce": "Divorce",
+    "diploma": "Diploma",
+    "career": "Career",
+    "retirement": "Retirement",
+    "move": "Move",
+    "migration": "Migration",
+    "death": "Death",
+    "other": "Other"
+  },
+  "placeholder": {
+    "select": "Select a person first.",
+    "notFound": "Person not found."
+  },
+  "confirm": {
+    "delete": "Are you sure you want to delete this row?"
+  },
+  "action": {
+    "delete": "Delete",
+    "deleteRowTitle": "Delete this row",
+    "deleteTitle": "Delete"
+  },
+  "alert": {
+    "maxRows": "The maximum number of temporary rows has been reached.",
+    "saved": "Saved.",
+    "saveFailed": "Save failed: {{error}}"
+  },
+  "rel": {
+    "parent": "Parent",
+    "partner": "Partner",
+    "sibling": "Sibling",
+    "root": "Main person",
+    "child": "Child",
+    "unknown": "Unknown"
+  }
+}

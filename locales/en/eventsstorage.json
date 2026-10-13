@@ -1,0 +1,29 @@
+{
+  "page": {
+    "title": "Event storage"
+  },
+  "welcome": {
+    "heading": "Event storage",
+    "intro": "View and manage events stored locally in this browser."
+  },
+  "btn": {
+    "reset": "Reset events"
+  },
+  "storage": {
+    "info": "Version {{version}} — {{count}} event(s)",
+    "empty": "No local events stored.",
+    "filterPlaceholder": "Filter...",
+    "confirmReset": "Delete all local events?"
+  },
+  "table": {
+    "eventId": "Event ID",
+    "type": "Type",
+    "title": "Title",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "place": "Place",
+    "participants": "Participants",
+    "sources": "Sources",
+    "notes": "Notes"
+  }
+}

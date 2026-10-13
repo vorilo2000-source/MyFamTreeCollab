@@ -13,10 +13,16 @@
     "button": "Export CSV"
   },
   "json": {
-    "heading": "🚧 Export as JSON",
+    "heading": "Export as JSON",
     "body": "A JSON file is a complete backup of your family tree including all fields. Store this file in a safe place so you never lose your data.",
     "button": "Export JSON",
     "note": "The file is automatically saved to your downloads folder with the date in the filename."
+  },
+  "events": {
+    "heading": "Export events as JSON",
+    "body": "Create a complete backup of all locally stored event data. This file can later be fully restored through the import page.",
+    "button": "Export events JSON",
+    "note": "The event file is saved as events_YYYYMMDD.json."
   },
   "status": {
     "noData": "No people to export.",
@@ -26,6 +32,9 @@
     "csvDownload": "Exported as {{filename}} (downloads folder)",
     "cancelled": "Export cancelled.",
     "failed": "Export failed. See console for details.",
-    "jsonSaved": "Exported as {{filename}}"
+    "jsonSaved": "Exported as {{filename}}",
+    "eventStorageError": "eventStorage.js is not loaded.",
+    "eventNoData": "No events to export.",
+    "eventJsonSaved": "Events exported as {{filename}}"
   }
 }

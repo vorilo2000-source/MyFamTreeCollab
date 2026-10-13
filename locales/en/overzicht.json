@@ -1,9 +1,7 @@
 {
   "page": {
     "title": "Access & Collaboration",
-    "intro": "MyFamTreeCollab uses account types that determine what you can do. The basic version is free and fully local,
-  no account required. Cloud storage and collaboration are available via an Owner account (donation)."
-    
+    "intro": "MyFamTreeCollab uses account types that determine what you can do. The basic version is free and fully local, no account required. Cloud storage and collaboration are available via an Owner account (donation)."
   },
   "hoe": {
     "title": "⚙️ How does access work?",
@@ -52,7 +50,7 @@
   },
   "rechten": {
     "title": "📋 Family tree rights: Viewer & Editor",
-    "intro": "Viewer and Editor are <strong>not account types</strong> — they are rights granted by an Owner to a specific family tree. A user <em>guest</em> with access gcan be Viewer or Editor on an Owner's family tree.",
+    "intro": "Viewer and Editor are <strong>not account types</strong> — they are rights granted by an Owner to a specific family tree. A user <em>guest</em> with access can be Viewer or Editor on an Owner's family tree.",
     "viewer": {
       "naam": "Viewer",
       "beschrijving": "Read access to a shared family tree. Assigned by the Owner of that tree.",
@@ -84,7 +82,7 @@
     "eenmalig_wat": "Owner account active for the duration of the donation for three family trees (Cloud backup). Family tree sharing and collaboration. No further obligations.",
     "stichtend_label": "Founding member",
     "stichtend_per": "Yearly",
-    "stichtend_wat": "Owner activation + early access to new features + listed as founding member."  ,
+    "stichtend_wat": "Owner activation + early access to new features + listed as founding member.",
     "noot": "<strong>Transparency:</strong> there is no automatic payment verification yet. The Owner account is activated manually after receipt of a donation. This will be automated in a future phase."
   },
   "cta": {

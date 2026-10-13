@@ -45,6 +45,7 @@
     "start": "Start",
     "stamboom": "Family tree",
     "developer": "Developer",
+    "events": "Events",
     "sub": {
       "create": "Create",
       "import": "Import",
@@ -71,7 +72,10 @@
       "blank": "Blank",
       "maintenance": "Maintenance",
       "pageExample": "Page example",
-      "sandbox": "Sandbox"
+      "sandbox": "Sandbox",
+      "eventsManager": "Manager",
+      "eventsStorage": "Storage",
+      "eventStats": "Statistics"
     }
   },
   "footer": {
