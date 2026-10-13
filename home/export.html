@@ -1,4 +1,4 @@
-<!-- ======================= home/export.html v2.3.0 =======================
+﻿<!-- ======================= home/export.html v2.3.0 =======================
      Wijziging v2.3.0 (sessie 25):
      - i18next geïntegreerd: laadvolgorde scripts in <head> toegevoegd
      - i18nModule.init() + loadNamespace('export') toegevoegd
@@ -54,15 +54,17 @@
         .export-sectie p  { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 14px 0; }
         .export-sectie .opmerking { font-size: 0.85rem; color: #888; margin-top: 10px; }
 
-        #exportCSVBtn, #exportJSONBtn {
+        #exportCSVBtn, #exportJSONBtn, #exportEventsJSONBtn {
             padding: 9px 18px; cursor: pointer; border: none;
             border-radius: 4px; font-size: 0.95rem; font-weight: bold;
         }
-        #exportCSVBtn        { background: #5bc0de; color: #fff; }
-        #exportCSVBtn:hover  { background: #31b0d5; }
-        #exportJSONBtn       { background: #0275d8; color: #fff; }
-        #exportJSONBtn:hover { background: #025aa5; }
-        #exportStatus        { font-size: 0.9rem; margin-top: 8px; }
+        #exportCSVBtn              { background: #5bc0de; color: #fff; }
+        #exportCSVBtn:hover        { background: #31b0d5; }
+        #exportJSONBtn             { background: #0275d8; color: #fff; }
+        #exportJSONBtn:hover       { background: #025aa5; }
+        #exportEventsJSONBtn       { background: #0275d8; color: #fff; }
+        #exportEventsJSONBtn:hover { background: #025aa5; }
+        #exportStatus, #eventExportStatus { font-size: 0.9rem; margin-top: 8px; }
 
         .welkom-blok { margin-bottom: 24px; }
         .welkom-blok h1 { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px 0; color: #222; }
@@ -103,6 +105,15 @@
             <p class="opmerking" data-i18n="export:json.note"></p>
         </div>
 
+        <!-- Events JSON sectie -->
+        <div class="export-sectie">
+            <h2 data-i18n="export:events.heading"></h2>
+            <p data-i18n="export:events.body"></p>
+            <button id="exportEventsJSONBtn" data-i18n="export:events.button"></button>
+            <p class="opmerking" data-i18n="export:events.note"></p>
+            <p id="eventExportStatus"></p>
+        </div>
+
     </div>
 </main>
 
@@ -136,7 +147,7 @@
             });
 
         // ======================= Navbar laden =======================
-        fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
             .then(r => r.text())
             .then(function (html) {
                 i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
@@ -156,6 +167,7 @@
 
 <script src="../js/schema.js"></script>
 <script src="../js/storage.js"></script>
+<script src="../js/eventStorage.js"></script>    <!-- Lokale EventStorage voor event-export -->
 <script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
 <script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen owner -->
 <script src="../js/export.js"></script>
@@ -166,9 +178,11 @@
         // Rolcheck: export.html is alleen voor owner
         window.AccessGuard.check([]); // Lege array: alleen owner wordt doorgelaten
 
-        var statusEl      = document.getElementById('exportStatus');   // Statusmelding element
-        var exportCSVBtn  = document.getElementById('exportCSVBtn');   // CSV export knop
-        var exportJSONBtn = document.getElementById('exportJSONBtn');  // JSON export knop
+        var statusEl            = document.getElementById('exportStatus');           // Statusmelding voor bestaande stamboomexport
+        var eventStatusEl       = document.getElementById('eventExportStatus');      // Statusmelding voor event-export
+        var exportCSVBtn        = document.getElementById('exportCSVBtn');           // CSV export knop
+        var exportJSONBtn       = document.getElementById('exportJSONBtn');          // JSON export knop
+        var exportEventsJSONBtn = document.getElementById('exportEventsJSONBtn');    // Events JSON export knop
 
         exportCSVBtn.addEventListener('click', function () {
             window.ExportModule.exportCSV(statusEl); // Roept exportCSV aan in export.js
@@ -176,8 +190,12 @@
         exportJSONBtn.addEventListener('click', function () {
             window.ExportModule.exportJSON(statusEl); // Roept exportJSON aan in export.js
         });
+        exportEventsJSONBtn.addEventListener('click', function () {
+            window.ExportModule.exportEventsJSON(eventStatusEl); // Roept de aparte EventStorage JSON-export aan
+        });
     });
 </script>
 
 </body>
 </html>
+

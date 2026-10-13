@@ -1,4 +1,4 @@
-<!-- ======================= home/import.html v2.4.0 =======================
+﻿<!-- ======================= home/import.html v2.4.0 =======================
      Wijziging v2.4.0:
      - padding-top: 100px toegevoegd aan main — ruimte voor sticky TopBar + Navbar
      - Volledige inline commentaar toegevoegd op elke coderegel
@@ -81,8 +81,10 @@
         .import-sectie p  { font-size: 0.9rem; color: #555; line-height: 1.6; margin: 0 0 16px 0; } /* Paragraaf stijl */
 
         /* ── Custom file input: verbergt native browser input ── */
-        #importFile {
-            display: none;              /* Native file picker volledig verborgen */
+        #importFile,
+        #stamboomJsonImportFile,
+        #eventImportFile {
+            display: none;              /* Native file pickers volledig verborgen */
         }
 
         /* ── Custom file input rij: knop + bestandsnaam naast elkaar ── */
@@ -108,7 +110,9 @@
         .knop-kies-bestand:hover { background: #5a6268; }                   /* Donkerder grijs bij hover */
 
         /* ── Bestandsnaam span: toont naam of "Geen bestand geselecteerd" ── */
-        #bestandsnaam {
+        #bestandsnaam,
+        #stamboomJsonBestandsnaam,
+        #eventBestandsnaam {
             font-size: 0.9rem;          /* Leesbare tekstgrootte */
             color: #666;                /* Grijze tekst */
             overflow: hidden;           /* Lange namen afkappen */
@@ -130,7 +134,9 @@
         .knop-import:hover { background: #1278d4; }                         /* Donkerder blauw bij hover */
 
         /* ── Import status: feedback na import poging ── */
-        #importStatus { font-size: 0.9rem; margin-top: 12px; }             /* Kleine tekst met ruimte boven */
+        #importStatus,
+        #stamboomJsonImportStatus,
+        #eventImportStatus { font-size: 0.9rem; margin-top: 12px; }           /* Kleine tekst met ruimte boven */
 
         /* ── Info blok: uitleg over ondersteunde formaten ── */
         .info-blok {
@@ -192,6 +198,54 @@
                 <p id="importStatus"></p>                                  <!-- Leeg tot import gestart is -->
             </div>
 
+            <!-- ── STAMBOOM JSON IMPORT ── Volledige stamboom-back-up terugzetten ── -->
+            <div class="import-sectie">
+                <h2 data-i18n="import:stamboomJson.heading"></h2>             <!-- Sectietitel via bestaande import namespace -->
+                <p class="subtitel" data-i18n="import:stamboomJson.subtitle"></p> <!-- Ondersteund formaat -->
+                <p data-i18n="import:stamboomJson.body"></p>                  <!-- Uitleg: StamboomStorage wordt volledig vervangen -->
+
+                <input type="file" id="stamboomJsonImportFile" accept=".json"> <!-- Alleen JSON-stamboomback-ups accepteren -->
+
+                <div class="custom-file-wrapper">
+                    <button type="button"
+                            class="knop-kies-bestand"
+                            id="stamboomJsonKiesBestandBtn"
+                            data-i18n="import:file.button">Kies bestand</button> <!-- Hergebruik bestandskeuzevertaling -->
+                    <span id="stamboomJsonBestandsnaam"
+                          data-i18n="import:file.noFile">Geen bestand geselecteerd</span> <!-- Toont gekozen JSON-bestand -->
+                </div>
+
+                <button id="stamboomJsonImportBtn"
+                        class="knop-import"
+                        data-i18n="import:stamboomJson.button"></button>       <!-- Start volledige JSON-restore -->
+
+                <p id="stamboomJsonImportStatus"></p>                        <!-- Status van stamboom JSON-import -->
+            </div>
+
+            <!-- ── EVENT IMPORT ── Volledige EventStorage-back-up terugzetten ── -->
+            <div class="import-sectie">
+                <h2 data-i18n="import:events.heading"></h2>                  <!-- Sectietitel via bestaande import namespace -->
+                <p class="subtitel" data-i18n="import:events.subtitle"></p>  <!-- Ondersteund formaat -->
+                <p data-i18n="import:events.body"></p>                       <!-- Uitleg: EventStorage wordt volledig vervangen -->
+
+                <input type="file" id="eventImportFile" accept=".json">      <!-- Alleen JSON-eventback-ups accepteren -->
+
+                <div class="custom-file-wrapper">
+                    <button type="button"
+                            class="knop-kies-bestand"
+                            id="eventKiesBestandBtn"
+                            data-i18n="import:file.button">Kies bestand</button> <!-- Hergebruik dezelfde vertaling voor bestandskeuze -->
+                    <span id="eventBestandsnaam"
+                          data-i18n="import:file.noFile">Geen bestand geselecteerd</span> <!-- Hergebruik dezelfde lege bestandsmelding -->
+                </div>
+
+                <button id="eventImportBtn"
+                        class="knop-import"
+                        data-i18n="import:events.button"></button>            <!-- Start EventStorage-import -->
+
+                <p id="eventImportStatus"></p>                               <!-- Status van event-import -->
+            </div>
+
             <!-- ── INFO BLOK ── Uitleg ondersteunde formaten ── -->
             <div class="info-blok">
                 <strong data-i18n="import:info.heading"></strong><br>      <!-- Koptekst via i18n -->
@@ -238,7 +292,7 @@
                 });
 
             // ── Navbar laden en injecteren ──
-            fetch('/MyFamTreeCollab/Layout/Navbar.html')                   // Navbar HTML ophalen
+            fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })                   // Navbar HTML ophalen
                 .then(r => r.text())                                        // Response naar tekst converteren
                 .then(function (html) {
                     i18nModule.onComponentLoaded(                           // Injecteren + vertalingen toepassen
@@ -267,6 +321,7 @@
     <!-- ======================= DOMEIN SCRIPTS ======================= -->
     <script src="../js/schema.js"></script>                                 <!-- Schema definities -->
     <script src="../js/storage.js"></script>                                <!-- Lokale opslag module -->
+    <script src="../js/eventStorage.js"></script>                           <!-- Lokale EventStorage voor event-import -->
     <script src="../js/shareModule.js"></script>                            <!-- Vereist door accessGuard.js -->
     <script src="../js/accessGuard.js"></script>                            <!-- Rolcheck: alleen owner -->
     <script src="../js/import.js"></script>                                 <!-- Import logica -->
@@ -295,6 +350,42 @@
                 }
             });
 
+            var stamboomJsonKiesBtn     = document.getElementById('stamboomJsonKiesBestandBtn'); // Eigen kies-knop voor stamboom JSON
+            var stamboomJsonNativeInput = document.getElementById('stamboomJsonImportFile');     // Verborgen stamboom JSON input
+            var stamboomJsonNaamSpan    = document.getElementById('stamboomJsonBestandsnaam');   // Bestandsnaam van stamboom JSON
+
+            stamboomJsonKiesBtn.addEventListener('click', function () {
+                stamboomJsonNativeInput.click();                            // Open native bestandsdialoog voor stamboom JSON
+            });
+
+            stamboomJsonNativeInput.addEventListener('change', function () {
+                if (stamboomJsonNativeInput.files.length > 0) {
+                    stamboomJsonNaamSpan.textContent = i18nModule.t('import:file.selected') + stamboomJsonNativeInput.files[0].name; // Toon gekozen bestand
+                    stamboomJsonNaamSpan.removeAttribute('data-i18n');      // Voorkom overschrijven van concrete bestandsnaam
+                } else {
+                    stamboomJsonNaamSpan.textContent = i18nModule.t('import:file.noFile'); // Herstel standaardmelding
+                    stamboomJsonNaamSpan.setAttribute('data-i18n', 'import:file.noFile');  // Herstel vertaalkey
+                }
+            });
+
+            var eventKiesBtn     = document.getElementById('eventKiesBestandBtn'); // Eigen kies-knop voor event JSON
+            var eventNativeInput = document.getElementById('eventImportFile');     // Verborgen event JSON input
+            var eventNaamSpan    = document.getElementById('eventBestandsnaam');   // Bestandsnaam van event JSON
+
+            eventKiesBtn.addEventListener('click', function () {
+                eventNativeInput.click();                                    // Open native bestandsdialoog voor event JSON
+            });
+
+            eventNativeInput.addEventListener('change', function () {
+                if (eventNativeInput.files.length > 0) {
+                    eventNaamSpan.textContent = i18nModule.t('import:file.selected') + eventNativeInput.files[0].name; // Toon gekozen eventbestand
+                    eventNaamSpan.removeAttribute('data-i18n');              // Voorkom overschrijven van concrete bestandsnaam
+                } else {
+                    eventNaamSpan.textContent = i18nModule.t('import:file.noFile'); // Herstel standaardmelding
+                    eventNaamSpan.setAttribute('data-i18n', 'import:file.noFile');  // Herstel vertaalkey
+                }
+            });
+
             // Rolcheck: alleen owner mag importeren
             window.AccessGuard.check([]);                                  // Lege array: alleen owner wordt doorgelaten
         });
@@ -302,3 +393,4 @@
 
 </body>
 </html>
+
