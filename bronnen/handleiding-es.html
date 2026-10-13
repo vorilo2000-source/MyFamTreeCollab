@@ -1,6 +1,12 @@
-<!-- ======================= bronnen/handleiding-es.html v2.4.0 =======================
+﻿<!-- ======================= bronnen/handleiding-es.html v2.5.0 =======================
      Guía de usuario en español para MyFamTreeCollab
      Véase handleiding-nl.html (neerlandés) y handleiding-en.html (inglés) para otros idiomas
+
+     Wijzigingen v2.5.0:
+     - Import bijgewerkt: stamboom CSV/TXT, stamboom JSON en Event JSON
+     - Export bijgewerkt: stamboom CSV/JSON, Event JSON en vaste bestandsnamen
+     - Nieuwe Events-sectie toegevoegd, inclusief lokale opslag, cloud events en gedeelde events
+     - Sectienummering en relevante rechtenregels bijgewerkt
 
      Wijzigingen v2.4.0 (sessie 27):
      - Nieuw bestand — Spaanstalige vertaling van handleiding-nl.html v2.3.0
@@ -88,7 +94,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Guía de usuario <span class="versie-badge">v2.3.0</span></h1>
+            <h1>Guía de usuario <span class="versie-badge">v2.5.0</span></h1>
             <p>Bienvenido a la guía de usuario de MyFamTreeCollab. Aquí encontrarás instrucciones paso a paso para todas las funciones de la aplicación, desde crear tu primera persona hasta exportar tu árbol genealógico y colaborar con otros.</p>
         </div>
 
@@ -106,6 +112,7 @@
                 <li><a href="#mijn-account">Mi cuenta</a></li>
                 <li><a href="#versiegeschiedenis">Historial de versiones</a></li>
                 <li><a href="#cloud">Árboles genealógicos en la nube</a></li>
+                <li><a href="#events">Eventos</a></li>
                 <li><a href="#importeren">Importar</a></li>
                 <li><a href="#exporteren">Exportar</a></li>
                 <li><a href="#wachtwoord-reset">Contraseña olvidada</a></li>
@@ -130,7 +137,7 @@
                 <li><strong>Cuenta básica</strong> <code>guest</code> — gratuita. Árbol genealógico local de hasta 60 personas. Sin nube, sin colaboración. Todas las cuentas nuevas empiezan como cuenta básica.</li>
                 <li><strong>Cuenta Owner</strong> <code>owner</code> — mediante una donación (~€5 cada 6 meses). Personas ilimitadas, copia de seguridad en la nube, compartir árboles e invitar a otros.</li>
             </ul>
-            <div class="info-noot">💡 <strong>Viewer y Editor no son tipos de cuenta.</strong> Son permisos de árbol genealógico que un Owner concede para un árbol específico. Véase la <a href="#delen">sección 14</a> para más información.</div>
+            <div class="info-noot">💡 <strong>Viewer y Editor no son tipos de cuenta.</strong> Son permisos de árbol genealógico que un Owner concede para un árbol específico. Véase la <a href="#delen">sección 16</a> para más información.</div>
             <h3>Crear una cuenta</h3>
             <ul class="stappen">
                 <li>Haz clic en <strong>Iniciar sesión</strong> en la barra de la parte superior.</li>
@@ -334,41 +341,88 @@
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
-        <div class="sectie" id="importeren">
-            <h2>12. Importar</h2>
-<p>Puedes importar datos de un árbol genealógico existente mediante un archivo CSV. Durante la importación, los IDs duplicados se detectan automáticamente.</p>
+        
+        <div class="sectie" id="events">
+            <h2>12. Eventos</h2>
+            <p>Los Eventos permiten registrar acontecimientos vinculados a personas del árbol genealógico. Los eventos se guardan localmente separados de los datos de las personas, pero siguen vinculados al mismo árbol mediante el ID de persona existente.</p>
+
+            <h3>Nacimiento y fallecimiento</h3>
+            <p>Al abrir Event Manager, se comprueban y sincronizan los eventos base fijos de cada persona:</p>
+            <ul>
+                <li><strong>&lt;ID-persona&gt;-001</strong> — Nacimiento</li>
+                <li><strong>&lt;ID-persona&gt;-002</strong> — Fallecimiento</li>
+                <li><strong>&lt;ID-persona&gt;-003</strong> y superiores — otros eventos</li>
+            </ul>
+            <p>La fecha y el lugar de nacimiento se copian desde los datos de la persona al evento de Nacimiento. La fecha y el lugar de fallecimiento se sincronizan del mismo modo con el evento de Fallecimiento.</p>
+
+            <h3>Gestionar eventos</h3>
             <ul class="stappen">
-                <li>Descarga la <a href="/MyFamTreeCollab/bronnen/template.html">plantilla CSV</a>.</li>
-                <li>Rellena la plantilla con los datos de tu familia.</li>
+                <li>Abre <strong>Event Manager</strong>.</li>
+                <li>Busca y selecciona la persona cuyos eventos quieres ver o añadir.</li>
+                <li>Se muestran los eventos existentes de esa persona. Si todavía no existe un evento normal, puedes añadir uno nuevo con el siguiente ID de evento.</li>
+                <li>Introduce el tipo de evento, título, fecha, lugar, fuentes y notas, y guarda el cambio.</li>
+            </ul>
+
+            <h3>Almacenamiento de eventos</h3>
+            <p><strong>Events opslag</strong> dispone de tres pestañas:</p>
+            <ul>
+                <li><strong>📋 Mis datos</strong> — eventos locales de este navegador.</li>
+                <li><strong>☁️ Eventos en la nube</strong> — eventos que pertenecen al mismo árbol genealógico en la nube que las personas.</li>
+                <li><strong>🔗 Compartido conmigo</strong> — eventos de árboles genealógicos compartidos contigo.</li>
+            </ul>
+            <div class="tip"><strong>Vinculación en la nube:</strong> Las personas y los eventos usan el mismo árbol genealógico en la nube. No se crea un árbol separado para eventos. Un Viewer puede cargar eventos compartidos; un Editor también puede guardar los eventos de un árbol compartido.</div>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
+        </div>
+
+        <div class="sectie" id="importeren">
+            <h2>13. Importar</h2>
+            <p>La página de importación ofrece tres opciones separadas: árbol genealógico CSV/TXT, árbol genealógico JSON y Event JSON.</p>
+
+            <h3>Importar un árbol mediante CSV/TXT</h3>
+            <ul class="stappen">
+                <li>Si es necesario, descarga la <a href="/MyFamTreeCollab/bronnen/template.html">plantilla CSV</a>.</li>
                 <li>Ve a <strong>Importar</strong> desde la navegación.</li>
-                <li>Haz clic en <strong>"Elegir archivo"</strong> y selecciona tu CSV.</li>
+                <li>Elige un archivo CSV o TXT con datos del árbol genealógico.</li>
                 <li>Haz clic en <strong>"Importar"</strong>.</li>
             </ul>
-            <h3>Gestión de duplicados</h3>
-            <p>Si un ID importado ya existe en tu árbol genealógico, aparece un cuadro de diálogo con el número de duplicados y los IDs afectados. Elige cómo continuar:</p>
-            <ul>
-                <li><strong>⏭ Omitir</strong> — importar solo personas nuevas, omitir duplicados</li>
-                <li><strong>♻️ Sobrescribir</strong> — reemplazar personas existentes con la versión importada</li>
-                <li><strong>📥 Importar todo de todas formas</strong> — añadir todo incluyendo duplicados</li>
-                <li><strong>✖ Cancelar</strong> — detener la importación, no se guarda nada</li>
-            </ul>
-            <div class="waarschuwing"><strong>Atención:</strong> Solo disponible para cuentas <strong>Owner</strong>.</div>
+            <p>Durante la importación CSV/TXT, los IDs de persona duplicados se detectan automáticamente. Puedes omitir duplicados, sobrescribir personas existentes, importar todo de todas formas o cancelar la importación.</p>
+
+            <h3>Importar un árbol mediante JSON</h3>
+            <p>Un archivo JSON del árbol genealógico está pensado como copia de seguridad completa. Tras la confirmación, el árbol local actual se sustituye por las personas del archivo JSON. No se realiza ninguna combinación ni se muestra un diálogo de duplicados.</p>
+
+            <h3>Importar eventos mediante JSON</h3>
+            <p>Un archivo Event JSON contiene una copia de seguridad completa de los eventos locales. Tras la validación y confirmación, los eventos locales actuales se sustituyen por completo por los eventos del archivo. No se realiza ninguna combinación.</p>
+
+            <div class="waarschuwing"><strong>Atención:</strong> Antes de una importación JSON completa, comprueba que has seleccionado el archivo correcto del árbol o de Eventos. La importación solo está disponible para cuentas <strong>Owner</strong>.</div>
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
         <div class="sectie" id="exporteren">
-            <h2>13. Exportar</h2>
-            <p>Exporta tu árbol genealógico en formato CSV o JSON. Disponible para todas las cuentas con sesión iniciada (Básica y Owner).</p>
-            <ul class="stappen">
-                <li>Ve a <strong>Exportar</strong> desde la navegación.</li>
-                <li>Haz clic en <strong>"Exportar CSV"</strong> o <strong>"Exportar JSON"</strong>.</li>
+            <h2>14. Exportar</h2>
+            <p>La página de exportación permite descargar por separado el árbol genealógico y los eventos.</p>
+
+            <h3>Exportar el árbol genealógico</h3>
+            <ul>
+                <li><strong>CSV</strong> — exportación de las personas del árbol genealógico.</li>
+                <li><strong>JSON</strong> — copia de seguridad JSON completa de las personas del árbol.</li>
             </ul>
-            <div class="tip"><strong>Consejo:</strong> Realiza exportaciones JSON regularmente como copia de seguridad.</div>
+
+            <h3>Exportar eventos</h3>
+            <p>Los eventos se exportan como un único archivo JSON. Este formato también conserva participantes, fuentes y los demás campos del evento.</p>
+
+            <h3>Nombres de archivo</h3>
+            <p>El apellido de la primera persona del árbol local se usa como nombre de familia en los archivos descargados:</p>
+            <ul>
+                <li><code>&lt;apellido&gt;_stamboom_YYYYMMDD.csv</code></li>
+                <li><code>&lt;apellido&gt;_stamboom_YYYYMMDD.json</code></li>
+                <li><code>&lt;apellido&gt;_event_YYYYMMDD.json</code></li>
+            </ul>
+            <div class="tip"><strong>Consejo:</strong> Guarda regularmente tanto una copia JSON del árbol como una copia Event JSON. Así puedes restaurar personas y eventos por separado.</div>
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
         <div class="sectie" id="wachtwoord-reset">
-            <h2>14. Contraseña olvidada</h2>
+            <h2>15. Contraseña olvidada</h2>
             <ul class="stappen">
                 <li>Haz clic en <strong>Iniciar sesión</strong> en la parte superior de la página.</li>
                 <li>Haz clic en <strong>"¿Olvidaste tu contraseña?"</strong>.</li>
@@ -379,8 +433,9 @@
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
+
         <div class="sectie" id="delen">
-            <h2>15. Compartir y colaborar</h2>
+            <h2>16. Compartir y colaborar</h2>
             <p>Como <strong>Owner</strong> puedes invitar a otros a ver o contribuir a tu árbol genealógico. Los usuarios invitados reciben un permiso de árbol: <strong>Viewer</strong> o <strong>Editor</strong>.</p>
             <div class="tip"><strong>Requisito:</strong> Haber iniciado sesión como <strong>Owner</strong>. El árbol debe estar guardado en la nube.</div>
             <h3>Resumen de tipos de cuenta</h3>
@@ -401,8 +456,8 @@
                     <tr><td>Compartir árbol genealógico</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                     <tr><td>Invitar Viewer / Editor</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                     <tr><td>Restaurar versiones</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-limiet">Máx. 5 versiones</td></tr>
-                    <tr><td>Exportar (CSV / JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
-                    <tr><td>Importar (CSV)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Exportar (árbol CSV/JSON + Event JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Importar (árbol CSV/TXT/JSON + Event JSON)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                 </tbody>
             </table>
             <h3>Permisos de árbol: Viewer y Editor</h3>
@@ -443,7 +498,7 @@
         </div>
 
         <div class="sectie" id="collab">
-            <h2>16. Tablón de mensajes (Colaboración)</h2>
+            <h2>17. Tablón de mensajes (Colaboración)</h2>
             <p>El tablón de mensajes muestra todos los árboles genealógicos a los que tienes acceso. Por árbol verás discusiones sobre personas específicas, organizadas por ID de persona.</p>
             <div class="tip"><strong>Requisito:</strong> Haber iniciado sesión con acceso a al menos un árbol genealógico.</div>
             <h3>Abrir el tablón de mensajes</h3>
@@ -490,7 +545,7 @@
         </div>
 
         <div class="sectie" id="steun">
-            <h2>17 r. Apoyar este proyecto</h2>
+            <h2>18. Apoyar este proyecto</h2>
             <p>MyFamTreeCollab es de uso gratuito. Si encuentras útil la aplicación, puedes apoyar el desarrollo a través de Ko-fi.</p>
             <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
                style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#FF5E5B; color:#fff; text-decoration:none; border-radius:6px; font-size:0.95rem; font-weight:bold;">
@@ -549,7 +604,7 @@
                 });
         })
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
                 .then(function (resp) { return resp.text(); })
                 .then(function (html) {
                     i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
@@ -576,3 +631,4 @@
 
 </body>
 </html>
+

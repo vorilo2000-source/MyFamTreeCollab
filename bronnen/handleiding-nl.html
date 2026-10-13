@@ -1,7 +1,13 @@
-<!-- ======================= bronnen/handleiding-nl.html v2.4.0 =======================
+﻿<!-- ======================= bronnen/handleiding-nl.html v2.5.0 =======================
      Nederlandstalige gebruikershandleiding voor MyFamTreeCollab
      Hernoemd van handleiding.html naar handleiding-nl.html (sessie 27)
      Zie handleiding-en.html en handleiding-es.html voor andere taalversies
+
+     Wijzigingen v2.5.0:
+     - Import bijgewerkt: stamboom CSV/TXT, stamboom JSON en Event JSON
+     - Export bijgewerkt: stamboom CSV/JSON, Event JSON en vaste bestandsnamen
+     - Nieuwe Events-sectie toegevoegd, inclusief lokale opslag, cloud events en gedeelde events
+     - Sectienummering en relevante rechtenregels bijgewerkt
 
      Wijzigingen v2.4.0 (sessie 27):
      - Hernoemd naar handleiding-nl.html (was handleiding.html)
@@ -94,7 +100,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Handleiding <span class="versie-badge">v2.3.0</span></h1>
+            <h1>Handleiding <span class="versie-badge">v2.5.0</span></h1>
             <p>Welkom bij de handleiding van MyFamTreeCollab. Hier vind je stap voor stap uitleg over alle functies van de applicatie, van je eerste persoon aanmaken tot je stamboom exporteren en samenwerken met anderen.</p>
         </div>
 
@@ -112,6 +118,7 @@
                 <li><a href="#mijn-account">Mijn Account</a></li>
                 <li><a href="#versiegeschiedenis">Versiegeschiedenis</a></li>
                 <li><a href="#cloud">Cloud stambomen</a></li>
+                <li><a href="#events">Events</a></li>
                 <li><a href="#importeren">Importeren</a></li>
                 <li><a href="#exporteren">Exporteren</a></li>
                 <li><a href="#wachtwoord-reset">Wachtwoord vergeten</a></li>
@@ -136,7 +143,7 @@
                 <li><strong>Basis account</strong> <code>guest</code> — gratis. Lokale stamboom tot max. 60 personen. Geen cloud, geen samenwerking. Alle nieuwe accounts starten als basis account.</li>
                 <li><strong>Owner account</strong> <code>owner</code> — via een donatie (~€5 per 6 maanden). Onbeperkt personen, cloud backup, stamboom delen en anderen uitnodigen.</li>
             </ul>
-            <div class="info-noot">💡 <strong>Viewer en Editor zijn geen account types.</strong> Het zijn stamboom-rechten die een Owner toekent aan een specifieke stamboom. Zie <a href="#delen">sectie 14</a> voor meer uitleg.</div>
+            <div class="info-noot">💡 <strong>Viewer en Editor zijn geen account types.</strong> Het zijn stamboom-rechten die een Owner toekent aan een specifieke stamboom. Zie <a href="#delen">sectie 16</a> voor meer uitleg.</div>
             <h3>Account aanmaken</h3>
             <ul class="stappen">
                 <li>Klik op <strong>Login</strong> in de balk bovenaan de pagina.</li>
@@ -341,30 +348,88 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
-        <div class="sectie" id="importeren">
-            <h2>12. Importeren</h2>
-      <p>Je kunt bestaande stamboomdata importeren via een CSV-bestand. Bij het importeren worden dubbele ID's automatisch gedetecteerd.</p>
+        
+        <div class="sectie" id="events">
+            <h2>12. Events</h2>
+            <p>Met Events leg je gebeurtenissen vast die bij personen in je stamboom horen. Events worden lokaal apart opgeslagen, maar blijven via het bestaande persoon-ID gekoppeld aan dezelfde stamboom.</p>
+
+            <h3>Geboorte en overlijden</h3>
+            <p>Bij het openen van Event Manager worden voor iedere persoon de vaste basis-events gecontroleerd en gesynchroniseerd:</p>
+            <ul>
+                <li><strong>&lt;persoon-ID&gt;-001</strong> — Geboorte</li>
+                <li><strong>&lt;persoon-ID&gt;-002</strong> — Overlijden</li>
+                <li><strong>&lt;persoon-ID&gt;-003</strong> en hoger — overige events</li>
+            </ul>
+            <p>Geboortedatum en geboorteplaats worden vanuit de persoonsgegevens overgenomen naar het Geboorte-event. Overlijdensdatum en overlijdensplaats worden op dezelfde manier naar het Overlijden-event gesynchroniseerd.</p>
+
+            <h3>Events beheren</h3>
             <ul class="stappen">
-                <li>Download het <a href="/MyFamTreeCollab/bronnen/template.html">CSV-sjabloon</a>.</li>
-                <li>Vul het sjabloon in met je familiegegevens.</li>
+                <li>Open <strong>Event Manager</strong>.</li>
+                <li>Zoek en selecteer de persoon waarvoor je events wilt bekijken of toevoegen.</li>
+                <li>Bestaande events van die persoon worden getoond. Als er nog geen regulier event bestaat, kun je een nieuw event toevoegen met het eerstvolgende event-ID.</li>
+                <li>Vul het eventtype, de titel, datum, plaats, bronnen en notities in en sla de wijziging op.</li>
+            </ul>
+
+            <h3>Events opslag</h3>
+            <p>Op <strong>Events opslag</strong> zijn drie tabbladen beschikbaar:</p>
+            <ul>
+                <li><strong>📋 Mijn data</strong> — lokale events in deze browser.</li>
+                <li><strong>☁️ Cloud events</strong> — events die bij dezelfde cloudstamboom horen als de personen.</li>
+                <li><strong>🔗 Gedeeld met mij</strong> — events van stambomen die met jou gedeeld zijn.</li>
+            </ul>
+            <div class="tip"><strong>Cloudkoppeling:</strong> Personen en events gebruiken dezelfde cloudstamboom. Er wordt geen aparte eventstamboom aangemaakt. Een Viewer kan gedeelde events laden; een Editor kan de events van een gedeelde stamboom ook opslaan.</div>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <div class="sectie" id="importeren">
+            <h2>13. Importeren</h2>
+            <p>Op de importpagina zijn drie afzonderlijke importmogelijkheden beschikbaar: stamboom CSV/TXT, stamboom JSON en Event JSON.</p>
+
+            <h3>Stamboom importeren via CSV/TXT</h3>
+            <ul class="stappen">
+                <li>Download indien nodig het <a href="/MyFamTreeCollab/bronnen/template.html">CSV-sjabloon</a>.</li>
                 <li>Ga naar <strong>Importeren</strong> via de navigatie.</li>
-                <li>Klik op <strong>"Bestand kiezen"</strong> en kies je CSV.</li>
+                <li>Kies een CSV- of TXT-bestand met stamboomgegevens.</li>
                 <li>Klik op <strong>"Importeren"</strong>.</li>
             </ul>
-            <h3>Duplicaten afhandelen</h3>
-            <p>Als een geïmporteerd ID al bestaat in je stamboom, verschijnt een keuzevenster met het aantal duplicaten en de betreffende IDs. Je kiest hoe je verdergaat:</p>
+            <p>Bij CSV/TXT-import worden dubbele persoon-ID's automatisch gedetecteerd. Je kunt duplicaten overslaan, bestaande personen overschrijven, alles toch importeren of de import annuleren.</p>
+
+            <h3>Stamboom importeren via JSON</h3>
+            <p>Een stamboom-JSON is bedoeld als volledige back-up. Na bevestiging wordt de huidige lokale stamboom vervangen door de personen uit het JSON-bestand. Er vindt geen merge of duplicaatkeuze plaats.</p>
+
+            <h3>Events importeren via JSON</h3>
+            <p>Een Event JSON bevat een volledige back-up van de lokale events. Na validatie en bevestiging worden de huidige lokale events volledig vervangen door de events uit het bestand. Er vindt geen merge plaats.</p>
+
+            <div class="waarschuwing"><strong>Let op:</strong> Controleer vóór een volledige JSON-import of je het juiste stamboom- of Event-bestand hebt gekozen. Importeren is alleen beschikbaar voor <strong>Owner</strong>-accounts.</div>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
+        </div>
+
+        <div class="sectie" id="exporteren">
+            <h2>14. Exporteren</h2>
+            <p>Via de exportpagina kun je de stamboom en de events afzonderlijk downloaden.</p>
+
+            <h3>Stamboom exporteren</h3>
             <ul>
-                <li><strong>⏭ Overslaan</strong> — importeer alleen nieuwe personen, sla duplicaten over</li>
-                <li><strong>♻️ Overschrijven</strong> — vervang bestaande personen door de geïmporteerde versie</li>
-                <li><strong>📥 Toch alles importeren</strong> — voeg alles toe inclusief duplicaten</li>
-                <li><strong>✖ Annuleren</strong> — stop de import, niets wordt opgeslagen</li>
+                <li><strong>CSV</strong> — export van de personen in de stamboom.</li>
+                <li><strong>JSON</strong> — volledige JSON-back-up van de personen in de stamboom.</li>
             </ul>
-            <div class="waarschuwing"><strong>Let op:</strong> Alleen voor <strong>Owner</strong>-accounts.</div>
-                <a href="#" class="terug-top">↑ Terug naar boven</a>
+
+            <h3>Events exporteren</h3>
+            <p>Events worden als één JSON-bestand geëxporteerd. Dit formaat bewaart ook de deelnemers, bronnen en andere eventvelden.</p>
+
+            <h3>Bestandsnamen</h3>
+            <p>De achternaam van de eerste persoon in de lokale stamboom wordt gebruikt als familienaam in de downloadnaam:</p>
+            <ul>
+                <li><code>&lt;familienaam&gt;_stamboom_YYYYMMDD.csv</code></li>
+                <li><code>&lt;familienaam&gt;_stamboom_YYYYMMDD.json</code></li>
+                <li><code>&lt;familienaam&gt;_event_YYYYMMDD.json</code></li>
+            </ul>
+            <div class="tip"><strong>Tip:</strong> Bewaar regelmatig zowel een stamboom-JSON als een Event JSON. Zo kun je personen en events afzonderlijk terugzetten.</div>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
         <div class="sectie" id="wachtwoord-reset">
-            <h2>14. Wachtwoord vergeten</h2>
+            <h2>15. Wachtwoord vergeten</h2>
             <ul class="stappen">
                 <li>Klik op <strong>Login</strong> bovenaan de pagina.</li>
                 <li>Klik op <strong>"Wachtwoord vergeten?"</strong>.</li>
@@ -375,8 +440,9 @@
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
+
         <div class="sectie" id="delen">
-            <h2>15. Stamboom delen &amp; samenwerken</h2>
+            <h2>16. Stamboom delen &amp; samenwerken</h2>
             <p>Als <strong>Owner</strong> kun je anderen uitnodigen om mee te kijken of mee te werken. Uitgenodigde gebruikers krijgen een stamboom-recht: <strong>Viewer</strong> of <strong>Editor</strong>.</p>
             <div class="tip"><strong>Vereist:</strong> Ingelogd als <strong>Owner</strong>. De stamboom moet opgeslagen zijn in de cloud.</div>
             <h3>Account types overzicht</h3>
@@ -397,8 +463,8 @@
                     <tr><td>Stamboom delen</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                     <tr><td>Viewer / Editor uitnodigen</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                     <tr><td>Versies terugzetten</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-limiet">Max. 5 versies</td></tr>
-                    <tr><td>Exporteren (CSV / JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
-                    <tr><td>Importeren (CSV)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Exporteren (stamboom CSV/JSON + Event JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Importeren (stamboom CSV/TXT/JSON + Event JSON)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                 </tbody>
             </table>
             <h3>Stamboom-rechten: Viewer &amp; Editor</h3>
@@ -439,7 +505,7 @@
         </div>
 
         <div class="sectie" id="collab">
-            <h2>16. Berichtenboard (Samenwerken)</h2>
+            <h2>17. Berichtenboard (Samenwerken)</h2>
             <p>Het berichtenboard toont alle stambomen waar je toegang toe hebt. Per stamboom zie je discussies over specifieke personen, geordend per persoon-ID.</p>
             <div class="tip"><strong>Vereist:</strong> Ingelogd met toegang tot minimaal één stamboom.</div>
             <h3>Berichtenboard openen</h3>
@@ -486,7 +552,7 @@
         </div>
 
         <div class="sectie" id="steun">
-            <h2>17. Steun dit project</h2>
+            <h2>18. Steun dit project</h2>
             <p>MyFamTreeCollab is gratis te gebruiken. Als je de app waardevol vindt, kun je de ontwikkeling steunen via Ko-fi.</p>
             <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
                style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#FF5E5B; color:#fff; text-decoration:none; border-radius:6px; font-size:0.95rem; font-weight:bold;">
@@ -545,7 +611,7 @@
                 });
         })
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
                 .then(function (resp) { return resp.text(); })
                 .then(function (html) {
                     i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
@@ -573,3 +639,4 @@
 
 </body>
 </html>
+

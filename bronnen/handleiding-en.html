@@ -1,6 +1,12 @@
-<!-- ======================= bronnen/handleiding-en.html v2.4.0 =======================
+﻿<!-- ======================= bronnen/handleiding-en.html v2.5.0 =======================
      English user guide for MyFamTreeCollab
      See handleiding-nl.html (Dutch) and handleiding-es.html (Spanish) for other languages
+
+     Wijzigingen v2.5.0:
+     - Import bijgewerkt: stamboom CSV/TXT, stamboom JSON en Event JSON
+     - Export bijgewerkt: stamboom CSV/JSON, Event JSON en vaste bestandsnamen
+     - Nieuwe Events-sectie toegevoegd, inclusief lokale opslag, cloud events en gedeelde events
+     - Sectienummering en relevante rechtenregels bijgewerkt
 
      Wijzigingen v2.4.0 (sessie 27):
      - Nieuw bestand — Engelstalige vertaling van handleiding-nl.html v2.3.0
@@ -88,7 +94,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>User Guide <span class="versie-badge">v2.3.0</span></h1>
+            <h1>User Guide <span class="versie-badge">v2.5.0</span></h1>
             <p>Welcome to the MyFamTreeCollab user guide. Here you will find step-by-step instructions for all features of the application, from creating your first person to exporting your family tree and collaborating with others.</p>
         </div>
 
@@ -106,6 +112,7 @@
                 <li><a href="#mijn-account">My Account</a></li>
                 <li><a href="#versiegeschiedenis">Version history</a></li>
                 <li><a href="#cloud">Cloud family trees</a></li>
+                <li><a href="#events">Events</a></li>
                 <li><a href="#importeren">Importing</a></li>
                 <li><a href="#exporteren">Exporting</a></li>
                 <li><a href="#wachtwoord-reset">Forgot password</a></li>
@@ -130,7 +137,7 @@
                 <li><strong>Basic account</strong> <code>guest</code> — free. Local family tree up to 60 people. No cloud, no collaboration. All new accounts start as basic accounts.</li>
                 <li><strong>Owner account</strong> <code>owner</code> — via a donation (~€5 per 6 months). Unlimited people, cloud backup, sharing family trees and inviting others.</li>
             </ul>
-            <div class="info-noot">💡 <strong>Viewer and Editor are not account types.</strong> They are family tree permissions that an Owner grants for a specific tree. See <a href="#delen">section 14</a> for more details.</div>
+            <div class="info-noot">💡 <strong>Viewer and Editor are not account types.</strong> They are family tree permissions that an Owner grants for a specific tree. See <a href="#delen">section 16</a> for more details.</div>
             <h3>Creating an account</h3>
             <ul class="stappen">
                 <li>Click <strong>Login</strong> in the bar at the top of the page.</li>
@@ -334,41 +341,88 @@
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
-        <div class="sectie" id="importeren">
-            <h2>12. Importing</h2>
-<p>You can import existing family tree data via a CSV file. During import, duplicate IDs are detected automatically.</p>
+        
+        <div class="sectie" id="events">
+            <h2>12. Events</h2>
+            <p>Events let you record important occurrences linked to people in your family tree. Events are stored separately from person data locally, but remain connected to the same family tree through the existing person ID.</p>
+
+            <h3>Birth and death</h3>
+            <p>When Event Manager opens, the fixed base events for each person are checked and synchronised:</p>
+            <ul>
+                <li><strong>&lt;person-ID&gt;-001</strong> — Birth</li>
+                <li><strong>&lt;person-ID&gt;-002</strong> — Death</li>
+                <li><strong>&lt;person-ID&gt;-003</strong> and higher — other events</li>
+            </ul>
+            <p>Birth date and birth place are copied from the person's data to the Birth event. Death date and death place are synchronised in the same way with the Death event.</p>
+
+            <h3>Managing events</h3>
             <ul class="stappen">
-                <li>Download the <a href="/MyFamTreeCollab/bronnen/template.html">CSV template</a>.</li>
-                <li>Fill in the template with your family data.</li>
+                <li>Open <strong>Event Manager</strong>.</li>
+                <li>Search for and select the person whose events you want to view or add.</li>
+                <li>Existing events for that person are shown. If no regular event exists yet, you can add a new event using the next event ID.</li>
+                <li>Enter the event type, title, date, place, sources and notes, then save the change.</li>
+            </ul>
+
+            <h3>Event storage</h3>
+            <p><strong>Event Storage</strong> has three tabs:</p>
+            <ul>
+                <li><strong>📋 My data</strong> — local events in this browser.</li>
+                <li><strong>☁️ Cloud events</strong> — events belonging to the same cloud family tree as the people.</li>
+                <li><strong>🔗 Shared with me</strong> — events from family trees shared with you.</li>
+            </ul>
+            <div class="tip"><strong>Cloud link:</strong> People and events use the same cloud family tree. No separate event tree is created. A Viewer can load shared events; an Editor can also save the events of a shared family tree.</div>
+            <a href="#" class="terug-top">↑ Back to top</a>
+        </div>
+
+        <div class="sectie" id="importeren">
+            <h2>13. Importing</h2>
+            <p>The import page provides three separate import options: family tree CSV/TXT, family tree JSON and Event JSON.</p>
+
+            <h3>Importing a family tree via CSV/TXT</h3>
+            <ul class="stappen">
+                <li>If needed, download the <a href="/MyFamTreeCollab/bronnen/template.html">CSV template</a>.</li>
                 <li>Go to <strong>Import</strong> via the navigation.</li>
-                <li>Click <strong>"Choose file"</strong> and select your CSV.</li>
+                <li>Choose a CSV or TXT file containing family tree data.</li>
                 <li>Click <strong>"Import"</strong>.</li>
             </ul>
-            <h3>Handling duplicates</h3>
-            <p>If an imported ID already exists in your family tree, a dialog appears showing the number of duplicates and the affected IDs. Choose how to proceed:</p>
-            <ul>
-                <li><strong>⏭ Skip</strong> — import only new people, skip duplicates</li>
-                <li><strong>♻️ Overwrite</strong> — replace existing people with the imported version</li>
-                <li><strong>📥 Import all anyway</strong> — add everything including duplicates</li>
-                <li><strong>✖ Cancel</strong> — stop the import, nothing is saved</li>
-            </ul>
-            <div class="waarschuwing"><strong>Note:</strong> Only available for <strong>Owner</strong> accounts.</div>
+            <p>During CSV/TXT import, duplicate person IDs are detected automatically. You can skip duplicates, overwrite existing people, import everything anyway, or cancel the import.</p>
+
+            <h3>Importing a family tree via JSON</h3>
+            <p>A family tree JSON file is intended as a complete backup. After confirmation, the current local family tree is replaced by the people in the JSON file. No merge or duplicate-choice dialog is used.</p>
+
+            <h3>Importing events via JSON</h3>
+            <p>An Event JSON file contains a complete backup of the local events. After validation and confirmation, the current local events are fully replaced by the events in the file. No merge is performed.</p>
+
+            <div class="waarschuwing"><strong>Note:</strong> Before a full JSON import, verify that you selected the correct family tree or Event file. Import is available only to <strong>Owner</strong> accounts.</div>
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
         <div class="sectie" id="exporteren">
-            <h2>13. Exporting</h2>
-            <p>Export your family tree as CSV or JSON. Available for all logged-in accounts (Basic and Owner).</p>
-            <ul class="stappen">
-                <li>Go to <strong>Export</strong> via the navigation.</li>
-                <li>Click <strong>"Export CSV"</strong> or <strong>"Export JSON"</strong>.</li>
+            <h2>14. Exporting</h2>
+            <p>The export page lets you download the family tree and the events separately.</p>
+
+            <h3>Exporting the family tree</h3>
+            <ul>
+                <li><strong>CSV</strong> — export of the people in the family tree.</li>
+                <li><strong>JSON</strong> — complete JSON backup of the people in the family tree.</li>
             </ul>
-            <div class="tip"><strong>Tip:</strong> Make regular JSON exports as a backup.</div>
+
+            <h3>Exporting events</h3>
+            <p>Events are exported as one JSON file. This format also preserves participants, sources and the other event fields.</p>
+
+            <h3>File names</h3>
+            <p>The surname of the first person in the local family tree is used as the family name in downloaded file names:</p>
+            <ul>
+                <li><code>&lt;familyname&gt;_stamboom_YYYYMMDD.csv</code></li>
+                <li><code>&lt;familyname&gt;_stamboom_YYYYMMDD.json</code></li>
+                <li><code>&lt;familyname&gt;_event_YYYYMMDD.json</code></li>
+            </ul>
+            <div class="tip"><strong>Tip:</strong> Regularly keep both a family tree JSON and an Event JSON backup. This lets you restore people and events separately.</div>
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
         <div class="sectie" id="wachtwoord-reset">
-            <h2>13. Forgot password</h2>
+            <h2>15. Forgot password</h2>
             <ul class="stappen">
                 <li>Click <strong>Login</strong> at the top of the page.</li>
                 <li>Click <strong>"Forgot password?"</strong>.</li>
@@ -379,8 +433,9 @@
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
+
         <div class="sectie" id="delen">
-            <h2>15. Sharing &amp; collaborating</h2>
+            <h2>16. Sharing &amp; collaborating</h2>
             <p>As an <strong>Owner</strong> you can invite others to view or contribute to your family tree. Invited users receive a tree permission: <strong>Viewer</strong> or <strong>Editor</strong>.</p>
             <div class="tip"><strong>Required:</strong> Logged in as <strong>Owner</strong>. The tree must be saved to the cloud.</div>
             <h3>Account types overview</h3>
@@ -401,8 +456,8 @@
                     <tr><td>Share family tree</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                     <tr><td>Invite Viewer / Editor</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                     <tr><td>Restore versions</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-limiet">Max. 5 versions</td></tr>
-                    <tr><td>Export (CSV / JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
-                    <tr><td>Import (CSV)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Export (family tree CSV/JSON + Event JSON)</td><td class="check-nee">✗</td><td class="check-ja">✓</td><td class="check-ja">✓</td></tr>
+                    <tr><td>Import (family tree CSV/TXT/JSON + Event JSON)</td><td class="check-nee">✗</td><td class="check-nee">✗</td><td class="check-ja">✓</td></tr>
                 </tbody>
             </table>
             <h3>Tree permissions: Viewer &amp; Editor</h3>
@@ -443,7 +498,7 @@
         </div>
 
         <div class="sectie" id="collab">
-            <h2>16. Message board (Collaboration)</h2>
+            <h2>17. Message board (Collaboration)</h2>
             <p>The message board shows all family trees you have access to. Per tree you see discussions about specific people, organised by person ID.</p>
             <div class="tip"><strong>Required:</strong> Logged in with access to at least one family tree.</div>
             <h3>Opening the message board</h3>
@@ -490,7 +545,7 @@
         </div>
 
         <div class="sectie" id="steun">
-            <h2>17. Support this project</h2>
+            <h2>18. Support this project</h2>
             <p>MyFamTreeCollab is free to use. If you find the app valuable, you can support development via Ko-fi.</p>
             <a href="https://ko-fi.com/vorilo" target="_blank" rel="noopener noreferrer"
                style="display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#FF5E5B; color:#fff; text-decoration:none; border-radius:6px; font-size:0.95rem; font-weight:bold;">
@@ -539,7 +594,7 @@
                 });
         })
         .then(function () {
-            return fetch('/MyFamTreeCollab/Layout/Navbar.html')
+            return fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
                 .then(function (resp) { return resp.text(); })
                 .then(function (html) {
                     i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
@@ -566,3 +621,4 @@
 
 </body>
 </html>
+
