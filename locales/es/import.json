@@ -23,11 +23,42 @@
     "noFile": "Ningún archivo seleccionado",
     "selected": "Seleccionado: "
   },
+  "events": {
+    "heading": "Importar eventos",
+    "subtitle": "Formato admitido: .json",
+    "body": "Importa una copia de seguridad completa de EventStorage. Tras la confirmación, los eventos locales actuales se sustituirán completamente por los eventos del archivo.",
+    "button": "Importar eventos JSON",
+    "confirmReplace": "Este archivo contiene {{count}} evento(s). El EventStorage actual se sustituirá completamente. ¿Continuar?"
+  },
   "status": {
     "storageError": "storage.js no cargado",
     "schemaError": "schema.js no cargado",
     "noFile": "Ningún archivo seleccionado",
     "noData": "El CSV no contiene datos",
-    "success": "Importación completada: {{count}} personas añadidas"
+    "success": "Importación completada: {{count}} personas añadidas",
+    "eventStorageError": "eventStorage.js no está cargado",
+    "eventNoFile": "No se ha seleccionado ningún archivo de eventos",
+    "eventReadError": "No se pudo leer el archivo de eventos",
+    "eventInvalidJson": "El archivo de eventos no contiene JSON válido",
+    "eventInvalidData": "Este archivo no es una copia de seguridad válida de EventStorage",
+    "eventNoData": "El archivo de eventos no contiene eventos",
+    "eventCancelled": "Importación de eventos cancelada",
+    "eventFailed": "No se pudo guardar la importación de eventos",
+    "eventSuccess": "Importación de eventos completada: {{count}} eventos restaurados",
+    "stamboomJsonNoFile": "No se ha seleccionado ningún archivo JSON del árbol genealógico",
+    "stamboomJsonReadError": "No se pudo leer el archivo JSON del árbol genealógico",
+    "stamboomJsonInvalidJson": "El archivo JSON del árbol genealógico no contiene JSON válido",
+    "stamboomJsonInvalidData": "Este archivo no es una copia de seguridad JSON válida del árbol genealógico",
+    "stamboomJsonNoData": "El archivo JSON del árbol genealógico no contiene personas",
+    "stamboomJsonCancelled": "Importación JSON del árbol genealógico cancelada",
+    "stamboomJsonFailed": "No se pudo guardar la importación JSON del árbol genealógico",
+    "stamboomJsonSuccess": "Importación JSON del árbol genealógico completada: {{count}} personas restauradas"
+  },
+  "stamboomJson": {
+    "heading": "Importar árbol genealógico como JSON",
+    "subtitle": "Formato admitido: .json",
+    "body": "Importa una copia de seguridad completa del árbol genealógico guardada previamente como JSON desde la página de exportación. Tras la confirmación, el árbol genealógico local actual se sustituirá completamente por las personas del archivo.",
+    "button": "Importar árbol genealógico JSON",
+    "confirmReplace": "Este archivo contiene {{count}} personas. El árbol genealógico actual se sustituirá completamente. ¿Continuar?"
   }
 }

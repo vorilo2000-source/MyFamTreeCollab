@@ -1,0 +1,27 @@
+{
+  "page": {
+    "title": "Estadísticas de eventos"
+  },
+  "welcome": {
+    "heading": "Estadísticas de eventos",
+    "intro": "Un resumen numérico de tus eventos. Todos los datos proceden directamente del almacenamiento local de eventos y se calculan en tiempo real."
+  },
+  "section": {
+    "eventTypes": "Resumen de tipos de evento"
+  },
+  "kpi": {
+    "totalEvents": "Total de eventos",
+    "lastModified": "Última modificación",
+    "storageVersion": "Versión del almacenamiento",
+    "eventTypes": "Tipos de evento",
+    "upcomingEvents": "Próximos eventos",
+    "withParticipants": "Con participantes",
+    "uniquePlaces": "Lugares únicos"
+  },
+  "eventTypes": {
+    "unknown": "Desconocido"
+  },
+  "empty": {
+    "events": "No hay eventos disponibles."
+  }
+}

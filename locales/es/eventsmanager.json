@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Gestor de eventos"
+  },
+  "welcome": {
+    "heading": "Bienvenido a tu Gestor de eventos",
+    "intro": "Busca una persona para gestionar sus eventos."
+  },
+  "search": {
+    "placeholder": "Buscar por ID, nombre o fecha de nacimiento..."
+  },
+  "btn": {
+    "refresh": "Actualizar",
+    "copy": "Copiar",
+    "save": "Guardar"
+  },
+  "table": {
+    "id": "ID",
+    "doopnaam": "Nombre",
+    "roepnaam": "Nombre habitual",
+    "prefix": "Prefijo",
+    "achternaam": "Apellido",
+    "geslacht": "Sexo",
+    "geboortedatum": "Fecha de nacimiento",
+    "eventId": "ID del evento",
+    "type": "Tipo",
+    "title": "Título",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de fin",
+    "place": "Lugar",
+    "participants": "Participantes",
+    "sources": "Fuentes",
+    "notes": "Notas"
+  },
+  "eventTypes": {
+    "religion": "Religión",
+    "relationship": "Relación",
+    "marriage": "Matrimonio",
+    "divorce": "Divorcio",
+    "diploma": "Diploma",
+    "career": "Trayectoria profesional",
+    "retirement": "Jubilación",
+    "move": "Mudanza",
+    "migration": "Migración",
+    "death": "Fallecimiento",
+    "other": "Otro"
+  },
+  "placeholder": {
+    "select": "Selecciona primero una persona.",
+    "notFound": "Persona no encontrada."
+  },
+  "confirm": {
+    "delete": "¿Seguro que quieres eliminar esta fila?"
+  },
+  "action": {
+    "delete": "Eliminar",
+    "deleteRowTitle": "Eliminar esta fila",
+    "deleteTitle": "Eliminar"
+  },
+  "alert": {
+    "maxRows": "Se ha alcanzado el número máximo de filas temporales.",
+    "saved": "Guardado.",
+    "saveFailed": "Error al guardar: {{error}}"
+  },
+  "rel": {
+    "parent": "Progenitor",
+    "partner": "Pareja",
+    "sibling": "Hermano/a",
+    "root": "Persona principal",
+    "child": "Hijo/a",
+    "unknown": "Desconocido"
+  }
+}

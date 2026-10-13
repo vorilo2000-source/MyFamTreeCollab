@@ -13,10 +13,16 @@
     "button": "Exportar CSV"
   },
   "json": {
-    "heading": "🚧 Exportar como JSON",
+    "heading": "Exportar como JSON",
     "body": "Un archivo JSON es una copia de seguridad completa de tu árbol genealógico con todos los campos. Guarda este archivo en un lugar seguro para no perder nunca tus datos.",
     "button": "Exportar JSON",
     "note": "El archivo se guarda automáticamente en tu carpeta de descargas con la fecha en el nombre del archivo."
+  },
+  "events": {
+    "heading": "Exportar eventos como JSON",
+    "body": "Crea una copia de seguridad completa de todos los datos de eventos almacenados localmente. Este archivo se puede restaurar completamente más adelante desde la página de importación.",
+    "button": "Exportar eventos JSON",
+    "note": "El archivo de eventos se guarda como events_AAAAMMDD.json."
   },
   "status": {
     "noData": "No hay personas para exportar.",
@@ -26,6 +32,9 @@
     "csvDownload": "Exportado como {{filename}} (carpeta de descargas)",
     "cancelled": "Exportación cancelada.",
     "failed": "Exportación fallida. Consulta la consola para más detalles.",
-    "jsonSaved": "Exportado como {{filename}}"
+    "jsonSaved": "Exportado como {{filename}}",
+    "eventStorageError": "eventStorage.js no está cargado.",
+    "eventNoData": "No hay eventos para exportar.",
+    "eventJsonSaved": "Eventos exportados como {{filename}}"
   }
 }

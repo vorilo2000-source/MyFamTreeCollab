@@ -1,0 +1,29 @@
+{
+  "page": {
+    "title": "Almacenamiento de eventos"
+  },
+  "welcome": {
+    "heading": "Almacenamiento de eventos",
+    "intro": "Consulta y gestiona los eventos almacenados localmente en este navegador."
+  },
+  "btn": {
+    "reset": "Restablecer eventos"
+  },
+  "storage": {
+    "info": "Versión {{version}} — {{count}} evento(s)",
+    "empty": "No hay eventos locales almacenados.",
+    "filterPlaceholder": "Filtrar...",
+    "confirmReset": "¿Eliminar todos los eventos locales?"
+  },
+  "table": {
+    "eventId": "ID del evento",
+    "type": "Tipo",
+    "title": "Título",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de fin",
+    "place": "Lugar",
+    "participants": "Participantes",
+    "sources": "Fuentes",
+    "notes": "Notas"
+  }
+}
