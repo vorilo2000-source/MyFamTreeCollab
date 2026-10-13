@@ -13,10 +13,16 @@
     "button": "Exporteer CSV"
   },
   "json": {
-    "heading": "🚧 Exporteer als JSON",
+    "heading": "Exporteer als JSON",
     "body": "Een JSON-bestand is een volledige back-up van je stamboom inclusief alle velden. Bewaar dit bestand op een veilige plek zodat je je data nooit kwijt bent.",
     "button": "Export JSON",
     "note": "Het bestand wordt automatisch opgeslagen in je downloadmap met de datum in de bestandsnaam."
+  },
+  "events": {
+    "heading": "Exporteer events als JSON",
+    "body": "Maak een volledige back-up van alle lokaal opgeslagen eventdata. Dit bestand kan later via de importpagina volledig worden teruggezet.",
+    "button": "Export events JSON",
+    "note": "Het eventbestand wordt opgeslagen als events_JJJJMMDD.json."
   },
   "status": {
     "noData": "Geen personen om te exporteren.",
@@ -26,6 +32,9 @@
     "csvDownload": "Geëxporteerd als {{filename}} (downloadmap)",
     "cancelled": "Export geannuleerd.",
     "failed": "Export mislukt. Zie console voor details.",
-    "jsonSaved": "Geëxporteerd als {{filename}}"
+    "jsonSaved": "Geëxporteerd als {{filename}}",
+    "eventStorageError": "eventStorage.js is niet geladen.",
+    "eventNoData": "Geen events om te exporteren.",
+    "eventJsonSaved": "Events geëxporteerd als {{filename}}"
   }
 }

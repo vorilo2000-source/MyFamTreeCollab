@@ -45,6 +45,7 @@
     "start": "Start",
     "stamboom": "Stamboom",
     "developer": "Developer",
+    "events": "Events",
     "sub": {
       "create": "Create",
       "import": "Import",
@@ -71,7 +72,10 @@
       "blank": "Leeg",
       "maintenance": "Maintenance",
       "pageExample": "Pagina-voorbeeld",
-      "sandbox": "Sandbox"
+      "sandbox": "Sandbox",
+      "eventsManager": "Manager",
+      "eventsStorage": "Storage",
+      "eventStats": "Statistiek"
     }
   },
   "footer": {

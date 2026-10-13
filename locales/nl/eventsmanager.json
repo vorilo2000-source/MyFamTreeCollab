@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Event Manager"
+  },
+  "welcome": {
+    "heading": "Welkom bij je Event Manager",
+    "intro": "Zoek een persoon op om events te beheren."
+  },
+  "search": {
+    "placeholder": "Zoek op ID, naam of geboortedatum..."
+  },
+  "btn": {
+    "refresh": "Vernieuwen",
+    "copy": "Kopieer",
+    "save": "Opslaan"
+  },
+  "table": {
+    "id": "ID",
+    "doopnaam": "Doopnaam",
+    "roepnaam": "Roepnaam",
+    "prefix": "Prefix",
+    "achternaam": "Achternaam",
+    "geslacht": "Geslacht",
+    "geboortedatum": "Geboortedatum",
+    "eventId": "Event ID",
+    "type": "Type",
+    "title": "Titel",
+    "startDate": "Startdatum",
+    "endDate": "Einddatum",
+    "place": "Plaats",
+    "participants": "Deelnemers",
+    "sources": "Bronnen",
+    "notes": "Notities"
+  },
+  "eventTypes": {
+    "religion": "Religie",
+    "relationship": "Relatie",
+    "marriage": "Huwelijk",
+    "divorce": "Scheiding",
+    "diploma": "Diploma",
+    "career": "Loopbaan",
+    "retirement": "Pensioen",
+    "move": "Verhuizing",
+    "migration": "Migratie",
+    "death": "Overlijden",
+    "other": "Anders"
+  },
+  "placeholder": {
+    "select": "Selecteer eerst een persoon.",
+    "notFound": "Persoon niet gevonden."
+  },
+  "confirm": {
+    "delete": "Weet je zeker dat je deze rij wilt verwijderen?"
+  },
+  "action": {
+    "delete": "Verwijder",
+    "deleteRowTitle": "Verwijder deze rij",
+    "deleteTitle": "Verwijder"
+  },
+  "alert": {
+    "maxRows": "Het maximale aantal tijdelijke rijen is bereikt.",
+    "saved": "Opgeslagen.",
+    "saveFailed": "Opslaan mislukt: {{error}}"
+  },
+  "rel": {
+    "parent": "Ouder",
+    "partner": "Partner",
+    "sibling": "Broer/Zus",
+    "root": "Hoofdpersoon",
+    "child": "Kind",
+    "unknown": "Onbekend"
+  }
+}

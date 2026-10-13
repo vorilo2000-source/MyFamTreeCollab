@@ -23,11 +23,42 @@
     "noFile": "Geen bestand geselecteerd",
     "selected": "Geselecteerd: "
   },
+  "events": {
+    "heading": "Importeer events",
+    "subtitle": "Ondersteund formaat: .json",
+    "body": "Importeer een volledige EventStorage-back-up. Na bevestiging worden de huidige lokaal opgeslagen events volledig vervangen door de events uit het bestand.",
+    "button": "Importeer events JSON",
+    "confirmReplace": "Dit bestand bevat {{count}} event(s). De huidige EventStorage wordt volledig vervangen. Doorgaan?"
+  },
   "status": {
     "storageError": "storage.js niet geladen",
     "schemaError": "schema.js niet geladen",
     "noFile": "Geen bestand geselecteerd",
     "noData": "CSV bevat geen data",
-    "success": "Import voltooid: {{count}} personen toegevoegd"
+    "success": "Import voltooid: {{count}} personen toegevoegd",
+    "eventStorageError": "eventStorage.js is niet geladen",
+    "eventNoFile": "Geen eventbestand geselecteerd",
+    "eventReadError": "Eventbestand kon niet gelezen worden",
+    "eventInvalidJson": "Eventbestand bevat geen geldige JSON",
+    "eventInvalidData": "Dit bestand is geen geldige EventStorage-back-up",
+    "eventNoData": "Eventbestand bevat geen events",
+    "eventCancelled": "Event-import geannuleerd",
+    "eventFailed": "Event-import kon niet worden opgeslagen",
+    "eventSuccess": "Event-import voltooid: {{count}} events teruggezet",
+    "stamboomJsonNoFile": "Geen stamboom JSON-bestand geselecteerd",
+    "stamboomJsonReadError": "Stamboom JSON-bestand kon niet gelezen worden",
+    "stamboomJsonInvalidJson": "Stamboom JSON-bestand bevat geen geldige JSON",
+    "stamboomJsonInvalidData": "Dit bestand is geen geldige stamboom JSON-back-up",
+    "stamboomJsonNoData": "Stamboom JSON-bestand bevat geen personen",
+    "stamboomJsonCancelled": "Stamboom JSON-import geannuleerd",
+    "stamboomJsonFailed": "Stamboom JSON-import kon niet worden opgeslagen",
+    "stamboomJsonSuccess": "Stamboom JSON-import voltooid: {{count}} personen teruggezet"
+  },
+  "stamboomJson": {
+    "heading": "Importeer stamboom als JSON",
+    "subtitle": "Ondersteund formaat: .json",
+    "body": "Importeer een volledige stamboom-back-up die via de exportpagina als JSON is opgeslagen. Na bevestiging wordt de huidige lokale stamboom volledig vervangen door de personen uit het bestand.",
+    "button": "Importeer stamboom JSON",
+    "confirmReplace": "Dit bestand bevat {{count}} persoon/personen. De huidige stamboom wordt volledig vervangen. Doorgaan?"
   }
 }

@@ -1,0 +1,29 @@
+{
+  "page": {
+    "title": "Events opslag"
+  },
+  "welcome": {
+    "heading": "Events opslag",
+    "intro": "Bekijk en beheer de lokaal opgeslagen events in deze browser."
+  },
+  "btn": {
+    "reset": "Reset events"
+  },
+  "storage": {
+    "info": "Versie {{version}} — {{count}} event(s)",
+    "empty": "Geen lokale events opgeslagen.",
+    "filterPlaceholder": "Filter...",
+    "confirmReset": "Alle lokale events verwijderen?"
+  },
+  "table": {
+    "eventId": "Event ID",
+    "type": "Type",
+    "title": "Titel",
+    "startDate": "Startdatum",
+    "endDate": "Einddatum",
+    "place": "Plaats",
+    "participants": "Deelnemers",
+    "sources": "Bronnen",
+    "notes": "Notities"
+  }
+}

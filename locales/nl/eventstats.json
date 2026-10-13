@@ -1,0 +1,27 @@
+{
+  "page": {
+    "title": "Event statistieken"
+  },
+  "welcome": {
+    "heading": "Event statistieken",
+    "intro": "Een overzicht van je events in cijfers. Alle gegevens komen rechtstreeks uit de lokale eventopslag en worden live berekend."
+  },
+  "section": {
+    "eventTypes": "Overzicht eventtypes"
+  },
+  "kpi": {
+    "totalEvents": "Totaal events",
+    "lastModified": "Laatste wijziging",
+    "storageVersion": "Storage versie",
+    "eventTypes": "Eventtypes",
+    "upcomingEvents": "Aankomende events",
+    "withParticipants": "Met deelnemers",
+    "uniquePlaces": "Unieke plaatsen"
+  },
+  "eventTypes": {
+    "unknown": "Onbekend"
+  },
+  "empty": {
+    "events": "Geen events beschikbaar."
+  }
+}
