@@ -1,9 +1,9 @@
-<!-- ======================= events/eventsmanager.html v1.0.1 =======================
+<!-- ======================= events/eventsmanager.html v1.0.2 =======================
      Beheerpagina: event bewerken als tabel met live search
 
      Scripts: utils.js → colorHelper.js → schema.js → idGenerator.js →
               storage.js → auth.js → siteAnalytics.js → shareModule.js →
-              accessGuard.js → LiveSearch.js → relatieEngine.js → eventsmanager.js
+              cloudinary.js → accessGuard.js → LiveSearch.js → relatieEngine.js → eventsmanager.js
      ======================================================================= -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -152,7 +152,8 @@
 <script src="../js/idGenerator.js"></script>
 <script src="../js/storage.js"></script>
 <script src="../js/eventStorage.js"></script>
-<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js -->
+<script src="../js/shareModule.js"></script>     <!-- Vereist door accessGuard.js en cloudinary.js -->
+<script src="../js/cloudinary.js"></script>      <!-- Centrale Cloudinary-configuratie/upload -->
 <script src="../js/accessGuard.js"></script>     <!-- Rolcheck: alleen editor + owner -->
 <script src="../js/LiveSearch.js"></script>
 <script src="../js/relatieEngine.js"></script>
