@@ -1,4 +1,4 @@
-<!-- ======================= abonnementen/prijzen.html v2.5.0 =======================
+﻿<!-- ======================= abonnementen/prijzen.html v2.5.0 =======================
      Wijziging v2.5.0 (sessie 30):
      - i18n uitgerold via namespace 'prijzen'
      - Alle zichtbare tekst vervangen door data-i18n attributen
@@ -381,7 +381,7 @@
             });
 
         // Stap 6: Navbar laden — geen auth-afhankelijkheid, mag parallel
-        fetch('/MyFamTreeCollab/Layout/Navbar.html')
+        fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
             .then(function(resp) { return resp.text(); })                                    // HTML ophalen
             .then(function(data) {
                 i18nModule.onComponentLoaded(data, document.getElementById('navbar-placeholder')); // Navbar injecteren + vertalen
@@ -402,3 +402,4 @@
 
 </body>
 </html>
+

@@ -1,4 +1,10 @@
-<!-- ======================= abonnementen/overzicht.html v2.4.1 =======================
+<!-- ======================= abonnementen/overzicht.html v2.6.0 =======================
+     Wijziging v2.6.0:
+     - i18n- en layout-laadvolgorde gelijkgetrokken met de werkende prijzen.html
+     - Scriptarchitectuur gelijkgetrokken met abonnementen/prijzen.html
+     - Pagina-specifieke JS wordt niet meer dynamisch geïnjecteerd
+     - TopBar / Navbar / Footer worden na namespace-load direct geladen
+
      Wijziging v2.4.1 (sessie 30 — bugfix):
      - i18n uitgerold via namespace 'overzicht'
      - Alle zichtbare tekst vervangen door data-i18n attributen
@@ -302,8 +308,8 @@
 </head>
 <body>
 
-<div id="topbar-placeholder"></div> <!-- TopBar wordt geladen via fetch -->
-<div id="navbar-placeholder"></div> <!-- Navbar wordt geladen via fetch -->
+<div id="topbar-placeholder"></div> <!-- TopBar wordt geladen via inline initialisatie -->
+<div id="navbar-placeholder"></div> <!-- Navbar wordt geladen via inline initialisatie -->
 
 <main>
 <div class="overzicht-wrapper">
@@ -422,7 +428,7 @@
     <!-- ===== STAMBOOM-RECHTEN: VIEWER & EDITOR ===== -->
     <div class="rechten-blok">
         <h2 data-i18n="overzicht:rechten.title">📋 Stamboom-rechten: Viewer &amp; Editor</h2> <!-- Sectietitel rechten — vertaald -->
-        <!-- Intro bevat HTML-tags (<strong>, <code>, <em>) — wordt gezet via _translateHTML() in script -->
+        <!-- Intro bevat HTML-tags (<strong>, <code>, <em>) — wordt gezet via _translateHTML() in inline script -->
         <p class="intro" id="rechten-intro"></p>
 
         <div class="rechten-grid">
@@ -495,7 +501,7 @@
                 </tr>
             </tbody>
         </table>
-        <!-- Noot bevat HTML-tags (<strong>) — wordt gezet via _translateHTML() in script -->
+        <!-- Noot bevat HTML-tags (<strong>) — wordt gezet via _translateHTML() in inline script -->
         <div class="donatie-noot" id="donatie-noot"></div>
     </div>
 
@@ -510,39 +516,92 @@
 </div>
 </main>
 
-<div id="footer-placeholder"></div> <!-- Footer wordt geladen via fetch -->
+<div id="footer-placeholder"></div> <!-- Footer wordt geladen via inline initialisatie -->
 
 <!-- =============================================================
-     SCRIPTS — verplichte laadvolgorde:
-     1. i18next CDN scripts   — in <head> geladen (core + backend + detector)
-     2. i18n.js               — core i18n module (window.i18nModule)
-     3. Supabase SDK          — vereist door auth.js
-     4. utils.js              — vereist door alle andere modules
-     5. auth.js               — vereist door topbar.js en siteAnalytics.js
-     6. siteAnalytics.js      — bezoektracking, na auth.js zodat tier beschikbaar is
-     7. Inline init-script    — roept i18nModule.init() aan (laadt 'common' + DOM)
-     8. overzicht.js          — wordt dynamisch geïnjecteerd na init() resolve;
-                                laadt namespace 'overzicht', vertaalt DOM opnieuw,
-                                regelt TopBar / Navbar / Footer en trackPage.
-                                REDEN: init() roept intern updateContent() aan vóór
-                                loadNamespace() klaar is → keys worden als key-naam
-                                weergegeven. Dynamische injectie na resolve garandeert
-                                juiste volgorde. Patroon: zelfde als stats.js (sessie 26).
+     SCRIPTS — zelfde laadpatroon als abonnementen/prijzen.html:
+     1. i18next CDN scripts   — in <head> geladen
+     2. i18n.js               — centrale i18n-module
+     3. Supabase SDK
+     4. utils.js
+     5. auth.js
+     6. siteAnalytics.js
+     7. Inline initialisatie:
+        a. i18nModule.init()
+        b. loadNamespace('overzicht')
+        c. pagina-specifieke HTML-vertaling indien nodig
+        d. languageChanged-listener indien nodig
+        e. TopBar / Navbar / Footer laden
+        f. SiteAnalytics.trackPage()
+     Geen dynamische injectie van ../js/overzicht.js meer.
      ============================================================= -->
-<script src="../js/i18n.js"></script>                                                  <!-- i18n module — window.i18nModule beschikbaar stellen -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>           <!-- Supabase SDK — vereist door auth.js -->
-<script src="../js/utils.js"></script>                                                  <!-- Utilities — vereist door alle modules -->
-<script src="../js/auth.js"></script>                                                   <!-- Auth module — vereist door topbar.js -->
-<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>                           <!-- Bezoektracking — na auth.js zodat tier beschikbaar is -->
+<script src="../js/i18n.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="/MyFamTreeCollab/js/siteAnalytics.js"></script>
 
 <script>
-    // i18nModule initialiseren — laadt 'common' namespace voor nl/en/es en detecteert taal.
-    // Na resolve wordt overzicht.js dynamisch geïnjecteerd zodat loadNamespace('overzicht')
-    // pas aanroept nadat i18next volledig geïnitialiseerd is (race condition vermeden).
+    /**
+     * _translateHTML(elementId, key)
+     * Vertaalt een element waarvan de inhoud HTML-tags bevat.
+     * Gebruikt innerHTML in plaats van textContent om opmaak te behouden.
+     */
+    function _translateHTML(elementId, key) {
+        var el = document.getElementById(elementId);
+        if (el) el.innerHTML = i18next.t(key);
+    }
+
+    /**
+     * _translateHTMLBlocks()
+     * Vertaalt alle HTML-bevattende tekstblokken op deze pagina.
+     */
+    function _translateHTMLBlocks() {
+        _translateHTML('rechten-intro', 'overzicht:rechten.intro');
+        _translateHTML('donatie-noot', 'overzicht:donatie.noot');
+    }
+
+    // Stap 1: i18n initialiseren — laadt 'common' en detecteert de actieve taal.
     i18nModule.init().then(function() {
-        var s = document.createElement('script');  // Script element aanmaken
-        s.src = '../js/overzicht.js';              // Pad naar pagina-script
-        document.body.appendChild(s);              // Injecteren — start na init() resolve
+
+        // Stap 2: pagina-specifieke namespace laden en DOM hertalen.
+        return i18nModule.loadNamespace('overzicht');
+
+    }).then(function() {
+
+        // Stap 3: HTML-bevattende tekstblokken vertalen.
+        _translateHTMLBlocks();
+
+        // Stap 4: HTML-blokken opnieuw vertalen bij iedere taalwissel.
+        i18next.on('languageChanged', _translateHTMLBlocks);
+
+        // Stap 5: TopBar laden; topbar.js pas injecteren nadat de TopBar in de DOM staat.
+        fetch('/MyFamTreeCollab/Layout/TopBar.html')
+            .then(function(resp) { return resp.text(); })
+            .then(function(data) {
+                i18nModule.onComponentLoaded(data, document.getElementById('topbar-placeholder'));
+                var s = document.createElement('script');
+                s.src = '../js/topbar.js';
+                document.body.appendChild(s);
+            });
+
+        // Stap 6: Navbar parallel laden — actuele versie, zonder browsercache.
+        fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
+            .then(function(resp) { return resp.text(); })
+            .then(function(data) {
+                i18nModule.onComponentLoaded(data, document.getElementById('navbar-placeholder'));
+            });
+
+        // Stap 7: Footer parallel laden.
+        fetch('/MyFamTreeCollab/Layout/Footer.html')
+            .then(function(resp) { return resp.text(); })
+            .then(function(data) {
+                var ph = document.getElementById('footer-placeholder');
+                if (ph) ph.innerHTML = data;
+            });
+
+        // Stap 8: pagina-bezoek registreren.
+        SiteAnalytics.trackPage('overzicht');
     });
 </script>
 
