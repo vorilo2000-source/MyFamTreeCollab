@@ -1,5 +1,10 @@
-﻿<!-- ======================= events/eventsstorage.html v0.2.0 =======================
+﻿<!-- ======================= events/eventsstorage.html v0.2.1 =======================
      Opslagpagina voor lokale en cloud Events.
+
+     Wijziging v0.2.1:
+     - Technische tabelheaders vervangen door leesbare labels
+     - Bronnen als benoemde klikbare links weergegeven
+     - Bestaande tekstbronnen blijven ondersteund
 
      Wijziging v0.2.0:
      - Tabs toegevoegd: Mijn data / Cloud events / Gedeeld met mij
@@ -56,6 +61,8 @@
         th { background: #f4f4f4; font-weight: bold; color: #333; }
         th input { width: 95%; padding: 3px 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 3px; }
         .empty { font-style: italic; color: #888; padding: 20px 0; }
+        .source-links { display: flex; flex-direction: column; gap: 3px; white-space: normal; }
+        .source-links a { color: #2563eb; text-decoration: underline; word-break: break-all; }
 
         .actieve-stamboom-balk { display: none; align-items: center; gap: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.92rem; color: #1e40af; }
         .actieve-stamboom-balk.zichtbaar { display: flex; }
@@ -306,6 +313,18 @@ i18nModule.init()
                 'notes'
             ];
 
+            var columnLabels = {
+                id: 'Event ID',
+                type: 'Type',
+                title: 'Titel',
+                start_date: 'Startdatum',
+                end_date: 'Einddatum',
+                place: 'Plaats',
+                participants: 'Deelnemers',
+                sources: 'Bronnen',
+                notes: 'Notities'
+            };
+
             function toonActieveBalkData() {
                 var id = StamboomStorage.getActiveTreeId();
                 var naam = StamboomStorage.getActiveTreeName();
@@ -330,10 +349,65 @@ i18nModule.init()
                 }
 
                 if (column === 'sources') {
-                    return Array.isArray(event.sources) ? event.sources.join(' | ') : '';
+                    return Array.isArray(event.sources)
+                        ? event.sources.map(function (source) {
+                            if (typeof source === 'string') return source.trim();
+
+                            if (source && typeof source === 'object') {
+                                var naam = source.name ? String(source.name).trim() : '';
+                                var url = source.url ? String(source.url).trim() : '';
+                                return naam || url;
+                            }
+
+                            return '';
+                        }).filter(Boolean).join(' | ')
+                        : '';
                 }
 
                 return event[column] || '';
+            }
+
+            function renderSourcesCell(td, sources) {
+                td.innerHTML = '';
+
+                if (!Array.isArray(sources) || !sources.length) return;
+
+                var wrapper = document.createElement('div');
+                wrapper.className = 'source-links';
+
+                sources.forEach(function (source) {
+                    var naam = '';
+                    var url = '';
+
+                    if (typeof source === 'string') {
+                        var legacy = source.trim();
+                        if (!legacy) return;
+                        naam = legacy;
+                        if (/^https?:\/\//i.test(legacy)) url = legacy;
+                    } else if (source && typeof source === 'object') {
+                        naam = source.name ? String(source.name).trim() : '';
+                        url = source.url ? String(source.url).trim() : '';
+                        if (!naam && !url) return;
+                        if (!naam) naam = url;
+                    } else {
+                        return;
+                    }
+
+                    if (url && /^https?:\/\//i.test(url)) {
+                        var link = document.createElement('a');
+                        link.href = url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.textContent = naam;
+                        wrapper.appendChild(link);
+                    } else {
+                        var span = document.createElement('span');
+                        span.textContent = naam;
+                        wrapper.appendChild(span);
+                    }
+                });
+
+                td.appendChild(wrapper);
             }
 
             function renderTable() {
@@ -355,7 +429,7 @@ i18nModule.init()
                 var headerRow = document.createElement('tr');
                 columns.forEach(function (column) {
                     var th = document.createElement('th');
-                    th.textContent = column;
+                    th.textContent = columnLabels[column] || column;
                     headerRow.appendChild(th);
                 });
                 thead.appendChild(headerRow);
@@ -397,7 +471,13 @@ i18nModule.init()
 
                         columns.forEach(function (column) {
                             var td = document.createElement('td');
-                            td.textContent = cellValue(event, column);
+
+                            if (column === 'sources') {
+                                renderSourcesCell(td, event.sources);
+                            } else {
+                                td.textContent = cellValue(event, column);
+                            }
+
                             row.appendChild(td);
                         });
 
