@@ -1,5 +1,10 @@
-/* ======================= js/eventsmanager.js v0.9.2 =======================
+/* ======================= js/eventsmanager.js v0.9.3 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
+   Wijziging v0.9.3:
+   - Cloudinary-upload toegevoegd aan de bestaande Bronnen-widget
+   - secure_url wordt na upload automatisch in het URL-veld geplaatst
+   - Een lege bronnaam wordt gevuld met de oorspronkelijke bestandsnaam
+
    Vereist: schema.js, idGenerator.js, storage.js, LiveSearch.js,
             relatieEngine.js, colorHelper.js
 
@@ -39,6 +44,10 @@
 
     /* ======================= MULTI-ID VELDEN ======================= */
     var MULTI_ID_FIELDS = ['VaderID', 'MoederID', 'PartnerID'];           // Velden met |-gescheiden meerdere waarden
+
+    /* ======================= CLOUDINARY ======================= */
+    var CLOUDINARY_CLOUD_NAME = 'iilt5yrt';                                // Eigen Cloudinary cloud name
+    var CLOUDINARY_UPLOAD_PRESET = 'fam_v_doorn_upload';                   // Unsigned upload preset
 
     /* ======================= KOLOMMEN DEFINITIE ======================= */
     var COLUMNS = [                                                        // Persoonskolommen + eventkolommen
@@ -236,6 +245,31 @@
         };
     }
 
+    async function uploadSourceToCloudinary(file) {
+        var form = new FormData();
+        form.append('file', file);
+        form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        var response = await fetch(
+            'https://api.cloudinary.com/v1_1/' + encodeURIComponent(CLOUDINARY_CLOUD_NAME) + '/image/upload',
+            {
+                method: 'POST',
+                body: form
+            }
+        );
+
+        var result = await response.json();
+
+        if (!response.ok || !result || !result.secure_url) {
+            var message = result && result.error && result.error.message
+                ? result.error.message
+                : 'Cloudinary upload mislukt.';
+            throw new Error(message);
+        }
+
+        return result;
+    }
+
     function buildSourceRow(source, wrapper) {
         var normalized = normalizeSourceForManager(source) || { name: '', url: '' };
         var row = document.createElement('div');
@@ -262,6 +296,20 @@
         removeBtn.title = i18nModule.t('eventsmanager:sourcesEditor.removeTitle');
         removeBtn.style.cssText = 'padding:2px 6px;font-size:0.9rem;cursor:pointer;background:#dc3545;color:#fff;border:none;border-radius:3px;line-height:1';
 
+        var fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+
+        var uploadBtn = document.createElement('button');
+        uploadBtn.type = 'button';
+        uploadBtn.textContent = 'Bestand kiezen en uploaden';
+        uploadBtn.title = 'Upload afbeelding naar Cloudinary';
+        uploadBtn.style.cssText = 'grid-column:1 / 4;justify-self:start;padding:3px 8px;font-size:0.82rem;cursor:pointer;background:#2563eb;color:#fff;border:none;border-radius:3px';
+
+        var uploadStatus = document.createElement('span');
+        uploadStatus.style.cssText = 'grid-column:1 / 4;font-size:0.8rem;color:#555;display:none';
+
         var preview = document.createElement('a');
         preview.className = 'source-link-preview';
         preview.target = '_blank';
@@ -282,6 +330,40 @@
             }
         }
 
+        uploadBtn.addEventListener('click', function () {
+            fileInput.value = '';
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async function () {
+            var file = fileInput.files && fileInput.files[0];
+            if (!file) return;
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploaden...';
+            uploadStatus.textContent = '';
+            uploadStatus.style.display = 'none';
+
+            try {
+                var result = await uploadSourceToCloudinary(file);
+                urlInput.value = result.secure_url;
+
+                if (!nameInput.value.trim()) {
+                    nameInput.value = file.name;
+                }
+
+                uploadStatus.textContent = 'Upload voltooid';
+                uploadStatus.style.display = 'inline';
+                updatePreview();
+            } catch (error) {
+                uploadStatus.textContent = 'Upload mislukt: ' + error.message;
+                uploadStatus.style.display = 'inline';
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Bestand kiezen en uploaden';
+            }
+        });
+
         nameInput.addEventListener('input', updatePreview);
         urlInput.addEventListener('input', updatePreview);
         removeBtn.addEventListener('click', function () {
@@ -291,6 +373,9 @@
         row.appendChild(nameInput);
         row.appendChild(urlInput);
         row.appendChild(removeBtn);
+        row.appendChild(fileInput);
+        row.appendChild(uploadBtn);
+        row.appendChild(uploadStatus);
         row.appendChild(preview);
         updatePreview();
 
