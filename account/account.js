@@ -1,5 +1,5 @@
 /**
- * account/account.js — v1.0.0
+ * account/account.js — v1.0.1
  * MyFamTreeCollab — Account overview page
  * -----------------------------------------
  * Handles: profile display, cloud tree list,
@@ -134,7 +134,7 @@ async function renderCloudTrees() {
       <div class="upgrade-notice">
         <span class="upgrade-icon">☁️</span>
         <p>Cloud opslag is beschikbaar vanaf het <strong>Supporter</strong> pakket.</p>
-        <a href="/MyFamTreeCollab/abonnementen/index.html" class="btn-upgrade">Bekijk abonnementen</a>
+        <a href="/MyFamTreeCollab/abonnementen/overzicht.html" class="btn-upgrade">Bekijk abonnementen</a>
       </div>`;
     return;                                                        // stop here for free users
   }
