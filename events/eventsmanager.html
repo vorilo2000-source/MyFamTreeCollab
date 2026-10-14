@@ -1,4 +1,4 @@
-<!-- ======================= events/eventsmanager.html v1.0.0 =======================
+<!-- ======================= events/eventsmanager.html v1.0.1 =======================
      Beheerpagina: event bewerken als tabel met live search
 
      Scripts: utils.js → colorHelper.js → schema.js → idGenerator.js →
@@ -10,7 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="manage:page.title">Beheer</title>
+    <title data-i18n="eventsmanager:page.title">Beheer</title>
 
     <!-- ======================= Favicon ======================= -->
     <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
@@ -108,22 +108,22 @@
 
         <!-- Welkomstblok — vertaald via data-i18n -->
         <div class="welkom-blok">
-            <h1 data-i18n="manage:welcome.heading">Welkom bij je event Manager</h1>
-            <p data-i18n="manage:welcome.intro">Zoek een persoon op om de event te beheren.</p>
+            <h1 data-i18n="eventsmanager:welcome.heading">Welkom bij je events Manager</h1>
+            <p data-i18n="eventsmanager:welcome.intro">Zoek een persoon op om de event te beheren.</p>
         </div>
 
         <!-- Zoekbalk — placeholder via JS na i18n init -->
         <div class="zoek-sectie">
             <input type="text" id="searchPerson"
-                   data-i18n-placeholder="manage:search.placeholder"
+                   data-i18n-placeholder="eventsmanager:search.placeholder"
                    placeholder="Zoek op ID, naam of geboortedatum...">
         </div>
 
         <!-- Knoppen — labels vertaald via data-i18n -->
         <div class="knoppen-balk">
-            <button id="refreshBtn" data-i18n="manage:btn.refresh">Vernieuwen</button>
-            <button id="addBtn"     data-i18n="manage:btn.add">+ Toevoegen</button>
-            <button id="saveBtn"    data-i18n="manage:btn.save">Opslaan</button>
+            <button id="refreshBtn" data-i18n="eventsmanager:btn.refresh">Vernieuwen</button>
+            <button id="addBtn"     data-i18n="eventsmanager:btn.add">+ Toevoegen</button>
+            <button id="saveBtn"    data-i18n="eventsmanager:btn.save">Opslaan</button>
         </div>
 
         <!-- Tabel — gevuld door eventsmanager.js -->
@@ -161,18 +161,18 @@
 <script>
 // ======================= i18n initialisatie + component fetch =======================
 i18nModule.init()
-    .then(function () { return i18nModule.loadNamespace('manage'); })    // Namespace laden
+    .then(function () { return i18nModule.loadNamespace('eventsmanager'); })    // Namespace laden
     .then(function () {
 
         // Namespace geladen — headers en placeholder bouwen via window.ManageTable
         // (zelfde patroon als bouwTabel() in bronnen/template.html)
         window.ManageTable.buildHeader();                                // Headers vertaald renderen
         window.ManageTable.showPlaceholder(                              // Beginmelding vertaald tonen
-            i18nModule.t('manage:placeholder.select')
+            i18nModule.t('eventsmanager:placeholder.select')
         );
 
         // Paginatitel vertalen
-        document.title = i18nModule.t('manage:page.title');
+        document.title = i18nModule.t('eventsmanager:page.title');
 
         // Placeholder input vertalen
         document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
