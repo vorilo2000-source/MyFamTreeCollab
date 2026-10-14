@@ -1,7 +1,12 @@
-/* ======================= js/eventsmanager.js v0.8.0 =======================
+/* ======================= js/eventsmanager.js v0.9.2 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Vereist: schema.js, idGenerator.js, storage.js, LiveSearch.js,
             relatieEngine.js, colorHelper.js
+
+   Wijziging v0.9.0:
+   - Bronnen per event als meerdere { name, url } links beheren
+   - Bronnen toevoegen, wijzigen en verwijderen vanuit Event Manager
+   - Klikbare bronnaam als preview in de Bronnen-kolom
 
    Wijziging v2.8.0 (sessie 36):
    - Kleurgradiënt op td cellen i.p.v. tr — CSS specificiteitsprobleem opgelost
@@ -37,13 +42,13 @@
 
     /* ======================= KOLOMMEN DEFINITIE ======================= */
     var COLUMNS = [                                                        // Persoonskolommen + eventkolommen
-        { key: 'ID',                i18nKey: 'manage:table.id',                readonly: true  },
-        { key: 'Doopnaam',          i18nKey: 'manage:table.doopnaam',          readonly: false },
-        { key: 'Roepnaam',          i18nKey: 'manage:table.roepnaam',          readonly: false },
-        { key: 'Prefix',            i18nKey: 'manage:table.prefix',            readonly: false },
-        { key: 'Achternaam',        i18nKey: 'manage:table.achternaam',        readonly: false },
-        { key: 'Geslacht',          i18nKey: 'manage:table.geslacht',          readonly: false },
-        { key: 'Geboortedatum',     i18nKey: 'manage:table.geboortedatum',     readonly: false },
+        { key: 'ID',                i18nKey: 'eventsmanager:table.id',                readonly: true  },
+        { key: 'Doopnaam',          i18nKey: 'eventsmanager:table.doopnaam',          readonly: false },
+        { key: 'Roepnaam',          i18nKey: 'eventsmanager:table.roepnaam',          readonly: false },
+        { key: 'Prefix',            i18nKey: 'eventsmanager:table.prefix',            readonly: false },
+        { key: 'Achternaam',        i18nKey: 'eventsmanager:table.achternaam',        readonly: false },
+        { key: 'Geslacht',          i18nKey: 'eventsmanager:table.geslacht',          readonly: false },
+        { key: 'Geboortedatum',     i18nKey: 'eventsmanager:table.geboortedatum',     readonly: false },
         { key: 'id',                i18nKey: 'Event ID',                        readonly: true  },
         { key: 'type',              i18nKey: 'Type',                            readonly: false },
         { key: 'title',             i18nKey: 'Titel',                           readonly: false },
@@ -100,7 +105,7 @@
     var searchInput   = document.getElementById('searchPerson');          // Zoekveld live search
 
     /* ======================= HEADER BOUWEN ======================= */
-    // Aangeropen vanuit manage.html .then()-chain, ná loadNamespace('manage')
+    // Aangeropen vanuit eventsmanager.html .then()-chain, ná loadNamespace('eventsmanager')
     function buildHeader() {
         theadRow.innerHTML = '';                                          // Verwijder bestaande kolomkoppen
         COLUMNS.forEach(function (col) {                                  // Loop door elke kolom-definitie
@@ -208,10 +213,142 @@
         return window.StamboomSchema.stringifyPartners(values);          // Samenvoegen met |
     }
 
+    /* ======================= BRONNEN WIDGET ======================= */
+    function normalizeSourceForManager(source) {
+        if (typeof source === 'string') {                                  // Ondersteun bestaande tekstbronnen.
+            var legacy = source.trim();
+            if (!legacy) return null;
+            return {
+                name: legacy,
+                url: /^https?:\/\//i.test(legacy) ? legacy : ''
+            };
+        }
+
+        if (!source || typeof source !== 'object') return null;
+
+        var name = source.name == null ? '' : String(source.name).trim();
+        var url = source.url == null ? '' : String(source.url).trim();
+        if (!name && !url) return null;
+
+        return {
+            name: name || url,
+            url: url
+        };
+    }
+
+    function buildSourceRow(source, wrapper) {
+        var normalized = normalizeSourceForManager(source) || { name: '', url: '' };
+        var row = document.createElement('div');
+        row.className = 'source-entry';
+        row.style.cssText = 'display:grid;grid-template-columns:minmax(120px,0.8fr) minmax(180px,1.2fr) auto;gap:4px;align-items:center';
+
+        var nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'source-name-input';
+        nameInput.value = normalized.name;
+        nameInput.placeholder = i18nModule.t('eventsmanager:sourcesEditor.namePlaceholder');
+        nameInput.style.cssText = 'width:100%;padding:3px 6px;font-size:0.85rem;border:1px solid #ccc;border-radius:3px;box-sizing:border-box';
+
+        var urlInput = document.createElement('input');
+        urlInput.type = 'url';
+        urlInput.className = 'source-url-input';
+        urlInput.value = normalized.url;
+        urlInput.placeholder = i18nModule.t('eventsmanager:sourcesEditor.urlPlaceholder');
+        urlInput.style.cssText = 'width:100%;padding:3px 6px;font-size:0.85rem;border:1px solid #ccc;border-radius:3px;box-sizing:border-box';
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.textContent = '×';
+        removeBtn.title = i18nModule.t('eventsmanager:sourcesEditor.removeTitle');
+        removeBtn.style.cssText = 'padding:2px 6px;font-size:0.9rem;cursor:pointer;background:#dc3545;color:#fff;border:none;border-radius:3px;line-height:1';
+
+        var preview = document.createElement('a');
+        preview.className = 'source-link-preview';
+        preview.target = '_blank';
+        preview.rel = 'noopener noreferrer';
+        preview.style.cssText = 'grid-column:1 / 4;font-size:0.82rem;word-break:break-all';
+
+        function updatePreview() {
+            var name = nameInput.value.trim();
+            var url = urlInput.value.trim();
+            if (url && /^https?:\/\//i.test(url)) {
+                preview.href = url;
+                preview.textContent = name || url;
+                preview.style.display = 'inline';
+            } else {
+                preview.removeAttribute('href');
+                preview.textContent = '';
+                preview.style.display = 'none';
+            }
+        }
+
+        nameInput.addEventListener('input', updatePreview);
+        urlInput.addEventListener('input', updatePreview);
+        removeBtn.addEventListener('click', function () {
+            wrapper.removeChild(row);
+        });
+
+        row.appendChild(nameInput);
+        row.appendChild(urlInput);
+        row.appendChild(removeBtn);
+        row.appendChild(preview);
+        updatePreview();
+
+        return row;
+    }
+
+    function buildSourcesCell(currentSources) {
+        var td = document.createElement('td');
+        td.dataset.sourcesCell = 'true';
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'sources-editor';
+        wrapper.style.cssText = 'display:flex;flex-direction:column;gap:6px;min-width:250px';
+
+        var sources = Array.isArray(currentSources) ? currentSources : [];
+        sources.map(normalizeSourceForManager).filter(Boolean).forEach(function (source) {
+            wrapper.appendChild(buildSourceRow(source, wrapper));
+        });
+
+        var addSourceBtn = document.createElement('button');
+        addSourceBtn.type = 'button';
+        addSourceBtn.textContent = i18nModule.t('eventsmanager:sourcesEditor.add');
+        addSourceBtn.title = i18nModule.t('eventsmanager:sourcesEditor.addTitle');
+        addSourceBtn.style.cssText = 'padding:3px 8px;font-size:0.82rem;cursor:pointer;background:#28a745;color:#fff;border:none;border-radius:3px;align-self:flex-start';
+
+        addSourceBtn.addEventListener('click', function () {
+            wrapper.insertBefore(buildSourceRow({ name: '', url: '' }, wrapper), addSourceBtn);
+        });
+
+        wrapper.appendChild(addSourceBtn);
+        td.appendChild(wrapper);
+        return td;
+    }
+
+    function readSourcesCell(td) {
+        var sources = [];
+
+        td.querySelectorAll('.source-entry').forEach(function (row) {
+            var nameInput = row.querySelector('.source-name-input');
+            var urlInput = row.querySelector('.source-url-input');
+            var name = nameInput ? nameInput.value.trim() : '';
+            var url = urlInput ? urlInput.value.trim() : '';
+
+            if (!name && !url) return;
+
+            sources.push({
+                name: name || url,
+                url: url
+            });
+        });
+
+        return sources;
+    }
+
     /* ======================= DELETE HANDLER FACTORY ======================= */
     function makeDeleteHandler(tr, getID) {
         return function () {
-            if (!confirm(i18nModule.t('manage:confirm.delete'))) return; // Bevestiging
+            if (!confirm(i18nModule.t('eventsmanager:confirm.delete'))) return; // Bevestiging
 
             var id = getID();                                            // Te verwijderen ID
 
@@ -245,22 +382,22 @@
     function relatieLabel(relatie) {
         switch (relatie) {
             case 'VHoofdID':
-            case 'MHoofdID':  return i18nModule.t('manage:rel.parent');  // Ouder
+            case 'MHoofdID':  return i18nModule.t('eventsmanager:rel.parent');  // Ouder
             case 'PHoofdID':
-            case 'Partner':   return i18nModule.t('manage:rel.partner'); // Partner
-            case 'BZID':      return i18nModule.t('manage:rel.sibling'); // Broer/Zus
-            case 'HoofdID':   return i18nModule.t('manage:rel.root');    // Hoofdpersoon
+            case 'Partner':   return i18nModule.t('eventsmanager:rel.partner'); // Partner
+            case 'BZID':      return i18nModule.t('eventsmanager:rel.sibling'); // Broer/Zus
+            case 'HoofdID':   return i18nModule.t('eventsmanager:rel.root');    // Hoofdpersoon
             case 'KindID':
             case 'HKindID':
-            case 'PHKindID':  return i18nModule.t('manage:rel.child');   // Kind
-            default:          return relatie || i18nModule.t('manage:rel.unknown');
+            case 'PHKindID':  return i18nModule.t('eventsmanager:rel.child');   // Kind
+            default:          return relatie || i18nModule.t('eventsmanager:rel.unknown');
         }
     }
 
     /* ======================= TABEL RENDEREN ======================= */
     function renderTable(ds) {
         if (!selectedHoofdId) {                                           // Zonder geselecteerde persoon niets tonen.
-            showPlaceholder(i18nModule.t('manage:placeholder.select'));    // Toon de bestaande selectiemelding.
+            showPlaceholder(i18nModule.t('eventsmanager:placeholder.select'));    // Toon de bestaande selectiemelding.
             return;                                                       // Stop de render.
         }
 
@@ -269,7 +406,7 @@
         });
 
         if (!persoon) {                                                   // Controleer of de persoon werkelijk bestaat.
-            showPlaceholder(i18nModule.t('manage:placeholder.notFound'));  // Toon de bestaande niet-gevondenmelding.
+            showPlaceholder(i18nModule.t('eventsmanager:placeholder.notFound'));  // Toon de bestaande niet-gevondenmelding.
             return;                                                       // Stop de render.
         }
 
@@ -298,9 +435,9 @@
                     }).filter(Boolean).join('\n')                        // Toon meerdere deelnemers elk op een eigen regel.
                     : '';                                                 // Geen deelnemers geeft een leeg veld.
 
-                eventRij.sources = Array.isArray(event.sources)           // Zet bronnenarray om naar bewerkbare tabeltekst.
-                    ? event.sources.join(' | ')                           // Gebruik dezelfde scheiding als bij opslaan.
-                    : '';                                                 // Geen bronnen geeft een leeg veld.
+                eventRij.sources = Array.isArray(event.sources)           // Houd bronnen als objecten voor de bronnen-editor.
+                    ? event.sources                                       // Iedere bron bevat name + url.
+                    : [];                                                 // Geen bronnen geeft een lege lijst.
 
                 tableBody.appendChild(buildRow(eventRij, false, 0));      // Voeg het bestaande event aan de tabel toe.
             });
@@ -329,15 +466,15 @@
                 td = document.createElement('td');
                 var btn = document.createElement('button');
                 if (isNew) {
-                    btn.textContent = i18nModule.t('manage:action.delete');
-                    btn.title       = i18nModule.t('manage:action.deleteRowTitle');
+                    btn.textContent = i18nModule.t('eventsmanager:action.delete');
+                    btn.title       = i18nModule.t('eventsmanager:action.deleteRowTitle');
                     btn.addEventListener('click', function () {
                         tr.remove();                                     // Verwijder rij uit DOM
                         tempRowCount--;                                  // Teller verlagen
                     });
                 } else {
-                    btn.textContent = i18nModule.t('manage:action.delete');
-                    btn.title       = i18nModule.t('manage:action.deleteTitle');
+                    btn.textContent = i18nModule.t('eventsmanager:action.delete');
+                    btn.title       = i18nModule.t('eventsmanager:action.deleteTitle');
                     btn.addEventListener('click', makeDeleteHandler(tr, function () { return safe(p.ID); }));
                 }
                 td.appendChild(btn);
@@ -374,6 +511,9 @@
 
                 select.value = isNew ? '' : (p[col.key] || '');           // Herstel bestaand type of laat nieuwe rij leeg.
                 td.appendChild(select);                                  // Plaats de dropdown in de tabelcel.
+
+            } else if (col.key === 'sources') {
+                td = buildSourcesCell(isNew ? [] : p[col.key]);           // Meerdere benoemde links beheren in één event.
 
             } else {
                 td = document.createElement('td');
@@ -461,7 +601,7 @@
         if (!selectedHoofdId) return;                                    // Zonder geselecteerde persoon niets kopiëren
 
         if (tempRowCount >= 10) {
-            alert(i18nModule.t('manage:alert.maxRows'));                 // Bestaande limiet van tien tijdelijke rijen behouden
+            alert(i18nModule.t('eventsmanager:alert.maxRows'));                 // Bestaande limiet van tien tijdelijke rijen behouden
             return;
         }
 
@@ -516,6 +656,8 @@
 
                     if (col.readonly) {                                    // Event ID is readonly in de tabel.
                         event[col.key] = safe(cell.textContent);           // Lees het Event ID rechtstreeks uit de cel.
+                    } else if (col.key === 'sources') {
+                        event.sources = readSourcesCell(cell);             // Lees alle benoemde links uit de Bronnen-widget.
                     } else {
                         var input = cell.querySelector('textarea, select'); // Lees textarea of Type-dropdown.
                         event[col.key] = input ? input.value.trim() : '';   // Neem de actuele ingevulde/gekozen waarde over.
@@ -529,12 +671,6 @@
                     role: ''                                              // Rol blijft leeg totdat hiervoor apart gedrag wordt toegevoegd.
                 }];
 
-                event.sources = event.sources                             // Zet het Bronnen-tekstveld om naar de EventStorage-array.
-                    ? event.sources.split('|').map(function (source) {    // Ondersteun dezelfde | scheiding als de opslagweergave.
-                        return source.trim();                              // Verwijder witruimte rond iedere bron.
-                    }).filter(Boolean)                                    // Bewaar alleen niet-lege bronnen.
-                    : [];                                                 // Leeg veld wordt een lege bronnenarray.
-
                 if (!event.id) return;                                    // Een event zonder Event ID mag niet worden opgeslagen.
 
                 if (storedIds.has(event.id)) {                            // Bestaand Event ID betekent een update.
@@ -546,9 +682,9 @@
             });
 
             tempRowCount = 0;                                             // Reset de teller na succesvolle opslag.
-            alert(i18nModule.t('manage:alert.saved'));                    // Gebruik de bestaande opslagbevestiging.
+            alert(i18nModule.t('eventsmanager:alert.saved'));                    // Gebruik de bestaande opslagbevestiging.
         } catch (e) {
-            alert(i18nModule.t('manage:alert.saveFailed', { error: e.message })); // Gebruik de bestaande foutmelding.
+            alert(i18nModule.t('eventsmanager:alert.saveFailed', { error: e.message })); // Gebruik de bestaande foutmelding.
         }
     }
 
@@ -588,8 +724,8 @@
     /* ======================= INITIALISATIE ======================= */
     function init() {
         // buildHeader() en showPlaceholder() worden NIET hier aangeroepen —
-        // beide vereisen de manage-namespace die nog niet geladen is op dit moment
-        // manage.html roept window.ManageTable.buildHeader() aan ná loadNamespace('manage')
+        // beide vereisen de eventsmanager-namespace die nog niet geladen is op dit moment
+        // eventsmanager.html roept window.ManageTable.buildHeader() aan ná loadNamespace('eventsmanager')
 
         i18next.on('languageChanged', function () {
             buildHeader();                                               // Headers hertekenen bij taalwissel
@@ -626,8 +762,8 @@
     init();                                                              // Start initialisatie
 
     /* ======================= PUBLIEKE API ======================= */
-    // Exposed via window.ManageTable zodat manage.html beide functies kan aanroepen
-    // ná loadNamespace('manage') — consistent met window.RelatieEngine, window.StamboomSchema
+    // Exposed via window.ManageTable zodat eventsmanager.html beide functies kan aanroepen
+    // ná loadNamespace('eventsmanager') — consistent met window.RelatieEngine, window.StamboomSchema
     window.ManageTable = {
         buildHeader:     buildHeader,                                    // Headers bouwen na namespace load
         showPlaceholder: showPlaceholder                                 // Beginmelding na namespace load
