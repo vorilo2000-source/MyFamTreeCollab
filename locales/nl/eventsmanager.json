@@ -3,7 +3,7 @@
     "title": "Event Manager"
   },
   "welcome": {
-    "heading": "Welkom bij je Event Manager",
+    "heading": "Welkom bij je events Manager",
     "intro": "Zoek een persoon op om events te beheren."
   },
   "search": {
@@ -44,6 +44,13 @@
     "migration": "Migratie",
     "death": "Overlijden",
     "other": "Anders"
+  },
+  "sourcesEditor": {
+    "namePlaceholder": "Naam (bijv. Geboortekaart)",
+    "urlPlaceholder": "https://...",
+    "add": "+ Bron",
+    "addTitle": "Bron toevoegen",
+    "removeTitle": "Bron verwijderen"
   },
   "placeholder": {
     "select": "Selecteer eerst een persoon.",
