@@ -1,5 +1,11 @@
-/* ======================= js/eventsmanager.js v0.9.3 =======================
+/* ======================= js/eventsmanager.js v0.9.4 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
+   Wijziging v0.9.4:
+   - Hardcoded Cloudinary cloud name en preset verwijderd
+   - Upload gebruikt centraal js/cloudinary.js
+   - Uploadknop alleen beschikbaar voor de owner van de actieve stamboom
+   - Stabiele stamboom-ID wordt gebruikt voor de Cloudinary asset_folder
+
    Wijziging v0.9.3:
    - Cloudinary-upload toegevoegd aan de bestaande Bronnen-widget
    - secure_url wordt na upload automatisch in het URL-veld geplaatst
@@ -46,8 +52,25 @@
     var MULTI_ID_FIELDS = ['VaderID', 'MoederID', 'PartnerID'];           // Velden met |-gescheiden meerdere waarden
 
     /* ======================= CLOUDINARY ======================= */
-    var CLOUDINARY_CLOUD_NAME = 'iilt5yrt';                                // Eigen Cloudinary cloud name
-    var CLOUDINARY_UPLOAD_PRESET = 'fam_v_doorn_upload';                   // Unsigned upload preset
+    var cloudinaryPermissionPromise = null;                               // Rolcheck per pagina eenmalig cachen
+
+    function canUseCloudinaryUpload() {
+        if (cloudinaryPermissionPromise) return cloudinaryPermissionPromise;
+
+        cloudinaryPermissionPromise = (async function () {
+            if (!window.CloudinaryModule) return false;
+
+            var treeId = window.CloudinaryModule.getActiveTreeId();
+            if (!treeId) return false;
+
+            return window.CloudinaryModule.canUploadForTree(treeId);
+        })().catch(function (error) {
+            console.warn('[eventsmanager] Cloudinary uploadrecht kon niet worden bepaald:', error);
+            return false;
+        });
+
+        return cloudinaryPermissionPromise;
+    }
 
     /* ======================= KOLOMMEN DEFINITIE ======================= */
     var COLUMNS = [                                                        // Persoonskolommen + eventkolommen
@@ -246,28 +269,18 @@
     }
 
     async function uploadSourceToCloudinary(file) {
-        var form = new FormData();
-        form.append('file', file);
-        form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-        var response = await fetch(
-            'https://api.cloudinary.com/v1_1/' + encodeURIComponent(CLOUDINARY_CLOUD_NAME) + '/image/upload',
-            {
-                method: 'POST',
-                body: form
-            }
-        );
-
-        var result = await response.json();
-
-        if (!response.ok || !result || !result.secure_url) {
-            var message = result && result.error && result.error.message
-                ? result.error.message
-                : 'Cloudinary upload mislukt.';
-            throw new Error(message);
+        if (!window.CloudinaryModule) {
+            throw new Error('CloudinaryModule is niet beschikbaar.');
         }
 
-        return result;
+        var treeId = window.CloudinaryModule.getActiveTreeId();
+        if (!treeId) {
+            throw new Error('Geen actieve stamboom geselecteerd.');
+        }
+
+        return window.CloudinaryModule.uploadImage(file, {
+            treeId: treeId
+        });
     }
 
     function buildSourceRow(source, wrapper) {
@@ -305,7 +318,7 @@
         uploadBtn.type = 'button';
         uploadBtn.textContent = 'Bestand kiezen en uploaden';
         uploadBtn.title = 'Upload afbeelding naar Cloudinary';
-        uploadBtn.style.cssText = 'grid-column:1 / 4;justify-self:start;padding:3px 8px;font-size:0.82rem;cursor:pointer;background:#2563eb;color:#fff;border:none;border-radius:3px';
+        uploadBtn.style.cssText = 'display:none;grid-column:1 / 4;justify-self:start;padding:3px 8px;font-size:0.82rem;cursor:pointer;background:#2563eb;color:#fff;border:none;border-radius:3px';
 
         var uploadStatus = document.createElement('span');
         uploadStatus.style.cssText = 'grid-column:1 / 4;font-size:0.8rem;color:#555;display:none';
@@ -378,6 +391,12 @@
         row.appendChild(uploadStatus);
         row.appendChild(preview);
         updatePreview();
+
+        canUseCloudinaryUpload().then(function (allowed) {
+            if (allowed) {
+                uploadBtn.style.display = 'inline-block';
+            }
+        });
 
         return row;
     }

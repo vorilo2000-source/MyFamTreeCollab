@@ -1,7 +1,15 @@
 // =============================================================================
 // topbar.js — TopBar Auth Modal & Status
-// MyFamTreeCollab v2.3.2
+// MyFamTreeCollab v2.3.4
 // -----------------------------------------------------------------------------
+// Nieuw in v2.3.4:
+// - Cloudinary-link verplaatst naar /MyFamTreeCollab/Layout/cloudinary.html
+// - Cloudinary-menu alleen zichtbaar voor owner/admin accounttypes
+//
+// Nieuw in v2.3.3:
+// - Cloudinary toegevoegd aan het gebruikersmenu
+//
+
 // Nieuw in v2.3.2 (sessie 28):
 // - _showAdminDropdown() herschreven van setInterval-poll naar MutationObserver
 //   De oude poll (20x per 100ms = max 2s) faalde wanneer de Navbar-HTML later
@@ -386,6 +394,7 @@
           <div class="top-user-dropdown" role="menu" id="top-user-dropdown">
             <div class="top-user-dropdown-header">${_escHtml(username)}</div>
             <a href="/MyFamTreeCollab/account/account.html" role="menuitem">⚙️ Mijn Account</a>
+            <a href="/MyFamTreeCollab/Layout/cloudinary.html" role="menuitem" id="top-cloudinary-link" style="display:none;">☁️ Cloudinary</a>
             <a href="/MyFamTreeCollab/account/history.html" role="menuitem">📜 Versiegeschiedenis</a>
             <a href="/MyFamTreeCollab/stamboom/collab.html" role="menuitem">
               💬 Samenwerken
@@ -445,6 +454,16 @@
     if (!wrapper) return;                                  // Guard: wrapper moet bestaan
     wrapper.classList.remove("open");                     // Dropdown sluiten
     if (btn) { btn.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); }
+  }
+
+  // ---------------------------------------------------------------------------
+  // _showCloudinaryMenu(isAllowed)
+  // Cloudinary is accountconfiguratie en wordt alleen getoond aan owner/admin.
+  // ---------------------------------------------------------------------------
+  function _showCloudinaryMenu(isAllowed) {
+    var link = document.getElementById("top-cloudinary-link");
+    if (!link) return;
+    link.style.display = isAllowed ? "block" : "none";
   }
 
   // ---------------------------------------------------------------------------
@@ -615,12 +634,22 @@
 
       try {
         const { profile } = await AuthModule.getProfile(); // Profiel ophalen
-        _showAdminDropdown(profile && profile.is_admin === true); // Admin-menu tonen/verbergen
-      } catch (e) { _showAdminDropdown(false); }           // Fout → admin-menu verbergen
+        const isAdmin = !!(profile && (profile.is_admin === true || profile.tier === 'admin'));
+        const canManageCloudinary = !!(
+          profile &&
+          (profile.tier === 'owner' || profile.tier === 'admin' || profile.is_admin === true)
+        );
+        _showAdminDropdown(isAdmin);                       // Admin-menu tonen/verbergen
+        _showCloudinaryMenu(canManageCloudinary);         // Cloudinary alleen owner/admin
+      } catch (e) {
+        _showAdminDropdown(false);
+        _showCloudinaryMenu(false);
+      }                                                    // Fout → beveiligde items verbergen
 
     } else {
       _renderTopBar(null);                                 // Login-knop tonen
       _showAdminDropdown(false);                           // Admin-menu verborgen houden
+      _showCloudinaryMenu(false);                         // Cloudinary verborgen houden
     }
 
     // Luister naar auth-wijzigingen (login, logout, token refresh)
@@ -639,11 +668,21 @@
         updateCollabBadge(session.user.id, supabase);      // Badge bijwerken
         try {
           const { profile } = await AuthModule.getProfile(); // Profiel opnieuw ophalen
-          _showAdminDropdown(profile && profile.is_admin === true); // Admin-menu bijwerken
-        } catch (e) { _showAdminDropdown(false); }
+          const isAdmin = !!(profile && (profile.is_admin === true || profile.tier === 'admin'));
+          const canManageCloudinary = !!(
+            profile &&
+            (profile.tier === 'owner' || profile.tier === 'admin' || profile.is_admin === true)
+          );
+          _showAdminDropdown(isAdmin);                     // Admin-menu bijwerken
+          _showCloudinaryMenu(canManageCloudinary);       // Cloudinary-menu bijwerken
+        } catch (e) {
+          _showAdminDropdown(false);
+          _showCloudinaryMenu(false);
+        }
       } else {
         _renderTopBar(null);                               // Login-knop tonen
         _showAdminDropdown(false);                         // Admin-menu verbergen
+        _showCloudinaryMenu(false);                       // Cloudinary verbergen
       }
     });
 
