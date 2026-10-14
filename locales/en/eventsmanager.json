@@ -3,7 +3,7 @@
     "title": "Event Manager"
   },
   "welcome": {
-    "heading": "Welcome to your Event Manager",
+    "heading": "Welcome to your Events Manager",
     "intro": "Search for a person to manage events."
   },
   "search": {
@@ -44,6 +44,13 @@
     "migration": "Migration",
     "death": "Death",
     "other": "Other"
+  },
+  "sourcesEditor": {
+    "namePlaceholder": "Name (e.g. Birth card)",
+    "urlPlaceholder": "https://...",
+    "add": "+ Source",
+    "addTitle": "Add source",
+    "removeTitle": "Remove source"
   },
   "placeholder": {
     "select": "Select a person first.",
