@@ -45,6 +45,13 @@
     "death": "Fallecimiento",
     "other": "Otro"
   },
+  "sourcesEditor": {
+    "namePlaceholder": "Nombre (p. ej. tarjeta de nacimiento)",
+    "urlPlaceholder": "https://...",
+    "add": "+ Fuente",
+    "addTitle": "Añadir fuente",
+    "removeTitle": "Eliminar fuente"
+  },
   "placeholder": {
     "select": "Selecciona primero una persona.",
     "notFound": "Persona no encontrada."
