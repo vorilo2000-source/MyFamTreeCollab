@@ -1,0 +1,507 @@
+<!-- ======================= account/cloudinary.html v0.1.0 =======================
+     Persoonlijke Cloudinary-configuratie voor stamboom owners.
+     Configuratie wordt opgeslagen in Supabase Auth user_metadata.cloudinary.
+     Geen API key, API secret of andere secrets opslaan.
+     ============================================================================ -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudinary - MyFamTreeCollab</title>
+
+    <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/MyFamTreeCollab/img/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/MyFamTreeCollab/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/MyFamTreeCollab/img/favicon-192x192.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="/MyFamTreeCollab/js/i18n.js"></script>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        main {
+            padding-top: 150px;
+        }
+
+        .cloudinary-page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 22px 32px;
+        }
+
+        .cloudinary-card {
+            background: #ffffff;
+            border: 1px solid #dfe5ec;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            padding: 26px 30px 30px;
+        }
+
+        .cloudinary-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .cloudinary-divider {
+            border: none;
+            border-top: 2px solid #547b49;
+            margin: 10px 0 26px;
+        }
+
+        .cloudinary-content {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .cloudinary-intro {
+            margin: 0 0 22px;
+            color: #5f6f8f;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .cloudinary-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 22px;
+            font-size: 0.92rem;
+            color: #4b5563;
+        }
+
+        .cloudinary-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #9ca3af;
+            flex: 0 0 auto;
+        }
+
+        .cloudinary-status.connected .cloudinary-status-dot {
+            background: #4f7f44;
+        }
+
+        .cloudinary-field {
+            margin-bottom: 16px;
+        }
+
+        .cloudinary-field label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .cloudinary-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border: 1px solid #cfd6df;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: Arial, sans-serif;
+            background: #fff;
+            color: #1f2937;
+        }
+
+        .cloudinary-field input:focus {
+            outline: none;
+            border-color: #547b49;
+            box-shadow: 0 0 0 2px rgba(84,123,73,0.12);
+        }
+
+        .cloudinary-help {
+            margin: 6px 0 0;
+            color: #7b8496;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .cloudinary-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 22px;
+        }
+
+        .cloudinary-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+
+        #cloudinary-save {
+            background: #4f7f44;
+            color: #fff;
+        }
+
+        #cloudinary-save:hover {
+            background: #416d38;
+        }
+
+        #cloudinary-remove {
+            background: #f3f4f6;
+            color: #b42318;
+            border: 1px solid #d9dee5;
+        }
+
+        #cloudinary-remove:hover {
+            background: #fff1f0;
+        }
+
+        .cloudinary-actions button:disabled {
+            opacity: 0.55;
+            cursor: default;
+        }
+
+        .cloudinary-message {
+            display: none;
+            margin-top: 16px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .cloudinary-message.success {
+            display: block;
+            background: #edf7ea;
+            color: #2f5f28;
+            border: 1px solid #b7d9ae;
+        }
+
+        .cloudinary-message.error {
+            display: block;
+            background: #fff1f0;
+            color: #9f1c16;
+            border: 1px solid #f2b8b5;
+        }
+
+        .cloudinary-note {
+            margin-top: 20px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-left: 4px solid #547b49;
+            color: #586579;
+            font-size: 0.88rem;
+            line-height: 1.55;
+        }
+
+        #cloudinary-access-denied {
+            display: none;
+            max-width: 760px;
+            margin: 150px auto 0;
+            padding: 28px 32px;
+            background: #fff;
+            border: 1px solid #dfe5ec;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            color: #7f1d1d;
+        }
+
+        #cloudinary-access-denied h2 {
+            margin-top: 0;
+            color: #991b1b;
+            font-size: 1.15rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="topbar-placeholder"></div>
+<div id="navbar-placeholder"></div>
+
+<main id="cloudinary-main" style="display:none;">
+    <div class="cloudinary-page">
+        <section class="cloudinary-card" aria-labelledby="cloudinary-settings-heading">
+            <h1 class="cloudinary-card-header" id="cloudinary-settings-heading">
+                <span aria-hidden="true">☁️</span>
+                <span>Cloudinary</span>
+            </h1>
+
+            <hr class="cloudinary-divider">
+
+            <div class="cloudinary-content">
+                <p class="cloudinary-intro">
+                    Koppel hier je persoonlijke Cloudinary-account aan MyFamTreeCollab.
+                    Deze koppeling wordt gebruikt voor alle stambomen waarvan jij owner bent.
+                </p>
+
+                <div id="cloudinary-status" class="cloudinary-status">
+                    <span class="cloudinary-status-dot" aria-hidden="true"></span>
+                    <span id="cloudinary-status-text">Nog niet gekoppeld</span>
+                </div>
+
+                <div class="cloudinary-field">
+                    <label for="cloudinary-cloud-name">Cloud name</label>
+                    <input
+                        type="text"
+                        id="cloudinary-cloud-name"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="bijv. iilt5yrt">
+                    <p class="cloudinary-help">
+                        De Cloudinary cloud name van je eigen account.
+                    </p>
+                </div>
+
+                <div class="cloudinary-field">
+                    <label for="cloudinary-upload-preset">Unsigned upload preset</label>
+                    <input
+                        type="text"
+                        id="cloudinary-upload-preset"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="bijv. fam_v_doorn_upload">
+                    <p class="cloudinary-help">
+                        Gebruik uitsluitend een unsigned upload preset. Vul hier geen API key of API secret in.
+                    </p>
+                </div>
+
+                <div class="cloudinary-actions">
+                    <button type="button" id="cloudinary-save">Opslaan</button>
+                    <button type="button" id="cloudinary-remove">Koppeling verwijderen</button>
+                </div>
+
+                <div id="cloudinary-message" class="cloudinary-message" role="status" aria-live="polite"></div>
+
+                <div class="cloudinary-note">
+                    MyFamTreeCollab bewaart alleen de Cloudinary <strong>cloud name</strong> en
+                    <strong>unsigned upload preset</strong>. De aparte Cloudinary-map per stamboom
+                    wordt later bij de upload bepaald aan de hand van de stabiele stamboom-ID.
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<section id="cloudinary-access-denied">
+    <h2>Geen toegang</h2>
+    <p id="cloudinary-access-denied-text">
+        Alleen een owner kan een Cloudinary-koppeling beheren.
+    </p>
+</section>
+
+<div id="footer-placeholder"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+
+<script>
+(function () {
+    'use strict';
+
+    function setMessage(text, type) {
+        var el = document.getElementById('cloudinary-message');
+        el.textContent = text || '';
+        el.className = 'cloudinary-message' + (type ? ' ' + type : '');
+    }
+
+    function setConnectedState(isConnected) {
+        var status = document.getElementById('cloudinary-status');
+        var text = document.getElementById('cloudinary-status-text');
+
+        status.classList.toggle('connected', !!isConnected);
+        text.textContent = isConnected ? 'Cloudinary gekoppeld' : 'Nog niet gekoppeld';
+
+        document.getElementById('cloudinary-remove').disabled = !isConnected;
+    }
+
+    function showAccessDenied(text) {
+        document.getElementById('cloudinary-main').style.display = 'none';
+        var denied = document.getElementById('cloudinary-access-denied');
+        var deniedText = document.getElementById('cloudinary-access-denied-text');
+        if (text) deniedText.textContent = text;
+        denied.style.display = 'block';
+    }
+
+    function showPage() {
+        document.getElementById('cloudinary-access-denied').style.display = 'none';
+        document.getElementById('cloudinary-main').style.display = '';
+    }
+
+    async function loadCloudinarySettings() {
+        var session = await window.AuthModule.getSession();
+
+        if (!session) {
+            showAccessDenied('Log eerst in om Cloudinary te beheren.');
+            return;
+        }
+
+        var tier = await window.AuthModule.getTier();
+
+        if (tier !== 'owner') {
+            showAccessDenied('Alleen een owner kan een Cloudinary-koppeling beheren.');
+            return;
+        }
+
+        showPage();
+
+        var metadata = session.user.user_metadata || {};
+        var cfg = metadata.cloudinary || {};
+
+        document.getElementById('cloudinary-cloud-name').value = cfg.cloud_name || '';
+        document.getElementById('cloudinary-upload-preset').value = cfg.upload_preset || '';
+
+        setConnectedState(!!(cfg.cloud_name && cfg.upload_preset));
+    }
+
+    async function saveCloudinarySettings() {
+        var cloudName = document.getElementById('cloudinary-cloud-name').value.trim();
+        var uploadPreset = document.getElementById('cloudinary-upload-preset').value.trim();
+        var saveBtn = document.getElementById('cloudinary-save');
+
+        setMessage('', '');
+
+        if (!cloudName || !uploadPreset) {
+            setMessage('Vul zowel Cloud name als Unsigned upload preset in.', 'error');
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(cloudName)) {
+            setMessage('Cloud name bevat ongeldige tekens.', 'error');
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(uploadPreset)) {
+            setMessage('Upload preset bevat ongeldige tekens.', 'error');
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Bezig…';
+
+        try {
+            var client = window.AuthModule.getClient();
+            var result = await client.auth.updateUser({
+                data: {
+                    cloudinary: {
+                        cloud_name: cloudName,
+                        upload_preset: uploadPreset
+                    }
+                }
+            });
+
+            if (result.error) throw result.error;
+
+            setConnectedState(true);
+            setMessage('Cloudinary-koppeling opgeslagen.', 'success');
+        } catch (err) {
+            setMessage('Opslaan mislukt: ' + (err.message || String(err)), 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Opslaan';
+        }
+    }
+
+    async function removeCloudinarySettings() {
+        var removeBtn = document.getElementById('cloudinary-remove');
+
+        if (!window.confirm('Cloudinary-koppeling verwijderen? Bestaande bron-URL’s in events blijven behouden.')) {
+            return;
+        }
+
+        setMessage('', '');
+        removeBtn.disabled = true;
+        removeBtn.textContent = 'Bezig…';
+
+        try {
+            var client = window.AuthModule.getClient();
+            var result = await client.auth.updateUser({
+                data: {
+                    cloudinary: null
+                }
+            });
+
+            if (result.error) throw result.error;
+
+            document.getElementById('cloudinary-cloud-name').value = '';
+            document.getElementById('cloudinary-upload-preset').value = '';
+
+            setConnectedState(false);
+            setMessage('Cloudinary-koppeling verwijderd.', 'success');
+        } catch (err) {
+            setMessage('Verwijderen mislukt: ' + (err.message || String(err)), 'error');
+            setConnectedState(true);
+        } finally {
+            removeBtn.textContent = 'Koppeling verwijderen';
+        }
+    }
+
+    function bindActions() {
+        document.getElementById('cloudinary-save').addEventListener('click', saveCloudinarySettings);
+        document.getElementById('cloudinary-remove').addEventListener('click', removeCloudinarySettings);
+    }
+
+    function loadSharedComponents() {
+        return i18nModule.init()
+            .then(function () {
+                return fetch('/MyFamTreeCollab/Layout/TopBar.html')
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        i18nModule.onComponentLoaded(
+                            html,
+                            document.getElementById('topbar-placeholder')
+                        );
+
+                        var script = document.createElement('script');
+                        script.src = '../js/topbar.js';
+                        document.body.appendChild(script);
+                    });
+            })
+            .then(function () {
+                return fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        i18nModule.onComponentLoaded(
+                            html,
+                            document.getElementById('navbar-placeholder')
+                        );
+                    });
+            })
+            .then(function () {
+                return fetch('/MyFamTreeCollab/Layout/Footer.html')
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        i18nModule.onComponentLoaded(
+                            html,
+                            document.getElementById('footer-placeholder')
+                        );
+                    });
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        bindActions();
+
+        loadSharedComponents()
+            .catch(function (err) {
+                console.warn('[cloudinary] Gedeelde componenten konden niet volledig laden:', err);
+            })
+            .finally(function () {
+                loadCloudinarySettings();
+            });
+    });
+})();
+</script>
+
+</body>
+</html>
