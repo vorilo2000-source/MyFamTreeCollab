@@ -272,7 +272,7 @@
         getActiveTreeName,      // ()           → string of null            (F5-07)
         setActiveTreeName,      // (naam)       → void                      (F5-07)
         MAX_LOCAL_FREE,         // 60
-        version: 'v2.2.0'
+        version: 'v2.2.1'
     };
 
 })();

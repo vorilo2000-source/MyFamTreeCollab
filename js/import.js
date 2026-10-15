@@ -1,4 +1,4 @@
-﻿/* ======================= js/import.js v2.3.0 ======================= */
+﻿/* ======================= js/import.js v2.4.0 ======================= */
 /* Wijziging v2.3.0 (sessie F3-62):
    - F3-62: Duplicate ID detectie bij CSV import
    - Bij duplicaten: modal met keuze overslaan / overschrijven / toch alles importeren
@@ -260,11 +260,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 obj = schema.empty(); // start met leeg schema object
 
                 schema.fields.forEach(function(field, i){
-                    obj[field] = values[i] !== undefined ? values[i] : ""; // vul kernvelden
+                    const colIndex = headerInfo.header ? headerInfo.header.indexOf(field) : i; // gebruik headerpositie voor oude/nieuwe CSV
+                    obj[field] = colIndex >= 0 && values[colIndex] !== undefined ? values[colIndex] : ""; // PortretURL optioneel
                 });
 
-                // Extra kolommen 15–22 bewaren als _extra array
-                obj._extra = values.slice(schema.coreFieldCount, maxColumns); // buiten schema
+                // Extra onbekende kolommen bewaren zonder de optionele PortretURL te verliezen
+                obj._extra = values.slice(schema.fields.length, maxColumns); // overige uitbreidingen blijven in _extra
             }
 
             newRows.push(obj); // voeg toe aan importlijst
@@ -341,7 +342,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Loop bestaande records: vervang als ID in importMap zit
             const updatedExisting = existing.map(function(p){
-                return importMap.has(p.ID) ? importMap.get(p.ID) : p; // vervang of bewaar
+                if (!importMap.has(p.ID)) return p; // behoud persoon zonder importrecord
+                const imported = importMap.get(p.ID); // te importeren gegevens
+                if (!imported.PortretURL && p.PortretURL) imported.PortretURL = p.PortretURL; // behoud bestaand portret bij oude CSV zonder foto
+                return imported; // vervang de overige velden
             });
 
             // Voeg geïmporteerde rijen toe die NIEUW zijn (nog niet in bestaand)

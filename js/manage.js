@@ -579,11 +579,11 @@
 
     /* ======================= EXPORT CSV ======================= */
     function exportCSV() {
-        var headers = COLUMNS.map(function (c) { return c.key; }).join(','); // Kolomkoppen
+        var headers = window.StamboomSchema.fields.join(','); // Gebruik schema inclusief PortretURL; sluit UI-only Portret uit. // Kolomkoppen
         var rows    = dataset
             .map(function (p) {
-                return COLUMNS
-                    .map(function (c) { return '"' + (p[c.key] || '').replace(/"/g, '""') + '"'; })
+                return window.StamboomSchema.fields
+                    .map(function (field) { return '"' + String(p[field] || '').replace(/"/g, '""') + '"'; }) // Exporteer PortretURL, geen buste-knop
                     .join(',');
             })
             .join('\n');

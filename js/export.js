@@ -1,4 +1,4 @@
-﻿/* ======================= js/export.js v2.1.0 =======================
+﻿/* ======================= js/export.js v2.2.0 =======================
    Wijziging v2.1.0 (sessie 25):
    - Alle hardcoded statusmeldingen vervangen door i18nModule.t('export:status.*')
    - Bestandsnaam interpolatie via {{filename}}
@@ -68,7 +68,7 @@
             return;
         }
 
-        const velden = window.StamboomSchema                               // Haal kolomnamen op uit schema
+        const velden = window.StamboomSchema                               // Neem inclusief PortretURL alle 15 schemavelden mee in CSV
             ? [...window.StamboomSchema.fields]
             : Object.keys(data[0]);                                        // Fallback: sleutels van eerste object
 

@@ -1,4 +1,4 @@
-// ======================= js/schema.js v0.1.0 =======================
+// ======================= js/schema.js v0.2.0 =======================
 // Centrale datastructuur voor MyFamTreeCollab
 // Beheert: schema velden, CSV parsing, header validatie en legacy migratie
 
@@ -8,11 +8,11 @@
 
 // ======================= SCHEMA INFO =======================
 
-const SCHEMA_VERSION = "0.1.0"; // versie van datastructuur
+const SCHEMA_VERSION = "0.2.0"; // versie van datastructuur
 
 const MAX_COLUMNS = 22; // maximale aantal kolommen toegestaan in CSV
 
-// ======================= HOOFDVELDEN (1–14) =======================
+// ======================= PERSOONSVELDEN (1–15) =======================
 // deze velden hebben betekenis voor de applicatie
 
 const FIELDS = [
@@ -30,11 +30,12 @@ const FIELDS = [
 "VaderID",          // verwijzing vader
 "MoederID",         // verwijzing moeder
 "PartnerID",        // meerdere partners met |
-"Opmerkingen"       // vrije tekst
+"Opmerkingen",      // vrije tekst
+"PortretURL"         // Cloudinary foto URL; geen afbeelding downloaden bij tabelrendering
 
 ];
 
-const CORE_FIELD_COUNT = FIELDS.length; // aantal schema velden (14)
+const CORE_FIELD_COUNT = 14; // Eerste 14 verplichte basisvelden; PortretURL is optionele kolom 15 voor oude CSV-compatibiliteit
 
 // ======================= LEGACY HEADERS =======================
 // oudere CSV structuren die automatisch gemigreerd worden
@@ -89,12 +90,12 @@ return (value || "")
 
 // ======================= HEADER VALIDATIE =======================
 
-// controleert alleen eerste 14 kolommen
+// Controleer uitsluitend de 14 historische kernkolommen voor oude en nieuwe CSV's
 function validateHeader(headerLine){
 
-const header = splitCSV(headerLine).map(h=>h.trim());
+const header = splitCSV(headerLine).map(h=>cleanValue(h.trim()));
 
-for(let i=0;i<CORE_FIELD_COUNT;i++) // controleer alleen kernvelden
+for(let i=0;i<CORE_FIELD_COUNT;i++) // valideer de originele 14 velden, ook wanneer PortretURL ontbreekt
 if(header[i] !== FIELDS[i])
 return false;
 
@@ -106,7 +107,7 @@ return true; // header is geldig
 
 function normalizeHeader(headerLine){
 
-const header = splitCSV(headerLine).map(h=>h.trim());
+const header = splitCSV(headerLine).map(h=>cleanValue(h.trim()));
 
 if(validateHeader(headerLine)) // check huidige schema
 return {type:"current", header};
@@ -181,9 +182,10 @@ return migrateLegacyRow(values, headerInfo.header);
 
 const obj = createEmptyPersoon(); // maak nieuw object
 
-FIELDS.forEach((field,i)=>{ // vul schema velden
+FIELDS.forEach((field,i)=>{ // vul schema velden (inclusief optionele PortretURL)
 
-let value = cleanValue(values[i]); // haal waarde op
+let index = headerInfo && headerInfo.header ? headerInfo.header.indexOf(field) : i; // match op kolomnaam, ook bij oude bestanden
+let value = index >= 0 ? cleanValue(values[index]) : ""; // ontbrekende optionele kolom wordt leeg // haal waarde op
 
 if(DATE_FIELDS.includes(field) && value){ // datum parsing
 
