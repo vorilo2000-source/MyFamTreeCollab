@@ -1,4 +1,4 @@
-/* ======================= js/manage.js v2.8.0 =======================
+/* ======================= js/manage.js v2.9.0 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Vereist: schema.js, idGenerator.js, storage.js, LiveSearch.js,
             relatieEngine.js, colorHelper.js
@@ -40,6 +40,7 @@
         { key: 'Acties',            i18nKey: 'manage:table.actions',           readonly: true  },
         { key: 'Relatie',           i18nKey: 'manage:table.relatie',           readonly: true  },
         { key: 'ID',                i18nKey: 'manage:table.id',                readonly: true  },
+        { key: 'Portret',           i18nKey: 'Portret',                        readonly: true  }, // UI-kolom; opslag via PortretURL buiten CSV-kernschema.
         { key: 'Doopnaam',          i18nKey: 'manage:table.doopnaam',          readonly: false },
         { key: 'Roepnaam',          i18nKey: 'manage:table.roepnaam',          readonly: false },
         { key: 'Prefix',            i18nKey: 'manage:table.prefix',            readonly: false },
@@ -76,7 +77,7 @@
         theadRow.innerHTML = '';                                          // Verwijder bestaande kolomkoppen
         COLUMNS.forEach(function (col) {                                  // Loop door elke kolom-definitie
             var th = document.createElement('th');                       // Maak nieuw <th> element
-            th.textContent = i18nModule.t(col.i18nKey);                  // Vertaalde kolomnaam via namespace
+            th.textContent = col.key === 'Portret' ? 'Portret' : i18nModule.t(col.i18nKey); // Portretkop zonder ontbrekende vertaalsleutel.                  // Vertaalde kolomnaam via namespace
             theadRow.appendChild(th);                                    // Toevoegen aan header-rij
         });
     }
@@ -97,6 +98,104 @@
                 ta.style.overflowY = 'hidden';                           // Geen scrollbalk nodig
             }
         });
+    }
+
+    /* ======================= PORTRET: KLIK-OM-TE-LADEN ======================= */
+    var portretModulePromise = null; // Laad bestaande Cloudinary-module alleen als upload gevraagd wordt.
+
+    function ensurePortretCloudinary() { // Hergebruik bestaande module, zonder extra uploadimplementatie.
+        if (window.CloudinaryModule) return Promise.resolve(window.CloudinaryModule); // Al aanwezig.
+        if (portretModulePromise) return portretModulePromise; // Voorkom dubbele scriptloads.
+        portretModulePromise = new Promise(function (resolve, reject) { // Laad de bestaande module dynamisch.
+            var script = document.createElement('script'); // Script-element voor de bestaande module.
+            script.src = '/MyFamTreeCollab/js/cloudinary.js'; // Gebruik de bestaande projectlocatie.
+            script.onload = function () { // Controleer of de module werkelijk is geregistreerd.
+                if (window.CloudinaryModule) resolve(window.CloudinaryModule); // Module klaar.
+                else reject(new Error('CloudinaryModule werd niet geregistreerd.')); // Geen bruikbare module.
+            };
+            script.onerror = function () { reject(new Error('cloudinary.js kon niet worden geladen.')); }; // Netwerk-/padfout.
+            document.head.appendChild(script); // Start laden.
+        }).catch(function (error) { portretModulePromise = null; throw error; }); // Herproberen mogelijk.
+        return portretModulePromise; // Retourneer dezelfde in-flight laadactie.
+    }
+
+    function buildPortretCell(p, isNew) { // Bouw een kleine buste, zonder afbeeldingen op te halen.
+        var td = document.createElement('td'); // Tabelcel voor portretactie.
+        td.dataset.portretCell = 'true'; // Markeer deze speciale kolom.
+        if (isNew || !p.ID) { td.textContent = '—'; return td; } // Nieuwe persoon heeft nog geen stabiele ID.
+        var button = document.createElement('button'); // Toegankelijke actieknop.
+        button.type = 'button'; // Voorkom onbedoelde formulier-submit.
+        button.setAttribute('aria-label', 'Portret voor ' + p.ID); // Beschrijf de actie.
+        button.title = 'Grijs: geen foto; groen: foto beschikbaar; rood: laden mislukt'; // Leg kleuren uit.
+        button.style.cssText = 'border:0;background:transparent;cursor:pointer;padding:3px;line-height:0'; // Compacte knop.
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); // Inline buste: geen afbeeldingrequest.
+        svg.setAttribute('viewBox', '0 0 48 48'); // Vaste SVG-coördinaten.
+        svg.setAttribute('width', '38'); // Compacte kolomafmeting.
+        svg.setAttribute('height', '38'); // Compacte kolomafmeting.
+        svg.setAttribute('aria-hidden', 'true'); // Knop heeft al een label.
+        var head = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); // Hoofd van silhouet.
+        head.setAttribute('cx', '24'); head.setAttribute('cy', '15'); head.setAttribute('r', '9'); // Positie en radius.
+        var body = document.createElementNS('http://www.w3.org/2000/svg', 'path'); // Schouders van silhouet.
+        body.setAttribute('d', 'M7 43c0-12 7-17 17-17s17 5 17 17z'); // Bustecontour.
+        svg.appendChild(head); svg.appendChild(body); button.appendChild(svg); td.appendChild(button); // Monteer pictogram.
+        var currentUrl = String(p.PortretURL || '').trim(); // Bewaar alleen een URL als persoonsattribuut.
+        function color(state) { // Zet status zonder foto te downloaden.
+            var palette = { gray: '#9299a1', green: '#238636', red: '#c62828' }; // Vastgestelde statussen.
+            head.setAttribute('fill', palette[state]); body.setAttribute('fill', palette[state]); // Zelfde kleur voor buste.
+            button.dataset.portretStatus = state; // Inspecteerbare visuele status.
+        }
+        color(currentUrl ? 'green' : 'gray'); // URL aanwezig betekent nog niet extern geverifieerd.
+
+        function chooseAndUpload() { // Open lokaal bestandsvenster alleen op verzoek.
+            var input = document.createElement('input'); // Tijdelijk bestandsveld.
+            input.type = 'file'; input.accept = 'image/*'; // Alleen afbeeldingselectie.
+            input.addEventListener('change', async function () { // Upload na selectie.
+                var file = input.files && input.files[0]; // Neem gekozen afbeelding.
+                if (!file) return; // Geannuleerde selectie.
+                button.disabled = true; // Voorkom dubbele uploads.
+                try {
+                    var module = await ensurePortretCloudinary(); // Gebruik gedeelde Cloudinary-implementatie.
+                    var result = await module.uploadImage(file, { treeId: module.getActiveTreeId() }); // Zelfde ownercontrole als events.
+                    if (!result || !result.secure_url) throw new Error('Cloudinary gaf geen foto-URL terug.'); // Verifieer response.
+                    if (!StamboomStorage.update(p.ID, { PortretURL: result.secure_url })) throw new Error('Persoon-ID niet gevonden.'); // Persist per bestaande ID.
+                    dataset = StamboomStorage.get(); // Ververs dataset voor latere opslaan-acties.
+                    p.PortretURL = result.secure_url; currentUrl = result.secure_url; // Ververs zichtbare status.
+                    color('green'); // Foto is na succesvolle upload gekoppeld.
+                    window.alert('Portret opgeslagen voor ' + p.ID + '.'); // Bevestig koppeling.
+                } catch (error) { window.alert('Portret uploaden mislukt: ' + error.message); } // Geen onterechte rode status: upload is iets anders dan laden.
+                finally { button.disabled = false; } // Herstel bediening.
+            });
+            input.click(); // Open bestandsselectie vanuit gebruikersactie.
+        }
+
+        function openPortret() { // Laad de foto pas na klik op groene/rode buste.
+            var overlay = document.createElement('div'); // Tijdelijke fotoviewer.
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px'; // Dialoogoverlay.
+            var panel = document.createElement('div'); // Viewer-inhoud.
+            panel.style.cssText = 'background:white;color:#222;padding:16px;border-radius:8px;max-width:min(94vw,640px);max-height:90vh;overflow:auto;text-align:center'; // Responsive paneel.
+            panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Portret ' + p.ID); // Toegankelijk dialoglabel.
+            var status = document.createElement('p'); status.textContent = 'Foto laden…'; // Terugkoppeling tijdens laden.
+            var img = document.createElement('img'); // Maak pas nu een foto-element.
+            img.alt = 'Portret van ' + p.ID; // Alternatieve tekst.
+            img.style.cssText = 'display:none;max-width:100%;max-height:65vh;object-fit:contain'; // Geen origineel buiten scherm.
+            img.onload = function () { status.textContent = ''; img.style.display = 'block'; color('green'); }; // Foto bereikbaar.
+            img.onerror = function () { status.textContent = 'Foto niet bereikbaar.'; color('red'); }; // Rood alleen na werkelijk mislukte load.
+            var actions = document.createElement('div'); actions.style.cssText = 'display:flex;gap:10px;justify-content:center;margin-top:12px'; // Knoppenstrook.
+            var replace = document.createElement('button'); replace.type = 'button'; replace.textContent = 'Vervangen'; // Uploadacties.
+            replace.onclick = function () { overlay.remove(); chooseAndUpload(); }; // Hergebruik uploadfunctie.
+            var close = document.createElement('button'); close.type = 'button'; close.textContent = 'Sluiten'; // Sluitknop.
+            close.onclick = function () { overlay.remove(); }; // Maak viewer volledig vrij.
+            overlay.onclick = function (event) { if (event.target === overlay) overlay.remove(); }; // Sluit via achtergrond.
+            actions.appendChild(replace); actions.appendChild(close); // Monteer knoppen.
+            panel.appendChild(status); panel.appendChild(img); panel.appendChild(actions); overlay.appendChild(panel); // Monteer viewer.
+            document.body.appendChild(overlay); // Maak zichtbaar voordat image wordt geladen.
+            img.src = currentUrl; // Enige fetch van gekoppelde portretfoto: pas na klik.
+        }
+
+        button.addEventListener('click', function () { // Kies actie passend bij huidige status.
+            if (currentUrl) openPortret(); else chooseAndUpload(); // Grijs: selecteer bestand; groen/rood: viewer.
+        });
+        return td; // Voltooide tabelcel.
     }
 
     /* ======================= MULTI-ID WIDGET BOUWEN ======================= */
@@ -350,6 +449,9 @@
                     btn.addEventListener('click', makeDeleteHandler(tr, function () { return safe(p.ID); }));
                 }
                 td.appendChild(btn);
+
+            } else if (col.key === 'Portret') {
+                td = buildPortretCell(p, isNew); // Toon statusbuste zonder Cloudinary-foto's op te halen.
 
             } else if (col.key === 'Relatie') {
                 td = document.createElement('td');
