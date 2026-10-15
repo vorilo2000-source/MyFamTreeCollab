@@ -1,4 +1,4 @@
-<!-- ======================= stamboom/storage.html v2.9.0 =======================
+﻿<!-- ======================= stamboom/storage.html v2.10.0 =======================
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
 
      Wijziging v2.9.0 (sessie 26):
@@ -63,6 +63,10 @@
         .storage-info { font-size: 0.88rem; color: #666; }
         .btn-reset { padding: 8px 16px; background: #d9534f; color: #fff; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
         .btn-reset:hover { background: #c9302c; }
+        /* ======================= PORTRETSTATUS ======================= */
+        .portret-indicator { border:0; background:transparent; padding:2px; line-height:0; cursor:pointer; } /* Alleen bekijken; nooit aanpassen. */
+        .portret-indicator svg { width:30px; height:30px; display:block; } /* Kleine vaste buste zonder afbeeldingsverzoek. */
+        .portret-indicator:focus-visible { outline:2px solid #2563eb; border-radius:4px; } /* Toegankelijke focusstatus. */
         .storage-tabel-wrapper { overflow-x: auto; margin-top: 10px; }
         table { border-collapse: collapse; width: 100%; font-size: 0.9rem; white-space: nowrap; }
         th, td { border: 1px solid #ddd; padding: 7px 10px; text-align: left; }
@@ -310,7 +314,7 @@ i18nModule.init()
         });
 
     // Laad Navbar en activeer i18n
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
         .then(function (r) { return r.text(); })
         .then(function (html) {
             i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
@@ -377,6 +381,51 @@ i18nModule.init()
         }
     }
 
+    // ======================= PORTRETINDICATOR (ALLEEN-LEZEN) =======================
+    function maakPortretIndicator(persoon) { // Maak buste op basis van PortretURL zonder een foto te laden.
+        var knop = document.createElement('button'); // Knop opent alleen fotoviewer.
+        knop.type = 'button'; // Voorkom formulier-submit.
+        knop.className = 'portret-indicator'; // Bestaande tabel blijft read-only.
+        var url = typeof persoon.PortretURL === 'string' ? persoon.PortretURL.trim() : ''; // Lees gekoppelde URL.
+        var status = url ? 'green' : 'gray'; // Groen bij link, grijs zonder link.
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); // Maak lokale SVG-buste.
+        svg.setAttribute('viewBox', '0 0 48 48'); // Vaste schaal van de buste.
+        svg.setAttribute('aria-hidden', 'true'); // Toegankelijke tekst komt op de knop.
+        var hoofd = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); // Bustehoofd.
+        hoofd.setAttribute('cx', '24'); hoofd.setAttribute('cy', '15'); hoofd.setAttribute('r', '9'); // Vormgeving hoofd.
+        var lichaam = document.createElementNS('http://www.w3.org/2000/svg', 'path'); // Schouderpartij.
+        lichaam.setAttribute('d', 'M7 43c0-12 7-17 17-17s17 5 17 17z'); // Vormgeving buste.
+        svg.appendChild(hoofd); svg.appendChild(lichaam); knop.appendChild(svg); // Alleen SVG, geen fotorequest.
+        function kleur(nieuw) { // Pas de kleur uitsluitend aan op basis van de waargenomen status.
+            var tint = {gray:'#9299a1',green:'#238636',red:'#c62828'}[nieuw]; // Vaste kleurcodering.
+            hoofd.setAttribute('fill', tint); lichaam.setAttribute('fill', tint); // Beide onderdelen dezelfde kleur.
+            knop.title = nieuw === 'gray' ? 'Geen portret gekoppeld (bewerken in Manage)' : (nieuw === 'green' ? 'Portret bekijken' : 'Portret niet bereikbaar'); // Tooltip.
+            knop.setAttribute('aria-label', knop.title + ' voor ' + persoon.ID); // Toegankelijk knopschrift.
+        }
+        kleur(status); // Initiële status afleiden uit het record.
+        if (!url) { knop.disabled = true; knop.style.cursor = 'default'; return knop; } // Zonder link geen viewer en geen wijziging.
+        knop.addEventListener('click', function () { // Externe foto pas downloaden na deze gebruikersklik.
+            var overlay = document.createElement('div'); // Tijdelijke alleen-lezen overlay.
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px'; // Achtergrond.
+            var paneel = document.createElement('div'); // Viewercontainer.
+            paneel.setAttribute('role', 'dialog'); paneel.setAttribute('aria-label', 'Portret bekijken'); // Beschrijf het venster.
+            paneel.style.cssText = 'background:white;border-radius:8px;padding:16px;max-width:min(94vw,640px);max-height:90vh;overflow:auto;text-align:center'; // Leesbaar op mobiel.
+            var melding = document.createElement('p'); melding.textContent = 'Foto laden…'; // Statusmelding.
+            var foto = document.createElement('img'); // Foto-element pas bij klik aanmaken.
+            foto.alt = 'Portret van ' + persoon.ID; // Alternatieve beschrijving.
+            foto.style.cssText = 'display:none;max-width:100%;max-height:70vh;object-fit:contain'; // Schaal zonder vervorming.
+            foto.onload = function () { melding.textContent = ''; foto.style.display = 'block'; kleur('green'); }; // Gecontroleerd bereikbaar.
+            foto.onerror = function () { melding.textContent = 'Foto niet bereikbaar.'; kleur('red'); }; // Rood alleen na mislukte aanvraag.
+            var sluit = document.createElement('button'); sluit.type = 'button'; sluit.textContent = 'Sluiten'; // Alleen sluitactie.
+            sluit.onclick = function () { overlay.remove(); }; // Verwijder het venster.
+            overlay.onclick = function (e) { if (e.target === overlay) overlay.remove(); }; // Klik naast foto sluit.
+            paneel.appendChild(melding); paneel.appendChild(foto); paneel.appendChild(sluit); overlay.appendChild(paneel); // Viewer opbouwen.
+            document.body.appendChild(overlay); // Viewer eerst in de DOM opnemen.
+            foto.src = url; // ENIGE foto-aanvraag, uitsluitend na klik.
+        });
+        return knop; // Geen upload, verwijdering of URL-aanpassing mogelijk.
+    }
+
     function renderTable() {
         var data = StamboomStorage.get();                            // Haal alle records op
         container.innerHTML = '';
@@ -401,7 +450,7 @@ i18nModule.init()
         var headerRow = document.createElement('tr');
         columns.forEach(function (col) {
             var th = document.createElement('th');
-            th.textContent = col;
+            th.textContent = col === 'PortretURL' ? 'Portret' : col; // Toegankelijke kolomkop, geen ruwe URL.
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
@@ -418,6 +467,7 @@ i18nModule.init()
                 filters[col] = this.value.toLowerCase();
                 applyFilters();
             });
+            if (col === 'PortretURL') { input.placeholder = 'Filter op URL'; } // Filter werkt op de URL-waarde; geen bewerking.
             th.appendChild(input);
             filterRow.appendChild(th);
         });
@@ -442,7 +492,8 @@ i18nModule.init()
                 var rij = document.createElement('tr');
                 columns.forEach(function (col) {
                     var td = document.createElement('td');
-                    td.textContent = p[col] || '';
+                    if (col === 'PortretURL') { td.appendChild(maakPortretIndicator(p)); } // Toon statusbuste i.p.v. de URL.
+                    else { td.textContent = p[col] || ''; } // Overige gegevens blijven read-only.
                     rij.appendChild(td);
                 });
                 fragment.appendChild(rij);
@@ -1128,3 +1179,4 @@ i18nModule.init()
 
 </body>
 </html>
+
