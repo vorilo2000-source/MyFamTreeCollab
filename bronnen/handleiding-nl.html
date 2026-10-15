@@ -1,9 +1,9 @@
-﻿<!-- ======================= bronnen/handleiding-nl.html v2.5.0 =======================
+<!-- ======================= bronnen/handleiding-nl.html v2.6.0 =======================
      Nederlandstalige gebruikershandleiding voor MyFamTreeCollab
      Hernoemd van handleiding.html naar handleiding-nl.html (sessie 27)
      Zie handleiding-en.html en handleiding-es.html voor andere taalversies
 
-     Wijzigingen v2.5.0:
+     Wijzigingen v2.6.0:
      - Import bijgewerkt: stamboom CSV/TXT, stamboom JSON en Event JSON
      - Export bijgewerkt: stamboom CSV/JSON, Event JSON en vaste bestandsnamen
      - Nieuwe Events-sectie toegevoegd, inclusief lokale opslag, cloud events en gedeelde events
@@ -100,7 +100,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Handleiding <span class="versie-badge">v2.5.0</span></h1>
+            <h1>Handleiding <span class="versie-badge">v2.7.0</span></h1>
             <p>Welkom bij de handleiding van MyFamTreeCollab. Hier vind je stap voor stap uitleg over alle functies van de applicatie, van je eerste persoon aanmaken tot je stamboom exporteren en samenwerken met anderen.</p>
         </div>
 
@@ -118,6 +118,7 @@
                 <li><a href="#mijn-account">Mijn Account</a></li>
                 <li><a href="#versiegeschiedenis">Versiegeschiedenis</a></li>
                 <li><a href="#cloud">Cloud stambomen</a></li>
+                <li><a href="#cloudinary">Cloudinary</a></li>
                 <li><a href="#events">Events</a></li>
                 <li><a href="#importeren">Importeren</a></li>
                 <li><a href="#exporteren">Exporteren</a></li>
@@ -226,7 +227,17 @@
                 <li>Klik op <strong>"Opslaan"</strong> om de wijzigingen te bewaren.</li>
             </ul>
               <div class="tip"><strong>Opslag:</strong> De waarden worden intern opgeslagen als <code>P-001|P-003</code> — de widget regelt dit automatisch.</div>
-             <a href="#" class="terug-top">↑ Terug naar boven</a>
+                         <!-- ======================= PORTRETFOTO'S ======================= -->
+            <h3>Portretfoto's bij personen</h3>
+            <p>In de kolom <strong>Portret</strong> van de Beheer-pagina hoort een foto bij het bestaande persoons-ID, niet bij een event. Klik op de buste om een portret toe te voegen of te bekijken.</p>
+            <ul>
+                <li><strong>Grijze buste:</strong> er is nog geen portret gekoppeld; klik om een foto te kiezen.</li>
+                <li><strong>Groene buste:</strong> er is een portret gekoppeld; klik om de foto op te halen en te bekijken of te vervangen.</li>
+                <li><strong>Rode buste:</strong> de gekoppelde foto kon bij het openen niet worden geladen.</li>
+            </ul>
+            <p>Uploaden gebruikt de bestaande Cloudinary-koppeling van de owner. De foto-URL wordt als aanvullend persoonsgegeven (<code>PortretURL</code>) bij het bestaande ID opgeslagen. Foto's worden niet vooraf geladen: pas na een klik op een groene buste wordt de afbeelding opgehaald.</p>
+            <div class="info-noot"><strong>Teststatus:</strong> de portretuitbreiding is voorbereid, maar de werking in de lokale en gepubliceerde website is nog niet bevestigd.</div>
+            <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
        
          <div class="sectie" id="kleuren">
@@ -349,6 +360,21 @@
         </div>
 
         
+        <div class="sectie" id="cloudinary">
+            <h2>11A. Cloudinary</h2>
+            <p>Cloudinary wordt gebruikt als externe opslag voor afbeeldingen en documenten die als bron aan een event kunnen worden gekoppeld. De koppeling is een <strong>accountinstelling van de owner</strong> en staat in het gebruikersmenu van de TopBar.</p>
+            <ul>
+                <li><strong>Owner/admin</strong> kan de Cloudinary-koppeling beheren.</li>
+                <li>Er wordt één centrale Cloudinary-configuratie per owner-account gebruikt voor alle eigen stambomen.</li>
+                <li>De configuratie bewaart alleen de <strong>Cloud name</strong> en een <strong>unsigned upload preset</strong>.</li>
+                <li>API keys, API secrets, wachtwoorden en tokens horen niet in deze configuratie.</li>
+                <li>Bij een upload vanuit Event Manager wordt de door Cloudinary teruggegeven directe <code>secure_url</code> als bron-URL gebruikt.</li>
+                <li>De uploadlogica gebruikt de stabiele stamboom-ID om bestanden per stamboom te scheiden.</li>
+                <li>Een editor krijgt niet automatisch de Cloudinary-uploadmogelijkheid van de owner.</li>
+            </ul>
+            <p><strong>Status v2.6.0:</strong> de nieuwe Cloudinary-code en TopBar-koppeling zijn voorbereid. De definitieve live werking moet na publicatie nog worden gecontroleerd.</p>
+        </div>
+
         <div class="sectie" id="events">
             <h2>12. Events</h2>
             <p>Met Events leg je gebeurtenissen vast die bij personen in je stamboom horen. Events worden lokaal apart opgeslagen, maar blijven via het bestaande persoon-ID gekoppeld aan dezelfde stamboom.</p>

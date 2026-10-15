@@ -1,8 +1,8 @@
-﻿<!-- ======================= bronnen/handleiding-es.html v2.5.0 =======================
+<!-- ======================= bronnen/handleiding-es.html v2.6.0 =======================
      Guía de usuario en español para MyFamTreeCollab
      Véase handleiding-nl.html (neerlandés) y handleiding-en.html (inglés) para otros idiomas
 
-     Wijzigingen v2.5.0:
+     Wijzigingen v2.6.0:
      - Import bijgewerkt: stamboom CSV/TXT, stamboom JSON en Event JSON
      - Export bijgewerkt: stamboom CSV/JSON, Event JSON en vaste bestandsnamen
      - Nieuwe Events-sectie toegevoegd, inclusief lokale opslag, cloud events en gedeelde events
@@ -94,7 +94,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Guía de usuario <span class="versie-badge">v2.5.0</span></h1>
+            <h1>Guía de usuario <span class="versie-badge">v2.7.0</span></h1>
             <p>Bienvenido a la guía de usuario de MyFamTreeCollab. Aquí encontrarás instrucciones paso a paso para todas las funciones de la aplicación, desde crear tu primera persona hasta exportar tu árbol genealógico y colaborar con otros.</p>
         </div>
 
@@ -112,6 +112,7 @@
                 <li><a href="#mijn-account">Mi cuenta</a></li>
                 <li><a href="#versiegeschiedenis">Historial de versiones</a></li>
                 <li><a href="#cloud">Árboles genealógicos en la nube</a></li>
+                <li><a href="#cloudinary">Cloudinary</a></li>
                 <li><a href="#events">Eventos</a></li>
                 <li><a href="#importeren">Importar</a></li>
                 <li><a href="#exporteren">Exportar</a></li>
@@ -220,7 +221,17 @@
                 <li>Haz clic en <strong>"Guardar"</strong> para guardar los cambios.</li>
             </ul>
             <div class="tip"><strong>Almacenamiento:</strong> Los valores se guardan internamente como <code>P-001|P-003</code> — el widget lo gestiona automáticamente.</div>
-               <a href="#" class="terug-top">↑ Volver arriba</a>
+                           <!-- ======================= RETRATOS DE PERSONAS ======================= -->
+            <h3>Fotografías de retrato de personas</h3>
+            <p>La columna <strong>Retrato</strong> de la página Gestionar vincula una foto al ID de persona existente, no a un evento. Haz clic en el icono de busto para añadir o ver un retrato.</p>
+            <ul>
+                <li><strong>Busto gris:</strong> todavía no hay retrato vinculado; haz clic para seleccionar una foto.</li>
+                <li><strong>Busto verde:</strong> hay un retrato vinculado; haz clic para cargarlo, verlo o sustituirlo.</li>
+                <li><strong>Busto rojo:</strong> no se pudo cargar la foto vinculada al intentar abrirla.</li>
+            </ul>
+            <p>Las subidas reutilizan la conexión existente de Cloudinary del propietario. La URL se guarda como propiedad adicional de la persona (<code>PortretURL</code>), asociada a su ID existente. No se precargan las fotos: la imagen se solicita solo al hacer clic en un busto verde.</p>
+            <div class="info-noot"><strong>Estado de pruebas:</strong> la ampliación de retratos está preparada, pero aún no se ha confirmado su funcionamiento en el sitio local o publicado.</div>
+            <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
          <div class="sectie" id="kleuren">
@@ -342,6 +353,21 @@
         </div>
 
         
+        <div class="sectie" id="cloudinary">
+            <h2>11A. Cloudinary</h2>
+            <p>Cloudinary se utiliza como almacenamiento externo para imágenes y documentos que pueden vincularse a un evento como fuente. La conexión es una <strong>configuración de la cuenta del owner</strong> y está disponible en el menú de usuario de la TopBar.</p>
+            <ul>
+                <li><strong>Owner/admin</strong> puede gestionar la conexión de Cloudinary.</li>
+                <li>Se utiliza una única configuración central de Cloudinary por cuenta owner para todos los árboles que posee.</li>
+                <li>Solo se guardan el <strong>Cloud name</strong> y un <strong>unsigned upload preset</strong>.</li>
+                <li>No deben guardarse API keys, API secrets, contraseñas ni tokens en esta configuración.</li>
+                <li>Al subir desde Event Manager, la URL directa <code>secure_url</code> devuelta por Cloudinary se guarda como URL de la fuente.</li>
+                <li>La lógica de subida utiliza el ID estable del árbol para separar los archivos por árbol.</li>
+                <li>Un editor no recibe automáticamente la capacidad de subida a Cloudinary del owner.</li>
+            </ul>
+            <p><strong>Estado v2.6.0:</strong> el nuevo código de Cloudinary y la conexión de TopBar están preparados. El funcionamiento final en vivo todavía debe verificarse después de la publicación.</p>
+        </div>
+
         <div class="sectie" id="events">
             <h2>12. Eventos</h2>
             <p>Los Eventos permiten registrar acontecimientos vinculados a personas del árbol genealógico. Los eventos se guardan localmente separados de los datos de las personas, pero siguen vinculados al mismo árbol mediante el ID de persona existente.</p>

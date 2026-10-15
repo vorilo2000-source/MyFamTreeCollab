@@ -1,8 +1,8 @@
-﻿<!-- ======================= bronnen/handleiding-en.html v2.5.0 =======================
+<!-- ======================= bronnen/handleiding-en.html v2.6.0 =======================
      English user guide for MyFamTreeCollab
      See handleiding-nl.html (Dutch) and handleiding-es.html (Spanish) for other languages
 
-     Wijzigingen v2.5.0:
+     Wijzigingen v2.6.0:
      - Import bijgewerkt: stamboom CSV/TXT, stamboom JSON en Event JSON
      - Export bijgewerkt: stamboom CSV/JSON, Event JSON en vaste bestandsnamen
      - Nieuwe Events-sectie toegevoegd, inclusief lokale opslag, cloud events en gedeelde events
@@ -94,7 +94,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>User Guide <span class="versie-badge">v2.5.0</span></h1>
+            <h1>User Guide <span class="versie-badge">v2.7.0</span></h1>
             <p>Welcome to the MyFamTreeCollab user guide. Here you will find step-by-step instructions for all features of the application, from creating your first person to exporting your family tree and collaborating with others.</p>
         </div>
 
@@ -112,6 +112,7 @@
                 <li><a href="#mijn-account">My Account</a></li>
                 <li><a href="#versiegeschiedenis">Version history</a></li>
                 <li><a href="#cloud">Cloud family trees</a></li>
+                <li><a href="#cloudinary">Cloudinary</a></li>
                 <li><a href="#events">Events</a></li>
                 <li><a href="#importeren">Importing</a></li>
                 <li><a href="#exporteren">Exporting</a></li>
@@ -220,7 +221,17 @@
                 <li>Click <strong>"Save"</strong> to store your changes.</li>
             </ul>
             <div class="tip"><strong>Storage:</strong> Values are stored internally as <code>P-001|P-003</code> — the widget handles this automatically.</div>
-               <a href="#" class="terug-top">↑ Back to top</a>
+                           <!-- ======================= PERSON PORTRAITS ======================= -->
+            <h3>Portrait photos for people</h3>
+            <p>The <strong>Portrait</strong> column on the Manage page links a photo to an existing person ID, not to an event. Click the bust icon to add or view a portrait.</p>
+            <ul>
+                <li><strong>Grey bust:</strong> no portrait is linked; click to select a photo.</li>
+                <li><strong>Green bust:</strong> a portrait is linked; click to load and view or replace it.</li>
+                <li><strong>Red bust:</strong> the linked photo could not be loaded when opened.</li>
+            </ul>
+            <p>Uploads reuse the owner's existing Cloudinary connection. The image URL is stored as an additional person property (<code>PortretURL</code>) against the existing ID. Photos are not preloaded: an image is fetched only when a green bust is clicked.</p>
+            <div class="info-noot"><strong>Testing status:</strong> the portrait extension has been prepared, but its behaviour on the local and published website has not yet been confirmed.</div>
+            <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
          <div class="sectie" id="kleuren">
@@ -342,6 +353,21 @@
         </div>
 
         
+        <div class="sectie" id="cloudinary">
+            <h2>11A. Cloudinary</h2>
+            <p>Cloudinary is used as external storage for images and documents that can be linked to an event as a source. The connection is an <strong>owner account setting</strong> and is available from the TopBar user menu.</p>
+            <ul>
+                <li><strong>Owner/admin</strong> can manage the Cloudinary connection.</li>
+                <li>One central Cloudinary configuration is used per owner account for all family trees owned by that account.</li>
+                <li>Only the <strong>Cloud name</strong> and an <strong>unsigned upload preset</strong> are stored.</li>
+                <li>API keys, API secrets, passwords and tokens must not be stored in this configuration.</li>
+                <li>When uploading from Event Manager, the direct <code>secure_url</code> returned by Cloudinary is stored as the source URL.</li>
+                <li>The upload logic uses the stable family-tree ID to separate files per tree.</li>
+                <li>An editor does not automatically receive the owner's Cloudinary upload capability.</li>
+            </ul>
+            <p><strong>Status v2.6.0:</strong> the new Cloudinary code and TopBar connection have been prepared. Final live behaviour still has to be verified after publication.</p>
+        </div>
+
         <div class="sectie" id="events">
             <h2>12. Events</h2>
             <p>Events let you record important occurrences linked to people in your family tree. Events are stored separately from person data locally, but remain connected to the same family tree through the existing person ID.</p>
