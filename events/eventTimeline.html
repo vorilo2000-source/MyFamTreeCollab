@@ -1,0 +1,73 @@
+<!-- ======================= events/eventTimeline.html v0.1.0 ======================= -->
+<!-- Alleen-lezen eventtijdlijn, hergebruik van StamboomStorage, EventStorage en LiveSearch. -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8"> <!-- Correcte tekencodering. -->
+  <meta name="viewport" content="width=device-width,initial-scale=1"> <!-- Mobiele weergave. -->
+  <title>Event Timeline — MyFamTreeCollab</title> <!-- Titel van de pagina. -->
+  <link rel="stylesheet" href="../css/style.css"> <!-- Bestaande globale stijl. -->
+  <style>
+    /* ======================= PAGINA ======================= */
+    main { padding: 150px 20px 70px; max-width: 1250px; margin: auto; } /* Ruimte voor vaste navigatie. */
+    .eventtl-controls { display:flex; align-items:end; flex-wrap:wrap; gap:12px; margin:20px 0; } /* Flexibele bediening. */
+    .eventtl-controls label { display:flex; flex-direction:column; gap:5px; font-weight:600; } /* Labels boven velden. */
+    #searchPerson { min-width:270px; width:min(410px,80vw); padding:9px; border:1px solid #adb5bd; border-radius:6px; } /* Zoekveld. */
+    .eventtl-toggle { display:flex; border:1px solid #cbd5e1; border-radius:7px; overflow:hidden; } /* Weergaveknoppen. */
+    .eventtl-toggle button { border:0; padding:10px 14px; background:#fff; cursor:pointer; color:#273449; } /* Standaardknop. */
+    .eventtl-toggle button[aria-pressed="true"] { background:#285b95; color:white; } /* Actieve weergave. */
+    .eventtl-count { color:#556575; margin:10px 0 18px; } /* Aantal gebeurtenissen. */
+    .eventtl-empty { padding:28px; color:#4b5563; border:1px dashed #bac4cf; border-radius:8px; } /* Lege status. */
+    /* ======================= GEDEELDE EVENTKAART ======================= */
+    .eventtl-card { background:white; border:1px solid #d7dee6; border-radius:9px; padding:13px; box-shadow:0 2px 5px #0000000a; color:#202b38; } /* Gebeurteniskaart. */
+    .eventtl-card h3 { font-size:1rem; margin:4px 0 8px; overflow-wrap:anywhere; } /* Eventtitel. */
+    .eventtl-card p { margin:5px 0; font-size:.91rem; overflow-wrap:anywhere; } /* Detailtekst. */
+    .eventtl-card .eventtl-date { font-size:.82rem; color:#52657b; font-weight:700; } /* Datum. */
+    .eventtl-card details { margin-top:9px; border-top:1px solid #edf0f3; padding-top:8px; } /* Uitklapbare details. */
+    .eventtl-card summary { cursor:pointer; color:#245c99; font-size:.88rem; } /* Details activeren. */
+    .eventtl-card a { color:#205d9d; overflow-wrap:anywhere; } /* Externe bronlinks. */
+    .eventtl-card ul { padding-left:20px; } /* Bronnenlijst. */
+    /* ======================= HORIZONTALE WEERGAVE ======================= */
+    .eventtl-horizontal { overflow-x:auto; padding:20px 2px 28px; } /* Scrollen zonder te verkleinen. */
+    .eventtl-track { display:flex; align-items:flex-start; position:relative; gap:18px; width:max-content; min-width:100%; padding:28px 15px 5px; } /* Chronologische kaartreeks. */
+    .eventtl-track:before { content:""; position:absolute; top:18px; left:25px; right:25px; height:3px; background:#9fb3c9; } /* Verbindende as. */
+    .eventtl-track-item { width:250px; max-width:250px; position:relative; padding-top:5px; } /* Vaste leesbare kaartbreedte. */
+    .eventtl-track-item:before { content:""; display:block; position:absolute; height:12px; width:12px; background:#3276b5; border:3px solid white; border-radius:100%; box-shadow:0 0 0 1px #3276b5; top:-16px; left:12px; } /* Tijdstip op as. */
+    /* ======================= VERTICALE WEERGAVE ======================= */
+    .eventtl-vertical { max-width:850px; border-left:3px solid #9fb3c9; margin:12px 0 20px 9px; padding-left:23px; } /* Doorlopende verticale as. */
+    .eventtl-vertical-item { position:relative; margin-bottom:18px; } /* Ruimte tussen gebeurtenissen. */
+    .eventtl-vertical-item:before { content:""; position:absolute; left:-34px; top:16px; width:12px; height:12px; border-radius:100%; background:#3276b5; border:3px solid white; box-shadow:0 0 0 1px #3276b5; } /* Tijdstip op as. */
+    .eventtl-undated { margin-top:25px; border-top:1px solid #ddd; padding-top:16px; } /* Aparte sectie zonder datum. */
+    .eventtl-undated-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; } /* Kaarten zonder datum. */
+    @media(max-width:650px){main{padding-top:135px} .eventtl-track-item{width:225px;max-width:225px}} /* Kleine schermen. */
+  </style>
+</head>
+<body>
+  <!-- ======================= BESTAANDE PAGINACOMPONENTEN ======================= -->
+  <div id="topbar-placeholder"></div> <!-- Bestaande topbar. -->
+  <div id="navbar-placeholder"></div> <!-- Bestaande navigatie. -->
+  <main>
+    <h1>Event Timeline</h1> <!-- Paginaoverzicht. -->
+    <p>Gebeurtenissen van een geselecteerde persoon, chronologisch en uitsluitend ter inzage.</p> <!-- Functieomschrijving. -->
+    <!-- ======================= ZOEKEN EN PRESENTATIE ======================= -->
+    <div class="eventtl-controls">
+      <label for="searchPerson">Persoon zoeken <input id="searchPerson" type="search" autocomplete="off" placeholder="ID, naam of geboortedatum"></label> <!-- LiveSearch-ingang. -->
+      <div class="eventtl-toggle" aria-label="Tijdlijnrichting">
+        <button type="button" id="eventtlHorizontal" aria-pressed="true">Horizontaal</button> <!-- Standaard richting. -->
+        <button type="button" id="eventtlVertical" aria-pressed="false">Verticaal</button> <!-- Alternatieve richting. -->
+      </div>
+    </div>
+    <p id="eventtlSelected" aria-live="polite">Selecteer een persoon om gebeurtenissen te bekijken.</p> <!-- Selectiestatus. -->
+    <p id="eventtlCount" class="eventtl-count"></p> <!-- Eventtelling. -->
+    <section id="eventtlOutput" aria-label="Gebeurtenissen"><div class="eventtl-empty">Nog geen persoon geselecteerd.</div></section> <!-- Tijdsas. -->
+  </main>
+  <div id="footer-placeholder"></div> <!-- Bestaande footer. -->
+  <!-- ======================= BESTAANDE MODULES ======================= -->
+  <script src="../js/utils.js"></script> <!-- Vereist door LiveSearch. -->
+  <script src="../js/schema.js"></script> <!-- Canoniek persoonsschema. -->
+  <script src="../js/storage.js"></script> <!-- Bestaande persoonsopslag. -->
+  <script src="../js/eventStorage.js"></script> <!-- Canonieke eventopslag. -->
+  <script src="../js/LiveSearch.js"></script> <!-- Bestaande Manage-zoekfunctie. -->
+  <script src="../js/eventTimeline.js"></script> <!-- Alleen-lezen timelinepresentatie. -->
+</body>
+</html>
