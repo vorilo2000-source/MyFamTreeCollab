@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.0 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.1 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -120,6 +120,7 @@
         if (!events.length) { addText(output, 'div', 'Geen gebeurtenissen gevonden voor deze persoon.', 'eventtl-empty'); return; } // Lege lijst.
         var timeline = document.createElement('div'); // Maak de tijdascontainer.
         timeline.className = orientation === 'horizontal' ? 'eventtl-horizontal' : 'eventtl-vertical'; // Richting bepalen.
+        timeline.dataset.orientation = orientation; // Markeer de richting expliciet voor inspectie en stylesheet.
         var track = orientation === 'horizontal' ? document.createElement('div') : timeline; // Binnenbaan alleen horizontaal.
         if (orientation === 'horizontal') { track.className = 'eventtl-track'; timeline.appendChild(track); } // Voeg horizontale baan toe.
         dated.forEach(function (event) { // Voeg ieder gedateerd event toe.
