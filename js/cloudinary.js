@@ -119,7 +119,7 @@
 
         try {
             var role = await window.ShareModule.getMyRoleForTree(normalizedTreeId);
-            return role === 'owner';
+           return role.rol === 'owner'; // GOED: controleert de eigenschap 'rol' uit ShareModule.
         } catch (error) {
             console.warn('[cloudinary] Stamboomrol kon niet worden bepaald:', error);
             return false;
