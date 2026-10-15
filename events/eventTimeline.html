@@ -1,4 +1,4 @@
-<!-- ======================= events/eventTimeline.html v0.1.0 ======================= -->
+<!-- ======================= events/eventTimeline.html v0.1.1 ======================= -->
 <!-- Alleen-lezen eventtijdlijn, hergebruik van StamboomStorage, EventStorage en LiveSearch. -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -28,18 +28,18 @@
     .eventtl-card a { color:#205d9d; overflow-wrap:anywhere; } /* Externe bronlinks. */
     .eventtl-card ul { padding-left:20px; } /* Bronnenlijst. */
     /* ======================= HORIZONTALE WEERGAVE ======================= */
-    .eventtl-horizontal { overflow-x:auto; padding:20px 2px 28px; } /* Scrollen zonder te verkleinen. */
-    .eventtl-track { display:flex; align-items:flex-start; position:relative; gap:18px; width:max-content; min-width:100%; padding:28px 15px 5px; } /* Chronologische kaartreeks. */
+    .eventtl-horizontal { display:block !important; width:100%; max-width:100%; overflow-x:auto; overflow-y:visible; padding:20px 2px 28px; box-sizing:border-box; } /* Horizontaal scrollgebied ongeacht globale CSS. */
+    .eventtl-horizontal > .eventtl-track { display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; align-items:flex-start; position:relative; gap:18px; width:max-content; min-width:100%; padding:28px 15px 5px; box-sizing:border-box; } /* Gebeurtenissen verplicht NAAST elkaar; nooit onder elkaar. */
     .eventtl-track:before { content:""; position:absolute; top:18px; left:25px; right:25px; height:3px; background:#9fb3c9; } /* Verbindende as. */
-    .eventtl-track-item { width:250px; max-width:250px; position:relative; padding-top:5px; } /* Vaste leesbare kaartbreedte. */
+    .eventtl-horizontal .eventtl-track-item { display:block; flex:0 0 250px !important; width:250px; min-width:250px; max-width:250px; position:relative; padding-top:5px; } /* Elke kaart houdt vaste breedte in horizontale rij. */
     .eventtl-track-item:before { content:""; display:block; position:absolute; height:12px; width:12px; background:#3276b5; border:3px solid white; border-radius:100%; box-shadow:0 0 0 1px #3276b5; top:-16px; left:12px; } /* Tijdstip op as. */
     /* ======================= VERTICALE WEERGAVE ======================= */
-    .eventtl-vertical { max-width:850px; border-left:3px solid #9fb3c9; margin:12px 0 20px 9px; padding-left:23px; } /* Doorlopende verticale as. */
-    .eventtl-vertical-item { position:relative; margin-bottom:18px; } /* Ruimte tussen gebeurtenissen. */
+    .eventtl-vertical { display:flex !important; flex-direction:column !important; align-items:stretch; gap:0; max-width:850px; border-left:3px solid #9fb3c9; margin:12px 0 20px 9px; padding-left:23px; } /* Gebeurtenissen verplicht ONDER elkaar. */
+    .eventtl-vertical-item { display:block; width:100%; position:relative; margin-bottom:18px; } /* Volledige breedte per verticale gebeurtenis. */
     .eventtl-vertical-item:before { content:""; position:absolute; left:-34px; top:16px; width:12px; height:12px; border-radius:100%; background:#3276b5; border:3px solid white; box-shadow:0 0 0 1px #3276b5; } /* Tijdstip op as. */
     .eventtl-undated { margin-top:25px; border-top:1px solid #ddd; padding-top:16px; } /* Aparte sectie zonder datum. */
     .eventtl-undated-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; } /* Kaarten zonder datum. */
-    @media(max-width:650px){main{padding-top:135px} .eventtl-track-item{width:225px;max-width:225px}} /* Kleine schermen. */
+    @media(max-width:650px){main{padding-top:135px} .eventtl-horizontal .eventtl-track-item{flex-basis:225px !important;width:225px;min-width:225px;max-width:225px}} /* Kleine schermen: horizontale rij behouden. */
   </style>
 </head>
 <body>
