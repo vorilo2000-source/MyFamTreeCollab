@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.2 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.3 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -72,43 +72,50 @@
         anchor.textContent = name; // Naam veilig als tekst.
         parent.appendChild(anchor); // Plaats in kaart.
     } // Sluit displaySourceLink af.
-    function addMedia(card, sources) { // Toon beeldbronnen compact en overige bronnen als links.
-        var images = []; // Afbeeldingen met directe URL.
-        var others = []; // Overige bronnen, waaronder documenten.
-        sources.forEach(function (source) { // Beoordeel iedere bestaande source zonder opslag te veranderen.
-            var raw = typeof source === 'string' ? source : source && source.url; // Ondersteun oudere strings.
-            var url = safeExternalURL(raw); // Verbied onveilige protocollen.
-            var name = asText(typeof source === 'string' ? source : source && source.name) || 'Bron openen'; // Toon bronlabel.
-            (url && isImageSource(url) ? images : others).push({ url: url, name: name }); // Sorteer media van documenten.
-        }); // Sluit bronnenverwerking af.
-        if (images.length) { // Alleen afbeeldingen tonen wanneer links aanwezig zijn.
-            var media = document.createElement('div'); // Flexibele thumbnailstrip.
-            media.className = 'eventtl-media'; // Layout verschilt per tijdlijnrichting.
-            images.forEach(function (entry) { // Bouw compacte fotokaart.
-                var link = document.createElement('a'); // Klik toont originele afbeelding.
-                link.href = entry.url; // Veilige directe afbeeldings-URL.
-                link.target = '_blank'; // Voor volledige weergave in apart tabblad.
-                link.rel = 'noopener noreferrer'; // Veilige externe navigatie.
-                link.className = 'eventtl-media-link'; // CSS thumbnailkader.
-                link.title = entry.name; // Benoem het bronbestand.
-                link.setAttribute('aria-label', 'Afbeelding openen: ' + entry.name); // Toegankelijke linknaam.
-                var image = document.createElement('img'); // Miniatuur opbouwen.
+    function addMedia(card, sources) { // Maak een afzonderlijk uitklapbaar fotovak per gebeurtenis.
+        var images = []; // Bewaar uitsluitend geldige afbeeldingsbronnen.
+        sources.forEach(function (source) { // Lees bestaande EventStorage-bronnen zonder mutatie.
+            var raw = typeof source === 'string' ? source : source && source.url; // URL uit bronvorm lezen.
+            var url = safeExternalURL(raw); // Alleen HTTP(S)-bronnen accepteren.
+            var name = asText(typeof source === 'string' ? source : source && source.name) || 'Foto'; // Bestaand bronlabel.
+            if (url && isImageSource(url)) images.push({ url: url, name: name }); // Alleen afbeeldingsbronnen.
+        }); // Bronnen zijn verwerkt.
+        if (!images.length) return; // Geen leeg fotovak weergeven.
+        var panel = document.createElement('details'); // Native uitklapbaar fotovak.
+        panel.className = 'eventtl-photo-panel'; // Eigen CSS zonder de details voor bronnen te beïnvloeden.
+        var summary = document.createElement('summary'); // Klikbare sectiekop.
+        summary.textContent = "Foto's (" + images.length + ')'; // Aantal media vermelden.
+        panel.appendChild(summary); // Sectiekop toevoegen.
+        var media = document.createElement('div'); // Container voor de afbeeldingen.
+        media.className = 'eventtl-media'; // Flexibele iconenstrook.
+        panel.appendChild(media); // Leeg totdat gebruiker uitklapt.
+        panel.addEventListener('toggle', function () { // Laad afbeeldingen pas na expliciet openen.
+            if (!panel.open || panel.dataset.loaded === 'true') return; // Geen herhaalde netwerkrequests.
+            panel.dataset.loaded = 'true'; // Eenmalig vullen.
+            images.forEach(function (entry) { // Afbeeldingen omzetten naar aanklikbare pictogrammen.
+                var link = document.createElement('a'); // Klik opent het origineel.
+                link.href = entry.url; // Gevalideerde afbeeldings-URL.
+                link.target = '_blank'; // Open in aparte browser-tab.
+                link.rel = 'noopener noreferrer'; // Geen toegang tot openingsvenster.
+                link.className = 'eventtl-media-link'; // Compact thumbnailkader.
+                link.title = entry.name; // Toegankelijke naam.
+                link.setAttribute('aria-label', 'Afbeelding openen: ' + entry.name); // Screenreader-label.
+                var image = document.createElement('img'); // Pas nu wordt een afbeeldingselement aangemaakt.
                 image.alt = entry.name; // Alternatieve tekst.
-                image.loading = 'lazy'; // Haal pas afbeeldingen op wanneer zichtbaar.
-                image.decoding = 'async'; // Decodeer afbeeldingen buiten de hoofdthread.
-                image.referrerPolicy = 'no-referrer'; // Deel geen pagina-URL als referer.
-                image.src = entry.url; // Publieke bron: browser laadt thumbnail pas bij zichtbaarheid.
-                image.addEventListener('error', function () { // Fout bij ontbrekend of verboden beeld.
-                    link.classList.add('eventtl-media-error'); // Gebruik neutraal gebroken afbeeldingspictogram.
-                    image.remove(); // Verwijder gebroken img-pictogram van browser.
-                    link.textContent = 'Afbeelding'; // Link naar bron blijft beschikbaar.
-                }); // Sluit foutcallback af.
-                link.appendChild(image); // Plaats miniatuur in link.
-                media.appendChild(link); // Plaats link in thumbnailstrip.
-            }); // Sluit miniaturen af.
-            card.appendChild(media); // Onder kaartinhoud; in verticale stand rechts via CSS.
-        } // Sluit afbeeldingsweergave af.
-        return others; // Niet-afbeeldingsbronnen worden in details weergegeven.
+                image.loading = 'lazy'; // Browser laadt thumbnails indien nodig.
+                image.decoding = 'async'; // Asynchrone decodering.
+                image.referrerPolicy = 'no-referrer'; // Geen pagina-URL doorgeven.
+                image.src = entry.url; // Alleen laden nadat het fotovak is geopend.
+                image.addEventListener('error', function () { // Onbereikbare beelden opvangen.
+                    link.classList.add('eventtl-media-error'); // Visuele foutmarkering.
+                    image.remove(); // Verwijder kapotte thumbnail.
+                    link.textContent = 'Foto'; // Bronlink blijft klikbaar.
+                }); // Einde foutmelding.
+                link.appendChild(image); // Afbeelding opnemen.
+                media.appendChild(link); // Pictogram aan fotovak toevoegen.
+            }); // Einde afbeeldingenlus.
+        }); // Einde open-event.
+        card.appendChild(panel); // Het fotovak staat onder de inhoud of rechts in verticale modus.
     } // Sluit addMedia af.
 
     /* ======================= GEBEURTENISDETAILS ======================= */
@@ -169,6 +176,8 @@
     function render() { // Teken vanuit de actuele eventopslag en selectie.
         output.replaceChildren(); // Ruim vorige weergave op.
         count.textContent = ''; // Reset de telling.
+        var oldUndated = document.querySelector('.eventtl-undated-inline'); // Verwijder vorige samenvattingslijst.
+        if (oldUndated) oldUndated.remove(); // Vermijd dubbele items bij nieuw zoeken of omschakelen.
         if (!selectedId) { addText(output, 'div', 'Selecteer een persoon om gebeurtenissen te bekijken.', 'eventtl-empty'); return; } // Wacht op selectie.
         if (!window.EventStorage || typeof window.EventStorage.get !== 'function') { addText(output, 'div', 'EventStorage is niet beschikbaar. Controleer js/eventStorage.js.', 'eventtl-empty'); return; } // Meld ontbrekende module.
         var events = window.EventStorage.get().filter(function (event) { return event && matchesPerson(event, selectedId); }); // Lees alleen relevante events.
@@ -189,16 +198,18 @@
             track.appendChild(item); // Voeg event aan tijdas toe.
         }); // Sluit eventlus af.
         if (dated.length) output.appendChild(timeline); // Toon tijdas alleen bij gedateerde events.
-        if (undated.length) { // Groepeer onbekende datums apart.
-            var section = document.createElement('section'); // Sectie voor ongedateerde gebeurtenissen.
-            section.className = 'eventtl-undated'; // Sectie CSS.
-            addText(section, 'h2', 'Gebeurtenissen zonder datum'); // Duidelijke groepering.
-            var grid = document.createElement('div'); // Responsive raster.
-            grid.className = 'eventtl-undated-grid'; // Rasterstijl.
-            undated.forEach(function (event) { grid.appendChild(buildCard(event)); }); // Voeg ongedateerde kaarten toe.
-            section.appendChild(grid); // Raster in sectie.
-            output.appendChild(section); // Sectie onder de tijdas.
-        } // Sluit sectie zonder datum af.
+        if (undated.length) { // Vermeld ongedateerde events als compacte horizontale lijst.
+            var line = document.createElement('div'); // Een regel met een label en kleine items.
+            line.className = 'eventtl-undated-inline'; // Lijst staat bij de eventtelling, boven de tijdas.
+            addText(line, 'strong', undated.length + ' gebeurtenis' + (undated.length === 1 ? '' : 'sen') + ' zonder datum:'); // Aantal zonder datum.
+            var list = document.createElement('ul'); // Toegankelijke horizontale opsomming.
+            list.className = 'eventtl-undated-list'; // Styling als compacte labels.
+            undated.forEach(function (event) { // Nooit ongedateerde items op een geschaalde tijdas plaatsen.
+                addText(list, 'li', event.title || event.type || 'Gebeurtenis'); // Alleen titel, geen onnodige kaart.
+            }); // Einde ongedateerde events.
+            line.appendChild(list); // Lijst in de horizontale regel.
+            count.insertAdjacentElement('afterend', line); // Plaats direct na het resultaataantal.
+        } // Einde regel zonder datum.
     } // Sluit render af.
 
     /* ======================= SELECTIE EN BESTURING ======================= */
