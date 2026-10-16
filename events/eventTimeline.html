@@ -1,4 +1,4 @@
-<!-- ======================= events/eventTimeline.html v0.1.4 ======================= -->
+<!-- ======================= events/eventTimeline.html v0.1.5 ======================= -->
 <!-- Alleen-lezen eventtijdlijn, hergebruik van StamboomStorage, EventStorage en LiveSearch. -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -6,6 +6,12 @@
   <meta charset="UTF-8"> <!-- Correcte tekencodering. -->
   <meta name="viewport" content="width=device-width,initial-scale=1"> <!-- Mobiele weergave. -->
   <title>Event Timeline — MyFamTreeCollab</title> <!-- Titel van de pagina. -->
+  <!-- ======================= BESTAANDE PAGINALAYOUT / I18N ======================= -->
+  <link rel="icon" type="image/x-icon" href="/MyFamTreeCollab/img/favicon.ico"> <!-- Gedeelde favicon. -->
+  <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script> <!-- Vertaalbibliotheek. -->
+  <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2/i18nextHttpBackend.min.js"></script> <!-- Vertalingen laden. -->
+  <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script> <!-- Browsertaal herkennen. -->
+  <script src="/MyFamTreeCollab/js/i18n.js"></script> <!-- Projectmodule voor vertaling van gedeelde componenten. -->
   <link rel="stylesheet" href="../css/style.css"> <!-- Bestaande globale stijl. -->
   <style>
     /* ======================= PAGINA ======================= */
@@ -78,11 +84,61 @@
   </main>
   <div id="footer-placeholder"></div> <!-- Bestaande footer. -->
   <!-- ======================= BESTAANDE MODULES ======================= -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- Auth gebruikt de bestaande Supabase-bibliotheek. -->
   <script src="../js/utils.js"></script> <!-- Vereist door LiveSearch. -->
   <script src="../js/schema.js"></script> <!-- Canoniek persoonsschema. -->
   <script src="../js/storage.js"></script> <!-- Bestaande persoonsopslag. -->
   <script src="../js/eventStorage.js"></script> <!-- Canonieke eventopslag. -->
   <script src="../js/LiveSearch.js"></script> <!-- Bestaande Manage-zoekfunctie. -->
+  <script src="../js/auth.js"></script> <!-- Accountgegevens voor de TopBar. -->
   <script src="../js/eventTimeline.js"></script> <!-- Alleen-lezen timelinepresentatie. -->
+  <script>
+    /* ======================= GEDEELDE TOPBAR / NAVBAR / FOOTER v0.1.5 ======================= */
+    (function () { // Houd de layout-initialisatie buiten de globale namespace.
+      'use strict'; // Strikte modus tegen onbedoelde globale variabelen.
+
+      function loadComponent(url, elementId) { // Laad één bestaand layoutfragment.
+        return fetch(url, { cache: 'no-store' }) // Vermijd verouderde navigatie uit de browsercache.
+          .then(function (response) { // Controleer op HTTP-fouten.
+            if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + url); // Toon de oorzaak in de console.
+            return response.text(); // Lees de HTML van het component.
+          })
+          .then(function (html) { // Plaats de ontvangen HTML in de juiste placeholder.
+            var target = document.getElementById(elementId); // Zoek de bestaande placeholder.
+            if (!target) return; // Stop als de placeholder ontbreekt.
+            if (window.i18nModule && typeof i18nModule.onComponentLoaded === 'function') { // Hergebruik projectvertalingen.
+              i18nModule.onComponentLoaded(html, target); // Render inclusief vertaalattributen.
+            } else { // Veilige terugval als i18n ontbreekt.
+              target.innerHTML = html; // Render dezelfde layout zonder vertaling.
+            }
+          });
+      }
+
+      function loadTopbar() { // Laad eerst de TopBar, dan pas zijn eigen script.
+        return loadComponent('/MyFamTreeCollab/Layout/TopBar.html', 'topbar-placeholder') // Gebruik bestaande TopBar.
+          .then(function () { // Het script mag pas starten als het HTML-fragment aanwezig is.
+            var script = document.createElement('script'); // Maak script-element aan.
+            script.src = '../js/topbar.js'; // Bestaande TopBar-functionaliteit voor login/account.
+            document.body.appendChild(script); // Activeer het bestaande script.
+          });
+      }
+
+      function initLayout() { // Initialiseer drie componenten onafhankelijk van de tijdlijngegevens.
+        loadTopbar().catch(function (error) { console.error('[EventTimeline] TopBar:', error); }); // Fouten apart melden.
+        loadComponent('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.2', 'navbar-placeholder') // Nieuwste Event Timeline-menulink.
+          .catch(function (error) { console.error('[EventTimeline] Navbar:', error); }); // Navbarfouten apart melden.
+        loadComponent('/MyFamTreeCollab/Layout/Footer.html', 'footer-placeholder') // Gedeelde footer.
+          .catch(function (error) { console.error('[EventTimeline] Footer:', error); }); // Footerfouten apart melden.
+      }
+
+      if (window.i18nModule && typeof i18nModule.init === 'function') { // Controleer of de projectvertaling beschikbaar is.
+        Promise.resolve(i18nModule.init()) // Start bestaande vertaling vóór de componenten.
+          .catch(function (error) { console.warn('[EventTimeline] i18n niet geladen:', error); }) // Bij fout renderen we alsnog de layout.
+          .then(initLayout); // Render drie gedeelde componenten.
+      } else { // Layout moet ook zichtbaar zijn wanneer de vertaalmodule niet laadt.
+        initLayout(); // Render componenten met hun oorspronkelijke HTML-teksten.
+      }
+    })(); // Einde geïsoleerde layout-initialisatie.
+  </script>
 </body>
 </html>
