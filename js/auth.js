@@ -1,6 +1,6 @@
 // =============================================================================
 // auth.js — Supabase Authentication Module
-// MyFamTreeCollab v2.5.3
+// MyFamTreeCollab v2.5.5
 // -----------------------------------------------------------------------------
 // Wijziging v2.5.2 (sessie 26):
 // - _errMsg() foutmeldingen via i18nModule.t('auth:error.*')
@@ -240,6 +240,23 @@
     return _client;
   }
 
+  // ======================= ACCOUNT VERWIJDEREN v2.5.4 =======================
+  // Edge Function controleert eigenaarschap; browser ontvangt nooit een service-role sleutel.
+  async function _accountDeletionRequest(action, password = null, confirmation = null) {
+    const session = await getSession(); // Actuele ingelogde sessie ophalen.
+    if (!session || !session.access_token) throw new Error('Je bent niet ingelogd.'); // Guard.
+    const response = await fetch(SUPABASE_URL + '/functions/v1/delete-my-account', {
+      method: 'POST', // Geen mutatie via GET.
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON }, // Verifieerbare sessie.
+      body: JSON.stringify(action === 'delete' ? { action, password, confirmation } : { action }) // Wachtwoord uitsluitend bij definitieve verwijderactie.
+    });
+    const result = await response.json().catch(() => ({})); // Serverantwoord veilig uitlezen.
+    if (!response.ok) return { success: false, allowed: false, message: result.message || 'Serverfout (' + response.status + ').' }; // Melding zonder succes.
+    return result; // Bevat allowed/success indien ondersteund.
+  }
+  async function checkAccountDeletion() { return _accountDeletionRequest('check'); } // Alleen eigendom controleren.
+  async function deleteMyAccount(password, confirmation) { return _accountDeletionRequest('delete', password, confirmation); } // Server controleert opnieuw en verwijdert.
+
   // ---------------------------------------------------------------------------
   // Publieke API
   // ---------------------------------------------------------------------------
@@ -256,6 +273,8 @@
     updateUsername,  // (username)                   → { error }
     onAuthChange,    // (callback)                   → void
     setAccountPersonLink, // (treeId, personId) → {error}
+    checkAccountDeletion, // Controleert eigenaarschap via server.
+    deleteMyAccount, // Definitieve verwijdering via server.
     getClient        // ()                           → supabase client
   };
 
