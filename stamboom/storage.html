@@ -1,5 +1,10 @@
-<!-- ======================= stamboom/storage.html v2.10.1 =======================
+<!-- ======================= stamboom/storage.html v2.10.2 =======================
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
+
+     Wijziging v2.10.2:
+     - ID = breedte voor 8 tekens; overige vaste kolommen volgen hun koptekst.
+     - Doopnaam/Achternaam flexibel; Opmerkingen krijgt dubbele flexruimte.
+     - Tabelbreedte volgt venster; bij te weinig ruimte horizontaal scrollen.
 
      Wijziging v2.10.1:
      - Portret in alleen-lezen tabel direct na ID (alleen presentatie, geen schemawijziging).
@@ -76,15 +81,17 @@
         th, td { border: 1px solid #ddd; padding: 7px 10px; text-align: left; }
         th { background: #f4f4f4; font-weight: bold; color: #333; }
         th input { width: 95%; padding: 3px 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 3px; }
-        /* ======================= TABELKOLOMMEN v2.10.1 ======================= */
-        /* Beperk uitsluitend de zichtbare breedte van de vier gevraagde velden. */
-        #storageContainer .storage-smalle-kolom { width: 125px; min-width: 125px; max-width: 125px; box-sizing: border-box; }
-        /* Lange waarden blijven beschikbaar via de tooltip; niets wordt in opslag ingekort. */
-        #storageContainer td.storage-smalle-kolom { overflow: hidden; text-overflow: ellipsis; }
-        /* Filtervelden passen binnen dezelfde kolombreedte zonder deze uit te rekken. */
-        #storageContainer th.storage-smalle-kolom input { width: 100%; min-width: 0; box-sizing: border-box; }
-        /* Portret is een kleine statuskolom naast het ID. */
-        #storageContainer .storage-portret-kolom { width: 64px; min-width: 64px; max-width: 64px; text-align: center; }
+        /* ======================= TABELKOLOMMEN v2.10.2 ======================= */
+        /* Alleen de persoonsgegevens-tabel gebruikt berekende kolombreedtes. */
+        #storageContainer .storage-tabel-wrapper { width: 100%; max-width: 100%; overflow-x: auto; }
+        #storageContainer .storage-tabel-wrapper > table { table-layout: fixed; width: 100%; }
+        /* Waarden veranderen niet; te lange teksten worden alleen visueel afgekort. */
+        #storageContainer .storage-tabel-wrapper td { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        #storageContainer .storage-tabel-wrapper th { white-space: nowrap; overflow: hidden; text-overflow: clip; }
+        /* Filtervelden hebben geen invloed op de gemeten koptekstbreedte. */
+        #storageContainer .storage-tabel-wrapper th input { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+        /* Een portret blijft uitsluitend een statuspictogram, geen bewerkbaar veld. */
+        #storageContainer td.storage-portret-kolom, #storageContainer th.storage-portret-kolom { text-align: center; }
 
         .empty { font-style: italic; color: #888; padding: 20px 0; }
         .cloud-intro { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 20px 0; }
@@ -388,9 +395,49 @@ i18nModule.init()
         columns.splice(portretIndex, 1); // Haal PortretURL uit de bestaande presentatievolgorde.
         columns.splice(columns.indexOf('ID') + 1, 0, 'PortretURL'); // Plaats Portret direct na ID.
     }
-    function geefKolomKlasse(el, col) { // Herbruikbare breedtes voor kop, filter en gegevenscel.
-        if (['Doopnaam', 'Geboorteplaats', 'Overlijdensplaats', 'Opmerkingen'].indexOf(col) !== -1) { el.classList.add('storage-smalle-kolom'); } // Alle vier gelijk smal.
-        if (col === 'PortretURL') { el.classList.add('storage-portret-kolom'); } // Compacte portretkolom.
+    function geefKolomKlasse(el, col) { // Alleen presentatieregels; geen schema- of opslagwijzigingen.
+        if (col === 'PortretURL') el.classList.add('storage-portret-kolom'); // Buste gecentreerd.
+    }
+    var kolomResizeObserver = null; // Bewaak maximaal één resize-observer voor de huidige tabel.
+
+    // ======================= RESPONSIEVE KOLOMBREEDTES v2.10.2 =======================
+    function activeerKolombreedtes(wrapper, table, colgroup) { // Bereken de breedtes vanuit de zichtbare kopteksten.
+        var canvas = document.createElement('canvas'); // Alleen lokaal meten; niet toevoegen aan DOM.
+        var ctx = canvas.getContext('2d'); // Browsertekstmeting respecteert het huidige lettertype.
+        var eersteKop = table.querySelector('thead tr:first-child th'); // Vraag het werkelijk gebruikte koplettertype op.
+        var css = eersteKop ? window.getComputedStyle(eersteKop) : null; // Val terug op de tabelbreedte indien afwezig.
+        if (ctx && css) ctx.font = css.fontWeight + ' ' + css.fontSize + ' ' + css.fontFamily; // Identieke letterbreedte als kop.
+        var meet = function (tekst) { return ctx ? ctx.measureText(tekst).width : tekst.length * 9; }; // Meet de tekstbreedte.
+        var horizontaleRuimte = css ? parseFloat(css.paddingLeft) + parseFloat(css.paddingRight) + 3 : 23; // Inclusief padding en randen.
+        var minima = columns.map(function (col) { // Minimaal de volledige header tonen.
+            var kop = col === 'PortretURL' ? 'Portret' : col; // Getoonde koptekst, niet de ruwe opslagnaam.
+            if (col === 'ID') return Math.ceil(meet('MMMMMMMM') + horizontaleRuimte); // Ruimte voor acht brede ID-tekens.
+            return Math.ceil(meet(kop) + horizontaleRuimte + 4); // Vaste kolommen precies naar koptekst.
+        });
+        var indices = ['Doopnaam', 'Achternaam', 'Opmerkingen'].map(function (naam) { return columns.indexOf(naam); }); // Flexibele kolommen.
+        var verhouding = [1, 1, 2]; // Opmerkingen krijgt 2x de extra ruimte van Doopnaam.
+        var minFlex = indices.map(function (idx, i) { // Bereken minimale flexibel beschikbare ruimte.
+            return idx < 0 ? 0 : Math.max(minima[idx], i === 2 && indices[0] >= 0 ? 2 * minima[indices[0]] : 0);
+        });
+        var vasteSom = minima.reduce(function (som, px, idx) { return indices.includes(idx) ? som : som + px; }, 0); // Alle niet-flexibele kolommen.
+        var totaleMin = vasteSom + minFlex.reduce(function (som, px) { return som + px; }, 0); // Benodigde minimumtabelbreedte.
+        function ververs() { // Wordt uitgevoerd bij initialisatie en veranderde vensterbreedte.
+            var beschikbaar = Math.floor(wrapper.clientWidth); // Werkelijke breedte van het zichtbare vensterdeel.
+            var breedte = Math.max(beschikbaar, totaleMin); // Bij ruimtegebrek horizontaal scrollen, nooit headers afsnijden.
+            var extra = Math.max(0, breedte - totaleMin); // Verdeel uitsluitend de resterende ruimte.
+            var pixelbreedtes = minima.slice(); // Laat vaste kolommen ongemoeid.
+            indices.forEach(function (idx, i) { if (idx >= 0) pixelbreedtes[idx] = minFlex[i] + extra * verhouding[i] / 4; }); // Verhouding 1:1:2.
+            table.style.width = breedte + 'px'; // Dwing een stabiele tabelbreedte af.
+            Array.from(colgroup.children).forEach(function (col, i) { col.style.width = pixelbreedtes[i] + 'px'; }); // Kolomkop, filter en inhoud gelijk.
+        }
+        if (kolomResizeObserver) kolomResizeObserver.disconnect(); // Voorkom observers op oude tabellen.
+        if (window.ResizeObserver) { // Moderne browsers reageren ook op wijzigingen buiten het browservenster.
+            kolomResizeObserver = new ResizeObserver(ververs); // Reageer op containerbreedte.
+            kolomResizeObserver.observe(wrapper); // Alleen de huidige tabel bewaken.
+        } else { // Terugval voor oudere browsers.
+            window.addEventListener('resize', ververs); // Meet opnieuw na vensterwijziging.
+        }
+        ververs(); // Geef direct de juiste breedtes bij openen.
     }
     var actieveBalkData = document.getElementById('actieveStamboomBalkData'); // Actief-balk tab 1
     var actieveNaamData = document.getElementById('actieveNaamTekstData');    // Naam in balk tab 1
@@ -469,6 +516,9 @@ i18nModule.init()
         var wrapper = document.createElement('div');
         wrapper.className = 'storage-tabel-wrapper';
         var table = document.createElement('table');
+        var colgroup = document.createElement('colgroup'); // Eén breedte per kolom, gedeeld door kop, filter en waarden.
+        columns.forEach(function () { colgroup.appendChild(document.createElement('col')); }); // Kolommen volgen de zichtbare volgorde.
+        table.appendChild(colgroup); // Vaste lay-out met responsieve pixelbreedtes.
         var thead = document.createElement('thead');
 
         // Kolomnamen als header
@@ -505,6 +555,7 @@ i18nModule.init()
         table.appendChild(tbody);
         wrapper.appendChild(table);
         container.appendChild(wrapper);
+        activeerKolombreedtes(wrapper, table, colgroup); // Bereken breedtes en reageer op schermwijzigingen.
 
         function applyFilters() {
             tbody.innerHTML = '';
