@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.1 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.2 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -55,55 +55,114 @@
         }); // Sluit participant-check af.
     } // Sluit matchesPerson af.
 
+    /* ======================= MEDIA EN BRONNEN ======================= */
+    function isImageSource(url) { // Herken uitsluitend plausibele directe afbeeldings-URL's.
+        try { // Parse de bron-URL zonder netwerkaanroep.
+            var parsed = new URL(url); // Gebruik genormaliseerde hostname en pathname.
+            var path = parsed.pathname.toLowerCase(); // Vergelijk extensies zonder hoofdletterverschil.
+            return /\.(?:png|jpe?g|gif|webp|avif|bmp|svg)$/.test(path) || // Herken bestandslinks van verschillende providers.
+                (parsed.hostname === 'res.cloudinary.com' && /\/image\/upload\//.test(path)); // Cloudinary levert vaak beelden zonder extensie.
+        } catch (error) { return false; } // Een ongeldige URL is nooit afbeeldingsbron.
+    } // Sluit isImageSource af.
+    function displaySourceLink(parent, name, url) { // Bouw een externe bronlink zonder HTML-injectie.
+        var anchor = document.createElement('a'); // Maak echte hyperlink.
+        anchor.href = url; // Alleen reeds gevalideerde URL.
+        anchor.target = '_blank'; // Open in nieuw tabblad na gebruikersactie.
+        anchor.rel = 'noopener noreferrer'; // Beperk toegang vanuit externe site.
+        anchor.textContent = name; // Naam veilig als tekst.
+        parent.appendChild(anchor); // Plaats in kaart.
+    } // Sluit displaySourceLink af.
+    function addMedia(card, sources) { // Toon beeldbronnen compact en overige bronnen als links.
+        var images = []; // Afbeeldingen met directe URL.
+        var others = []; // Overige bronnen, waaronder documenten.
+        sources.forEach(function (source) { // Beoordeel iedere bestaande source zonder opslag te veranderen.
+            var raw = typeof source === 'string' ? source : source && source.url; // Ondersteun oudere strings.
+            var url = safeExternalURL(raw); // Verbied onveilige protocollen.
+            var name = asText(typeof source === 'string' ? source : source && source.name) || 'Bron openen'; // Toon bronlabel.
+            (url && isImageSource(url) ? images : others).push({ url: url, name: name }); // Sorteer media van documenten.
+        }); // Sluit bronnenverwerking af.
+        if (images.length) { // Alleen afbeeldingen tonen wanneer links aanwezig zijn.
+            var media = document.createElement('div'); // Flexibele thumbnailstrip.
+            media.className = 'eventtl-media'; // Layout verschilt per tijdlijnrichting.
+            images.forEach(function (entry) { // Bouw compacte fotokaart.
+                var link = document.createElement('a'); // Klik toont originele afbeelding.
+                link.href = entry.url; // Veilige directe afbeeldings-URL.
+                link.target = '_blank'; // Voor volledige weergave in apart tabblad.
+                link.rel = 'noopener noreferrer'; // Veilige externe navigatie.
+                link.className = 'eventtl-media-link'; // CSS thumbnailkader.
+                link.title = entry.name; // Benoem het bronbestand.
+                link.setAttribute('aria-label', 'Afbeelding openen: ' + entry.name); // Toegankelijke linknaam.
+                var image = document.createElement('img'); // Miniatuur opbouwen.
+                image.alt = entry.name; // Alternatieve tekst.
+                image.loading = 'lazy'; // Haal pas afbeeldingen op wanneer zichtbaar.
+                image.decoding = 'async'; // Decodeer afbeeldingen buiten de hoofdthread.
+                image.referrerPolicy = 'no-referrer'; // Deel geen pagina-URL als referer.
+                image.src = entry.url; // Publieke bron: browser laadt thumbnail pas bij zichtbaarheid.
+                image.addEventListener('error', function () { // Fout bij ontbrekend of verboden beeld.
+                    link.classList.add('eventtl-media-error'); // Gebruik neutraal gebroken afbeeldingspictogram.
+                    image.remove(); // Verwijder gebroken img-pictogram van browser.
+                    link.textContent = 'Afbeelding'; // Link naar bron blijft beschikbaar.
+                }); // Sluit foutcallback af.
+                link.appendChild(image); // Plaats miniatuur in link.
+                media.appendChild(link); // Plaats link in thumbnailstrip.
+            }); // Sluit miniaturen af.
+            card.appendChild(media); // Onder kaartinhoud; in verticale stand rechts via CSS.
+        } // Sluit afbeeldingsweergave af.
+        return others; // Niet-afbeeldingsbronnen worden in details weergegeven.
+    } // Sluit addMedia af.
+
     /* ======================= GEBEURTENISDETAILS ======================= */
-    function buildCard(event) { // Maak een herbruikbare gebeurteniskaart voor beide richtingen.
-        var card = document.createElement('article'); // Basis van de kaart.
-        card.className = 'eventtl-card'; // Gebruik gedeelde styling.
-        addText(card, 'div', event.start_date || 'Datum onbekend', 'eventtl-date'); // Startdatum als hoofddatum.
-        addText(card, 'h3', event.title || event.type || 'Gebeurtenis'); // Toon titel of type.
-        if (event.type && event.title && event.type !== event.title) addText(card, 'p', 'Type: ' + event.type); // Voeg afwijkend type toe.
-        if (event.end_date) addText(card, 'p', 'Tot: ' + event.end_date); // Toon einddatum indien aanwezig.
-        if (event.place) addText(card, 'p', 'Plaats: ' + event.place); // Toon plaats indien aanwezig.
-        var details = document.createElement('details'); // Details blijven ingeklapt.
-        var summary = document.createElement('summary'); // Klikbare detailskop.
+    function buildCard(event) { // Bouw dezelfde alleen-lezen kaart in beide richtingen.
+        var card = document.createElement('article'); // Basis van een eventkaart.
+        card.className = 'eventtl-card'; // Gedeelde presentatieregels.
+        var body = document.createElement('div'); // Tekstgedeelte dat naast foto's kan staan.
+        body.className = 'eventtl-card-body'; // Flexibele kolom voor verticale layout.
+        addText(body, 'div', event.start_date || 'Datum onbekend', 'eventtl-date'); // Hoofddatum.
+        addText(body, 'h3', event.title || event.type || 'Gebeurtenis'); // Eventtitel.
+        if (event.type && event.title && event.type !== event.title) addText(body, 'p', 'Type: ' + event.type); // Alleen afwijkend type.
+        if (event.end_date) addText(body, 'p', 'Tot: ' + event.end_date); // Einddatum indien beschikbaar.
+        if (event.place) addText(body, 'p', 'Plaats: ' + event.place); // Plaatsnaam indien beschikbaar.
+        var participants = Array.isArray(event.participants) ? event.participants : []; // Canonieke deelnemers.
+        var extras = participants.filter(function (p) { // Onderdruk alleen de geselecteerde hoofdpersoon.
+            return p && asText(p.person_id) !== selectedId && (asText(p.person_id) || asText(p.name)); // Andere gekoppelde of los benoemde deelnemers.
+        }); // Sluit extra-deelnemersfilter af.
+        if (extras.length) { // Toon uitsluitend andere deelnemers.
+            var names = extras.map(function (p) { // Zet deelnemer om naar bestaande persoonsnaam.
+                var linked = people.find(function (person) { return asText(person.ID) === asText(p.person_id); }); // Hergebruik persoonsdataset.
+                var name = linked ? personName(linked) : asText(p.name || p.person_id); // Fallback voor losse deelnemers.
+                return name + (p.role ? ' (' + asText(p.role) + ')' : ''); // Rol alleen indien bekend.
+            }).filter(Boolean); // Onderdruk lege labels.
+            if (names.length) addText(body, 'p', 'Deelnemers: ' + names.join(', '), 'eventtl-participants'); // Alleen extra personen.
+        } // Sluit deelnemerweergave af.
+        var details = document.createElement('details'); // Bronverwijzingen en notities uitklapbaar.
+        var summary = document.createElement('summary'); // Samenvatting voor inklappen.
         summary.textContent = 'Details en bronnen'; // Beknopte actie.
-        details.appendChild(summary); // Plaats de kop.
-        if (event.notes) addText(details, 'p', event.notes); // Toon eventuele opmerkingen.
-        var participants = Array.isArray(event.participants) ? event.participants : []; // Lees deelnemers.
-        if (participants.length) { // Toon alleen als deelnemers bestaan.
-            addText(details, 'strong', 'Betrokken personen'); // Sectietitel.
-            var names = participants.map(function (p) { // Bouw deelnemerslabels.
-                var linked = people.find(function (person) { return asText(person.ID) === asText(p && p.person_id); }); // Zoek persoon via bestaande opslag.
-                return linked ? personName(linked) : asText(p && (p.name || p.person_id)); // Fallback naar oorspronkelijke deelnemergegevens.
-            }).filter(Boolean); // Sla lege deelnemersnamen over.
-            addText(details, 'p', names.join(', ') || 'Niet gespecificeerd'); // Toon deelnemers als tekst.
-        } // Sluit deelnemersweergave af.
-        var sources = sourceObjects(event); // Lees bestaande bronnen.
-        if (sources.length) { // Toon alleen wanneer broninformatie bestaat.
-            addText(details, 'strong', 'Bronnen en media'); // Sectietitel.
-            var list = document.createElement('ul'); // Lijst met bronnen.
-            sources.forEach(function (source) { // Verwerk ieder bronobject.
-                var item = document.createElement('li'); // Eén bronitem.
-                var raw = typeof source === 'string' ? source : source.url; // Ondersteun bronobject en oudere stringwaarde.
-                var url = safeExternalURL(raw); // Controleer veilig linkprotocol.
-                var name = asText(typeof source === 'string' ? source : source.name) || 'Bron openen'; // Lees de bronnaam.
-                if (url) { // Maak uitsluitend bij geldige URL een link.
-                    var anchor = document.createElement('a'); // Klikbare externe verwijzing.
-                    anchor.href = url; // URL wordt niet tijdens rendering opgehaald.
-                    anchor.textContent = name; // Veilige linktekst.
-                    anchor.target = '_blank'; // Open bron alleen na klik.
-                    anchor.rel = 'noopener noreferrer'; // Beperk toegang vanuit externe website.
-                    item.appendChild(anchor); // Voeg link toe.
-                } else { // Bron heeft geen veilige URL.
-                    item.textContent = name; // Alleen tekst tonen.
-                } // Sluit URL-afhandeling af.
-                list.appendChild(item); // Voeg bron toe aan lijst.
+        details.appendChild(summary); // Plaats uitklapbare kop.
+        if (event.notes) addText(details, 'p', event.notes); // Eventnotities veilig tonen.
+        var sources = sourceObjects(event); // Gebruik canonieke sources[] van EventStorage.
+        var nonImages = sources.filter(function (source) { // Scheid bronnen zonder afbeeldings-URL.
+            var raw = typeof source === 'string' ? source : source && source.url; // Lees URL uit bekende bronvorm.
+            var url = safeExternalURL(raw); // Valideer HTTP(S).
+            return !url || !isImageSource(url); // Afbeeldingen krijgen zichtbare miniaturen.
+        }); // Sluit filtering af.
+        if (nonImages.length) { // Alleen wanneer er overige bronnen zijn.
+            addText(details, 'strong', 'Bronnen'); // Sectietitel.
+            var list = document.createElement('ul'); // Eenvoudige bronnenlijst.
+            nonImages.forEach(function (source) { // Toon elke gewone bron afzonderlijk.
+                var item = document.createElement('li'); // Bronlijstitem.
+                var raw = typeof source === 'string' ? source : source && source.url; // Bronadres.
+                var url = safeExternalURL(raw); // Gevalideerde bronlink.
+                var name = asText(typeof source === 'string' ? source : source && source.name) || 'Bron openen'; // Label.
+                if (url) displaySourceLink(item, name, url); else item.textContent = name; // Maak link uitsluitend bij geldig adres.
+                list.appendChild(item); // Voeg bron toe.
             }); // Sluit bronnenlus af.
-            details.appendChild(list); // Plaats bronnenlijst.
-        } // Sluit bronnenweergave af.
-        if (!event.notes && !participants.length && !sources.length) addText(details, 'p', 'Geen aanvullende informatie.'); // Lege detailsmelding.
-        card.appendChild(details); // Details standaard gesloten bewaren.
-        return card; // Retourneer kaart zonder afbeeldingsverzoeken.
+            details.appendChild(list); // Bronnen staan in ingeklapte details.
+        } // Sluit gewone bronnen af.
+        if (!event.notes && !sources.length) addText(details, 'p', 'Geen aanvullende informatie.'); // Lege detailsmelding.
+        body.appendChild(details); // Details in tekstdeel.
+        card.appendChild(body); // Tekstdeel eerst.
+        addMedia(card, sources); // Afbeeldingen onder of rechts naast het tekstdeel.
+        return card; // Eventkaart gereed.
     } // Sluit buildCard af.
 
     /* ======================= RENDERING ======================= */
