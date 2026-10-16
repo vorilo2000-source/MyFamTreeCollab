@@ -1,6 +1,6 @@
 // =============================================================================
 // topbar.js — TopBar Auth Modal & Status
-// MyFamTreeCollab v2.3.4
+// MyFamTreeCollab v2.3.5
 // -----------------------------------------------------------------------------
 // Nieuw in v2.3.4:
 // - Cloudinary-link verplaatst naar /MyFamTreeCollab/Layout/cloudinary.html
@@ -376,6 +376,35 @@
   }
 
   // ---------------------------------------------------------------------------
+  // _renderAccountPortrait() — bestaand PortretURL via gekoppeld tree/person-ID.
+  // Bestaande buste blijft fallback; nooit afbeeldingen vooraf in bulk ophalen.
+  // ---------------------------------------------------------------------------
+  async function _renderAccountPortrait() {
+    const icon = document.getElementById('top-account-avatar'); // Plek naast gebruikersnaam.
+    if (!icon) return;
+    icon.textContent = '👤'; // Reset bij gebruikerswissel of ontbrekend portret.
+    const session = await AuthModule.getSession(); // Opnieuw de actieve sessie controleren.
+    if (!session || !document.getElementById('top-account-avatar')) return;
+    const link = session.user.user_metadata && session.user.user_metadata.account_person_link;
+    if (!link || !link.tree_id || !link.person_id) return; // Zonder koppeling normale buste.
+    const activeId = String(localStorage.getItem('stamboomActiefId') || '').trim();
+    if (String(link.tree_id) !== activeId) return; // Andere boom mag nooit getoond worden.
+    let persons;
+    try { persons = JSON.parse(localStorage.getItem('stamboomData') || '[]'); } catch (_) { return; }
+    if (!Array.isArray(persons)) return; // Corrupte of ontbrekende lokale data.
+    const person = persons.find(p => p && String(p.ID) === String(link.person_id)); // Exacte ID-match.
+    const url = String(person && person.PortretURL || '').trim(); // Eén bron van waarheid.
+    if (!/^https:\/\//i.test(url)) return; // Alleen veilige HTTPS-URL.
+    const image = document.createElement('img'); // Afbeelding pas laden bij geldige koppeling.
+    image.src = url;
+    image.alt = '';
+    image.style.cssText = 'width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle';
+    image.onerror = function () { const target = document.getElementById('top-account-avatar'); if (target) target.textContent = '👤'; };
+    const target = document.getElementById('top-account-avatar');
+    if (target) target.replaceChildren(image); // Accountfoto naast de bestaande naam.
+  }
+
+  // ---------------------------------------------------------------------------
   // _renderTopBar(username)
   // Rendert de ingelogde gebruikersknop met dropdown, of de login-knop.
   // ---------------------------------------------------------------------------
@@ -387,7 +416,7 @@
       slot.innerHTML = `
         <div class="top-user-wrapper" id="top-user-wrapper">
           <button class="top-user-btn" id="top-user-btn" aria-haspopup="true" aria-expanded="false">
-            👤 <span>${_escHtml(username)}</span>
+            <span id="top-account-avatar">👤</span> <span>${_escHtml(username)}</span>
             <span class="collab-badge" id="collab-badge-knop" style="display:none;" title="Ongelezen berichten in Samenwerken"></span>
             <span class="top-user-chevron">▼</span>
           </button>
@@ -406,6 +435,7 @@
         </div>
       `;
 
+      _renderAccountPortrait(); // Portret tonen voor gekoppelde actieve stamboom.
       const wrapper  = document.getElementById("top-user-wrapper");       // Wrapper element
       const btn      = document.getElementById("top-user-btn");           // Knop element
       const dropdown = document.getElementById("top-user-dropdown");      // Dropdown paneel
@@ -686,6 +716,10 @@
       }
     });
 
+    window.addEventListener('account-person-link-changed', _renderAccountPortrait); // Koppeling gewijzigd.
+    window.addEventListener('storage', event => { // Synchronisatie tussen browsertabbladen.
+      if (['stamboomData', 'stamboomActiefId'].includes(event.key)) _renderAccountPortrait();
+    });
     document.addEventListener("click", () => _closeUserDropdown()); // Klik buiten sluit dropdown
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") { _closeUserDropdown(); closeModal(); } // Escape sluit alles

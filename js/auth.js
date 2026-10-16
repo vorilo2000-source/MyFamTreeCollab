@@ -1,6 +1,6 @@
 // =============================================================================
 // auth.js — Supabase Authentication Module
-// MyFamTreeCollab v2.5.2
+// MyFamTreeCollab v2.5.3
 // -----------------------------------------------------------------------------
 // Wijziging v2.5.2 (sessie 26):
 // - _errMsg() foutmeldingen via i18nModule.t('auth:error.*')
@@ -213,6 +213,18 @@
   }
 
   // ---------------------------------------------------------------------------
+  // setAccountPersonLink() — accountkoppeling, zonder nieuwe fotokopie of storage.
+  // Koppelt één account aan een persoons-ID BINNEN een specifieke stamboom.
+  // ---------------------------------------------------------------------------
+  async function setAccountPersonLink(treeId, personId) {
+    var user = await getUser(); // Alleen ingelogde gebruikers mogen eigen metadata bijwerken.
+    if (!user) return { error: 'Niet ingelogd.' };
+    var link = (treeId && personId) ? { tree_id: String(treeId), person_id: String(personId) } : null;
+    var result = await _client.auth.updateUser({ data: { account_person_link: link } });
+    return { error: _errMsg(result.error) };
+  }
+
+  // ---------------------------------------------------------------------------
   // onAuthChange(callback)
   // ---------------------------------------------------------------------------
   function onAuthChange(callback) {
@@ -243,6 +255,7 @@
     getTier,         // ()                           → 'guest' | 'owner' | 'admin'
     updateUsername,  // (username)                   → { error }
     onAuthChange,    // (callback)                   → void
+    setAccountPersonLink, // (treeId, personId) → {error}
     getClient        // ()                           → supabase client
   };
 
