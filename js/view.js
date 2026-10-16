@@ -1,6 +1,7 @@
-/* ======================= js/view.js v1.8.2 =======================
+/* ======================= js/view.js v1.8.3 =======================
  * Stamboom Viewer: bestaande relatie-, zoek- en kleurlogica behouden.
- * Nieuw v1.8.2: ID en naam op regel 1, geboortedatum op regel 2; portret over volle blokhoogte.
+ * Nieuw v1.8.3: Broers & Zussen heeft een eigen brede kolom met twee kaarten per rij.
+ * v1.8.2: ID en naam op regel 1, geboortedatum op regel 2; portret over volle blokhoogte.
  * v1.8.1: portret vóór persoons-ID; zichtbare spaties tussen alle onderdelen.
  * PortretURL wordt uitsluitend uit het bestaande persoonsrecord gelezen.
  * ================================================================ */
@@ -50,7 +51,27 @@
             /* Werkelijke portretfoto vult de gehele hoogte van het tekstblok. */
             '.tree-node .view-portrait{width:38px;min-height:38px;height:auto;align-self:stretch;flex:0 0 38px;border-radius:5px;object-fit:cover;}' +
             /* Zonder geldige URL blijft de standaardbuste even groot als de portretpositie. */
-            '.tree-node .view-portrait-fallback{width:38px;min-height:38px;align-self:stretch;flex:0 0 38px;display:inline-flex!important;align-items:center;justify-content:center;font-size:26px;line-height:1;}';
+            '.tree-node .view-portrait-fallback{width:38px;min-height:38px;align-self:stretch;flex:0 0 38px;display:inline-flex!important;align-items:center;justify-content:center;font-size:26px;line-height:1;}' +
+            /* De stamboom en de rechterkolom mogen elkaars minimale inhoudsbreedte niet opdrijven. */
+            '.stamboom-wrapper{display:flex;gap:16px;align-items:flex-start;min-width:0;}' +
+            '.stamboom-wrapper>#treeContainer{flex:1 1 0;min-width:0;box-sizing:border-box;}' +
+            /* Reserveer rechts op normale desktopbreedte voldoende ruimte voor twee kaarten naast elkaar. */
+            '.stamboom-wrapper>div:last-child{flex:0 0 clamp(360px,35%,480px);min-width:0;box-sizing:border-box;}' +
+            '#BZBox{width:100%!important;box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-content:start;}' +
+            /* Elke broer of zus vormt één grid-item en behoudt eventuele partnerkaart in dezelfde groep. */
+            '#BZBox>.tree-kid-group{display:flex;flex-wrap:wrap;min-width:0;gap:4px;align-content:start;align-items:stretch;}' +
+            '#BZBox .tree-node{display:flex;align-items:center;justify-content:center;flex:1 1 100%;min-width:0;width:auto!important;margin:0!important;box-sizing:border-box;padding:6px 5px;}' +
+            '#BZBox .view-person-row{width:100%;justify-content:flex-start;gap:5px;}' +
+            '#BZBox .view-person-primary{gap:0 4px;}' +
+            /* ID's blijven heel; namen breken op woordgrenzen in plaats van letter voor letter. */
+            '#BZBox .view-person-primary>.id{white-space:nowrap;overflow-wrap:normal;word-break:normal;}' +
+            '#BZBox .view-person-primary>.name{overflow-wrap:break-word;word-break:normal;}' +
+            '#BZBox .view-portrait,#BZBox .view-portrait-fallback{width:30px;flex-basis:30px;min-height:34px;}' +
+            '#BZBox .view-portrait-fallback{font-size:23px;}' +
+            /* Bij smallere vensters: kolommen onder elkaar; siblings krijgen ruimte voor twee kaarten. */
+            '@media(max-width:850px){.stamboom-wrapper{flex-direction:column;}.stamboom-wrapper>#treeContainer,.stamboom-wrapper>div:last-child{width:100%;flex:0 0 auto;}.stamboom-wrapper>div:last-child{max-width:none;}}' +
+            /* Smalle mobiele schermen tonen één kaart per rij in plaats van smalle tekststroken. */
+            '@media(max-width:440px){#BZBox{grid-template-columns:minmax(0,1fr);}}';
         document.head.appendChild(style);
     }
     function isAllowedImageURL(url) {
