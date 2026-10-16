@@ -1,5 +1,5 @@
 /**
- * account/account.js — v1.1.0
+ * account/account.js — v1.3.0
  * MyFamTreeCollab — Account overview page
  * -----------------------------------------
  * Handles: profile display, cloud tree list,
@@ -36,7 +36,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ── 7. Wire up avatar selector ───────────────────────────────────────────
   initAvatarSelector(profile.profile);
-  initAccountPersonLink(session);                                     // highlight current avatar, save on click
+  initAccountPersonLink(session);
+  initDeleteAccount(session); // Beveiligde eigendomscontrole vóór accountverwijdering.                                     // highlight current avatar, save on click
 
 });
 
@@ -407,5 +408,85 @@ function initAccountPersonLink(session) {
     current.textContent = 'Nog geen persoon gekoppeld.';
     status.textContent = 'Koppeling verwijderd. De foto in de stamboom blijft behouden.';
     window.dispatchEvent(new Event('account-person-link-changed')); // TopBar bijwerken.
+  });
+}
+
+// ======================= ACCOUNT VERWIJDEREN v1.3.0 =======================
+// Compatibel met Edge Function delete-my-account v1.10.
+// De service-role sleutel en eigendomscontrole blijven uitsluitend op de server.
+function initDeleteAccount(session) {
+  const trigger = document.getElementById('btn-delete-account');
+  const panel = document.getElementById('delete-account-confirm');
+  const passwordInput = document.getElementById('delete-account-password');
+  const wordInput = document.getElementById('delete-account-word');
+  const confirmBtn = document.getElementById('btn-delete-account-confirm');
+  const cancelBtn = document.getElementById('btn-delete-account-cancel');
+  const status = document.getElementById('delete-account-status');
+  if (!trigger || !panel || !passwordInput || !wordInput || !confirmBtn || !cancelBtn || !status || !session?.user) return;
+
+  let busy = false;
+  const show = (message, error = false) => {
+    status.textContent = message;
+    status.className = 'form-status' + (error ? ' form-status--error' : '');
+  };
+  const clearSecrets = () => { passwordInput.value = ''; wordInput.value = ''; };
+  const refreshConfirm = () => {
+    confirmBtn.disabled = busy || passwordInput.value.length === 0 || wordInput.value !== 'VERWIJDER';
+  };
+  passwordInput.addEventListener('input', refreshConfirm);
+  wordInput.addEventListener('input', refreshConfirm);
+
+  trigger.addEventListener('click', async () => {
+    if (busy) return;
+    busy = true; trigger.disabled = true; show('Eigenaarschap controleren…');
+    try {
+      const response = await window.AuthModule.checkAccountDeletion();
+      if (!response.allowed) {
+        panel.hidden = true;
+        clearSecrets();
+        show(response.message || 'Accountverwijdering is niet toegestaan.', true);
+        return;
+      }
+      panel.hidden = false;
+      clearSecrets();
+      show('Voer je huidige wachtwoord in en typ VERWIJDER om de verwijdering te bevestigen.');
+      passwordInput.focus();
+    } catch (error) {
+      panel.hidden = true;
+      clearSecrets();
+      show('Controle mislukt: ' + error.message, true);
+    } finally {
+      busy = false; trigger.disabled = false; refreshConfirm();
+    }
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    if (busy) return;
+    panel.hidden = true; clearSecrets(); refreshConfirm(); show('');
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    if (busy || confirmBtn.disabled) return;
+    busy = true;
+    const password = passwordInput.value; // Alleen in geheugen gedurende dit verzoek.
+    clearSecrets();
+    confirmBtn.disabled = true; cancelBtn.disabled = true; trigger.disabled = true;
+    show('Accountverwijdering wordt gecontroleerd…');
+    try {
+      const result = await window.AuthModule.deleteMyAccount(password, 'VERWIJDER');
+      if (!result.success) {
+        show(result.message || 'Verwijdering niet uitgevoerd.', true);
+        return;
+      }
+      // Pas na bevestiging door de server lokale accountgebonden cache wissen.
+      ['stamboomData','stamboomData_modified','stamboomActiefId','stamboomActiefNaam',
+       'stamboomEvents','stamboomEvents_modified'].forEach(key => localStorage.removeItem(key));
+      try { await window.AuthModule.logout(); } catch (_) { /* Auth-account is al verwijderd. */ }
+      window.location.replace('/MyFamTreeCollab/index.html');
+    } catch (error) {
+      show('Verwijdering mislukt: ' + error.message, true);
+    } finally {
+      busy = false; cancelBtn.disabled = false; trigger.disabled = false; refreshConfirm();
+    }
   });
 }
