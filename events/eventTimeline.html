@@ -1,4 +1,4 @@
-<!-- ======================= events/eventTimeline.html v0.1.3 ======================= -->
+<!-- ======================= events/eventTimeline.html v0.1.4 ======================= -->
 <!-- Alleen-lezen eventtijdlijn, hergebruik van StamboomStorage, EventStorage en LiveSearch. -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -44,10 +44,6 @@
     .eventtl-vertical .eventtl-photo-panel { width:155px; flex:0 0 155px; } /* Verticale modus: fotovak rechts naast kaarttekst. */
     .eventtl-vertical .eventtl-photo-panel .eventtl-media { width:auto; flex-basis:auto; justify-content:flex-start; } /* Miniaturen lopen in rechterkolom. */
     @media(max-width:650px) { .eventtl-vertical .eventtl-photo-panel { width:100%; flex-basis:auto; } } /* Mobiel: uitklapbare foto's onder tekst. */
-    /* ======================= ZONDER DATUM: COMPACTE LIJST ======================= */
-    .eventtl-undated-inline { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:-8px 0 18px; color:#425369; font-size:.9rem; } /* Direct onder eventtelling. */
-    .eventtl-undated-list { display:flex; flex-wrap:wrap; gap:7px; list-style:none; margin:0; padding:0; } /* Horizontale itemlijst. */
-    .eventtl-undated-list li { padding:3px 8px; border:1px solid #d7dee6; border-radius:5px; background:#f4f6f9; color:#263a50; } /* Leesbare compacte eventnaam. */
     /* ======================= HORIZONTALE WEERGAVE ======================= */
     .eventtl-horizontal { display:block !important; width:100%; max-width:100%; overflow-x:auto; overflow-y:visible; padding:20px 2px 28px; box-sizing:border-box; } /* Horizontaal scrollgebied ongeacht globale CSS. */
     .eventtl-horizontal > .eventtl-track { display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; align-items:flex-start; position:relative; gap:18px; width:max-content; min-width:100%; padding:28px 15px 5px; box-sizing:border-box; } /* Gebeurtenissen verplicht NAAST elkaar; nooit onder elkaar. */
