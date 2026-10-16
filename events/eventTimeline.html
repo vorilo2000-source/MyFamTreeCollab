@@ -1,4 +1,4 @@
-<!-- ======================= events/eventTimeline.html v0.1.1 ======================= -->
+<!-- ======================= events/eventTimeline.html v0.1.2 ======================= -->
 <!-- Alleen-lezen eventtijdlijn, hergebruik van StamboomStorage, EventStorage en LiveSearch. -->
 <!DOCTYPE html>
 <html lang="nl">
@@ -27,12 +27,22 @@
     .eventtl-card summary { cursor:pointer; color:#245c99; font-size:.88rem; } /* Details activeren. */
     .eventtl-card a { color:#205d9d; overflow-wrap:anywhere; } /* Externe bronlinks. */
     .eventtl-card ul { padding-left:20px; } /* Bronnenlijst. */
+    /* ======================= THUMBNAILS EN MEDIA ======================= */
+    .eventtl-card { display:flex; flex-direction:column; gap:8px; } /* Eventinhoud met mediastrook. */
+    .eventtl-card-body { min-width:0; flex:1; } /* Tekst krimpt veilig naast miniaturen. */
+    .eventtl-media { display:flex; gap:7px; flex-wrap:wrap; padding-top:8px; border-top:1px solid #edf0f3; } /* Horizontaal: miniaturen onder de inhoud. */
+    .eventtl-media-link { width:54px; height:54px; flex:0 0 54px; display:flex; align-items:center; justify-content:center; border:1px solid #cad5e0; border-radius:6px; overflow:hidden; background:#f4f6f9; font-size:.65rem; text-align:center; } /* Kleine aanklikbare foto's. */
+    .eventtl-media-link img { display:block; width:100%; height:100%; object-fit:cover; } /* Behoud herkenbare uitsnede. */
+    .eventtl-media-error { color:#596879; padding:3px; overflow-wrap:anywhere; } /* Gebroken bron blijft herkenbaar en klikbaar. */
+    .eventtl-vertical .eventtl-card { flex-direction:row; align-items:flex-start; } /* Verticaal: foto's rechts van de tekst. */
+    .eventtl-vertical .eventtl-media { width:125px; flex:0 0 125px; border-top:0; padding-top:0; justify-content:flex-end; } /* Rechts uitgelijnde foto's. */
+    @media(max-width:650px) { .eventtl-vertical .eventtl-card { flex-direction:column; } .eventtl-vertical .eventtl-media { width:100%; flex-basis:auto; justify-content:flex-start; border-top:1px solid #edf0f3; padding-top:8px; } } /* Mobiel: thumbnails onder de kaart. */
     /* ======================= HORIZONTALE WEERGAVE ======================= */
     .eventtl-horizontal { display:block !important; width:100%; max-width:100%; overflow-x:auto; overflow-y:visible; padding:20px 2px 28px; box-sizing:border-box; } /* Horizontaal scrollgebied ongeacht globale CSS. */
     .eventtl-horizontal > .eventtl-track { display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; align-items:flex-start; position:relative; gap:18px; width:max-content; min-width:100%; padding:28px 15px 5px; box-sizing:border-box; } /* Gebeurtenissen verplicht NAAST elkaar; nooit onder elkaar. */
     .eventtl-track:before { content:""; position:absolute; top:18px; left:25px; right:25px; height:3px; background:#9fb3c9; } /* Verbindende as. */
     .eventtl-horizontal .eventtl-track-item { display:block; flex:0 0 250px !important; width:250px; min-width:250px; max-width:250px; position:relative; padding-top:5px; } /* Elke kaart houdt vaste breedte in horizontale rij. */
-    .eventtl-track-item:before { content:""; display:block; position:absolute; height:12px; width:12px; background:#3276b5; border:3px solid white; border-radius:100%; box-shadow:0 0 0 1px #3276b5; top:-16px; left:12px; } /* Tijdstip op as. */
+    .eventtl-track-item:before { content:""; display:block; position:absolute; height:12px; width:12px; background:#3276b5; border:3px solid white; border-radius:100%; box-shadow:0 0 0 1px #3276b5; top:-16px; left:12px; } /* Tijdstip op as, verbonden aan kaart. */
     /* ======================= VERTICALE WEERGAVE ======================= */
     .eventtl-vertical { display:flex !important; flex-direction:column !important; align-items:stretch; gap:0; max-width:850px; border-left:3px solid #9fb3c9; margin:12px 0 20px 9px; padding-left:23px; } /* Gebeurtenissen verplicht ONDER elkaar. */
     .eventtl-vertical-item { display:block; width:100%; position:relative; margin-bottom:18px; } /* Volledige breedte per verticale gebeurtenis. */
