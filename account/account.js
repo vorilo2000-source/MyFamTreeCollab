@@ -1,5 +1,5 @@
 /**
- * account/account.js — v1.0.1
+ * account/account.js — v1.1.0
  * MyFamTreeCollab — Account overview page
  * -----------------------------------------
  * Handles: profile display, cloud tree list,
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const profile = await window.AuthModule.getProfile();           // fetch profiles row for current user
 
   // ── 3. Render profile section ────────────────────────────────────────────
-  renderProfile(session, profile);                                 // fill in avatar, name, tier, email
+  renderProfile(session, profile.profile);                                 // fill in avatar, name, tier, email
 
   // ── 4. Load cloud tree list ──────────────────────────────────────────────
   await renderCloudTrees();                                        // list all stambomen from Supabase
@@ -35,7 +35,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPasswordForm();                                              // attach submit handler
 
   // ── 7. Wire up avatar selector ───────────────────────────────────────────
-  initAvatarSelector(profile);                                     // highlight current avatar, save on click
+  initAvatarSelector(profile.profile);
+  initAccountPersonLink(session);                                     // highlight current avatar, save on click
 
 });
 
@@ -228,7 +229,7 @@ async function renderCloudTrees() {
  */
 function renderLocalSummary() {
 
-  const persons = window.StamboomStorage.getAll();               // get all local persons
+  const persons = window.StamboomStorage.get();               // get all local persons
   document.getElementById("local-count").textContent =
     `${persons.length} personen opgeslagen`;                     // show count
 
@@ -304,7 +305,8 @@ function initAvatarSelector(profile) {
       document.getElementById("profile-avatar").textContent = av.emoji; // update header avatar
 
       try {
-        await window.AuthModule.updateProfile({ avatar_id: av.id }); // save to Supabase
+        const result = await window.AuthModule.getClient().from('profiles').update({ avatar_id: av.id }).eq('id', (await window.AuthModule.getUser()).id); // bestaande avatar-ID opslaan
+        if (result.error) throw result.error;
         showToast("✅ Avatar opgeslagen!");
       } catch (err) {
         showToast(`❌ ${err.message}`, "error");
@@ -337,4 +339,73 @@ function showToast(msg, type = "success") {
     toast.classList.remove("toast--visible");
     setTimeout(() => toast.remove(), 400);                        // wait for fade out
   }, 3000);
+}
+
+// ======================= Accountportret via bestaand persoonsportret v1.1.0 =======================
+function initAccountPersonLink(session) {
+  const search = document.getElementById('account-person-search'); // LiveSearch invoerveld.
+  const status = document.getElementById('account-person-status'); // Feedback voor de gebruiker.
+  const current = document.getElementById('account-person-current'); // Huidige koppeling.
+  const preview = document.getElementById('account-person-preview'); // Foto of buste.
+  const save = document.getElementById('account-person-save'); // Opslaan.
+  const clear = document.getElementById('account-person-clear'); // Loskoppelen.
+  const storage = window.StamboomStorage; // Hergebruik huidige opslag.
+  const treeId = storage.getActiveTreeId(); // Een ID is alleen uniek binnen een stamboom.
+  const persons = storage.get(); // Geen dubbele dataopslag.
+  let selected = null; // Nog niet gekozen persoon.
+
+  function picture(person) { // Toon portret wanneer bestaande URL beschikbaar is.
+    preview.textContent = '👤'; // Fallback vóór laden en bij fout.
+    const profileIcon = document.getElementById('profile-avatar'); // Grote accountavatar.
+    if (profileIcon) profileIcon.textContent = '👤'; // Ook hier standaardbuste tonen.
+    const url = String(person && person.PortretURL || '').trim(); // Alleen bestaand veld.
+    if (!/^https:\/\//i.test(url)) return; // Geen onveilige of lege afbeeldingbron.
+    const img = document.createElement('img'); // Maak afbeelding pas voor geselecteerde persoon.
+    img.alt = 'Persoonsportret'; // Toegankelijke omschrijving.
+    img.referrerPolicy = 'no-referrer'; // Beperk doorgifte van referrer.
+    img.onerror = () => { preview.textContent = '👤'; if (profileIcon) profileIcon.textContent = '👤'; }; // Fallback bij fout.
+    img.src = url; // Cloudinary of andere HTTPS-host is toegestaan.
+    preview.replaceChildren(img); // Geen afbeelding van alle personen laden.
+    if (profileIcon) { const profileImg = document.createElement('img'); profileImg.src = url; profileImg.alt = 'Accountportret'; profileImg.onerror = () => { profileIcon.textContent = '👤'; }; profileIcon.replaceChildren(profileImg); } // Zelfde persoonsportret in het accountprofiel.
+  }
+
+  const linked = session.user.user_metadata && session.user.user_metadata.account_person_link; // Eigen accountmetadata.
+  if (linked && linked.tree_id === treeId) { // Alleen link van werkelijk actieve stamboom gebruiken.
+    const person = persons.find(p => String(p.ID) === String(linked.person_id)); // Exact ID.
+    if (person) { current.textContent = `${person.Roepnaam || person.Doopnaam || ''} ${person.Achternaam || ''} (${person.ID})`; picture(person); }
+    else current.textContent = 'Gekoppelde persoon niet gevonden in de actieve stamboom.';
+  } else if (linked) {
+    current.textContent = 'Account is gekoppeld aan een andere stamboom; activeer die stamboom om de foto te zien.';
+  }
+
+  if (!treeId || !persons.length) { // Niet opslaan zonder stabiele stamboomidentiteit.
+    status.textContent = 'Laad eerst een stamboom met een actieve stamboom-ID.';
+    search.disabled = true; // Voorkom ongeldige koppeling.
+  } else if (typeof window.initLiveSearch === 'function') { // Hergebruik de bestaande Manage-zoekmodule.
+    window.initLiveSearch(search, persons, personId => { // Callback levert ID, niet hele persoon.
+      selected = persons.find(p => String(p.ID) === String(personId)) || null;
+      save.disabled = !selected; // Alleen bevestigde selectie bewaren.
+      if (selected) { search.value = `${selected.ID} — ${selected.Roepnaam || selected.Doopnaam || ''} ${selected.Achternaam || ''}`; picture(selected); status.textContent = 'Geselecteerd; klik op Koppeling opslaan.'; }
+    });
+    search.addEventListener('input', () => { selected = null; save.disabled = true; }); // Vrij typen is geen selectie.
+  } else status.textContent = 'LiveSearch is niet geladen.';
+
+  save.addEventListener('click', async () => { // Alleen op expliciete gebruikersactie opslaan.
+    if (!selected || !treeId) return;
+    save.disabled = true;
+    const result = await window.AuthModule.setAccountPersonLink(treeId, selected.ID); // Alleen ID-paar in auth metadata.
+    if (result.error) { status.textContent = 'Opslaan mislukt: ' + result.error; save.disabled = false; return; }
+    current.textContent = search.value; // Koppeling bevestigd.
+    status.textContent = 'Account gekoppeld aan de geselecteerde persoon.';
+    window.dispatchEvent(new Event('account-person-link-changed')); // TopBar direct bijwerken.
+    save.disabled = false;
+  });
+  clear.addEventListener('click', async () => { // Verwijder alleen koppeling, nooit portret of persoon.
+    const result = await window.AuthModule.setAccountPersonLink(null, null);
+    if (result.error) { status.textContent = 'Ontkoppelen mislukt: ' + result.error; return; }
+    selected = null; search.value = ''; save.disabled = true; preview.textContent = '👤'; document.getElementById('profile-avatar').textContent = '👤';
+    current.textContent = 'Nog geen persoon gekoppeld.';
+    status.textContent = 'Koppeling verwijderd. De foto in de stamboom blijft behouden.';
+    window.dispatchEvent(new Event('account-person-link-changed')); // TopBar bijwerken.
+  });
 }

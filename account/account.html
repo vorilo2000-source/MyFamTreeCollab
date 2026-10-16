@@ -1,4 +1,4 @@
-<!-- ======================= account/index.html v1.0.0 =======================
+﻿<!-- ======================= account/account.html v1.1.0 =======================
      Account overzichtspagina — profiel, cloud stambomen, avatar, wachtwoord
      Standaard paginaformaat: TopBar + Navbar + Footer via fetch()
      ======================================================================= -->
@@ -67,6 +67,8 @@
       user-select: none;
     }
 
+    /* Portretfoto past binnen dezelfde avatarplaats als de bestaande buste. */
+    .profile-avatar-display img { width:64px; height:64px; border-radius:50%; object-fit:cover; vertical-align:middle; }
     .profile-meta {
       display: flex;
       flex-direction: column;
@@ -411,6 +413,21 @@
       <div id="cloud-access-status"></div>
     </section>
 
+    <!-- ======================= Account gekoppeld aan stamboompersoon ======================= -->
+    <section class="account-card" aria-labelledby="section-account-person">
+      <h2 id="section-account-person">Accountportret uit de stamboom</h2>
+      <p>Zoek je persoon in de actieve stamboom. De bestaande PortretURL wordt gebruikt; er wordt geen foto opnieuw geüpload.</p>
+      <div class="profile-header">
+        <span id="account-person-preview" class="profile-avatar-display">👤</span>
+        <span id="account-person-current">Nog geen persoon gekoppeld.</span>
+      </div>
+      <label for="account-person-search">Persoon zoeken (LiveSearch)</label>
+      <input id="account-person-search" type="search" autocomplete="off" placeholder="Persoons-ID of naam" style="width:100%;max-width:420px;padding:9px;border:1px solid #aaa;border-radius:6px;" />
+      <p id="account-person-status" role="status" aria-live="polite"></p>
+      <button id="account-person-save" class="btn-save-password" type="button" disabled>Koppeling opslaan</button>
+      <button id="account-person-clear" class="btn-delete" type="button">Koppeling verwijderen</button>
+    </section>
+
     <!-- ── 2. Cloud stambomen ───────────────────────────────────────────── -->
     <section class="account-card" aria-labelledby="section-cloud">
       <h2 id="section-cloud">☁️ Cloud stambomen</h2>
@@ -483,6 +500,7 @@
 <script src="/MyFamTreeCollab/js/storage.js"></script>
 <script src="/MyFamTreeCollab/js/auth.js"></script>
 <script src="/MyFamTreeCollab/js/cloudSync.js"></script>
+<script src="/MyFamTreeCollab/js/LiveSearch.js"></script>
 
 <script>
     // Stap 1: TopBar HTML laden, daarna PAS topbar.js injecteren
@@ -498,7 +516,7 @@
         });
 
     // Stap 2: Navbar laden — geen auth-afhankelijkheid, mag parallel
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.2', { cache: 'no-store' })
         .then(resp => resp.text())
         .then(function(data) {
             document.getElementById('navbar-placeholder').innerHTML = data;
@@ -517,3 +535,4 @@
 
 </body>
 </html>
+
