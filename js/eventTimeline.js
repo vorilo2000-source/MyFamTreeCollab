@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.4 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.6 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -202,6 +202,34 @@
         } // Geen apart blok of aparte lijst voor ongedateerde gebeurtenissen.
     } // Sluit render af.
 
+    /* ======================= GESELECTEERD PERSOONSPORTRET ======================= */
+    function renderSelectedPerson(person) { // Toon hetzelfde persoonsportret als in de Stamboom Viewer.
+        selected.replaceChildren(); // Verwijder vorige naam en vorige foto zonder innerHTML.
+        if (!person) { // Onbekend persoons-ID heeft geen gekoppelde afbeelding.
+            addText(selected, 'span', selectedId || '', 'eventtl-selected-name'); // Behoud een leesbare selectie.
+            return; // Klaar zonder persoonsgegevens.
+        } // Einde ontbrekende persoon.
+        var portrait = document.createElement('span'); // Container voor portret of standaardbuste.
+        portrait.className = 'eventtl-person-avatar'; // Gebruik eigen compacte layoutklasse.
+        var url = safeExternalURL(person.PortretURL); // Hergebruik de portretlink uit StamboomStorage.
+        if (url && isImageSource(url)) { // Toon alleen herkenbare afbeeldingsadressen.
+            var img = document.createElement('img'); // Maak miniatuur naast de naam.
+            img.src = url; // Cloudinary of een andere geldige afbeeldingsprovider.
+            img.alt = 'Portret van ' + personName(person); // Toegankelijke omschrijving.
+            img.loading = 'lazy'; // Afbeelding laden wanneer zichtbaar.
+            img.referrerPolicy = 'no-referrer'; // Deel geen pagina-URL met externe host.
+            img.addEventListener('error', function () { // Val terug bij een onbereikbare bron.
+                portrait.replaceChildren(); // Verwijder mislukte afbeelding.
+                portrait.textContent = '👤'; // Toon dezelfde standaardbuste als fallback.
+            }); // Einde foutafhandeling.
+            portrait.appendChild(img); // Portret toevoegen.
+        } else { // Nog geen bruikbare portretlink.
+            portrait.textContent = '👤'; // Standaardbuste blijft zichtbaar.
+        } // Einde portretkeuze.
+        selected.appendChild(portrait); // Portret altijd vóór de naam.
+        addText(selected, 'span', personName(person) + ' (' + selectedId + ')', 'eventtl-selected-name'); // Naam en ID naast buste.
+    } // Sluit renderSelectedPerson af.
+
     /* ======================= SELECTIE EN BESTURING ======================= */
     function setOrientation(next) { // Wissel uitsluitend de presentatierichting.
         orientation = next; // Bewaar huidige richting.
@@ -215,7 +243,7 @@
         window.initLiveSearch(search, people, function (personId) { // Callback krijgt geselecteerd persoons-ID.
             selectedId = asText(personId); // Houd canoniek persoons-ID aan.
             var person = people.find(function (p) { return asText(p.ID) === selectedId; }); // Zoek geselecteerd record.
-            selected.textContent = person ? personName(person) + ' (' + selectedId + ')' : selectedId; // Toon actieve persoon.
+            renderSelectedPerson(person); // Toon buste of PortretURL vóór de geselecteerde naam.
             render(); // Toon gebeurtenissen.
         }); // Sluit LiveSearch-init af.
     } else { // Module ontbreekt.
