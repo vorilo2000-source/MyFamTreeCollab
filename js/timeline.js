@@ -1,5 +1,6 @@
-/* ======================= js/timeline.js v2.8.0 =======================
+/* ======================= js/timeline.js v2.8.1 =======================
  * Canvas-based family timeline renderer
+ * v2.8.1: WCAG contrastkleur voor balktekst en grotere, teruglopende generatielabels.
  * v2.8.0: portret/buste, grotere balken en leesbare labels; tijdschaal blijft correct.
  *
  * Wijzigingen v2.7.0 (sessie 36):
@@ -64,9 +65,9 @@
     var DEFAULT_SPAN = 50;
     var TICK_INTERVAL= 10;
     var UNKNOWN_BAR_W= 190;
-    var LABEL_COL_W  = 155;
+    var LABEL_COL_W  = 195;
     var MIN_PX_YEAR  = 8;
-    var SECTION_H    = 26;
+    var SECTION_H    = 42;
     var YEAR_PAD     = 7;
 
     /* ------------------------------------------------------------------
@@ -182,12 +183,27 @@
         return [safe(p.Roepnaam), safe(p.Prefix), safe(p.Achternaam)].filter(Boolean).join(' ');
     }
 
+    // Bepaal de leesbaarste kleur, ook bij HEX-kleuren (#rrggbb / #rgb).
     function needsDarkText(hexOrRgb) {
-        if (!hexOrRgb) return false;
-        var rgb = hexOrRgb.match(/\d+/g);
-        if (!rgb) return false;
-        var lum = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
-        return lum > 160;
+        if (!hexOrRgb) return true;
+        var value = String(hexOrRgb).trim();
+        var rgb;
+        if (/^#[0-9a-f]{3}$/i.test(value)) {
+            rgb = [1, 2, 3].map(function (i) { return parseInt(value[i] + value[i], 16); });
+        } else if (/^#[0-9a-f]{6}$/i.test(value)) {
+            rgb = [1, 3, 5].map(function (i) { return parseInt(value.slice(i, i + 2), 16); });
+        } else {
+            var match = value.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+            if (!match) return true;
+            rgb = [Number(match[1]), Number(match[2]), Number(match[3])];
+        }
+        var light = rgb.map(function (c) {
+            var n = c / 255;
+            return n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4);
+        });
+        var luminance = 0.2126 * light[0] + 0.7152 * light[1] + 0.0722 * light[2];
+        // Kies zwart indien zwart een hogere contrastverhouding geeft dan wit.
+        return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05);
     }
 
     /* ------------------------------------------------------------------
@@ -731,12 +747,13 @@
                 top:          y + 'px',
                 left:         '5px',
                 right:        '4px',
-                height:       SECTION_H + 'px',
-                lineHeight:   SECTION_H + 'px',
+                minHeight:    SECTION_H + 'px',
+                lineHeight:   '1.35',
+                fontSize:     '14px',
                 fontWeight:   'bold',
-                whiteSpace:   'nowrap',
-                overflow:     'hidden',
-                textOverflow: 'ellipsis'
+                whiteSpace:   'normal',
+                overflowWrap: 'break-word',
+                overflow:     'visible'
             });
             lbl.textContent = row.sectionLabel;
             stickyCol.appendChild(lbl);
