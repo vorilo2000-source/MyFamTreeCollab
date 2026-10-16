@@ -1,5 +1,6 @@
-/* ======================= js/timeline.js v2.7.0 =======================
+/* ======================= js/timeline.js v2.8.0 =======================
  * Canvas-based family timeline renderer
+ * v2.8.0: portret/buste, grotere balken en leesbare labels; tijdschaal blijft correct.
  *
  * Wijzigingen v2.7.0 (sessie 36):
  *  - COLOR object: relatie-kleuren vervangen door window.ColorHelper.BASE_COLORS
@@ -53,20 +54,20 @@
     /* ------------------------------------------------------------------
      * SECTION 2 — LAYOUT CONSTANTS
      * ------------------------------------------------------------------ */
-    var ROW_H        = 28;
-    var ROW_GAP      = 4;
-    var GROUP_GAP    = 12;
+    var ROW_H        = 40;
+    var ROW_GAP      = 7;
+    var GROUP_GAP    = 16;
     var RIGHT_PAD    = 32;
     var TICK_AREA_H  = 40;
-    var BAR_H        = 16;
+    var BAR_H        = 30;
     var RADIUS       = 3;
     var DEFAULT_SPAN = 50;
     var TICK_INTERVAL= 10;
-    var UNKNOWN_BAR_W= 60;
+    var UNKNOWN_BAR_W= 190;
     var LABEL_COL_W  = 155;
-    var MIN_PX_YEAR  = 5;
-    var SECTION_H    = 20;
-    var YEAR_PAD     = 5;
+    var MIN_PX_YEAR  = 8;
+    var SECTION_H    = 26;
+    var YEAR_PAD     = 7;
 
     /* ------------------------------------------------------------------
      * SECTION 3 — COLOUR PALETTE
@@ -123,6 +124,8 @@
     var dynMinYear = 1800;
     var dynMaxYear = new Date().getFullYear();
     var TODAY      = new Date().getFullYear();
+    var portraitCache = new Map(); // Alleen zichtbare tijdlijnpersonen; geen volledige stamboom-preload.
+    var lastRows = null;          // Hertekenen zodra een zichtbaar portret geladen is.
 
     /* ------------------------------------------------------------------
      * SECTION 5 — DATE UTILITIES
@@ -404,6 +407,7 @@
      * ------------------------------------------------------------------ */
     function renderCanvas(rows) {
         if (!rows || rows.length === 0) return;
+        lastRows = rows;
 
         var totalH    = TICK_AREA_H;
         var prevLabel = null;
@@ -500,7 +504,7 @@
         ctx.moveTo(0, TICK_AREA_H - 4);
         ctx.lineTo(timeW, TICK_AREA_H - 4);
         ctx.stroke();
-        ctx.font         = '9px sans-serif';
+        ctx.font         = '12px sans-serif';
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'bottom';
         var firstTick = Math.ceil(dynMinYear / TICK_INTERVAL) * TICK_INTERVAL;
@@ -528,6 +532,52 @@
         ctx.moveTo(x, TICK_AREA_H - 4);
         ctx.lineTo(x, canvas.height - 10);
         ctx.stroke();
+        ctx.restore();
+    }
+
+    // Canvasportret: lees PortretURL uitsluitend voor personen die daadwerkelijk getekend worden.
+    // Na een geslaagde of mislukte laadpoging wordt de huidige tijdlijn bijgewerkt.
+    function getPortrait(person) {
+        var url = String(person.PortretURL || '').trim();
+        if (!/^https:\/\//i.test(url)) return null; // Geen onveilige of lokale URL's laden.
+        var cached = portraitCache.get(url);
+        if (cached) return cached.status === 'loaded' ? cached.img : null;
+        var img = new Image();
+        portraitCache.set(url, { status: 'loading', img: img });
+        img.onload = function () {
+            portraitCache.set(url, { status: 'loaded', img: img });
+            if (lastRows) renderCanvas(lastRows);
+        };
+        img.onerror = function () {
+            portraitCache.set(url, { status: 'failed', img: null });
+            if (lastRows) renderCanvas(lastRows); // Bij fout blijft de standaardbuste staan.
+        };
+        img.src = url;
+        return null;
+    }
+
+    // Foto of getekende standaardbuste, beide binnen dezelfde vierkante ruimte.
+    function drawBust(ctx, person, x, y) {
+        var size = BAR_H - 6;
+        var px = x + 3, py = y + 3;
+        var img = getPortrait(person);
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(px, py, size, size, 3);
+        ctx.clip();
+        if (img) {
+            ctx.drawImage(img, px, py, size, size);
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.52)';
+            ctx.fillRect(px, py, size, size);
+            ctx.fillStyle = '#55407b';
+            ctx.beginPath();
+            ctx.arc(px + size / 2, py + size * .34, size * .19, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(px + size / 2, py + size * .97, size * .35, size * .34, 0, Math.PI, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.restore();
     }
 
@@ -563,11 +613,12 @@
         }
 
         ctx.fillStyle    = COLOR.birthLabel;
-        ctx.font         = '9px sans-serif';
+        ctx.font         = '12px sans-serif';
         ctx.textAlign    = 'right';
         ctx.textBaseline = 'middle';
         if (birthYear) ctx.fillText(String(birthYear), startX - YEAR_PAD, barCY);
         if (isDead && deathYear) { ctx.textAlign = 'left'; ctx.fillText(String(deathYear), solidEndX + YEAR_PAD, barCY); }
+        drawBust(ctx, person, startX, barY);
         drawBarLabel(ctx, displayName(person), startX, barY, solidW, needsDarkText(color));
         if (entry.isRoot) drawRootIndicator(ctx, startX + solidW / 2, barY);
     }
@@ -577,25 +628,24 @@
         ctx.fillStyle = COLOR.unknown;
         roundedRect(ctx, barX, barY, UNKNOWN_BAR_W, BAR_H, RADIUS);
         ctx.fill();
-        ctx.fillStyle    = COLOR.unknownText;
-        ctx.font         = 'bold 10px sans-serif';
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('?', barX + 10, barCY);
-        ctx.font      = '9px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(clipText(ctx, displayName(entry.person), UNKNOWN_BAR_W - 18), barX + 18, barCY);
+        drawBust(ctx, entry.person, barX, barY);
+        drawBarLabel(ctx, displayName(entry.person), barX, barY, UNKNOWN_BAR_W, true);
     }
 
     function drawBarLabel(ctx, name, barX, barY, barW, darkText) {
-        var pad  = 5;
-        var maxW = barW - pad * 2;
-        if (maxW < 8) return;
-        ctx.fillStyle = COLOR.barTextDark;
-        ctx.font         = '9px sans-serif';
-        ctx.textAlign    = 'left';
+        var textX = barX + BAR_H + 4; // Ruimte na buste; de tijdas bepaalt de echte balklengte.
+        var maxW  = barW - BAR_H - 10;
+        ctx.fillStyle = darkText ? COLOR.barTextDark : COLOR.barText;
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(clipText(ctx, name, maxW), barX + pad, barY + BAR_H / 2);
+        if (maxW >= 16) {
+            ctx.fillText(clipText(ctx, name, maxW), textX, barY + BAR_H / 2);
+        } else {
+            // Bij een zeer kort leven: label buiten de tijdbalk, zonder de duur te vervalsen.
+            ctx.fillStyle = COLOR.barTextDark;
+            ctx.fillText(name, barX + barW + 8, barY + BAR_H / 2);
+        }
     }
 
     function clipText(ctx, text, maxW) {
