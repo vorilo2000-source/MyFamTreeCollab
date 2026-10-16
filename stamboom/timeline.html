@@ -1,4 +1,5 @@
-<!-- ======================= stamboom/timeline.html v2.4.1 =======================
+﻿<!-- ======================= stamboom/timeline.html v2.4.2 =======================
+     v2.4.2: grotere portretbalken in timeline.js v2.8.0.
      Tijdlijnpagina: visualiseert personen op een horizontale tijdas via HTML5 Canvas
 
      Wijziging v2.4.0 (sessie 26):
@@ -195,7 +196,7 @@
 <script src="../js/storage.js"></script>
 <script src="../js/LiveSearch.js"></script>
 <script src="../js/relatieEngine.js"></script>
-<script src="../js/timeline.js"></script>
+<script src="../js/timeline.js?v=2.8.0"></script>
 
 <script>
 // ======================= i18n initialisatie + component fetch =======================
@@ -227,7 +228,7 @@ i18nModule.init()
         });
 
     // Laad Navbar en activeer i18n
-    fetch('/MyFamTreeCollab/Layout/Navbar.html')
+    fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' })
         .then(function (r) { return r.text(); })
         .then(function (html) {
             i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder'));
@@ -248,3 +249,4 @@ i18nModule.init()
 
 </body>
 </html>
+
