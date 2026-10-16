@@ -1,5 +1,9 @@
-﻿<!-- ======================= stamboom/storage.html v2.10.0 =======================
+<!-- ======================= stamboom/storage.html v2.10.1 =======================
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
+
+     Wijziging v2.10.1:
+     - Portret in alleen-lezen tabel direct na ID (alleen presentatie, geen schemawijziging).
+     - Doopnaam/Geboorteplaats/Overlijdensplaats smaller; Opmerkingen even breed als Doopnaam.
 
      Wijziging v2.9.0 (sessie 26):
      - i18n geïntegreerd: data-i18n attributen op alle statische teksten
@@ -72,6 +76,16 @@
         th, td { border: 1px solid #ddd; padding: 7px 10px; text-align: left; }
         th { background: #f4f4f4; font-weight: bold; color: #333; }
         th input { width: 95%; padding: 3px 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 3px; }
+        /* ======================= TABELKOLOMMEN v2.10.1 ======================= */
+        /* Beperk uitsluitend de zichtbare breedte van de vier gevraagde velden. */
+        #storageContainer .storage-smalle-kolom { width: 125px; min-width: 125px; max-width: 125px; box-sizing: border-box; }
+        /* Lange waarden blijven beschikbaar via de tooltip; niets wordt in opslag ingekort. */
+        #storageContainer td.storage-smalle-kolom { overflow: hidden; text-overflow: ellipsis; }
+        /* Filtervelden passen binnen dezelfde kolombreedte zonder deze uit te rekken. */
+        #storageContainer th.storage-smalle-kolom input { width: 100%; min-width: 0; box-sizing: border-box; }
+        /* Portret is een kleine statuskolom naast het ID. */
+        #storageContainer .storage-portret-kolom { width: 64px; min-width: 64px; max-width: 64px; text-align: center; }
+
         .empty { font-style: italic; color: #888; padding: 20px 0; }
         .cloud-intro { font-size: 0.95rem; color: #555; line-height: 1.6; margin: 0 0 20px 0; }
         .cloud-banner { padding: 12px 16px; border-radius: 6px; font-size: 0.92rem; margin-bottom: 16px; font-weight: bold; display: none; line-height: 1.5; }
@@ -366,7 +380,18 @@ i18nModule.init()
     var container       = document.getElementById('storageContainer');        // Container voor tabel
     var info            = document.getElementById('storageInfo');             // Versie + records label
     var resetBtn        = document.getElementById('resetBtn');                // Reset knop
-    var columns         = window.StamboomSchema ? window.StamboomSchema.fields.slice() : []; // Kolomnamen
+    var columns         = window.StamboomSchema ? window.StamboomSchema.fields.slice() : []; // Schema-volgorde als uitgangspunt; geen wijziging aan opslag.
+    // ======================= KOLOMVOLGORDE v2.10.1 =======================
+    var portretIndex = columns.indexOf('PortretURL'); // Controleer of het portretveld bestaat.
+    var idIndex = columns.indexOf('ID'); // Bepaal de huidige ID-positie.
+    if (portretIndex !== -1 && idIndex !== -1) { // Verplaats alleen de presentatiekolom wanneer beide velden bestaan.
+        columns.splice(portretIndex, 1); // Haal PortretURL uit de bestaande presentatievolgorde.
+        columns.splice(columns.indexOf('ID') + 1, 0, 'PortretURL'); // Plaats Portret direct na ID.
+    }
+    function geefKolomKlasse(el, col) { // Herbruikbare breedtes voor kop, filter en gegevenscel.
+        if (['Doopnaam', 'Geboorteplaats', 'Overlijdensplaats', 'Opmerkingen'].indexOf(col) !== -1) { el.classList.add('storage-smalle-kolom'); } // Alle vier gelijk smal.
+        if (col === 'PortretURL') { el.classList.add('storage-portret-kolom'); } // Compacte portretkolom.
+    }
     var actieveBalkData = document.getElementById('actieveStamboomBalkData'); // Actief-balk tab 1
     var actieveNaamData = document.getElementById('actieveNaamTekstData');    // Naam in balk tab 1
 
@@ -451,6 +476,7 @@ i18nModule.init()
         columns.forEach(function (col) {
             var th = document.createElement('th');
             th.textContent = col === 'PortretURL' ? 'Portret' : col; // Toegankelijke kolomkop, geen ruwe URL.
+            geefKolomKlasse(th, col); // Pas alleen de tabelpresentatie aan.
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
@@ -460,6 +486,7 @@ i18nModule.init()
         var filters   = {};
         columns.forEach(function (col) {
             var th    = document.createElement('th');
+            geefKolomKlasse(th, col); // Houd filter even smal als de bijbehorende gegevenskolom.
             var input = document.createElement('input');
             input.type        = 'text';
             input.placeholder = i18nModule.t('storage:data.filterPlaceholder'); // Vertaald
@@ -492,8 +519,9 @@ i18nModule.init()
                 var rij = document.createElement('tr');
                 columns.forEach(function (col) {
                     var td = document.createElement('td');
+                    geefKolomKlasse(td, col); // Houd de gegevenskolom op de ingestelde breedte.
                     if (col === 'PortretURL') { td.appendChild(maakPortretIndicator(p)); } // Toon statusbuste i.p.v. de URL.
-                    else { td.textContent = p[col] || ''; } // Overige gegevens blijven read-only.
+                    else { td.textContent = p[col] || ''; td.title = String(p[col] || ''); } // Volledige waarde in tooltip; opslag ongewijzigd.
                     rij.appendChild(td);
                 });
                 fragment.appendChild(rij);
