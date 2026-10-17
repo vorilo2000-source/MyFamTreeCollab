@@ -1,4 +1,5 @@
-<!-- ======================= stamboom/storage.html v2.10.4 =======================
+<!-- ======================= stamboom/storage.html v2.10.5 =======================
+     v2.10.5: Reset stamboom behoudt EventStorage en onafhankelijke Events-laadstatus.
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
 
      Wijziging v2.10.2:
@@ -587,7 +588,7 @@ i18nModule.init()
         if (!StamboomStorage.get().length) return;
         // Bevestigingsdialoog — vertaald via i18n
         if (!confirm(i18nModule.t('storage:confirm.reset'))) return;
-        StamboomStorage.clear();
+        StamboomStorage.clear(); // Uitsluitend persoonsrecords wissen; Events blijven intact.
         StamboomStorage.setActiveTreeId(null);   // Bugfix v2.7.1: wis actieve UUID
         StamboomStorage.setActiveTreeName(null); // Bugfix v2.7.1: wis actieve naam
         renderTable();
@@ -1115,7 +1116,7 @@ i18nModule.init()
         btnOverschrijf.disabled = !nuActiefId;
         await initCloud(); // Vernieuw rijen en 'Geladen'/'Laden' knopstatus.
     };
-    window.addEventListener('myfamtreecollab:events-reset', _verversCloudStatus);
+    // v2.10.5: Events-reset wijzigt de actieve persoonsstamboom niet.
     window.addEventListener('focus', _verversCloudStatus);
     window.addEventListener('pageshow', _verversCloudStatus);
     window.addEventListener('storage', function (e) {
