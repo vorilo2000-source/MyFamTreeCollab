@@ -1,4 +1,4 @@
-/* ======================= js/eventsmanager.js v0.9.4 =======================
+/* ======================= js/eventsmanager.js v0.9.5 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Wijziging v0.9.4:
    - Hardcoded Cloudinary cloud name en preset verwijderd
@@ -73,7 +73,8 @@
     }
 
     /* ======================= KOLOMMEN DEFINITIE ======================= */
-    var COLUMNS = [                                                        // Persoonskolommen + eventkolommen
+    var COLUMNS = [
+        { key: 'Acties',            i18nKey: 'Acties',                          readonly: true },                                                        // Persoonskolommen + eventkolommen
         { key: 'ID',                i18nKey: 'eventsmanager:table.id',                readonly: true  },
         { key: 'Doopnaam',          i18nKey: 'eventsmanager:table.doopnaam',          readonly: false },
         { key: 'Roepnaam',          i18nKey: 'eventsmanager:table.roepnaam',          readonly: false },
@@ -123,6 +124,7 @@
     if (window.EventStorage && typeof EventStorage.importFromStamboom === 'function') { // Gebruik de bestaande EventStorage-import wanneer beschikbaar.
         EventStorage.importFromStamboom(dataset);                          // Voeg alleen ontbrekende -001 Geboorte- en -002 Overlijden-events toe.
     }
+    var ownerCanPublish = false;
     var selectedHoofdId = null;                                           // Geselecteerde hoofdpersoon
     var tempRowCount    = 0;                                              // Teller voor onopgeslagen rijen
 
@@ -142,7 +144,7 @@
         theadRow.innerHTML = '';                                          // Verwijder bestaande kolomkoppen
         COLUMNS.forEach(function (col) {                                  // Loop door elke kolom-definitie
             var th = document.createElement('th');                       // Maak nieuw <th> element
-            th.textContent = i18nModule.t(col.i18nKey);                  // Vertaalde kolomnaam via namespace
+            th.textContent = col.key === 'Acties' ? 'Acties' : i18nModule.t(col.i18nKey);                  // Vertaalde kolomnaam via namespace
             if (COLUMN_MIN_WIDTHS[col.key]) {                            // Alleen de gevraagde eventkolommen verbreden.
                 th.style.minWidth = COLUMN_MIN_WIDTHS[col.key];          // Pas dezelfde minimale breedte toe op de kolomkop.
             }
@@ -519,7 +521,7 @@
 
         var opgeslagenEvents = window.EventStorage                        // Controleer of EventStorage beschikbaar is.
             ? EventStorage.get().filter(function (event) {                // Lees alle events en selecteer die van deze persoon.
-                return Array.isArray(event.participants) &&               // Het event moet een deelnemerslijst hebben.
+                return (ownerCanPublish || event.published === true) && Array.isArray(event.participants) &&               // Het event moet een deelnemerslijst hebben.
                     event.participants.some(function (participant) {      // Controleer iedere gekoppelde deelnemer.
                         return participant &&                             // De deelnemer moet bestaan.
                             safe(participant.person_id) === selectedHoofdId; // Koppel exact op het persoons-ID.
@@ -568,20 +570,45 @@
 
             if (col.key === 'Acties') {
                 td = document.createElement('td');
-                var btn = document.createElement('button');
-                if (isNew) {
-                    btn.textContent = i18nModule.t('eventsmanager:action.delete');
-                    btn.title       = i18nModule.t('eventsmanager:action.deleteRowTitle');
-                    btn.addEventListener('click', function () {
-                        tr.remove();                                     // Verwijder rij uit DOM
-                        tempRowCount--;                                  // Teller verlagen
+                td.style.whiteSpace = 'nowrap';
+                var deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.textContent = '🗑';
+                deleteBtn.title = 'Event verwijderen';
+                deleteBtn.setAttribute('aria-label', 'Event verwijderen');
+                deleteBtn.style.cssText = 'padding:5px 9px;margin-right:5px;cursor:pointer;border:1px solid #ddd;border-radius:4px';
+                deleteBtn.addEventListener('click', function () {
+                    var eventId = String(p.id || '').trim();
+                    if (!eventId) return;
+                    if (/-00[12]$/.test(eventId)) {
+                        alert('Geboorte- en Overlijden-basisevents worden automatisch opnieuw aangemaakt. Verwijderen is hier niet mogelijk.');
+                        return;
+                    }
+                    if (!confirm('Event ' + eventId + ' definitief lokaal verwijderen?')) return;
+                    var existing = EventStorage.get().some(function (e) { return String(e.id) === eventId; });
+                    if (existing && !EventStorage.remove(eventId)) {
+                        alert('Event verwijderen is mislukt.');
+                        return;
+                    }
+                    tr.remove();
+                });
+                td.appendChild(deleteBtn);
+                if (ownerCanPublish) {
+                    var publishBtn = document.createElement('button');
+                    publishBtn.type = 'button';
+                    var isPublished = p.published === true;
+                    publishBtn.textContent = isPublished ? 'Gepubliceerd' : 'Publiceren';
+                    publishBtn.title = isPublished ? 'Publicatie intrekken' : 'Event publiceren';
+                    publishBtn.style.cssText = 'padding:5px 9px;cursor:pointer;border:1px solid #aaa;border-radius:4px';
+                    publishBtn.addEventListener('click', function () {
+                        var next = tr.dataset.published !== 'true';
+                        tr.dataset.published = String(next);
+                        publishBtn.textContent = next ? 'Gepubliceerd' : 'Publiceren';
+                        publishBtn.title = next ? 'Publicatie intrekken' : 'Event publiceren';
                     });
-                } else {
-                    btn.textContent = i18nModule.t('eventsmanager:action.delete');
-                    btn.title       = i18nModule.t('eventsmanager:action.deleteTitle');
-                    btn.addEventListener('click', makeDeleteHandler(tr, function () { return safe(p.ID); }));
+                    td.appendChild(publishBtn);
                 }
-                td.appendChild(btn);
+                tr.dataset.published = String(p.published === true);
 
             } else if (col.key === 'Relatie') {
                 td = document.createElement('td');
@@ -685,7 +712,7 @@
         });
 
         tableBody.querySelectorAll('tr').forEach(function (tr) {         // Controleer daarna ook nog niet-opgeslagen zichtbare rijen.
-            var eventIdCell = tr.cells[7];                               // Event ID staat direct na Geboortedatum.
+            var eventIdCell = tr.cells[8];                               // Event ID staat direct na Geboortedatum.
             if (!eventIdCell) return;                                    // Rij zonder Event ID overslaan.
 
             var eventId = safe(eventIdCell.textContent);                 // Lees het zichtbare Event ID.
@@ -714,8 +741,8 @@
 
         var copied = {};                                                 // Nieuw object voor de eventrij
 
-        COLUMNS.slice(0, 7).forEach(function (col, i) {                  // Kopieer alleen ID t/m Geboortedatum
-            var cell = firstRow.cells[i];                                // Bijbehorende cel uit de eerste rij
+        COLUMNS.slice(1, 8).forEach(function (col, i) {                  // Kopieer alleen ID t/m Geboortedatum
+            var cell = firstRow.cells[i + 1];                                // Bijbehorende cel uit de eerste rij
             if (!cell) return;                                           // Ontbrekende cel veilig overslaan
 
             if (col.readonly) {
@@ -751,11 +778,11 @@
             rows.forEach(function (tr) {                                  // Verwerk iedere zichtbare rij afzonderlijk.
                 if (tr.cells.length !== COLUMNS.length) return;           // Sla placeholder- of onvolledige rijen over.
 
-                var personId = safe(tr.cells[0].textContent);             // Persoons-ID blijft de koppeling naar StamboomStorage.
+                var personId = safe(tr.cells[1].textContent);             // Persoons-ID blijft de koppeling naar StamboomStorage.
                 var event = {};                                           // Bouw alleen het EventStorage-record op.
 
-                COLUMNS.slice(7).forEach(function (col, offset) {         // Lees uitsluitend de eventkolommen na Geboortedatum.
-                    var cell = tr.cells[offset + 7];                       // Zoek de bijbehorende eventcel.
+                COLUMNS.slice(8).forEach(function (col, offset) {         // Lees uitsluitend de eventkolommen na Geboortedatum.
+                    var cell = tr.cells[offset + 8];                       // Zoek de bijbehorende eventcel.
                     if (!cell) return;                                    // Ontbrekende cel veilig overslaan.
 
                     if (col.readonly) {                                    // Event ID is readonly in de tabel.
@@ -776,6 +803,9 @@
                 }];
 
                 if (!event.id) return;                                    // Een event zonder Event ID mag niet worden opgeslagen.
+                // Publicatiestatus is uitsluitend door een geverifieerde owner te veranderen.
+                if (ownerCanPublish) event.published = tr.dataset.published === 'true';
+                else if (!storedIds.has(event.id)) event.published = false;
 
                 if (storedIds.has(event.id)) {                            // Bestaand Event ID betekent een update.
                     EventStorage.update(event.id, event);                 // Werk uitsluitend dit bestaande event bij.
@@ -834,6 +864,19 @@
         i18next.on('languageChanged', function () {
             buildHeader();                                               // Headers hertekenen bij taalwissel
         });
+
+        (async function () {
+            var treeId = StamboomStorage.getActiveTreeId();
+            if (!treeId || !window.ShareModule || typeof ShareModule.getMyRoleForTree !== 'function') return;
+            try {
+                var role = await ShareModule.getMyRoleForTree(treeId);
+                ownerCanPublish = !!role && !role.error && role.rol === 'owner';
+                if (selectedHoofdId) renderTable(dataset);
+            } catch (e) {
+                ownerCanPublish = false;
+                console.warn('[eventsmanager] Owner-rolcontrole mislukt:', e);
+            }
+        })();
 
         addBtn.removeAttribute('data-i18n');                             // Voorkom dat i18n het nieuwe knoplabel terugzet
         addBtn.textContent = 'Kopieer';                                  // + Toevoegen wordt Kopieer
