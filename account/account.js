@@ -1,5 +1,5 @@
 /**
- * account/account.js — v1.3.0
+ * account/account.js — v1.3.1
  * MyFamTreeCollab — Account overview page
  * -----------------------------------------
  * Handles: profile display, cloud tree list,
@@ -191,10 +191,13 @@ async function renderCloudTrees() {
       const naam = btn.dataset.naam;                             // tree name
       if (!confirm(`Stamboom "${naam}" laden? Dit overschrijft je huidige lokale data.`)) return;
       try {
-        await window.CloudSync.loadFromCloud(id);                // load into localStorage
-        window.StamboomStorage.setActiveTreeId(id);              // store active UUID
-        window.StamboomStorage.setActiveTreeName(naam);          // store active name
-        showToast(`✅ "${naam}" geladen!`);                      // success feedback
+        const result = await window.CloudSync.loadFromCloud(id); // v1.3.1: personen én Events laden
+        if (!result.success) { // Annuleren en API-fouten niet als succes melden
+          if (result.error !== 'cancelled_by_user') showToast(`Laden mislukt: ${result.error || 'onbekend'}`, 'error');
+          return;
+        }
+        // CloudSync beheert de actieve stamboom-ID en -naam na geslaagde opslag.
+        showToast(`✅ "${naam}" geladen (${result.aantalEvents ?? 0} Events)!`);
         await renderCloudTrees();                                 // refresh list (active badge update)
         renderLocalSummary();                                     // refresh local count
       } catch (err) {
