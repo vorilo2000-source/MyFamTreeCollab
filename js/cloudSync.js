@@ -1,4 +1,4 @@
-// ========================= js/cloudSync.js v2.4.0 =========================
+// ========================= js/cloudSync.js v2.4.1 =========================
 // Cloud sync module for MyFamTreeCollab
 //
 // Nieuw v2.4.0:
@@ -171,7 +171,7 @@
         }
         // Lokale events zijn niet per boom genamespaced: de actieve boom moet overeenkomen.
         var activeTreeId = window.StamboomStorage.getActiveTreeId();
-        if (stamboumId && activeTreeId && activeTreeId !== stamboumId) {
+        if (stamboumId && activeTreeId !== stamboumId) {
             return { success: false, error: 'wrong_active_tree' };
         }
 
