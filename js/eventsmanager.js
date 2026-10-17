@@ -1,4 +1,4 @@
-/* ======================= js/eventsmanager.js v0.9.6 =======================
+/* ======================= js/eventsmanager.js v0.9.7 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Wijziging v0.9.4:
    - Hardcoded Cloudinary cloud name en preset verwijderd
@@ -601,7 +601,7 @@
                 publishBtn.setAttribute('aria-label', isPublished ? 'Publicatie intrekken' : 'Event publiceren');
                 publishBtn.title = ownerCanPublish
                     ? (isPublished ? 'Publicatie intrekken' : 'Event publiceren')
-                    : 'Alleen de geverifieerde stamboomeigenaar kan publiceren. Laad de cloudstamboom om je rol te controleren.';
+                    : 'Publiceren vereist dat je als eigenaar bent geverifieerd voor de geladen cloudstamboom.';
                 publishBtn.disabled = !ownerCanPublish;
                 publishBtn.style.cssText = 'padding:5px 9px;cursor:pointer;border:1px solid #aaa;border-radius:4px';
                 if (!ownerCanPublish) publishBtn.style.cssText += ';opacity:.5;cursor:not-allowed';
@@ -871,16 +871,33 @@
             buildHeader();                                               // Headers hertekenen bij taalwissel
         });
 
+        // Controleer de feitelijke eigenaar van de actieve cloudstamboom.
+        // Een accounttier 'owner' is onvoldoende: iemand kan editor van andermans boom zijn.
         (async function () {
             var treeId = StamboomStorage.getActiveTreeId();
-            if (!treeId || !window.ShareModule || typeof ShareModule.getMyRoleForTree !== 'function') return;
+            if (!treeId) {
+                console.info('[eventsmanager] Geen actieve cloudstamboom: publicatie uitgeschakeld.');
+                return;
+            }
             try {
-                var role = await ShareModule.getMyRoleForTree(treeId);
-                ownerCanPublish = !!role && !role.error && role.rol === 'owner';
+                if (!window.AuthModule || typeof AuthModule.getClient !== 'function' ||
+                    typeof AuthModule.getUser !== 'function') return;
+                var user = await AuthModule.getUser();
+                if (!user) return;
+                var result = await AuthModule.getClient()
+                    .from('stambomen')
+                    .select('id, user_id')
+                    .eq('id', treeId)
+                    .single();
+                if (result.error) {
+                    console.warn('[eventsmanager] Verificatie eigenaar mislukt:', result.error.message);
+                    return;
+                }
+                ownerCanPublish = !!result.data && result.data.user_id === user.id;
                 if (selectedHoofdId) renderTable(dataset);
             } catch (e) {
                 ownerCanPublish = false;
-                console.warn('[eventsmanager] Owner-rolcontrole mislukt:', e);
+                console.warn('[eventsmanager] Owner-verificatie mislukt:', e);
             }
         })();
 
