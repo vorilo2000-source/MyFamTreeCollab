@@ -1,4 +1,4 @@
-/* ======================= js/eventStorage.js v0.1.0 ======================= */ // Persistente lokale opslag voor Events v1.
+/* ======================= js/eventStorage.js v0.1.1 ======================= */ // Persistente lokale opslag voor Events v1.
 (function () { // Start een afgeschermde module.
     'use strict'; // Activeert strikte JavaScript-validatie.
 
@@ -188,10 +188,26 @@
         return set(filtered); // Slaat de gefilterde dataset op.
     } // Sluit remove af.
 
-    function clear() { // Verwijdert alle lokale events.
-        localStorage.removeItem(STORAGE_KEY); // Wist de eventdataset.
+    // v0.1.1 — Reset van de lokale events maakt de complete cloudstamboom niet langer 'geladen'.
+    // De stamboom en de events op Supabase worden NIET verwijderd.
+    function clear() { // Verwijdert uitsluitend de lokale events.
+        localStorage.removeItem(STORAGE_KEY); // Wist de lokale eventdataset.
         _updateModified(); // Registreert het moment van wissen.
-        return true; // Meldt succesvolle reset.
+        // Verbreek alleen de actieve cloudkoppeling, omdat de lokale data
+        // niet meer gelijk is aan de gezamenlijk geladen personen + events.
+        if (window.StamboomStorage &&
+            typeof window.StamboomStorage.setActiveTreeId === 'function' &&
+            typeof window.StamboomStorage.setActiveTreeName === 'function') {
+            window.StamboomStorage.setActiveTreeId(null);
+            window.StamboomStorage.setActiveTreeName(null);
+        } else {
+            // Ook wanneer de stamboommodule niet op de Events-pagina geladen is.
+            localStorage.removeItem('stamboomActiefId');
+            localStorage.removeItem('stamboomActiefNaam');
+        }
+        // Andere paginaonderdelen in hetzelfde browservenster kunnen direct verversen.
+        window.dispatchEvent(new CustomEvent('myfamtreecollab:events-reset'));
+        return true;
     } // Sluit clear af.
 
     function replaceAll(dataset) { // Vervangt de volledige eventdataset.
@@ -218,6 +234,6 @@
         replaceAll: replaceAll, // Vervangt alle events.
         getModified: getModified, // Geeft de laatste wijzigingstijd terug.
         importFromStamboom: importFromStamboom, // Importeert ontbrekende en synchroniseert bestaande Geboorte- en Overlijden-events uit stamboomdata.
-        version: 'v0.1.0' // Publiceert de huidige moduleversie.
+        version: 'v0.1.1' // Publiceert de huidige moduleversie.
     }; // Sluit de publieke API af.
 })(); // Sluit en voert de module direct uit.
