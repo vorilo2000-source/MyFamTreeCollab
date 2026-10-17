@@ -1,4 +1,4 @@
-/* ======================= js/eventsmanager.js v0.9.5 =======================
+/* ======================= js/eventsmanager.js v0.9.6 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Wijziging v0.9.4:
    - Hardcoded Cloudinary cloud name en preset verwijderd
@@ -593,21 +593,27 @@
                     tr.remove();
                 });
                 td.appendChild(deleteBtn);
-                if (ownerCanPublish) {
-                    var publishBtn = document.createElement('button');
-                    publishBtn.type = 'button';
-                    var isPublished = p.published === true;
-                    publishBtn.textContent = isPublished ? 'Gepubliceerd' : 'Publiceren';
-                    publishBtn.title = isPublished ? 'Publicatie intrekken' : 'Event publiceren';
-                    publishBtn.style.cssText = 'padding:5px 9px;cursor:pointer;border:1px solid #aaa;border-radius:4px';
-                    publishBtn.addEventListener('click', function () {
-                        var next = tr.dataset.published !== 'true';
-                        tr.dataset.published = String(next);
-                        publishBtn.textContent = next ? 'Gepubliceerd' : 'Publiceren';
-                        publishBtn.title = next ? 'Publicatie intrekken' : 'Event publiceren';
-                    });
-                    td.appendChild(publishBtn);
-                }
+                // Altijd zichtbaar; zonder geverifieerde Owner-rol nooit bedienbaar.
+                var publishBtn = document.createElement('button');
+                publishBtn.type = 'button';
+                var isPublished = p.published === true;
+                publishBtn.textContent = isPublished ? '◉' : '◯';
+                publishBtn.setAttribute('aria-label', isPublished ? 'Publicatie intrekken' : 'Event publiceren');
+                publishBtn.title = ownerCanPublish
+                    ? (isPublished ? 'Publicatie intrekken' : 'Event publiceren')
+                    : 'Alleen de geverifieerde stamboomeigenaar kan publiceren. Laad de cloudstamboom om je rol te controleren.';
+                publishBtn.disabled = !ownerCanPublish;
+                publishBtn.style.cssText = 'padding:5px 9px;cursor:pointer;border:1px solid #aaa;border-radius:4px';
+                if (!ownerCanPublish) publishBtn.style.cssText += ';opacity:.5;cursor:not-allowed';
+                publishBtn.addEventListener('click', function () {
+                    if (!ownerCanPublish) return;
+                    var next = tr.dataset.published !== 'true';
+                    tr.dataset.published = String(next);
+                    publishBtn.textContent = next ? '◉' : '◯';
+                    publishBtn.setAttribute('aria-label', next ? 'Publicatie intrekken' : 'Event publiceren');
+                    publishBtn.title = next ? 'Publicatie intrekken' : 'Event publiceren';
+                });
+                td.appendChild(publishBtn);
                 tr.dataset.published = String(p.published === true);
 
             } else if (col.key === 'Relatie') {
