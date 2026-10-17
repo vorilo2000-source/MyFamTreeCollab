@@ -1,4 +1,4 @@
-<!-- ======================= stamboom/storage.html v2.10.3 =======================
+<!-- ======================= stamboom/storage.html v2.10.4 =======================
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
 
      Wijziging v2.10.2:
@@ -977,6 +977,7 @@ i18nModule.init()
             actieveBalk.classList.add('zichtbaar');
             btnOverschrijf.disabled = false;
         } else {
+            actieveBalk.classList.remove('zichtbaar'); // v2.10.4 — oude actiefstatus wissen.
             btnOverschrijf.disabled = true;
         }
         if (actieveNaam && !inputNaamNieuw.value) { inputNaamNieuw.value = actieveNaam; }
@@ -1101,6 +1102,25 @@ i18nModule.init()
     }
 
     initCloud();
+
+    // v2.10.4 — Toon na een Events-reset opnieuw 'Laden' in Jouw cloud stambomen.
+    // Bij terugkeer uit een andere pagina kan localStorage in de tussentijd gewijzigd zijn.
+    var _laatstActiefId = StamboomStorage.getActiveTreeId();
+    var _verversCloudStatus = async function () {
+        var nuActiefId = StamboomStorage.getActiveTreeId();
+        if (_laatstActiefId === nuActiefId) return; // Geen onnodige Supabase-opvraag.
+        _laatstActiefId = nuActiefId;
+        _toonActieveBalkData();
+        actieveBalk.classList.remove('zichtbaar');
+        btnOverschrijf.disabled = !nuActiefId;
+        await initCloud(); // Vernieuw rijen en 'Geladen'/'Laden' knopstatus.
+    };
+    window.addEventListener('myfamtreecollab:events-reset', _verversCloudStatus);
+    window.addEventListener('focus', _verversCloudStatus);
+    window.addEventListener('pageshow', _verversCloudStatus);
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'stamboomActiefId' || e.key === 'stamboomActiefNaam') _verversCloudStatus();
+    });
 
     // ======================= GEDEELD MET MIJ TABBLAD =======================
 
