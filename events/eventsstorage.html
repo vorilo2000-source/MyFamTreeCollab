@@ -1,4 +1,5 @@
-﻿<!-- ======================= events/eventsstorage.html v0.2.1 =======================
+﻿<!-- ======================= events/eventsstorage.html v0.2.2 =======================
+     v0.2.2: onafhankelijke event-reset en event-specifieke geladen-status.
      Opslagpagina voor lokale en cloud Events.
 
      Wijziging v0.2.1:
@@ -269,6 +270,22 @@ i18nModule.init()
             var tabInhouden = document.querySelectorAll('.tab-inhoud');
             var gedeeldGeladen = false;
 
+            // v0.2.2: Alleen de geladen-status van Events bewaren, gescheiden van personen.
+            var EVENT_ACTIVE_ID_KEY = 'stamboomEventsActiefId';
+            var EVENT_ACTIVE_NAME_KEY = 'stamboomEventsActiefNaam';
+            function getActiveEventsTreeId() { return localStorage.getItem(EVENT_ACTIVE_ID_KEY) || null; }
+            function getActiveEventsTreeName() { return localStorage.getItem(EVENT_ACTIVE_NAME_KEY) || null; }
+            function setActiveEventsTree(id, name) {
+                if (id) {
+                    localStorage.setItem(EVENT_ACTIVE_ID_KEY, String(id));
+                    localStorage.setItem(EVENT_ACTIVE_NAME_KEY, String(name || ''));
+                } else {
+                    localStorage.removeItem(EVENT_ACTIVE_ID_KEY);
+                    localStorage.removeItem(EVENT_ACTIVE_NAME_KEY);
+                }
+            }
+
+
             function activeerTab(naam) {
                 tabKnoppen.forEach(function (knop) {
                     knop.classList.toggle('actief', knop.dataset.tab === naam);
@@ -326,8 +343,8 @@ i18nModule.init()
             };
 
             function toonActieveBalkData() {
-                var id = StamboomStorage.getActiveTreeId();
-                var naam = StamboomStorage.getActiveTreeName();
+                var id = getActiveEventsTreeId();
+                var naam = getActiveEventsTreeName();
 
                 if (id && naam) {
                     actieveNaamData.textContent = naam;
@@ -489,10 +506,14 @@ i18nModule.init()
             }
 
             resetBtn.addEventListener('click', function () {
-                if (!EventStorage.get().length) return;
-                if (!confirm('Alle lokale events verwijderen?')) return;
-                EventStorage.clear();
+                if (!EventStorage.get().length && !getActiveEventsTreeId()) return;
+                if (!confirm('Alleen de lokale Events verwijderen? Persoonsgegevens en Cloud Events blijven behouden.')) return;
+                if (EventStorage.clear() === false) return; // Geen status wissen wanneer reset mislukt.
+                setActiveEventsTree(null, null); // Alleen Event-status ontkoppelen.
                 renderTable();
+                toonActieveBalkData();
+                initCloud(); // 'Geladen' verandert direct naar 'Laden'.
+                // Personen, hun actieve stamboom-ID en Cloudinary-afbeeldingen worden niet gewijzigd.
             });
 
             renderTable();
@@ -539,6 +560,8 @@ i18nModule.init()
                     statusFunctie('Stamboom geladen, maar events konden niet worden geladen: ' + (eventResult.error || 'onbekend'), 'fout');
                     return;
                 }
+
+                setActiveEventsTree(id, naam); // v0.2.2: Events zijn nu geladen.
 
                 statusFunctie(
                     '"' + naam + '" geladen — ' + personenResult.count + ' personen, ' + eventResult.count + ' events.',
@@ -720,7 +743,7 @@ i18nModule.init()
                     return;
                 }
 
-                var actieveId = StamboomStorage.getActiveTreeId();
+                var actieveId = getActiveEventsTreeId();
                 var tabel = document.createElement('table');
                 tabel.className = 'stambomen-tabel';
 
@@ -839,8 +862,8 @@ i18nModule.init()
                 sectionOpslaan.classList.add('zichtbaar');
                 sectionLijst.classList.add('zichtbaar');
 
-                var actieveId = StamboomStorage.getActiveTreeId();
-                var actieveNaam = StamboomStorage.getActiveTreeName();
+                var actieveId = getActiveEventsTreeId();
+                var actieveNaam = getActiveEventsTreeName();
 
                 if (actieveId && actieveNaam) {
                     actieveNaamEl.textContent = actieveNaam;
@@ -854,8 +877,8 @@ i18nModule.init()
             }
 
             btnEventsOpslaan.addEventListener('click', function () {
-                var id = StamboomStorage.getActiveTreeId();
-                var naam = StamboomStorage.getActiveTreeName() || 'actieve stamboom';
+                var id = getActiveEventsTreeId();
+                var naam = getActiveEventsTreeName() || 'actieve stamboom';
                 slaEventsOp(id, naam, toonCloudStatus);
             });
 
@@ -900,7 +923,7 @@ i18nModule.init()
                     return;
                 }
 
-                var actieveId = StamboomStorage.getActiveTreeId();
+                var actieveId = getActiveEventsTreeId();
                 var tabel = document.createElement('table');
                 tabel.className = 'stambomen-tabel';
 
@@ -976,7 +999,8 @@ i18nModule.init()
                         var leave = await ShareModule.leaveCollaboration(item.stamboom_id);
                         if (leave.success) {
                             toonGedeeldStatus('Samenwerking verlaten.', 'succes');
-                            if (StamboomStorage.getActiveTreeId() === item.stamboom_id) {
+                            if (getActiveEventsTreeId() === item.stamboom_id) {
+                                setActiveEventsTree(null, null);
                                 StamboomStorage.setActiveTreeId(null);
                                 StamboomStorage.setActiveTreeName(null);
                                 toonActieveBalkData();
