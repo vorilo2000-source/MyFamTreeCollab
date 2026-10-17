@@ -1,5 +1,12 @@
-// ========================= js/cloudSync.js v2.3.0 =========================
+// ========================= js/cloudSync.js v2.4.0 =========================
 // Cloud sync module for MyFamTreeCollab
+//
+// Nieuw v2.4.0:
+// - saveToCloud en loadFromCloud verwerken personen (incl. PortretURL) en events samen
+// - Supabase stambomen.data en stambomen.events blijven dezelfde velden
+// - Bij potentieel verlies van lokale gegevens vraagt laden expliciete bevestiging
+// - EventStorage ontbreekt: stop veilig vóór cloudschrijfopdracht of lokaal vervangen
+// - Losse event-acties mogen niet per ongeluk events van een andere boom opslaan
 //
 // Nieuw v2.3.0:
  // - Cloud-events gekoppeld aan dezelfde stambomen.id als de persoonsdata
@@ -119,6 +126,31 @@
     }
 
     // -----------------------------------------------------------------------
+    // _eventStore — vereiste lokale eventmodule voor gecombineerde synchronisatie
+    // -----------------------------------------------------------------------
+    function _eventStore() {
+        var store = window.EventStorage;
+        return store && typeof store.get === 'function' && typeof store.replaceAll === 'function'
+            ? store : null;
+    }
+
+    // -----------------------------------------------------------------------
+    // _canReplaceLocal — voorkom stilzwijgend verlies van lokale persoons-/eventgegevens
+    // -----------------------------------------------------------------------
+    function _canReplaceLocal(persons, events) {
+        var localPersons = window.StamboomStorage.get();
+        var localEvents = window.EventStorage.get();
+        var personsDiffer = JSON.stringify(localPersons) !== JSON.stringify(persons);
+        var eventsDiffer = JSON.stringify(localEvents) !== JSON.stringify(events);
+        if (!personsDiffer && !eventsDiffer) return true;
+        // Bevestiging omvat BEIDE datasets: bestaande gebruikersinterface vroeg enkel personen.
+        return typeof window.confirm === 'function' && window.confirm(
+            'Cloudstamboom laden? Dit vervangt je lokale personen én Events, inclusief Cloudinary-links. ' +
+            'Exporteer of bewaar je lokale gegevens eerst als je ze wilt behouden.'
+        );
+    }
+
+    // -----------------------------------------------------------------------
     // saveToCloud(naam, stamboumId)
     // Alleen voor owner en admin — viewers/editors mogen niet opslaan.
     // -----------------------------------------------------------------------
@@ -130,7 +162,18 @@
         if (!access.allowed) return { success: false, error: access.error, tier: access.tier };
 
         if (!window.StamboomStorage) return { success: false, error: 'storage_unavailable' };
+        var eventsStore = _eventStore();
+        if (!eventsStore) return { success: false, error: 'event_storage_unavailable' };
         var allPersons = window.StamboomStorage.get();
+        var allEvents = eventsStore.get();
+        if (!Array.isArray(allPersons) || !Array.isArray(allEvents)) {
+            return { success: false, error: 'invalid_local_data' };
+        }
+        // Lokale events zijn niet per boom genamespaced: de actieve boom moet overeenkomen.
+        var activeTreeId = window.StamboomStorage.getActiveTreeId();
+        if (stamboumId && activeTreeId && activeTreeId !== stamboumId) {
+            return { success: false, error: 'wrong_active_tree' };
+        }
 
         if (!access.isAdmin && allPersons.length > MAX_PERSONS) {
             return { success: false, error: 'limit_exceeded', count: allPersons.length, max: MAX_PERSONS };
@@ -144,12 +187,12 @@
         if (stamboumId) {
             result = await client
                 .from(TABLE)
-                .update({ naam: stamNaam, data: allPersons, updated_at: nu })
+                .update({ naam: stamNaam, data: allPersons, events: allEvents, updated_at: nu })
                 .eq('id', stamboumId);
         } else {
             result = await client
                 .from(TABLE)
-                .insert({ user_id: userId, naam: stamNaam, data: allPersons, updated_at: nu })
+                .insert({ user_id: userId, naam: stamNaam, data: allPersons, events: allEvents, updated_at: nu })
                 .select('id')
                 .single();
         }
@@ -175,7 +218,7 @@
             }
         }
 
-        return { success: true, id: nieuwId, naam: stamNaam, count: allPersons.length };
+        return { success: true, id: nieuwId, naam: stamNaam, count: allPersons.length, aantalEvents: allEvents.length };
     }
 
     // -----------------------------------------------------------------------
@@ -196,7 +239,7 @@
         // Geen user_id filter — RLS regelt toegang voor owners én viewers/editors
         var result = await client
             .from(TABLE)
-            .select('id, naam, data, updated_at')
+            .select('id, naam, data, events, updated_at')
             .eq('id', stamboumId)
             .single();
 
@@ -214,12 +257,33 @@
         }
 
         if (!window.StamboomStorage) return { success: false, error: 'storage_unavailable' };
-
-        window.StamboomStorage.replaceAll(cloudData);
+        var eventsStore = _eventStore();
+        if (!eventsStore) return { success: false, error: 'event_storage_unavailable' };
+        // NULL is toegestaan bij oude stambomen, maar onverwachte JSON-vormen niet.
+        var rawEvents = result.data.events;
+        if (rawEvents !== null && rawEvents !== undefined && !Array.isArray(rawEvents)) {
+            return { success: false, error: 'invalid_cloud_events' };
+        }
+        var cloudEvents = Array.isArray(rawEvents) ? rawEvents : [];
+        if (!_canReplaceLocal(cloudData, cloudEvents)) {
+            return { success: false, error: 'cancelled_by_user' };
+        }
+        // Houd een lokale herstelkopie achter de hand bij schrijffouten.
+        var oldPersons = window.StamboomStorage.get();
+        var oldEvents = eventsStore.get();
+        var personsWritten = window.StamboomStorage.replaceAll(cloudData);
+        if (!personsWritten) return { success: false, error: 'storage_write_failed' };
+        var eventsWritten = eventsStore.replaceAll(cloudEvents);
+        if (!eventsWritten) {
+            window.StamboomStorage.replaceAll(oldPersons);
+            eventsStore.replaceAll(oldEvents);
+            return { success: false, error: 'event_storage_write_failed' };
+        }
         window.StamboomStorage.setActiveTreeId(stamboumId);
         window.StamboomStorage.setActiveTreeName(stamNaam);
 
-        return { success: true, naam: stamNaam, count: cloudData.length, updatedAt: updatedAt };
+        return { success: true, naam: stamNaam, count: cloudData.length,
+                 aantalEvents: cloudEvents.length, updatedAt: updatedAt };
     }
 
     // -----------------------------------------------------------------------
@@ -316,6 +380,8 @@
             return { success: false, error: 'no_write_access' };
         }
 
+        var activeId = window.StamboomStorage && window.StamboomStorage.getActiveTreeId();
+        if (activeId !== stamboumId) return { success: false, error: 'wrong_active_tree' };
         var events = window.EventStorage.get();
         var nu = new Date().toISOString();
         var client = _getClient();
@@ -354,6 +420,8 @@
             return { success: false, error: 'event_storage_unavailable' };
         }
 
+        var activeId = window.StamboomStorage && window.StamboomStorage.getActiveTreeId();
+        if (activeId !== stamboumId) return { success: false, error: 'use_loadFromCloud_for_tree_switch' };
         var client = _getClient();
 
         var result = await client
@@ -371,6 +439,11 @@
         var naam = result.data.naam || 'Naamloos';
         var updatedAt = result.data.updated_at;
 
+        if (JSON.stringify(window.EventStorage.get()) !== JSON.stringify(cloudEvents) &&
+            typeof window.confirm === 'function' &&
+            !window.confirm('Cloud Events laden? Dit overschrijft je lokale Events en mediaverwijzingen.')) {
+            return { success: false, error: 'cancelled_by_user' };
+        }
         var replaced = window.EventStorage.replaceAll(cloudEvents);
         if (!replaced) return { success: false, error: 'event_storage_write_failed' };
 
