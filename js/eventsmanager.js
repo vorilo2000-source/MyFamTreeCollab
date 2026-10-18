@@ -1,4 +1,4 @@
-/* ======================= js/eventsmanager.js v0.9.7 =======================
+/* ======================= js/eventsmanager.js v0.9.8 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Wijziging v0.9.4:
    - Hardcoded Cloudinary cloud name en preset verwijderd
@@ -109,13 +109,15 @@
         'Anders'                                                          // Overige gebeurtenissen.
     ];
 
-    var COLUMN_MIN_WIDTHS = {                                             // Minimale breedtes voor de gevraagde eventkolommen.
-        type: '130px',                                                    // Breed genoeg om Verhuizing volledig te tonen.
-        title: '210px',                                                   // Iets compacter, maar voldoende voor een normale titel.
-        place: '150px',                                                   // Breed genoeg voor bijvoorbeeld 's-Hertogenbosch.
-        participants: '220px',                                            // Meer ruimte voor meerdere deelnemers onder elkaar.
-        sources: '260px',                                                 // Bestaande breedte behouden.
-        notes: '260px'                                                    // Bestaande breedte behouden.
+    var COLUMN_MIN_WIDTHS = { // Presentatie: compacte eventkolommen.
+        type: 'calc(12ch + 20px)',
+        title: 'calc(12ch + 20px)',
+        place: 'calc(12ch + 20px)',
+        start_date: '116px',
+        end_date: '116px',
+        participants: '220px',
+        sources: '260px',
+        notes: '260px'
     };
 
     /* ======================= STATE ======================= */
@@ -146,7 +148,12 @@
             var th = document.createElement('th');                       // Maak nieuw <th> element
             th.textContent = col.key === 'Acties' ? 'Acties' : i18nModule.t(col.i18nKey);                  // Vertaalde kolomnaam via namespace
             if (COLUMN_MIN_WIDTHS[col.key]) {                            // Alleen de gevraagde eventkolommen verbreden.
-                th.style.minWidth = COLUMN_MIN_WIDTHS[col.key];          // Pas dezelfde minimale breedte toe op de kolomkop.
+                th.style.minWidth = COLUMN_MIN_WIDTHS[col.key];
+                if (['type', 'title', 'place', 'start_date', 'end_date'].includes(col.key)) {
+                    th.style.width = COLUMN_MIN_WIDTHS[col.key];
+                    th.style.maxWidth = COLUMN_MIN_WIDTHS[col.key];
+                    th.style.boxSizing = 'border-box';
+                }          // Pas dezelfde minimale breedte toe op de kolomkop.
             }
             theadRow.appendChild(th);                                    // Toevoegen aan header-rij
         });
@@ -660,6 +667,7 @@
                 ta.style.width     = '100%';
                 ta.style.boxSizing = 'border-box';
                 ta.style.resize    = 'vertical';
+                if (col.key === 'notes') { ta.wrap = 'soft'; ta.style.whiteSpace = 'pre-wrap'; ta.style.overflowWrap = 'anywhere'; ta.rows = 3; }
                 if (col.key === 'participants') {                        // Deelnemers mogen meerdere namen onder elkaar bevatten.
                     ta.rows = 3;                                          // Toon standaard meerdere regels voor deelnemers.
                 }
@@ -667,7 +675,12 @@
             }
 
             if (COLUMN_MIN_WIDTHS[col.key]) {                            // Alleen Type, Titel, Bronnen en Notities verbreden.
-                td.style.minWidth = COLUMN_MIN_WIDTHS[col.key];          // Houd de kolombreedte gelijk aan de header.
+                td.style.minWidth = COLUMN_MIN_WIDTHS[col.key];
+                if (['type', 'title', 'place', 'start_date', 'end_date'].includes(col.key)) {
+                    td.style.width = COLUMN_MIN_WIDTHS[col.key];
+                    td.style.maxWidth = COLUMN_MIN_WIDTHS[col.key];
+                    td.style.boxSizing = 'border-box';
+                }          // Houd de kolombreedte gelijk aan de header.
             }
 
             tr.appendChild(td);                                          // Cel toevoegen aan rij
