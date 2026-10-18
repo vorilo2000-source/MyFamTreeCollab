@@ -1,4 +1,4 @@
-﻿<!-- ======================= events/eventsstorage.html v0.2.3 =======================
+﻿<!-- ======================= events/eventsstorage.html v0.2.4 =======================
      v0.2.2: onafhankelijke event-reset en event-specifieke geladen-status.
      Opslagpagina voor lokale en cloud Events.
      v0.2.3: toont gedeelde gebruikersaantallen via dezelfde ShareModule als Stamboom Storage.
@@ -64,6 +64,23 @@
         th input { width: 95%; padding: 3px 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 3px; }
         .empty { font-style: italic; color: #888; padding: 20px 0; }
         .source-links { display: flex; flex-direction: column; gap: 3px; white-space: normal; }
+        /* Alleen de lokale Eventtabel; cloudlijsten behouden hun breedtes. */
+        #eventStorageContainer .storage-tabel-wrapper > table { table-layout: fixed; width: max-content; min-width: 100%; }
+        #eventStorageContainer .storage-tabel-wrapper th,
+        #eventStorageContainer .storage-tabel-wrapper td { box-sizing: border-box; }
+        #eventStorageContainer .storage-tabel-wrapper th input { width: 100%; min-width: 0; box-sizing: border-box; }
+        #eventStorageContainer .storage-tabel-wrapper th:nth-child(2),
+        #eventStorageContainer .storage-tabel-wrapper td:nth-child(2),
+        #eventStorageContainer .storage-tabel-wrapper th:nth-child(3),
+        #eventStorageContainer .storage-tabel-wrapper td:nth-child(3),
+        #eventStorageContainer .storage-tabel-wrapper th:nth-child(6),
+        #eventStorageContainer .storage-tabel-wrapper td:nth-child(6) { width: calc(12ch + 20px); min-width: calc(12ch + 20px); max-width: calc(12ch + 20px); overflow-wrap: anywhere; white-space: normal; }
+        #eventStorageContainer .storage-tabel-wrapper th:nth-child(4),
+        #eventStorageContainer .storage-tabel-wrapper td:nth-child(4),
+        #eventStorageContainer .storage-tabel-wrapper th:nth-child(5),
+        #eventStorageContainer .storage-tabel-wrapper td:nth-child(5) { width: 116px; min-width: 116px; max-width: 116px; }
+        #eventStorageContainer .storage-tabel-wrapper td:nth-child(9) { white-space: pre-wrap; overflow-wrap: anywhere; vertical-align: top; }
+
         .source-links a { color: #2563eb; text-decoration: underline; word-break: break-all; }
 
         .actieve-stamboom-balk { display: none; align-items: center; gap: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.92rem; color: #1e40af; }
@@ -443,6 +460,14 @@ i18nModule.init()
                 wrapper.className = 'storage-tabel-wrapper';
 
                 var table = document.createElement('table');
+                var colgroup = document.createElement('colgroup');
+                // ID, Type, Titel, Startdatum, Einddatum, Plaats, Deelnemers, Bronnen, Notities.
+                ['175px', 'calc(12ch + 20px)', 'calc(12ch + 20px)', '116px', '116px', 'calc(12ch + 20px)', '180px', '180px', '260px'].forEach(function (breedte) {
+                    var col = document.createElement('col');
+                    col.style.width = breedte;
+                    colgroup.appendChild(col);
+                });
+                table.appendChild(colgroup);
                 var thead = document.createElement('thead');
 
                 var headerRow = document.createElement('tr');
