@@ -1,8 +1,9 @@
 // =============================================================================
 // shareModule.js — Stamboom Delen Module
-// MyFamTreeCollab v1.1.0
+// MyFamTreeCollab v1.2.0
 // -----------------------------------------------------------------------------
 // Handles sharing family trees with other users (viewer or editor role).
+// v1.2.0: uitnodiging atomair registreren via Edge Function en e-mail versturen.
 // Manages invitations, access lists, and revocation.
 //
 // Nieuw in v1.1.0 (F6-05):
@@ -89,78 +90,33 @@
   // @returns {{ success: boolean, error: string|null }}
   // ---------------------------------------------------------------------------
   async function shareTree(stamboomId, email, rol) {
-    const client = _getClient();
-
-    // Validate role value before doing anything
-    if (!['viewer', 'editor'].includes(rol)) {
-      return { success: false, error: "Ongeldige rol. Kies 'viewer' of 'editor'." };
+    if (!stamboomId || !['viewer', 'editor'].includes(rol) ||
+        !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return { success: false, error: 'Controleer stamboom, e-mailadres en rol.' };
     }
 
-    // Get the currently logged-in user (must be owner or admin)
     const user = await window.AuthModule.getUser();
-    if (!user) return { success: false, error: "Niet ingelogd." };
+    if (!user) return { success: false, error: 'Niet ingelogd.' };
 
-    // Check that the current user has the right tier to invite others
-    const myTier = await window.AuthModule.getTier();                // Haal tier op van uitnodigende gebruiker
-    if (!['owner', 'admin'].includes(myTier)) {                      // Alleen owner en admin mogen uitnodigen
-      return { success: false, error: "Alleen owners kunnen andere gebruikers uitnodigen." };
-    }
-
-    // Verify ownership: check that the tree belongs to the current user
-    const { data: boom, error: boomErr } = await client
-      .from("stambomen")
-      .select("id, user_id")
-      .eq("id", stamboomId)
-      .eq("user_id", user.id) // Only the owner passes this check
-      .single();
-
-    if (boomErr || !boom) {
-      return { success: false, error: "Je bent niet de eigenaar van deze stamboom." };
-    }
-
-    // Look up the viewer's user_id via their email address using the RPC function
-    const { data: viewerId, error: rpcErr } = await client
-      .rpc("get_user_id_by_email", { email: email.trim().toLowerCase() });
-
-    if (rpcErr || !viewerId) {
-      return { success: false, error: "Geen account gevonden met dit e-mailadres." };
-    }
-
-    // Prevent owner from inviting themselves
-    if (viewerId === user.id) {
-      return { success: false, error: "Je kunt jezelf niet uitnodigen." };
-    }
-
-    // Check that the invited user is not on the free tier
-    const { data: profiel, error: profielErr } = await client
-      .from("profiles")
-      .select("tier")
-      .eq("id", viewerId)
-      .single();
-
-    if (profielErr || !profiel) {
-      return { success: false, error: "Profiel van uitgenodigde gebruiker niet gevonden." };
-    }
-
-    // Insert the sharing record into stamboom_gedeeld
-    const { error: insertErr } = await client
-      .from("stamboom_gedeeld")
-      .insert({
-        stamboom_id: stamboomId,   // UUID of the tree being shared
-        eigenaar_id: user.id,      // UUID of the owner (current user)
-        viewer_id:   viewerId,     // UUID of the invited user
-        rol:         rol           // 'viewer' or 'editor'
+    // Eén serveractie voor toegangsregistratie en e-mail. Geen e-mailgeheimen in de browser.
+    try {
+      const { data, error } = await _getClient().functions.invoke('send-share-invitation', {
+        body: { stamboom_id: stamboomId, email: email.trim().toLowerCase(), rol: rol }
       });
-
-    // Handle duplicate: user already has access
-    if (insertErr) {
-      if (insertErr.code === "23505") { // Postgres unique constraint violation
-        return { success: false, error: "Deze gebruiker heeft al toegang tot deze stamboom." };
-      }
-      return { success: false, error: insertErr.message };
+      if (error) return { success: false, error: error.message || 'Uitnodiging mislukt.' };
+      if (!data || !data.success) return {
+        success: false,
+        error: (data && data.error) || 'Uitnodiging mislukt.'
+      };
+      return {
+        success: true,
+        error: null,
+        email_sent: data.email_sent === true,
+        email_error: data.email_error || null
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Netwerkfout bij uitnodigen.' };
     }
-
-    return { success: true, error: null };
   }
 
   // ---------------------------------------------------------------------------
