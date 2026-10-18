@@ -1,4 +1,6 @@
-<!-- ======================= home/confirm.html v1.3.3 =======================
+﻿<!-- ======================= home/confirm.html v1.3.4 =======================
+     Wijziging v1.3.4:
+     - Aanroep dynamic-responder verwijderd; accountbevestiging blijft via Supabase Auth.
      Wijziging v1.3.3:
      - Paden naar gedeelde CSS en JS vanaf de projecthoofdmap geladen.
      - Navbar toegevoegd tussen TopBar en bevestigingsblok.
@@ -134,7 +136,7 @@ Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de 
         });
 
     // ======================= Navbar laden =======================
-    fetch('/MyFamTreeCollab/Layout/Navbar.html') // Haal de gedeelde navigatie op.
+    fetch('/MyFamTreeCollab/Layout/Navbar.html?v=1.4.1', { cache: 'no-store' }) // Haal de gedeelde navigatie op.
         .then(function (r) { if (!r.ok) throw new Error('Navbar HTTP ' + r.status); return r.text(); }) // Controleer of het bestand bestaat.
         .then(function (html) { // Plaats de navigatie na het ophalen.
             if (translationsReady) i18nModule.onComponentLoaded(html, document.getElementById('navbar-placeholder')); // Vertaal de Navbar als i18n werkt.
@@ -159,19 +161,6 @@ Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de 
     // Laadtekst tonen via i18n
     title.textContent = t('auth:confirm.loadingTitle'); // Toon de laadtekst in de beschikbare taal.
     msg.textContent   = t('auth:confirm.loadingMsg'); // Toon de toelichting in de beschikbare taal.
-
-    // ======================= notifyAdmin(email) =======================
-    async function notifyAdmin(email) {
-        try {
-            await fetch(SUPABASE_URL + '/functions/v1/dynamic-responder', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email })
-            });
-        } catch (e) {
-            console.warn('[confirm] notifyAdmin fout (niet kritiek):', e);
-        }
-    }
 
     // ======================= Toon succes — via i18n =======================
     function showSuccess() {
@@ -219,9 +208,7 @@ Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de 
             return;
         }
 
-        var email = result.data && result.data.user ? result.data.user.email : ''; // Lees het e-mailadres alleen als er een gebruiker is.
         showSuccess(); // Toon succes en plan de doorsturing zodra de verificatie slaagt.
-        void notifyAdmin(email); // Stuur de niet-kritieke adminmelding zonder de doorsturing op te houden.
     })().catch(function (error) { // Verwerk onverwachte fouten van de client of het netwerk.
         console.error('[confirm] Verificatie mislukt:', error); // Bewaar de technische oorzaak in de console.
         showError(t('auth:confirm.errorDefault')); // Toon een begrijpelijke fout in plaats van de zandloper.
@@ -243,3 +230,4 @@ Promise.race([translationLoad, new Promise(function (_, reject) { // Begrens de 
 
 </body>
 </html>
+
