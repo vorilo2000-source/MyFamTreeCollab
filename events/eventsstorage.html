@@ -1,6 +1,7 @@
-﻿<!-- ======================= events/eventsstorage.html v0.2.2 =======================
+﻿<!-- ======================= events/eventsstorage.html v0.2.3 =======================
      v0.2.2: onafhankelijke event-reset en event-specifieke geladen-status.
      Opslagpagina voor lokale en cloud Events.
+     v0.2.3: toont gedeelde gebruikersaantallen via dezelfde ShareModule als Stamboom Storage.
 
      Wijziging v0.2.1:
      - Technische tabelheaders vervangen door leesbare labels
@@ -103,6 +104,7 @@
         .stambomen-tabel td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; color: #333; vertical-align: middle; }
         .stambomen-tabel tr.actief-rij td { background: #eff6ff; }
 
+        .deel-indicator { display:block; margin-top:4px; color:#475569; font-size:0.78rem; font-weight:normal; }
         .badge-actief { font-size: 0.72rem; font-weight: bold; background: #2563eb; color: #fff; padding: 2px 7px; border-radius: 10px; margin-left: 6px; }
         .badge-rol { font-size: 0.72rem; font-weight: bold; padding: 2px 7px; border-radius: 10px; white-space: nowrap; display: inline-block; }
         .badge-rol.viewer { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
@@ -590,6 +592,28 @@ i18nModule.init()
                 }
             }
 
+            // Dezelfde toegangsregistraties als Stamboom Storage: geen aparte event-sharing.
+            async function verversDeelIndicator(stamboomId) {
+                var label = document.querySelector('[data-share-status-id="' + stamboomId + '"]');
+                if (!label) return;
+                try {
+                    var result = await ShareModule.listSharedWith(stamboomId);
+                    if (!label.isConnected) return;
+                    if (result.error) {
+                        label.textContent = 'Delen: status onbekend';
+                        label.title = result.error;
+                        return;
+                    }
+                    var aantal = Array.isArray(result.data) ? result.data.length : 0;
+                    label.textContent = aantal ? 'Gedeeld met ' + aantal : 'Niet gedeeld';
+                    label.title = aantal ? 'Toegang verleend aan ' + aantal + ' gebruiker(s)' : 'Geen gedeelde toegang';
+                } catch (error) {
+                    if (!label.isConnected) return;
+                    label.textContent = 'Delen: status onbekend';
+                    label.title = error.message || String(error);
+                }
+            }
+
             function bouwDeelPaneel(stamboomId, stamboomNaam, paneel) {
                 paneel.innerHTML = '';
 
@@ -678,6 +702,7 @@ i18nModule.init()
                     lijst.innerHTML = '<p class="deel-lijst-leeg">Toegang laden…</p>';
 
                     var result = await ShareModule.listSharedWith(stamboomId);
+                    verversDeelIndicator(stamboomId);
                     lijst.innerHTML = '';
 
                     if (result.error) {
@@ -767,6 +792,11 @@ i18nModule.init()
 
                     var tdNaam = document.createElement('td');
                     tdNaam.textContent = stamboom.naam;
+                    var deelIndicator = document.createElement('small');
+                    deelIndicator.dataset.shareStatusId = stamboom.id;
+                    deelIndicator.className = 'deel-indicator';
+                    deelIndicator.textContent = 'Delen controleren…';
+                    tdNaam.appendChild(deelIndicator);
 
                     if (isActief) {
                         var badge = document.createElement('span');
@@ -838,6 +868,7 @@ i18nModule.init()
 
                 tabel.appendChild(tbody);
                 lijstContainer.appendChild(tabel);
+                stambomen.forEach(function (boom) { verversDeelIndicator(boom.id); });
             }
 
             async function initCloud() {
