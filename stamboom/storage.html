@@ -1,4 +1,4 @@
-<!-- ======================= stamboom/storage.html v2.10.5 =======================
+<!-- ======================= stamboom/storage.html v2.10.6 =======================
      v2.10.5: Reset stamboom behoudt EventStorage en onafhankelijke Events-laadstatus.
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
 
@@ -91,6 +91,8 @@
         #storageContainer .storage-tabel-wrapper th { white-space: nowrap; overflow: hidden; text-overflow: clip; }
         /* Filtervelden hebben geen invloed op de gemeten koptekstbreedte. */
         #storageContainer .storage-tabel-wrapper th input { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+        /* Opmerkingen: meerregelige inhoud zonder afkappen, ook bij lange woorden. */
+        #storageContainer .storage-tabel-wrapper td.storage-opmerkingen-kolom { white-space: pre-wrap; overflow-wrap: anywhere; text-overflow: clip; vertical-align: top; }
         /* Een portret blijft uitsluitend een statuspictogram, geen bewerkbaar veld. */
         #storageContainer td.storage-portret-kolom, #storageContainer th.storage-portret-kolom { text-align: center; }
 
@@ -398,6 +400,7 @@ i18nModule.init()
         columns.splice(columns.indexOf('ID') + 1, 0, 'PortretURL'); // Plaats Portret direct na ID.
     }
     function geefKolomKlasse(el, col) { // Alleen presentatieregels; geen schema- of opslagwijzigingen.
+        if (col === 'Opmerkingen') el.classList.add('storage-opmerkingen-kolom');
         if (col === 'PortretURL') el.classList.add('storage-portret-kolom'); // Buste gecentreerd.
     }
     var kolomResizeObserver = null; // Bewaak maximaal één resize-observer voor de huidige tabel.
