@@ -1,4 +1,4 @@
-<!-- ======================= bronnen/handleiding-es.html v2.6.0 =======================
+<!-- ======================= bronnen/handleiding-es.html v2.8.0 =======================
      Guía de usuario en español para MyFamTreeCollab
      Véase handleiding-nl.html (neerlandés) y handleiding-en.html (inglés) para otros idiomas
 
@@ -94,7 +94,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Guía de usuario <span class="versie-badge">v2.7.0</span></h1>
+            <h1>Guía de usuario <span class="versie-badge">v2.8.0</span></h1>
             <p>Bienvenido a la guía de usuario de MyFamTreeCollab. Aquí encontrarás instrucciones paso a paso para todas las funciones de la aplicación, desde crear tu primera persona hasta exportar tu árbol genealógico y colaborar con otros.</p>
         </div>
 
@@ -312,6 +312,7 @@
                 <li>Confirma la contraseña en el segundo campo.</li>
                 <li>Haz clic en <strong>"Guardar"</strong>.</li>
             </ul>
+                        <h3>Eliminar la cuenta</h3><p>Solo puedes eliminar definitivamente tu cuenta cuando ya no eres propietario de ningún árbol en la nube. Primero exporta y descarga los archivos del árbol y de eventos; después elimina los árboles de tu propiedad y procede con la eliminación de la cuenta. Supabase comprueba la propiedad.</p>
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
@@ -349,6 +350,7 @@
                 <li>Haz clic en <strong>"🗑️ Eliminar"</strong> junto al árbol.</li>
                 <li>Confirma el aviso. La barra ACTIVO desaparece automáticamente.</li>
             </ul>
+                        <h3>Datos personales y eventos</h3><p>Un árbol en la nube guarda datos personales (incluido <code>PortretURL</code> para los retratos) y eventos. Las imágenes permanecen en Cloudinary; solo sus URL se guardan junto a los registros. Al cargar un árbol, ambos tipos de datos están disponibles localmente.</p><h3>Restablecer solo los datos personales locales</h3><p><strong>Almacenamiento → Mis datos → Restablecer árbol</strong> elimina únicamente los registros locales de personas. Los eventos locales y los datos de Supabase se conservan. Cada página de almacenamiento gestiona su propio restablecimiento y estado de carga. Vuelve a cargar los datos adecuados antes de sobrescribir la copia en la nube.</p>
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
@@ -366,7 +368,8 @@
                 <li>Un editor no recibe automáticamente la capacidad de subida a Cloudinary del owner.</li>
             </ul>
             <p><strong>Estado v2.6.0:</strong> el nuevo código de Cloudinary y la conexión de TopBar están preparados. El funcionamiento final en vivo todavía debe verificarse después de la publicación.</p>
-        </div>
+                    <h3>Retratos y fuentes de eventos</h3><p>El retrato se vincula al ID de persona existente mediante <code>PortretURL</code>. Los eventos pueden contener enlaces de Cloudinary entre sus fuentes. Estas referencias se guardan con los registros correspondientes sin duplicar la imagen en Supabase.</p>
+            </div>
 
         <div class="sectie" id="events">
             <h2>12. Eventos</h2>
@@ -397,6 +400,7 @@
                 <li><strong>🔗 Compartido conmigo</strong> — eventos de árboles genealógicos compartidos contigo.</li>
             </ul>
             <div class="tip"><strong>Vinculación en la nube:</strong> Las personas y los eventos usan el mismo árbol genealógico en la nube. No se crea un árbol separado para eventos. Un Viewer puede cargar eventos compartidos; un Editor también puede guardar los eventos de un árbol compartido.</div>
+                        <h3>Eliminar y publicar eventos</h3><p>En <strong>Event Manager</strong>, los botones de acción aparecen a la izquierda de cada evento. La papelera elimina un evento individual previa confirmación. Los eventos fijos de nacimiento y fallecimiento (<code>-001</code> y <code>-002</code>) están excluidos de esta acción.</p><p>El <strong>botón del ojo</strong> indica el estado de publicación. Solo el <strong>Owner verificado del árbol en la nube activo</strong> puede publicar o retirar la publicación. Sin un árbol activo, la acción no está disponible. Los eventos nuevos no están publicados de forma predeterminada (<code>published: false</code>).</p><div class="waarschuwing"><strong>Limitación de privacidad:</strong> el control de publicación está disponible en la interfaz, pero la protección de los eventos no publicados en el servidor todavía no está terminada. Los usuarios con acceso al árbol compartido en Supabase podrían leer los eventos no publicados. No consideres el estado «no publicado» como almacenamiento confidencial.</div><h3>Restablecer los eventos locales</h3><p>Ve a <strong>Almacenamiento de eventos → Mis datos → Restablecer eventos</strong> para borrar solo los eventos locales. Los datos personales, los retratos y los datos en la nube se conservan. Usa <strong>Cargar</strong> para recuperar los eventos guardados. Nota: al abrir Event Manager pueden reconstruirse los eventos fijos de nacimiento y fallecimiento a partir de los datos personales.</p><h3>Eventos en la nube y acceso compartido</h3><p><strong>Almacenamiento de eventos → Eventos en la nube</strong> muestra los árboles con sus cantidades de personas y eventos. La indicación <strong>Compartido con …</strong> o <strong>No compartido</strong> refleja los permisos existentes. Ambas páginas de almacenamiento usan las mismas invitaciones y roles; no es necesario invitar dos veces. La invitación da acceso al árbol completo, no solo a los eventos.</p><p><strong>Guardar eventos en el árbol activo</strong> actualiza solo los eventos. La sincronización conjunta conserva los datos personales, incluido <code>PortretURL</code>, y los eventos en el mismo árbol. Tras restablecer los eventos locales, vuelve a cargarlos antes de sobrescribir datos en la nube.</p>
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 
@@ -520,6 +524,7 @@
                 <li>Ve a <strong>Almacenamiento → 🔗 Compartido conmigo</strong>.</li>
                 <li>Haz clic en <strong>"⬇️ Cargar"</strong> para cargar el árbol.</li>
             </ul>
+                        <h3>Compartir desde cualquiera de las páginas de almacenamiento</h3><p>Almacenamiento del árbol y Almacenamiento de eventos muestran y usan <strong>los mismos permisos compartidos</strong> del árbol en la nube. Almacenamiento de eventos indica si el árbol está compartido; abre <strong>Compartir</strong> para ver o revocar los accesos de Viewer y Editor. No es necesario volver a invitar a usuarios ya invitados desde Almacenamiento del árbol.</p><p><strong>Permisos de publicación:</strong> solo el Owner puede cambiar el estado de publicación de un evento. La posibilidad de que un Editor guarde eventos compartidos no le otorga permiso para publicarlos. La protección de eventos no publicados en el servidor sigue pendiente.</p>
             <a href="#" class="terug-top">↑ Volver arriba</a>
         </div>
 

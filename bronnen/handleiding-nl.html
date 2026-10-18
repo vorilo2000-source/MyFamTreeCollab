@@ -1,4 +1,4 @@
-<!-- ======================= bronnen/handleiding-nl.html v2.6.0 =======================
+<!-- ======================= bronnen/handleiding-nl.html v2.8.0 =======================
      Nederlandstalige gebruikershandleiding voor MyFamTreeCollab
      Hernoemd van handleiding.html naar handleiding-nl.html (sessie 27)
      Zie handleiding-en.html en handleiding-es.html voor andere taalversies
@@ -100,7 +100,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>Handleiding <span class="versie-badge">v2.7.0</span></h1>
+            <h1>Handleiding <span class="versie-badge">v2.8.0</span></h1>
             <p>Welkom bij de handleiding van MyFamTreeCollab. Hier vind je stap voor stap uitleg over alle functies van de applicatie, van je eerste persoon aanmaken tot je stamboom exporteren en samenwerken met anderen.</p>
         </div>
 
@@ -319,6 +319,7 @@
                 <li>Bevestig het wachtwoord in het tweede veld.</li>
                 <li>Klik op <strong>"Opslaan"</strong>.</li>
             </ul>
+                        <h3>Account verwijderen</h3><p>Je kunt je account pas definitief verwijderen wanneer je geen eigenaar meer bent van cloudstambomen. Exporteer en download eerst de stamboom- en Eventbestanden, verwijder vervolgens je eigen cloudstambomen en voer daarna de accountverwijdering uit. De controle op eigenaarschap gebeurt via Supabase.</p>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
@@ -356,6 +357,7 @@
                 <li>Klik op <strong>"🗑️ Verwijderen"</strong> naast de stamboom.</li>
                 <li>Bevestig de melding. De ACTIEF-balk verdwijnt automatisch.</li>
             </ul>
+                        <h3>Stamboomgegevens en Events</h3><p>Een cloudstamboom bevat persoonsgegevens (inclusief de <code>PortretURL</code> voor portretten) en Eventgegevens. De afbeeldingen zelf blijven in Cloudinary; alleen hun URL's worden bij de gegevens bewaard. Bij het laden van een stamboom worden beide gegevenssoorten lokaal beschikbaar gemaakt.</p><h3>Alleen lokale persoonsgegevens resetten</h3><p>Met <strong>Opslag → Mijn data → Reset stamboom</strong> verwijder je alleen de lokale persoonsrecords. De lokale Events en de gegevens in Supabase blijven behouden. De geladen-status kan per opslagpagina verschillen: personen en Events hebben afzonderlijke resetfuncties. Laad de juiste gegevens opnieuw vóór je de cloudversie overschrijft.</p>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
@@ -373,7 +375,8 @@
                 <li>Een editor krijgt niet automatisch de Cloudinary-uploadmogelijkheid van de owner.</li>
             </ul>
             <p><strong>Status v2.6.0:</strong> de nieuwe Cloudinary-code en TopBar-koppeling zijn voorbereid. De definitieve live werking moet na publicatie nog worden gecontroleerd.</p>
-        </div>
+                    <h3>Portretten en Eventbronnen</h3><p>Een persoonsportret is gekoppeld aan het bestaande persoons-ID via het veld <code>PortretURL</code>. Een Event kan Cloudinary-links bevatten in zijn bronnen. Deze verwijzingen worden samen met de betreffende persoons- en Eventrecords opgeslagen; er wordt geen tweede exemplaar van het afbeeldingsbestand in Supabase geplaatst.</p>
+            </div>
 
         <div class="sectie" id="events">
             <h2>12. Events</h2>
@@ -404,6 +407,7 @@
                 <li><strong>🔗 Gedeeld met mij</strong> — events van stambomen die met jou gedeeld zijn.</li>
             </ul>
             <div class="tip"><strong>Cloudkoppeling:</strong> Personen en events gebruiken dezelfde cloudstamboom. Er wordt geen aparte eventstamboom aangemaakt. Een Viewer kan gedeelde events laden; een Editor kan de events van een gedeelde stamboom ook opslaan.</div>
+                        <h3>Events verwijderen en publiceren</h3><p>In <strong>Event Manager</strong> staan de acties links van een Event. Met de prullenbak verwijder je een afzonderlijk Event na bevestiging. Vaste geboorte- en overlijdenevents (<code>-001</code> en <code>-002</code>) zijn uitgezonderd van deze verwijderactie.</p><p>De <strong>oogknop</strong> geeft de publicatiestatus aan. Alleen de gecontroleerde <strong>Owner van de actieve cloudstamboom</strong> kan publiceren of de publicatie intrekken. Zonder actieve cloudstamboom is deze actie niet beschikbaar. Nieuwe Events zijn standaard niet gepubliceerd (<code>published: false</code>).</p><div class="waarschuwing"><strong>Privacybeperking:</strong> de publicatieknop is in de interface beschikbaar, maar de serverbeveiliging voor niet-gepubliceerde Events is nog niet afgerond. Gebruikers met toegang tot de gedeelde Supabase-stamboom kunnen mogelijk ook niet-gepubliceerde Eventgegevens uitlezen. Beschouw de status 'niet gepubliceerd' voorlopig niet als vertrouwelijke opslag.</div><h3>Events lokaal resetten</h3><p>Ga naar <strong>Events opslag → Mijn data → Reset events</strong> om uitsluitend de lokale Events te wissen. De persoonsgegevens, portretten en cloudgegevens blijven behouden. Via <strong>Laden</strong> haal je de opgeslagen Events opnieuw op. Let op: bij het openen van Event Manager kunnen vaste geboorte- en overlijdenevents opnieuw uit de persoonsdata worden opgebouwd.</p><h3>Cloud Events en gedeelde toegang</h3><p>In <strong>Events opslag → Cloud events</strong> staan de stambomen met het aantal personen en Events. De aanduiding <strong>Gedeeld met …</strong> of <strong>Niet gedeeld</strong> toont de bestaande gedeelde toegang. Het deelpaneel gebruikt dezelfde uitnodigingen en rechten als Stamboom Storage; opnieuw uitnodigen is niet nodig. Een nieuwe deeluitnodiging geldt voor de hele stamboom, niet uitsluitend voor Events.</p><p>Met <strong>Events opslaan in actieve stamboom</strong> schrijf je alleen de Eventgegevens weg. In de gezamenlijke cloudsynchronisatie worden persoonsgegevens inclusief <code>PortretURL</code> en Events bij dezelfde stamboom bewaard. Reset je lokale Events, laad ze dan opnieuw voordat je iets in de cloud overschrijft.</p>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 
@@ -527,6 +531,7 @@
                 <li>Ga naar <strong>Opslag → 🔗 Gedeeld met mij</strong>.</li>
                 <li>Klik op <strong>"⬇️ Laden"</strong> om de stamboom te laden.</li>
             </ul>
+                        <h3>Delen vanuit Stamboom Storage of Events opslag</h3><p>Beide pagina's tonen en gebruiken <strong>dezelfde gedeelde toegang</strong> van de cloudstamboom. In Events opslag zie je in de cloudlijst of de boom gedeeld is; open <strong>Delen</strong> om de bestaande Viewer- en Editor-toegang te bekijken of in te trekken. Een gebruiker die al is uitgenodigd via Stamboom Storage hoeft niet opnieuw te worden uitgenodigd.</p><p><strong>Publicatierechten:</strong> alleen de Owner kan de publicatiestatus van Events wijzigen. Het opslaan van gedeelde Events door een Editor verleent geen publicatierecht. De afscherming van niet-gepubliceerde Events op serverniveau moet nog worden afgerond.</p>
             <a href="#" class="terug-top">↑ Terug naar boven</a>
         </div>
 

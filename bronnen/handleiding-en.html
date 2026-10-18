@@ -1,4 +1,4 @@
-<!-- ======================= bronnen/handleiding-en.html v2.6.0 =======================
+<!-- ======================= bronnen/handleiding-en.html v2.8.0 =======================
      English user guide for MyFamTreeCollab
      See handleiding-nl.html (Dutch) and handleiding-es.html (Spanish) for other languages
 
@@ -94,7 +94,7 @@
     <div class="handleiding-wrapper">
 
         <div class="welkom-blok">
-            <h1>User Guide <span class="versie-badge">v2.7.0</span></h1>
+            <h1>User Guide <span class="versie-badge">v2.8.0</span></h1>
             <p>Welcome to the MyFamTreeCollab user guide. Here you will find step-by-step instructions for all features of the application, from creating your first person to exporting your family tree and collaborating with others.</p>
         </div>
 
@@ -312,6 +312,7 @@
                 <li>Confirm the password in the second field.</li>
                 <li>Click <strong>"Save"</strong>.</li>
             </ul>
+                        <h3>Deleting your account</h3><p>You can permanently delete your account only after you no longer own any cloud family trees. First export and download your family tree and Event files, then delete your owned cloud trees and proceed with account deletion. Ownership is checked through Supabase.</p>
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
@@ -349,6 +350,7 @@
                 <li>Click <strong>"🗑️ Delete"</strong> next to the tree.</li>
                 <li>Confirm the prompt. The ACTIVE bar disappears automatically.</li>
             </ul>
+                        <h3>Person data and Events</h3><p>A cloud family tree stores person records (including the portrait <code>PortretURL</code>) and Events. Image files remain in Cloudinary; only their URLs are stored with the records. Loading a family tree makes both types of data available locally.</p><h3>Resetting local person data only</h3><p><strong>Storage → My data → Reset family tree</strong> deletes only local person records. Local Events and data held in Supabase remain unchanged. The two Storage pages manage their own reset and loaded status. Reload the appropriate data before overwriting the cloud copy.</p>
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
@@ -366,7 +368,8 @@
                 <li>An editor does not automatically receive the owner's Cloudinary upload capability.</li>
             </ul>
             <p><strong>Status v2.6.0:</strong> the new Cloudinary code and TopBar connection have been prepared. Final live behaviour still has to be verified after publication.</p>
-        </div>
+                    <h3>Portraits and Event sources</h3><p>A portrait is linked to an existing person ID by the <code>PortretURL</code> field. Events can have Cloudinary links among their sources. These references are stored alongside the relevant person or Event records, without copying the image file into Supabase.</p>
+            </div>
 
         <div class="sectie" id="events">
             <h2>12. Events</h2>
@@ -397,6 +400,7 @@
                 <li><strong>🔗 Shared with me</strong> — events from family trees shared with you.</li>
             </ul>
             <div class="tip"><strong>Cloud link:</strong> People and events use the same cloud family tree. No separate event tree is created. A Viewer can load shared events; an Editor can also save the events of a shared family tree.</div>
+                        <h3>Deleting and publishing Events</h3><p>In <strong>Event Manager</strong>, action buttons appear to the left of each Event. The bin button deletes an individual Event after confirmation. Fixed birth and death Events (<code>-001</code> and <code>-002</code>) are excluded from this deletion action.</p><p>The <strong>eye button</strong> indicates publication status. Only the verified <strong>Owner of the active cloud family tree</strong> can publish or unpublish an Event. This action is unavailable without an active cloud tree. New Events are unpublished by default (<code>published: false</code>).</p><div class="waarschuwing"><strong>Privacy limitation:</strong> although the publication control is available in the interface, server-side protection for unpublished Events is not yet complete. Users with access to the shared Supabase tree may still be able to read unpublished Event data. Do not treat 'unpublished' as confidential storage yet.</div><h3>Resetting local Events</h3><p>Open <strong>Event Storage → My data → Reset events</strong> to clear only the local Events. Person records, portraits and cloud data are retained. Use <strong>Load</strong> to retrieve saved Events again. Note: opening Event Manager may recreate the fixed birth and death Events from person records.</p><h3>Cloud Events and sharing</h3><p><strong>Event Storage → Cloud events</strong> lists family trees with their person and Event counts. The <strong>Shared with …</strong> or <strong>Not shared</strong> label reflects existing sharing permissions. Both Storage pages use the same invitations and roles; you do not need to invite someone twice. An invitation grants access to the family tree, not just its Events.</p><p><strong>Save events to active tree</strong> updates only Event data. The combined cloud sync keeps person records including <code>PortretURL</code> and Events with the same cloud tree. After resetting local Events, load them again before overwriting anything in the cloud.</p>
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
@@ -520,6 +524,7 @@
                 <li>Go to <strong>Storage → 🔗 Shared with me</strong>.</li>
                 <li>Click <strong>"⬇️ Load"</strong> to load the tree.</li>
             </ul>
+                        <h3>Sharing from either Storage page</h3><p>Family Tree Storage and Event Storage both display and use <strong>the same sharing permissions</strong> for a cloud tree. Event Storage indicates whether the tree is shared; click <strong>Share</strong> to review or revoke existing Viewer or Editor access. Users already invited from Family Tree Storage must not be invited again.</p><p><strong>Publication permissions:</strong> only the Owner may change an Event's publication status. An Editor's ability to save shared Events does not grant publication rights. Server-side protection of unpublished Events is not yet complete.</p>
             <a href="#" class="terug-top">↑ Back to top</a>
         </div>
 
