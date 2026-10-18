@@ -1,4 +1,4 @@
-<!-- ======================= stamboom/storage.html v2.10.6 =======================
+<!-- ======================= stamboom/storage.html v2.10.7 =======================
      v2.10.5: Reset stamboom behoudt EventStorage en onafhankelijke Events-laadstatus.
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
 
@@ -854,14 +854,13 @@ i18nModule.init()
             btnUitnodig.disabled    = false;
             btnUitnodig.textContent = i18nModule.t('storage:share.btnInvite');
             if (result.success) {
-                // Bevestiging met rol-label vertaald
                 var rolLabel = rol === 'editor'
                     ? i18nModule.t('storage:share.rolEditor')
                     : i18nModule.t('storage:share.rolViewer');
-                toonDeelStatus(
-                    i18nModule.t('storage:share.invited', { email: email, rol: rolLabel }),
-                    'succes'
-                );
+                var tekst = 'Toegang verleend aan ' + email + ' (' + rolLabel + '). ' +
+                    (result.email_sent ? 'Uitnodiging per e-mail verzonden.' :
+                     'E-mail niet verzonden; toegang is wel verleend. ' + (result.email_error || ''));
+                toonDeelStatus(tekst, result.email_sent ? 'succes' : 'fout');
                 emailInput.value = '';
                 laadDeelLijst();
             } else {
