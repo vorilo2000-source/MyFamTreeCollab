@@ -1,4 +1,4 @@
-﻿<!-- ======================= events/eventsstorage.html v0.2.4 =======================
+﻿<!-- ======================= events/eventsstorage.html v0.2.5 =======================
      v0.2.2: onafhankelijke event-reset en event-specifieke geladen-status.
      Opslagpagina voor lokale en cloud Events.
      v0.2.3: toont gedeelde gebruikersaantallen via dezelfde ShareModule als Stamboom Storage.
@@ -693,7 +693,7 @@ i18nModule.init()
                     uitnodigBtn.disabled = false;
 
                     if (result.success) {
-                        toonDeelStatus('Toegang toegevoegd voor ' + email + '.', 'succes');
+                        toonDeelStatus('Toegang verleend aan ' + email + '. ' + (result.email_sent ? 'Uitnodiging per e-mail verzonden.' : 'E-mail niet verzonden; toegang is wel verleend. ' + (result.email_error || '')), result.email_sent ? 'succes' : 'fout');
                         emailInput.value = '';
                         laadDeelLijst();
                     } else {
