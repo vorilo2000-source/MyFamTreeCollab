@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.8 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.9 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -130,17 +130,17 @@
         if (event.end_date) addText(body, 'p', 'Tot: ' + event.end_date); // Einddatum indien beschikbaar.
         if (event.place) addText(body, 'p', 'Plaats: ' + event.place); // Plaatsnaam indien beschikbaar.
         var participants = Array.isArray(event.participants) ? event.participants : []; // Canonieke deelnemers.
-        var extras = participants.filter(function (p) { // Onderdruk alleen de geselecteerde hoofdpersoon.
-            return p && asText(p.person_id) !== selectedId && (asText(p.person_id) || asText(p.name)); // Andere gekoppelde of los benoemde deelnemers.
-        }); // Sluit extra-deelnemersfilter af.
-        if (extras.length) { // Toon uitsluitend andere deelnemers.
-            var names = extras.map(function (p) { // Zet deelnemer om naar bestaande persoonsnaam.
-                var linked = people.find(function (person) { return asText(person.ID) === asText(p.person_id); }); // Hergebruik persoonsdataset.
-                var name = linked ? personName(linked) : (p.person_id ? 'Privépersoon' : asText(p.name)); // Fallback voor losse deelnemers.
-                return name + (p.role ? ' (' + asText(p.role) + ')' : ''); // Rol alleen indien bekend.
-            }).filter(Boolean); // Onderdruk lege labels.
-            if (names.length) addText(body, 'p', 'Deelnemers: ' + names.join(', '), 'eventtl-participants'); // Alleen extra personen.
-        } // Sluit deelnemerweergave af.
+        // Toon alle geregistreerde deelnemers, ook de geselecteerde hoofdpersoon.
+        var names = participants.filter(function (p) {
+            return p && (asText(p.person_id) || asText(p.name));
+        }).map(function (p) {
+            var id = asText(p.person_id);
+            var linked = people.find(function (person) { return asText(person.ID) === id; });
+            // Geen persoonsgegevens van niet-gepubliceerde personen tonen.
+            var name = linked ? personName(linked) : (id ? 'Privépersoon' : asText(p.name));
+            return name + (p.role ? ' (' + asText(p.role) + ')' : '');
+        }).filter(Boolean);
+        if (names.length) addText(body, 'p', 'Deelnemers: ' + names.join(', '), 'eventtl-participants');
         var details = document.createElement('details'); // Bronverwijzingen en notities uitklapbaar.
         var summary = document.createElement('summary'); // Samenvatting voor inklappen.
         summary.textContent = 'Details en bronnen'; // Beknopte actie.
