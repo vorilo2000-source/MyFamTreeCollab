@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.10 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.11 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -72,6 +72,79 @@
         anchor.textContent = name; // Naam veilig als tekst.
         parent.appendChild(anchor); // Plaats in kaart.
     } // Sluit displaySourceLink af.
+    /* ======================= ONAFHANKELIJKE FOTOPOPUPS ======================= */
+    var photoPopupCount = 0;
+    var photoPopupZ = 2000;
+    function ensurePhotoPopupStyles() {
+        if (document.getElementById('eventtl-photo-popup-styles')) return;
+        var style = document.createElement('style');
+        style.id = 'eventtl-photo-popup-styles';
+        style.textContent =
+            '.eventtl-photo-popup{position:fixed;z-index:2000;width:min(580px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:#fff;color:#222;border:1px solid #888;border-radius:9px;box-shadow:0 12px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden;}' +
+            '.eventtl-photo-popup-head{display:flex;align-items:center;gap:10px;background:#f3f4f6;padding:8px 10px;cursor:move;touch-action:none;user-select:none;}' +
+            '.eventtl-photo-popup-title{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}' +
+            '.eventtl-photo-popup-close{border:0;background:transparent;font-size:24px;line-height:1;cursor:pointer;padding:0 5px;color:#222;}' +
+            '.eventtl-photo-popup-body{overflow:auto;padding:10px;text-align:center;min-height:0;}' +
+            '.eventtl-photo-popup-body img{display:block;margin:auto;max-width:100%;max-height:calc(100vh - 130px);height:auto;width:auto;object-fit:contain;}' +
+            '.eventtl-media-link{cursor:zoom-in;}';
+        document.head.appendChild(style);
+    }
+    function openPhotoPopup(entry) {
+        ensurePhotoPopupStyles();
+        photoPopupCount++;
+        var popup = document.createElement('section');
+        popup.className = 'eventtl-photo-popup';
+        popup.setAttribute('role', 'dialog');
+        popup.setAttribute('aria-label', 'Foto: ' + entry.name);
+        popup.style.zIndex = String(++photoPopupZ);
+        // Een nieuwe popup overlapt niet volledig met de voorgaande.
+        var offset = (photoPopupCount - 1) % 7 * 28;
+        popup.style.left = Math.max(12, Math.min(65 + offset, window.innerWidth - 300)) + 'px';
+        popup.style.top = Math.max(12, Math.min(65 + offset, window.innerHeight - 180)) + 'px';
+        var head = document.createElement('div');
+        head.className = 'eventtl-photo-popup-head';
+        var title = document.createElement('span');
+        title.className = 'eventtl-photo-popup-title';
+        title.textContent = entry.name;
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'eventtl-photo-popup-close';
+        close.textContent = '×';
+        close.title = 'Foto sluiten';
+        close.setAttribute('aria-label', 'Foto sluiten');
+        close.addEventListener('click', function () { popup.remove(); });
+        head.appendChild(title);
+        head.appendChild(close);
+        var body = document.createElement('div');
+        body.className = 'eventtl-photo-popup-body';
+        var img = document.createElement('img');
+        img.src = entry.url;
+        img.alt = entry.name;
+        img.referrerPolicy = 'no-referrer';
+        img.addEventListener('error', function () { body.textContent = 'Foto kon niet worden geladen.'; });
+        body.appendChild(img);
+        popup.appendChild(head);
+        popup.appendChild(body);
+        popup.addEventListener('pointerdown', function () { popup.style.zIndex = String(++photoPopupZ); });
+        // Alleen de titelbalk is versleepbaar; foto blijft normaal selecteerbaar.
+        head.addEventListener('pointerdown', function (event) {
+            if (event.target === close || close.contains(event.target) || event.button !== 0) return;
+            var startX = event.clientX, startY = event.clientY;
+            var rect = popup.getBoundingClientRect();
+            head.setPointerCapture(event.pointerId);
+            function move(e) {
+                var left = Math.max(0, Math.min(window.innerWidth - 65, rect.left + e.clientX - startX));
+                var top = Math.max(0, Math.min(window.innerHeight - 44, rect.top + e.clientY - startY));
+                popup.style.left = left + 'px'; popup.style.top = top + 'px';
+            }
+            function stop(e) { head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', stop); head.removeEventListener('pointercancel', stop); try { head.releasePointerCapture(e.pointerId); } catch (_) {} }
+            head.addEventListener('pointermove', move);
+            head.addEventListener('pointerup', stop);
+            head.addEventListener('pointercancel', stop);
+        });
+        document.body.appendChild(popup);
+        close.focus();
+    }
     function addMedia(card, sources) { // Maak een afzonderlijk uitklapbaar fotovak per gebeurtenis.
         var images = []; // Bewaar uitsluitend geldige afbeeldingsbronnen.
         sources.forEach(function (source) { // Lees bestaande EventStorage-bronnen zonder mutatie.
@@ -94,9 +167,11 @@
             panel.dataset.loaded = 'true'; // Eenmalig vullen.
             images.forEach(function (entry) { // Afbeeldingen omzetten naar aanklikbare pictogrammen.
                 var link = document.createElement('a'); // Klik opent het origineel.
-                link.href = entry.url; // Gevalideerde afbeeldings-URL.
-                link.target = '_blank'; // Open in aparte browser-tab.
-                link.rel = 'noopener noreferrer'; // Geen toegang tot openingsvenster.
+                link.href = entry.url; // Gevalideerde afbeeldings-URL blijft beschikbaar bij ontbreken van JavaScript.
+                link.addEventListener('click', function (event) { // Foto in een eigen venster boven de tijdlijn.
+                    event.preventDefault();
+                    openPhotoPopup(entry); // Sluit andere foto-popups niet.
+                });
                 link.className = 'eventtl-media-link'; // Compact thumbnailkader.
                 link.title = entry.name; // Toegankelijke naam.
                 link.setAttribute('aria-label', 'Afbeelding openen: ' + entry.name); // Screenreader-label.
