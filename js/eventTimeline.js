@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.7 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.8 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -178,7 +178,7 @@
         count.textContent = ''; // Reset de telling.
         if (!selectedId) { addText(output, 'div', 'Selecteer een persoon om gebeurtenissen te bekijken.', 'eventtl-empty'); return; } // Wacht op selectie.
         if (!window.EventStorage || typeof window.EventStorage.get !== 'function') { addText(output, 'div', 'EventStorage is niet beschikbaar. Controleer js/eventStorage.js.', 'eventtl-empty'); return; } // Meld ontbrekende module.
-        var events = window.EventStorage.get().filter(function (event) { return event && matchesPerson(event, selectedId); }); // Lees alleen relevante events.
+        var events = window.EventStorage.get().filter(function (event) { return event && event.published === true && matchesPerson(event, selectedId); }); // Lees alleen relevante events.
         var dated = events.filter(function (event) { return dateKey(event.start_date) !== null; }); // Datum bekende events.
         var undated = events.filter(function (event) { return dateKey(event.start_date) === null; }); // Events zonder datum.
         dated.sort(function (a, b) { return dateKey(a.start_date) - dateKey(b.start_date) || asText(a.id).localeCompare(asText(b.id)); }); // Oudste eerst, stabiel bij gelijke datum.
