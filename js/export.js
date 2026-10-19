@@ -36,17 +36,17 @@
         return `${jaar}${maand}${dag}`;                                    // Combineer tot JJJJMMDD
     }
 
-    function familienaamVoorBestandsnaam() {
-        const data = StamboomStorage.get();                                // Lees de stamboom in bestaande opslagvolgorde
-        const eerstePersoon = data.length ? data[0] : null;                // Gebruik de eerste persoon als naamgever van de stamboom
-        const achternaam = eerstePersoon && eerstePersoon.Achternaam       // Lees uitsluitend de achternaam van die eerste persoon
-            ? String(eerstePersoon.Achternaam).trim()
-            : 'familie';                                                   // Veilige fallback wanneer geen achternaam beschikbaar is
-
-        return achternaam
-            .replace(/[\\/:*?"<>|]/g, '')                                // Verwijder tekens die niet in bestandsnamen mogen voorkomen
-            .replace(/\s+/g, '_')                                         // Zet spaties om naar underscores
-            || 'familie';                                                  // Behoud altijd een geldige bestandsnaam
+    // Gebruik de expliciet opgeslagen naam van de actieve stamboom; nooit een persoonsnaam.
+    function stamboomnaamVoorBestandsnaam() {
+        const opgeslagenNaam = window.StamboomStorage &&
+            typeof StamboomStorage.getActiveTreeName === 'function'
+            ? StamboomStorage.getActiveTreeName() : null;
+        const naam = String(opgeslagenNaam || '').trim() || 'MyFamTreeCollab_Export';
+        return naam
+            .replace(/[\\/:*?"<>|\x00-\x1f]/g, '')
+            .replace(/\s+/g, '_')
+            .replace(/[. ]+$/g, '')
+            .slice(0, 120) || 'MyFamTreeCollab_Export';
     }
 
     /* ======================= CSV EXPORT ======================= */
@@ -68,11 +68,11 @@
             return;
         }
 
-        const velden = window.StamboomSchema                               // Neem inclusief PortretURL alle 15 schemavelden mee in CSV
+        const velden = window.StamboomSchema                               // Haal kolomnamen op uit schema
             ? [...window.StamboomSchema.fields]
             : Object.keys(data[0]);                                        // Fallback: sleutels van eerste object
 
-        const volledigeNaam = `${familienaamVoorBestandsnaam()}_stamboom_${datumVoorBestandsnaam()}.csv`; // Vaste naam: familienaam_stamboom_JJJJMMDD.csv
+        const volledigeNaam = `${stamboomnaamVoorBestandsnaam()}_stamboom_${datumVoorBestandsnaam()}.csv`; // Vaste naam: stamboomnaam_stamboom_JJJJMMDD.csv
 
         // Bouw CSV-inhoud op
         const csvRegels = [];
@@ -146,7 +146,7 @@
             return;
         }
 
-        const standaardNaam = `${familienaamVoorBestandsnaam()}_stamboom_${datumVoorBestandsnaam()}.json`; // Vaste naam: familienaam_stamboom_JJJJMMDD.json
+        const standaardNaam = `${stamboomnaamVoorBestandsnaam()}_stamboom_${datumVoorBestandsnaam()}.json`; // Vaste naam: stamboomnaam_stamboom_JJJJMMDD.json
         const blob = new Blob(
             [JSON.stringify(data, null, 2)],                               // Leesbare JSON met 2 spaties inspringing
             { type: 'application/json' }
@@ -193,7 +193,7 @@
             return;
         }
 
-        const standaardNaam = `${familienaamVoorBestandsnaam()}_event_${datumVoorBestandsnaam()}.json`; // Vaste naam: familienaam_event_JJJJMMDD.json
+        const standaardNaam = `${stamboomnaamVoorBestandsnaam()}_event_${datumVoorBestandsnaam()}.json`; // Vaste naam: stamboomnaam_event_JJJJMMDD.json
         const blob = new Blob(
             [JSON.stringify(data, null, 2)],                                 // Exporteer volledige EventStorage als leesbare JSON
             { type: 'application/json' }
