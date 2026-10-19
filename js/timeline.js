@@ -1,4 +1,4 @@
-/* ======================= js/timeline.js v2.8.1 =======================
+/* ======================= js/timeline.js v2.8.2 =======================
  * Canvas-based family timeline renderer
  * v2.8.1: WCAG contrastkleur voor balktekst en grotere, teruglopende generatielabels.
  * v2.8.0: portret/buste, grotere balken en leesbare labels; tijdschaal blijft correct.
@@ -868,7 +868,7 @@
      * SECTION 16 — INIT (ongewijzigd)
      * ------------------------------------------------------------------ */
     function init() {
-        dataset = window.StamboomStorage.get() || [];
+        dataset = (window.StamboomStorage.get() || []).filter(function(p){ return p.published !== false; });
         window.initLiveSearch(searchInput, dataset, function (selectedId) {
             rootId = safe(selectedId);
             draw();

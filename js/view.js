@@ -1,4 +1,4 @@
-/* ======================= js/view.js v1.8.3 =======================
+/* ======================= js/view.js v1.8.4 =======================
  * Stamboom Viewer: bestaande relatie-, zoek- en kleurlogica behouden.
  * Nieuw v1.8.3: Broers & Zussen heeft een eigen brede kolom met twee kaarten per rij.
  * v1.8.2: ID en naam op regel 1, geboortedatum op regel 2; portret over volle blokhoogte.
@@ -12,7 +12,7 @@
     var treeBox = document.getElementById('treeContainer');
     var BZBox = document.getElementById('BZBox');
     var searchInput = document.getElementById('searchPerson');
-    var dataset = window.StamboomStorage.get() || [];
+    var dataset = (window.StamboomStorage.get() || []).filter(function(p){ return p.published !== false; });
     var selectedHoofdId = null;
 
     function safe(val) { return val == null ? '' : String(val).trim(); }
@@ -195,7 +195,7 @@
     });
     function renderTree() { buildTree(selectedHoofdId); }
     function refreshView() {
-        dataset = window.StamboomStorage.get() || [];
+        dataset = (window.StamboomStorage.get() || []).filter(function(p){ return p.published !== false; });
         selectedHoofdId = null;
         renderTree();
     }

@@ -1,4 +1,4 @@
-/* ======================= js/manage.js v2.9.0 =======================
+/* ======================= js/manage.js v2.10.0 =======================
    Beheerpagina: toont stamboom als tabel, live search, add/save/refresh
    Vereist: schema.js, idGenerator.js, storage.js, LiveSearch.js,
             relatieEngine.js, colorHelper.js
@@ -58,8 +58,26 @@
 
     /* ======================= STATE ======================= */
     var dataset         = StamboomStorage.get();                          // Volledige stamboom-dataset uit localStorage
+    var ownerCanPublish = false; // Alleen feitelijke eigenaar van actieve cloudboom.
     var selectedHoofdId = null;                                           // Geselecteerde hoofdpersoon
     var tempRowCount    = 0;                                              // Teller voor onopgeslagen rijen
+
+    // Oude records zonder published-veld blijven zichtbaar; nieuwe personen starten verborgen.
+    function visiblePeople() {
+        return ownerCanPublish ? dataset : dataset.filter(function (p) { return p.published !== false; });
+    }
+    async function verifyPublicationOwner() {
+        var id = StamboomStorage.getActiveTreeId();
+        if (!id || !window.ShareModule) return;
+        try {
+            var result = await ShareModule.getMyRoleForTree(id);
+            ownerCanPublish = !result.error && result.rol === 'owner';
+            if (typeof initLiveSearch === 'function') initLiveSearch(searchInput, visiblePeople(), selectPerson);
+            if (selectedHoofdId && !visiblePeople().some(function(p){return String(p.ID)===String(selectedHoofdId);})) selectedHoofdId=null;
+            if (selectedHoofdId) renderTable(visiblePeople());
+        } catch (e) { console.warn('[manage] Publicatierechten onbekend:', e); }
+    }
+    function selectPerson(id) { selectedHoofdId=id; renderTable(visiblePeople()); }
 
     /* ======================= DOM ELEMENTEN ======================= */
     var tableBody     = document.querySelector('#manageTable tbody');     // <tbody> voor persoonsrijen
@@ -331,7 +349,7 @@
             return;
         }
 
-        var contextData = computeRelaties(ds, selectedHoofdId);          // Bereken relaties rondom hoofdpersoon
+        var contextData = computeRelaties(visiblePeople(), selectedHoofdId);          // Bereken relaties rondom hoofdpersoon
         if (!contextData.length) {
             showPlaceholder(i18nModule.t('manage:placeholder.notFound')); // Geen personen gevonden
             return;
@@ -374,7 +392,7 @@
                 .filter(Boolean)
                 .slice(1)                                                 // Eerste al via relatieEngine
                 .forEach(function (pid, sliceIdx) {
-                    var ep = dataset.find(function (p) { return safe(p.ID) === pid; });
+                    var ep = visiblePeople().find(function (p) { return safe(p.ID) === pid; });
                     if (ep) renderQueue.push({
                         p: Object.assign({}, ep, { Relatie: 'PHoofdID' }),
                         colorIndex: sliceIdx + 1                         // slice(1) → index start bij 1
@@ -389,7 +407,7 @@
                 renderQueue.push({ p: k, colorIndex: 0 });               // Kind altijd index 0
                 if (safe(k.PartnerID)) {
                     parsePartners(k.PartnerID).forEach(function (pid, idx) {
-                        var kp = dataset.find(function (p) { return safe(p.ID) === pid; });
+                        var kp = visiblePeople().find(function (p) { return safe(p.ID) === pid; });
                         if (kp) renderQueue.push({
                             p: Object.assign({}, kp, { Relatie: 'Partner' }),
                             colorIndex: idx                               // Index op positie in lijst
@@ -405,7 +423,7 @@
                 renderQueue.push({ p: s, colorIndex: 0 });               // BZ altijd index 0
                 if (safe(s.PartnerID)) {
                     parsePartners(s.PartnerID).forEach(function (pid, idx) {
-                        var bzP = dataset.find(function (p) { return safe(p.ID) === pid; });
+                        var bzP = visiblePeople().find(function (p) { return safe(p.ID) === pid; });
                         if (bzP) renderQueue.push({
                             p: Object.assign({}, bzP, { Relatie: 'Partner' }),
                             colorIndex: idx
@@ -449,6 +467,28 @@
                     btn.addEventListener('click', makeDeleteHandler(tr, function () { return safe(p.ID); }));
                 }
                 td.appendChild(btn);
+                if (!isNew) {
+                    var publish = document.createElement('button');
+                    publish.type = 'button';
+                    var publishedNow = p.published !== false;
+                    publish.textContent = publishedNow ? '◉' : '◯';
+                    publish.title = ownerCanPublish ? (publishedNow ? 'Publicatie intrekken' : 'Persoon publiceren') : 'Alleen de eigenaar kan publiceren';
+                    publish.setAttribute('aria-label', publish.title);
+                    publish.disabled = !ownerCanPublish;
+                    publish.style.cssText = 'margin-left:5px;padding:3px 7px;cursor:pointer';
+                    publish.addEventListener('click', function () {
+                        if (!ownerCanPublish) return;
+                        var next = p.published === false;
+                        // Direct opslaan; relaties en alle andere velden blijven intact.
+                        if (!StamboomStorage.update(p.ID, {published: next})) return;
+                        p.published = next;
+                        dataset = StamboomStorage.get();
+                        publish.textContent = next ? '◉' : '◯';
+                        publish.title = next ? 'Publicatie intrekken' : 'Persoon publiceren';
+                        publish.setAttribute('aria-label', publish.title);
+                    });
+                    td.appendChild(publish);
+                }
 
             } else if (col.key === 'Portret') {
                 td = buildPortretCell(p, isNew); // Toon statusbuste zonder Cloudinary-foto's op te halen.
@@ -549,6 +589,7 @@
                     );
                 }
 
+                if (!idMap.has(persoon.ID)) persoon.published = false;
                 idMap.set(persoon.ID, Object.assign(
                     {},
                     idMap.get(persoon.ID) || {},                         // Bewaar bestaande velden
@@ -622,10 +663,7 @@
         if (exportCsvBtn)  exportCsvBtn.addEventListener('click',  exportCSV);
 
         if (typeof initLiveSearch === 'function') {
-            initLiveSearch(searchInput, dataset, function (selectedID) {
-                selectedHoofdId = selectedID;                            // Nieuwe hoofdpersoon
-                renderTable(dataset);                                    // Tabel herbouwen
-            });
+            initLiveSearch(searchInput, visiblePeople(), selectPerson);
 
             document.addEventListener('click', function (e) {
                 var popup = document.getElementById('searchPopup');      // Zoekresultaten-popup
@@ -636,7 +674,8 @@
         }
     }
 
-    init();                                                              // Start initialisatie
+    init();
+    void verifyPublicationOwner();                                       // Rol uitsluitend via huidige cloudboom
 
     /* ======================= PUBLIEKE API ======================= */
     // Exposed via window.ManageTable zodat manage.html beide functies kan aanroepen

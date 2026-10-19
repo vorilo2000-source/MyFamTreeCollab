@@ -1,4 +1,4 @@
-/* ======================= js/eventTimeline.js v0.1.6 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
+/* ======================= js/eventTimeline.js v0.1.7 ======================= */ // Alleen-lezen Event Timeline; geen dubbele opslag of zoekmodule.
 (function () { // IIFE voorkomt globale naamconflicten.
     'use strict'; // Strikte modus voor JavaScript.
 
@@ -9,7 +9,7 @@
     var count = document.getElementById('eventtlCount'); // Aantal zichtbare gebeurtenissen.
     var buttonHorizontal = document.getElementById('eventtlHorizontal'); // Schakelknop horizontaal.
     var buttonVertical = document.getElementById('eventtlVertical'); // Schakelknop verticaal.
-    var people = window.StamboomStorage ? window.StamboomStorage.get() : []; // Lees bestaande persoonsdata.
+    var people = window.StamboomStorage ? window.StamboomStorage.get().filter(function(p){return p.published !== false;}) : []; // Lees bestaande persoonsdata.
     var selectedId = null; // Nog geen persoon geselecteerd.
     var orientation = 'horizontal'; // Horizontaal is de standaardweergave.
 
@@ -136,7 +136,7 @@
         if (extras.length) { // Toon uitsluitend andere deelnemers.
             var names = extras.map(function (p) { // Zet deelnemer om naar bestaande persoonsnaam.
                 var linked = people.find(function (person) { return asText(person.ID) === asText(p.person_id); }); // Hergebruik persoonsdataset.
-                var name = linked ? personName(linked) : asText(p.name || p.person_id); // Fallback voor losse deelnemers.
+                var name = linked ? personName(linked) : (p.person_id ? 'Privépersoon' : asText(p.name)); // Fallback voor losse deelnemers.
                 return name + (p.role ? ' (' + asText(p.role) + ')' : ''); // Rol alleen indien bekend.
             }).filter(Boolean); // Onderdruk lege labels.
             if (names.length) addText(body, 'p', 'Deelnemers: ' + names.join(', '), 'eventtl-participants'); // Alleen extra personen.
