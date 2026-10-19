@@ -1,4 +1,4 @@
-<!-- ======================= stamboom/storage.html v2.10.9 =======================
+<!-- ======================= stamboom/storage.html v2.11.0 =======================
      v2.10.5: Reset stamboom behoudt EventStorage en onafhankelijke Events-laadstatus.
      Opslagpagina: lokale data, cloud stambomenbeheer en gedeelde stambomen
 
@@ -503,8 +503,32 @@ i18nModule.init()
         return knop; // Geen upload, verwijdering of URL-aanpassing mogelijk.
     }
 
+    var publicationRoleTree = null;
+    var publicationIsOwner = false;
+    var publicationRolePending = false;
+    function refreshPublicationRole() {
+        var id = StamboomStorage.getActiveTreeId();
+        if (id !== publicationRoleTree) {
+            publicationRoleTree = id;
+            publicationIsOwner = false; // Voorkom overname van rechten vorige boom.
+            publicationRolePending = false;
+        }
+        if (!id || publicationRolePending || publicationIsOwner || !window.ShareModule) return;
+        publicationRolePending = true;
+        ShareModule.getMyRoleForTree(id).then(function(result) {
+            if (StamboomStorage.getActiveTreeId() !== id) return;
+            var verifiedOwner = !result.error && result.rol === 'owner';
+            if (verifiedOwner !== publicationIsOwner) {
+                publicationIsOwner = verifiedOwner;
+                renderTable();
+            }
+        }).catch(function(e){ console.warn('[storage] Publicatierol niet vastgesteld:',e); })
+          .finally(function(){ publicationRolePending = false; });
+    }
     function renderTable() {
-        var data = StamboomStorage.get();                            // Haal alle records op
+        refreshPublicationRole();
+        var data = StamboomStorage.get();
+        if (!publicationIsOwner) data = data.filter(function(p){return p.published !== false;});                            // Haal alle records op
         container.innerHTML = '';
         // Vertaald versie-label via i18n interpolatie
         info.innerHTML = i18nModule.t('storage:info.version', {
